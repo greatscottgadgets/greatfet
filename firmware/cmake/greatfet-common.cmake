@@ -26,6 +26,8 @@
 
 enable_language(C CXX ASM)
 
+include(../cmake/dfu-util.cmake)
+
 SET(PATH_GREATFET ../..)
 SET(PATH_GREATFET_FIRMWARE ${PATH_GREATFET}/firmware)
 SET(PATH_GREATFET_FIRMWARE_COMMON ${PATH_GREATFET_FIRMWARE}/common)
@@ -61,7 +63,7 @@ endif()
 
 if(NOT DEFINED SRC_M0)
 	set(SRC_M0 "${PATH_GREATFET_FIRMWARE_COMMON}/m0_sleep.c")
-endif()
+endif(NOT DEFINED SRC_M0)
 
 SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -DTX_ENABLE -D'VERSION_STRING=\"git-${VERSION}\"' -DRUN_FROM=${RUN_FROM}")
 
@@ -154,14 +156,12 @@ macro(DeclareTargets)
 		COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
 	)
 
-	add_custom_target(
-		${PROJECT_NAME}.dfu ALL
+    add_custom_target(
+		${PROJECT_NAME}.dfu ${DFU_ALL}
 		DEPENDS ${PROJECT_NAME}.bin
 		COMMAND rm -f _tmp.dfu _header.bin
 		COMMAND cp ${PROJECT_NAME}.bin _tmp.dfu
-		#COMMAND dfu-suffix --vid=0x1fc9 --pid=0x000c --did=0x0 -s 0 -a _tmp.dfu
-		COMMAND dfu-suffix --vid=0x1fc9 --pid=0x000c --did=0x0 -a _tmp.dfu
-		COMMAND dfu-prefix -s 0 -a _tmp.dfu
+		COMMAND ${DFU_COMMAND}
 		COMMAND python -c \"import os.path\; import struct\; print\('0000000: da ff ' + ' '.join\(map\(lambda s: '%02x' % ord\(s\), struct.pack\('<H', os.path.getsize\('${PROJECT_NAME}.bin'\) / 512 + 1\)\)\) + ' ff ff ff ff'\)\" | xxd -g1 -r > _header.bin
 		COMMAND cat _header.bin _tmp.dfu >${PROJECT_NAME}.dfu
 		COMMAND rm -f _tmp.dfu _header.bin
