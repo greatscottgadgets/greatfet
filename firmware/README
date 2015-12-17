@@ -1,0 +1,56 @@
+The primary firmware source code for USB HackRF devices is hackrf_usb.  Most of
+the other directories contain firmware source code for test and development.
+The common directory contains source code shared by multiple HackRF firmware
+projects.  The cpld directory contains HDL source for the CPLD.
+
+
+The firmware is set up for compilation with the GCC toolchain available here:
+
+https://code.launchpad.net/gcc-arm-embedded
+
+Required dependency:
+
+https://github.com/mossmann/libopencm3
+
+If you are using git, the preferred way to install libopencm3 is to use the
+submodule:
+
+$ cd ..
+$ git submodule init
+$ git submodule update
+$ cd firmware/libopencm3
+$ make
+
+
+To build and install a standard firmware image for HackRF One:
+
+$ cd hackrf_usb
+$ mkdir build
+$ cd build
+$ cmake .. -DBOARD=HACKRF_ONE
+$ make
+$ hackrf_spiflash -w hackrf_usb.bin
+
+If you have a Jawbreaker, use -DBOARD=JAWBREAKER instead.
+
+
+For loading firmware into RAM with DFU you will also need:
+
+http://dfu-util.gnumonks.org/
+
+To start up HackRF One in DFU mode, hold down the DFU button while powering it
+on or while pressing and releasing the RESET button.  Release the DFU button
+after the 3V3 LED illuminates.
+
+With dfu-util and dfu-suffix (from the dfu-util package) installed and with the
+HackRF operating in DFU mode, you can build firmware for RAM and load it with:
+
+$ cd hackrf_usb
+$ mkdir build
+$ cd build
+$ cmake .. -DRUN_FROM=RAM
+$ make hackrf_usb-program
+
+Alternatively you can load a .dfu file from a release package with:
+
+$ dfu-util --device 1fc9:000c --alt 0 --download hackrf_usb_ram.dfu
