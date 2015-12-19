@@ -1,7 +1,7 @@
 /*
- * Copyright 2012 Jared Boone <jared@sharebrained.com>
+ * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,20 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __SGPIO_H__
-#define __SGPIO_H__
+#ifndef __GPIO_H__
+#define __GPIO_H__
 
-#include <greatfet_core.h>
+#include <stdbool.h>
 
-typedef enum {
-	SGPIO_DIRECTION_RX,
-	SGPIO_DIRECTION_TX,
-} sgpio_direction_t;
-	
-void sgpio_configure_pin_functions();
-void sgpio_test_interface();
-void sgpio_set_slice_mode(
-	const bool multi_slice
-);
-void sgpio_configure(
-	const sgpio_direction_t direction
-);
+typedef const struct gpio_t* gpio_t;
 
-#endif//__SGPIO_H__
+void gpio_init();
+void gpio_set(gpio_t gpio);
+void gpio_clear(gpio_t gpio);
+void gpio_toggle(gpio_t gpio);
+void gpio_output(gpio_t gpio);
+void gpio_input(gpio_t gpio);
+void gpio_write(gpio_t gpio, const bool value);
+bool gpio_read(gpio_t gpio);
+
+#endif/*__GPIO_H__*/

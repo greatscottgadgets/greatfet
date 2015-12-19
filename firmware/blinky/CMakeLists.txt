@@ -24,7 +24,7 @@ set(CMAKE_TOOLCHAIN_FILE ../cmake/toolchain-arm-cortex-m.cmake)
 
 project(blinky)
 
-include(../cmake/hackrf-common.cmake)
+include(../cmake/greatfet-common.cmake)
 
 set(SRC_M4
 	blinky.c

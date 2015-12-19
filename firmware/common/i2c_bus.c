@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Jared Boone <jared@sharebrained.com>
+ * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
  *
  * This file is part of GreatFET.
  *
@@ -19,25 +19,21 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GPDMA_H__
-#define __GPDMA_H__
+#include "i2c_bus.h"
 
-#include <stddef.h>
-#include <stdint.h>
+void i2c_bus_start(i2c_bus_t* const bus, const void* const config) {
+	bus->start(bus, config);
+}
 
-#include <libopencm3/lpc43xx/gpdma.h>
+void i2c_bus_stop(i2c_bus_t* const bus) {
+	bus->stop(bus);
+}
 
-void gpdma_controller_enable();
-
-void gpdma_channel_enable(const uint_fast8_t channel);
-void gpdma_channel_disable(const uint_fast8_t channel);
-
-void gpdma_channel_interrupt_tc_clear(const uint_fast8_t channel);
-void gpdma_channel_interrupt_error_clear(const uint_fast8_t channel);
-
-void gpdma_lli_enable_interrupt(gpdma_lli_t* const lli);
-
-void gpdma_lli_create_loop(gpdma_lli_t* const lli, const size_t lli_count);
-void gpdma_lli_create_oneshot(gpdma_lli_t* const lli, const size_t lli_count);
-
-#endif/*__GPDMA_H__*/
+void i2c_bus_transfer(
+	i2c_bus_t* const bus,
+	const uint_fast8_t slave_address,
+	const uint8_t* const tx, const size_t tx_count,
+	uint8_t* const rx, const size_t rx_count
+) {
+	bus->transfer(bus, slave_address, tx, tx_count, rx, rx_count);
+}

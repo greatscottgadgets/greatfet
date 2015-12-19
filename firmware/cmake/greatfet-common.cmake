@@ -133,7 +133,12 @@ macro(DeclareTargets)
 	add_executable(${PROJECT_NAME}.elf
 		${SRC_M4}
 		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/w25q80bv_target.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/w25q80bv.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/spi_ssp.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_bus.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_lpc.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
 		m0_bin.s
 	)
 

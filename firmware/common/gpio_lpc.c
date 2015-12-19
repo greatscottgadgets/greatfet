@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Jared Boone <jared@sharebrained.com>
+ * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
  *
  * This file is part of GreatFET.
  *
@@ -19,25 +19,40 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GPDMA_H__
-#define __GPDMA_H__
+#include "gpio_lpc.h"
 
 #include <stddef.h>
-#include <stdint.h>
 
-#include <libopencm3/lpc43xx/gpdma.h>
+void gpio_init() {
+	for(size_t i=0; i<8; i++) {
+		GPIO_LPC_PORT(i)->dir = 0;
+	}
+}
 
-void gpdma_controller_enable();
+void gpio_set(gpio_t gpio) {
+	gpio->port->set = gpio->mask;
+}
 
-void gpdma_channel_enable(const uint_fast8_t channel);
-void gpdma_channel_disable(const uint_fast8_t channel);
+void gpio_clear(gpio_t gpio) {
+	gpio->port->clr = gpio->mask;
+}
 
-void gpdma_channel_interrupt_tc_clear(const uint_fast8_t channel);
-void gpdma_channel_interrupt_error_clear(const uint_fast8_t channel);
+void gpio_toggle(gpio_t gpio) {
+	gpio->port->not = gpio->mask;
+}
 
-void gpdma_lli_enable_interrupt(gpdma_lli_t* const lli);
+void gpio_output(gpio_t gpio) {
+	gpio->port->dir |= gpio->mask;
+}
 
-void gpdma_lli_create_loop(gpdma_lli_t* const lli, const size_t lli_count);
-void gpdma_lli_create_oneshot(gpdma_lli_t* const lli, const size_t lli_count);
+void gpio_input(gpio_t gpio) {
+	gpio->port->dir &= ~gpio->mask;
+}
 
-#endif/*__GPDMA_H__*/
+void gpio_write(gpio_t gpio, const bool value) {
+	*gpio->gpio_w = value;
+}
+
+bool gpio_read(gpio_t gpio) {
+	return *gpio->gpio_w;
+}

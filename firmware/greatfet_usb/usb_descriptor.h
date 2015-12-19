@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Jared Boone
  *
- * This file is part of GreatFET.
+ * This file is part of HackRF.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

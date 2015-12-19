@@ -1,7 +1,7 @@
 /*
- * Copyright 2013 Jared Boone <jared@sharebrained.com>
+ * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,30 +19,28 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __SGPIO_DMA_H__
-#define __SGPIO_DMA_H__
+#ifndef __SPI_SSP_H__
+#define __SPI_SSP_H__
 
+#include <stdint.h>
 #include <stddef.h>
 
-#include <libopencm3/lpc43xx/gpdma.h>
+#include "spi_bus.h"
 
-void sgpio_dma_configure_lli(
-	gpdma_lli_t* const lli,
-	const size_t lli_count,
-	const bool direction_transmit,
-	void* const buffer,
-	const size_t transfer_bytes
-);
+#include "gpio.h"
 
-void sgpio_dma_init();
-void sgpio_dma_rx_start(const gpdma_lli_t* const start_lli);
-void sgpio_dma_tx_start(const gpdma_lli_t* const start_lli);
-void sgpio_dma_irq_tc_acknowledge();
-void sgpio_dma_stop();
+#include <libopencm3/lpc43xx/ssp.h>
 
-size_t sgpio_dma_current_transfer_index(
-	const gpdma_lli_t* const lli,
-	const size_t lli_count
-);
+typedef struct ssp_config_t {
+	ssp_datasize_t data_bits;
+	uint8_t serial_clock_rate;
+	uint8_t clock_prescale_rate;
+	gpio_t gpio_select;
+} ssp_config_t;
 
-#endif/*__SGPIO_DMA_H__*/
+void spi_ssp_start(spi_bus_t* const bus, const void* const config);
+void spi_ssp_stop(spi_bus_t* const bus);
+void spi_ssp_transfer(spi_bus_t* const bus, void* const data, const size_t count);
+void spi_ssp_transfer_gather(spi_bus_t* const bus, const spi_transfer_t* const transfers, const size_t count);
+
+#endif/*__SPI_SSP_H__*/

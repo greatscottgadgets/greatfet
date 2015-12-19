@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Jared Boone <jared@sharebrained.com>
+ * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
  *
  * This file is part of GreatFET.
  *
@@ -19,25 +19,20 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GPDMA_H__
-#define __GPDMA_H__
+#include "spi_bus.h"
 
-#include <stddef.h>
-#include <stdint.h>
+void spi_bus_start(spi_bus_t* const bus, const void* const config) {
+	bus->start(bus, config);
+}
 
-#include <libopencm3/lpc43xx/gpdma.h>
+void spi_bus_stop(spi_bus_t* const bus) {
+	bus->stop(bus);
+}
 
-void gpdma_controller_enable();
+void spi_bus_transfer(spi_bus_t* const bus, void* const data, const size_t count) {
+	bus->transfer(bus, data, count);
+}
 
-void gpdma_channel_enable(const uint_fast8_t channel);
-void gpdma_channel_disable(const uint_fast8_t channel);
-
-void gpdma_channel_interrupt_tc_clear(const uint_fast8_t channel);
-void gpdma_channel_interrupt_error_clear(const uint_fast8_t channel);
-
-void gpdma_lli_enable_interrupt(gpdma_lli_t* const lli);
-
-void gpdma_lli_create_loop(gpdma_lli_t* const lli, const size_t lli_count);
-void gpdma_lli_create_oneshot(gpdma_lli_t* const lli, const size_t lli_count);
-
-#endif/*__GPDMA_H__*/
+void spi_bus_transfer_gather(spi_bus_t* const bus, const spi_transfer_t* const transfers, const size_t count) {
+	bus->transfer_gather(bus, transfers, count);
+}

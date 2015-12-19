@@ -22,14 +22,78 @@
  */
 
 #include "greatfet_core.h"
-#include "sgpio.h"
-#include <libopencm3/lpc43xx/i2c.h>
+#include "spi_ssp.h"
+#include "w25q80bv.h"
+#include "w25q80bv_target.h"
+#include "i2c_bus.h"
+#include "i2c_lpc.h"
 #include <libopencm3/lpc43xx/cgu.h>
-#include <libopencm3/lpc43xx/gpio.h>
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/ssp.h>
 
+#include "gpio_lpc.h"
+
+/* TODO: Consolidate ARRAY_SIZE declarations */
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #define WAIT_CPU_CLOCK_INIT_DELAY   (10000)
+
+/* GPIO Output PinMux */
+static struct gpio_t gpio_led[4] = {
+	GPIO(PORT_LED1_3_4,  PIN_LED1),
+	GPIO(PORT_LED2,      PIN_LED2),
+	GPIO(PORT_LED1_3_4,  PIN_LED3),
+	GPIO(PORT_LED1_3_4,  PIN_LED4)
+};
+
+static struct gpio_t gpio_1v8_enable		= GPIO(3,  6);
+
+static struct gpio_t gpio_w25q80bv_hold		= GPIO(1, 14);
+static struct gpio_t gpio_w25q80bv_wp		= GPIO(1, 15);
+static struct gpio_t gpio_w25q80bv_select	= GPIO(5, 11);
+
+/* CPLD JTAG interface GPIO pins */
+static struct gpio_t gpio_cpld_tdo			= GPIO(5, 18);
+static struct gpio_t gpio_cpld_tck			= GPIO(3,  0);
+static struct gpio_t gpio_cpld_tms			= GPIO(3,  4);
+static struct gpio_t gpio_cpld_tdi			= GPIO(3,  1);
+
+i2c_bus_t i2c0 = {
+	.obj = (void*)I2C0_BASE,
+	.start = i2c_lpc_start,
+	.stop = i2c_lpc_stop,
+	.transfer = i2c_lpc_transfer,
+};
+
+i2c_bus_t i2c1 = {
+	.obj = (void*)I2C1_BASE,
+	.start = i2c_lpc_start,
+	.stop = i2c_lpc_stop,
+	.transfer = i2c_lpc_transfer,
+};
+
+const ssp_config_t ssp_config_w25q80bv = {
+	.data_bits = SSP_DATA_8BITS,
+	.serial_clock_rate = 2,
+	.clock_prescale_rate = 2,
+	.gpio_select = &gpio_w25q80bv_select,
+};
+
+spi_bus_t spi_bus_ssp0 = {
+	.obj = (void*)SSP0_BASE,
+	.config = &ssp_config_w25q80bv,
+	.start = spi_ssp_start,
+	.stop = spi_ssp_stop,
+	.transfer = spi_ssp_transfer,
+	.transfer_gather = spi_ssp_transfer_gather,
+};
+
+w25q80bv_driver_t spi_flash = {
+	.bus = &spi_bus_ssp0,
+	.gpio_hold = &gpio_w25q80bv_hold,
+	.gpio_wp = &gpio_w25q80bv_wp,
+	.target_init = w25q80bv_target_init,
+};
 
 void delay(uint32_t duration)
 {
@@ -111,6 +175,12 @@ void cpu_clock_init(void)
 	/* Switch APB3 clock over to use PLL1 (204MHz) */
 	CGU_BASE_APB3_CLK = CGU_BASE_APB3_CLK_AUTOBLOCK(1)
 			| CGU_BASE_APB3_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+	CGU_BASE_SSP0_CLK = CGU_BASE_SSP0_CLK_AUTOBLOCK(1)
+			| CGU_BASE_SSP0_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+	CGU_BASE_SSP1_CLK = CGU_BASE_SSP1_CLK_AUTOBLOCK(1)
+			| CGU_BASE_SSP1_CLK_CLK_SEL(CGU_SRC_PLL1);
 }
 
 
@@ -204,55 +274,59 @@ void cpu_clock_pll1_max_speed(void)
 
 }
 
-void ssp1_init(void)
-{
-	/* Configure SSP1 Peripheral (to be moved later in SSP driver) */
-	scu_pinmux(SCU_SSP1_MISO, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
-	scu_pinmux(SCU_SSP1_MOSI, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
-	scu_pinmux(SCU_SSP1_SCK,  (SCU_SSP_IO | SCU_CONF_FUNCTION1));
-}
-
 void pin_setup(void) {
+	/* Release CPLD JTAG pins */
+	scu_pinmux(SCU_PINMUX_CPLD_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);
+	scu_pinmux(SCU_PINMUX_CPLD_TCK, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_CPLD_TMS, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_CPLD_TDI, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
+	
+	gpio_input(&gpio_cpld_tdo);
+	gpio_input(&gpio_cpld_tck);
+	gpio_input(&gpio_cpld_tms);
+	gpio_input(&gpio_cpld_tdi);
+	
 	/* Configure SCU Pin Mux as GPIO */
 	scu_pinmux(SCU_PINMUX_LED1, SCU_GPIO_NOPULL);
 	scu_pinmux(SCU_PINMUX_LED2, SCU_GPIO_NOPULL);
 	scu_pinmux(SCU_PINMUX_LED3, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_LED4, SCU_GPIO_NOPULL);
 	
 	scu_pinmux(SCU_PINMUX_EN1V8, SCU_GPIO_NOPULL);
-
-	/* Configure all GPIO as Input (safe state) */
-	GPIO0_DIR = 0;
-	GPIO1_DIR = 0;
-	GPIO2_DIR = 0;
-	GPIO3_DIR = 0;
-	GPIO4_DIR = 0;
-	GPIO5_DIR = 0;
-	GPIO6_DIR = 0;
-	GPIO7_DIR = 0;
-
-	/* Configure GPIO2[1/2/8] (P4_1/2 P6_12) as output. */
-	GPIO2_DIR |= (PIN_LED1 | PIN_LED2 | PIN_LED3);
-
-	/* GPIO3[6] on P6_10  as output. */
-	GPIO3_DIR |= PIN_EN1V8;
-
-	/* Configure SSP1 Peripheral (to be moved later in SSP driver) */
-	scu_pinmux(SCU_SSP1_MISO, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
-	scu_pinmux(SCU_SSP1_MOSI, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
-	scu_pinmux(SCU_SSP1_SCK, (SCU_SSP_IO | SCU_CONF_FUNCTION1));
-	scu_pinmux(SCU_SSP1_SSEL, (SCU_SSP_IO | SCU_CONF_FUNCTION1));
 	
+	/* Configure all GPIO as Input (safe state) */
+	gpio_init();
+
+	gpio_output(&gpio_led[0]);
+	gpio_output(&gpio_led[1]);
+	gpio_output(&gpio_led[2]);
+	gpio_output(&gpio_led[3]);
+
+	gpio_output(&gpio_1v8_enable);
+
+	/* enable input on SCL and SDA pins */
+	SCU_SFSI2C0 = SCU_I2C0_NOMINAL;
+
 	/* Configure external clock in */
 	scu_pinmux(SCU_PINMUX_GP_CLKIN, SCU_CLK_IN | SCU_CONF_FUNCTION1);
-
-	sgpio_configure_pin_functions();
 }
 
 void enable_1v8_power(void) {
-	gpio_set(PORT_EN1V8, PIN_EN1V8);
+	gpio_set(&gpio_1v8_enable);
 }
 
 void disable_1v8_power(void) {
-	gpio_clear(PORT_EN1V8, PIN_EN1V8);
+	gpio_clear(&gpio_1v8_enable);
 }
 
+void led_on(const led_t led) {
+	gpio_set(&gpio_led[led]);
+}
+
+void led_off(const led_t led) {
+	gpio_clear(&gpio_led[led]);
+}
+
+void led_toggle(const led_t led) {
+	gpio_toggle(&gpio_led[led]);
+}

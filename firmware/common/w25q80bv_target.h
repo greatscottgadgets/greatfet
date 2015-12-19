@@ -1,7 +1,7 @@
 /*
- * Copyright 2012 Jared Boone <jared@sharebrained.com>
+ * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,11 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __BITBAND_H__
-#define __BITBAND_H__
+#ifndef __W25Q80BV_TARGET_H__
+#define __W25Q80BV_TARGET_H__
 
-#include <stdint.h>
+#include "w25q80bv.h"
 
-volatile uint32_t* peripheral_bitband_address(volatile void* const address, const uint_fast8_t bit_number);
-void peripheral_bitband_set(volatile void* const peripheral_address, const uint_fast8_t bit_number);
-void peripheral_bitband_clear(volatile void* const peripheral_address, const uint_fast8_t bit_number);
-uint32_t peripheral_bitband_get(volatile void* const peripheral_address, const uint_fast8_t bit_number);
+void w25q80bv_target_init(w25q80bv_driver_t* const drv);
 
-#endif//__BITBAND_H__
+#endif/*__W25Q80BV_TARGET_H__*/

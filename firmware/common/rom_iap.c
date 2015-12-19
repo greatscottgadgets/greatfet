@@ -1,7 +1,7 @@
 /*
  * Copyright 2013 Benjamin Vernoux <titanmkd@gmail.com>
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include "greatfet_core.h"
+ #include "greatfet_core.h"
 #include <stdint.h>
 
 #include "rom_iap.h"
@@ -67,10 +67,6 @@ bool iap_is_implemented(void)
 isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res) 
 {
 	uint32_t* p_u32_data;
-
-	/* aborting because this isn't working for some reason on Azalea */
-	iap_cmd_res->status_res.status_ret = ERROR_IAP_NOT_IMPLEMENTED;
-	return iap_cmd_res->status_res.status_ret;
 	
 	if( iap_is_implemented() )
 	{
@@ -81,7 +77,8 @@ isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res)
 		  Alternative way to retrieve Part Id on MCU with no IAP 
 		  Read Serial No => Read Unique ID in SPIFI (only compatible with W25Q80BV
 		*/
-		w25q80bv_setup();
+		spi_bus_start(spi_flash.bus, &ssp_config_w25q80bv);
+		w25q80bv_setup(&spi_flash);
 
 		switch(iap_cmd_res->cmd_param.command_code)
 		{
@@ -96,7 +93,7 @@ isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res)
 			/* Only 64bits used */
 			iap_cmd_res->status_res.iap_result[0] = 0;
 			iap_cmd_res->status_res.iap_result[1] = 0;
-			w25q80bv_get_unique_id( (w25q80bv_unique_id_t*)&iap_cmd_res->status_res.iap_result[2] );
+			w25q80bv_get_unique_id(&spi_flash, (w25q80bv_unique_id_t*)&iap_cmd_res->status_res.iap_result[2] );
 				iap_cmd_res->status_res.status_ret = CMD_SUCCESS;
 			break;
 			

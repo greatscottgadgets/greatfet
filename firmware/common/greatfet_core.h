@@ -32,6 +32,9 @@ extern "C"
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "spi_ssp.h"
+#include "w25q80bv.h"
+
 /* hardware identification number */
 #define BOARD_ID_AZALEA  0
 
@@ -44,9 +47,19 @@ extern "C"
  */
 
 /* GPIO Output PinMux */
-#define SCU_PINMUX_LED1     (P4_1)  /* GPIO2[1] on P4_1 */
-#define SCU_PINMUX_LED2     (P4_2)  /* GPIO2[2] on P4_2 */
-#define SCU_PINMUX_LED3     (P6_12) /* GPIO2[8] on P6_12 */
+
+#define SCU_PINMUX_LED1     (P7_6)  /* GPIO3[14] on P7_6 */
+#define SCU_PINMUX_LED2     (P4_1)  /* GPIO2[1] on P4_1 */
+#define SCU_PINMUX_LED3     (P7_5)  /* GPIO3[13] on P7_5 */
+#define SCU_PINMUX_LED4     (P7_4)  /* GPIO3[12] on P7_4 */
+
+#define PIN_LED1            (14) /* GPIO3[14] on P7_6 */
+#define PIN_LED2            (1)  /* GPIO2[1] on P4_1 */
+#define PIN_LED3            (13) /* GPIO3[13] on P7_5 */
+#define PIN_LED4            (12) /* GPIO3[12] on P7_4 */
+
+#define PORT_LED1_3_4       (3) /* PORT for LED1, 3, 4 */
+#define PORT_LED2           (2) /* PORT for LED1, 3, 4 */
 
 #define SCU_PINMUX_EN1V8    (P6_10) /* GPIO3[6] on P6_10 */
 
@@ -61,6 +74,17 @@ extern "C"
 #define SCU_SSP1_MOSI       (P1_4)  /* P1_4 */
 #define SCU_SSP1_SCK        (P1_19) /* P1_19 */
 #define SCU_SSP1_SSEL       (P1_20) /* P1_20 */
+
+/* CPLD JTAG interface */
+#define SCU_PINMUX_CPLD_TDO (P9_5)  /* GPIO5[18] */
+#define SCU_PINMUX_CPLD_TCK (P6_1)  /* GPIO3[ 0] */
+#ifdef HACKRF_ONE
+#define SCU_PINMUX_CPLD_TMS (P6_5)  /* GPIO3[ 4] */
+#define SCU_PINMUX_CPLD_TDI (P6_2)  /* GPIO3[ 1] */
+#else
+#define SCU_PINMUX_CPLD_TMS (P6_2)  /* GPIO3[ 1] */
+#define SCU_PINMUX_CPLD_TDI (P6_5)  /* GPIO3[ 4] */
+#endif
 
 /* CPLD SGPIO interface */
 #define SCU_PINMUX_SGPIO0   (P0_0)
@@ -114,54 +138,32 @@ extern "C"
 
 #define SCU_PINMUX_GP_CLKIN	(P4_7)
 
-/*
- * GPIO Pins
- */
-
-/* GPIO Output */
-#define PIN_LED1    (BIT1) /* GPIO2[1] on P4_1 */
-#define PIN_LED2    (BIT2) /* GPIO2[2] on P4_2 */
-#define PIN_LED3    (BIT8) /* GPIO2[8] on P6_12 */
-#define PORT_LED1_3 (GPIO2) /* PORT for LED1, 2 & 3 */
-
-#define PIN_EN1V8   (BIT6) /* GPIO3[6] on P6_10 */
-#define PORT_EN1V8  (GPIO3)
-
-#define PIN_AD_CS  (BIT7)  /* GPIO2[7] on P5_7 */
-#define PORT_AD_CS (GPIO2) /* PORT for AD_CS */
-
-#define PIN_FLASH_HOLD (BIT14) /* GPIO1[14] on P3_4 */
-#define PIN_FLASH_WP   (BIT15) /* GPIO1[15] on P3_5 */
-#define PORT_FLASH     (GPIO1)
-#define PIN_SSP0_SSEL  (BIT11) /* GPIO5[11] on P3_8 */
-#define PORT_SSP0_SSEL (GPIO5)
-
-/* GPIO Input */
-#define PIN_BOOT0   (BIT8)  /* GPIO0[8] on P1_1 */
-#define PIN_BOOT1   (BIT9)  /* GPIO0[9] on P1_2 */
-#define PIN_BOOT2   (BIT7)  /* GPIO5[7] on P2_8 */
-#define PIN_BOOT3   (BIT10) /* GPIO1[10] on P2_9 */
- 
-/* Read GPIO Pin */
-#define GPIO_STATE(port, pin) ((GPIO_PIN(port) & (pin)) == (pin))
-#define BOOT0_STATE       GPIO_STATE(GPIO0, PIN_BOOT0)
-#define BOOT1_STATE       GPIO_STATE(GPIO0, PIN_BOOT1)
-#define BOOT2_STATE       GPIO_STATE(GPIO5, PIN_BOOT2)
-#define BOOT3_STATE       GPIO_STATE(GPIO1, PIN_BOOT3)
-
-/* TODO add other Pins */
-
 void delay(uint32_t duration);
+
+/* TODO: Hide these configurations */
+extern const ssp_config_t ssp_config_w25q80bv;
+
+extern w25q80bv_driver_t spi_flash;
 
 void cpu_clock_init(void);
 void cpu_clock_pll1_low_speed(void);
 void cpu_clock_pll1_max_speed(void);
-void ssp1_init(void);
 
 void pin_setup(void);
 
 void enable_1v8_power(void);
 void disable_1v8_power(void);
+
+typedef enum {
+	LED1 = 0,
+	LED2 = 1,
+	LED3 = 2,
+	LED4 = 3,
+} led_t;
+
+void led_on(const led_t led);
+void led_off(const led_t led);
+void led_toggle(const led_t led);
 
 #ifdef __cplusplus
 }
