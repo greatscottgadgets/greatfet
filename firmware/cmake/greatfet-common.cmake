@@ -57,8 +57,6 @@ endif()
 
 if(BOARD STREQUAL "GREATFET_AZALEA")
 	set(MCU_PARTNO LPC4330)
-else()
-	set(MCU_PARTNO LPC4330)
 endif()
 
 if(NOT DEFINED SRC_M0)
