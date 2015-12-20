@@ -99,7 +99,7 @@ include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
 macro(DeclareTargets)
 	configure_file(
-		${PATH_GREATFET_FIRMWARE_COMMON}/m0_bin.s.cmake
+		../cmake/m0_bin.s.cmake
 		m0_bin.s
 	)
 

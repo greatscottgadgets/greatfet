@@ -2,6 +2,7 @@
  * Copyright 2012 Michael Ossmann <mike@ossmann.com>
  * Copyright 2012 Benjamin Vernoux <titanmkd@gmail.com>
  * Copyright 2012 Jared Boone <jared@sharebrained.com>
+ * Copyright 2015 Dominic Spill <dominicgs@gmail.com>
  *
  * This file is part of GreatFET.
  *
@@ -21,8 +22,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __HACKRF_CORE_H
-#define __HACKRF_CORE_H
+#ifndef __GREATFET_CORE_H
+#define __GREATFET_CORE_H
 
 #ifdef __cplusplus
 extern "C"
@@ -165,4 +166,4 @@ void led_toggle(const led_t led);
 }
 #endif
 
-#endif /* __HACKRF_CORE_H */
+#endif /* __GREATFET_CORE_H */

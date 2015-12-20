@@ -2,7 +2,7 @@
  * Copyright 2012 Michael Ossmann <mike@ossmann.com>
  * Copyright 2012 Jared Boone <jared@sharebrained.com>
  *
- * This file is part of HackRF
+ * This file is part of GreatFET
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 MEMORY
 {
 	/* Physical address in Flash used to copy Code from Flash to RAM */
-	rom_flash (rx)  : ORIGIN = 0x80000000, LENGTH =  1M
+	rom_flash (rx)  : ORIGIN = 0x80000000, LENGTH =  2M
 	ram_m0 (rwx) : ORIGIN = 0x20000000, LENGTH = 28K
 	ram_shared (rwx) : ORIGIN = 0x20007000, LENGTH =  4K
 	ram_usb (rwx) : ORIGIN = 0x20008000, LENGTH = 32K

@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Jared Boone
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ extern uint8_t usb_descriptor_device[];
 extern uint8_t usb_descriptor_device_qualifier[];
 extern uint8_t usb_descriptor_configuration_full_speed[];
 extern uint8_t usb_descriptor_configuration_high_speed[];
-extern uint8_t usb_descriptor_configuration_cpld_update_full_speed[];
-extern uint8_t usb_descriptor_configuration_cpld_update_high_speed[];
 extern uint8_t usb_descriptor_string_languages[];
 extern uint8_t usb_descriptor_string_manufacturer[];
 extern uint8_t usb_descriptor_string_product[];

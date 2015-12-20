@@ -2,7 +2,7 @@
  * Copyright 2012 Michael Ossmann <mike@ossmann.com>
  * Copyright 2012 Jared Boone <jared@sharebrained.com>
  *
- * This file is part of HackRF
+ * This file is part of GreatFET
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-/* Linker script for HackRF Jellybean/Jawbreaker (LPC4330, 1M SPI flash, 264K SRAM). */
+/* Linker script for GreatFET Azalea (LPC4330, 2M SPI flash, 264K SRAM). */
 
 MEMORY
 {

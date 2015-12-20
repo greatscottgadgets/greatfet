@@ -45,7 +45,7 @@
 
 #define W25Q80BV_STATUS_BUSY  0x01
 
-#define W25Q80BV_DEVICE_ID_RES  0x13 /* Expected device_id for W25Q80BV */
+#define W25Q80BV_DEVICE_ID_RES  0x13 /* Expected device_id for W25Q16DV */
 
 /*
  * Set up pins for GPIO and SPI control, configure SSP0 peripheral for SPI.
@@ -56,8 +56,8 @@ void w25q80bv_setup(w25q80bv_driver_t* const drv)
 	uint8_t device_id;
 
 	drv->page_len = 256U;
-	drv->num_pages = 4096U;
-	drv->num_bytes = 1048576U;
+	drv->num_pages = 8192U;
+	drv->num_bytes = 2097152U;
 
 	drv->target_init(drv);
 

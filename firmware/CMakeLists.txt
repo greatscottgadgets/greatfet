@@ -1,6 +1,6 @@
 # Copyright 2012 Jared Boone <jared@sharebrained.com>
 #
-# This file is part of HackRF.
+# This file is part of GreatFET.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # Boston, MA 02110-1301, USA.
 #
 
-# Top directory CMake project for HackRF firmware
+# Top directory CMake project for GreatFET firmware
 
 cmake_minimum_required(VERSION 2.8.9)
 set(CMAKE_TOOLCHAIN_FILE cmake/toolchain-arm-cortex-m.cmake)

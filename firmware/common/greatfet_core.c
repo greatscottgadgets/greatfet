@@ -2,6 +2,7 @@
  * Copyright 2012 Michael Ossmann <mike@ossmann.com>
  * Copyright 2012 Jared Boone <jared@sharebrained.com>
  * Copyright 2013 Benjamin Vernoux <titanmkd@gmail.com>
+ * Copyright 2015 Dominic Spill <dominicgs@gmail.com>
  *
  * This file is part of GreatFET.
  *

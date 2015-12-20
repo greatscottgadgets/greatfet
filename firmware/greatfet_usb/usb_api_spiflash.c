@@ -2,7 +2,7 @@
  * Copyright 2012 Jared Boone
  * Copyright 2013 Benjamin Vernoux
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,10 @@
  */
 
 #include "usb_api_spiflash.h"
-
 #include "usb_queue.h"
 
 #include <stddef.h>
-
-#include <hackrf_core.h>
-
+#include <greatfet_core.h>
 #include <w25q80bv.h>
 
 /* Buffer size == spi_flash.page_len */
