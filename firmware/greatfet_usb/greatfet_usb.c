@@ -39,8 +39,30 @@
 #include "usb_api_spiflash.h"
 #include "usb_bulk_buffer.h"
 
+/* Temporary LED based debugging */
+void debug_led(uint8_t val) {
+	if(val & 0x1)
+		led_on(LED1);
+	else
+		led_off(LED1);
+		
+	if(val & 0x2)
+		led_on(LED2);
+	else
+		led_off(LED2);
+		
+	if(val & 0x4)
+		led_on(LED3);
+	else
+		led_off(LED3);
+		
+	if(val & 0x8)
+		led_on(LED4);
+	else
+		led_off(LED4);
+}
+
 static const usb_request_handler_fn vendor_request_handler[] = {
-	NULL,
 	usb_vendor_request_erase_spiflash,
 	usb_vendor_request_write_spiflash,
 	usb_vendor_request_read_spiflash,
@@ -54,8 +76,7 @@ static const uint32_t vendor_request_handler_count =
 
 usb_request_status_t usb_vendor_request(
 	usb_endpoint_t* const endpoint,
-	const usb_transfer_stage_t stage
-) {
+	const usb_transfer_stage_t stage) {
 	usb_request_status_t status = USB_REQUEST_STATUS_STALL;
 	
 	if( endpoint->setup.request < vendor_request_handler_count ) {
@@ -64,7 +85,6 @@ usb_request_status_t usb_vendor_request(
 			status = handler(endpoint, stage);
 		}
 	}
-	
 	return status;
 }
 
@@ -75,9 +95,8 @@ const usb_request_handlers_t usb_request_handlers = {
 	.reserved = 0,
 };
 
-void usb_configuration_changed(
-	usb_device_t* const device
-) {
+void usb_configuration_changed(usb_device_t* const device)
+{
 	if( device->configuration->number == 1 ) {
 		// transceiver configuration
 		cpu_clock_pll1_max_speed();
@@ -114,80 +133,69 @@ void usb_set_descriptor_by_serial_number(void)
 	}
 }
 
-void debug_led(uint8_t val) {
-	if(val & 0x1)
-		led_on(LED1);
-	else
-		led_off(LED1);
-		
-	if(val & 0x2)
-		led_on(LED2);
-	else
-		led_off(LED2);
-		
-	if(val & 0x4)
-		led_on(LED3);
-	else
-		led_off(LED3);
-		
-	if(val & 0x8)
-		led_on(LED4);
-	else
-		led_off(LED4);
-}
-
 int main(void) {
 	pin_setup();
-	debug_led(1);
-	//enable_1v8_power();
 	cpu_clock_init();
-	debug_led(2);
 
 	usb_set_descriptor_by_serial_number();
-	debug_led(3);
 
 	usb_set_configuration_changed_cb(usb_configuration_changed);
-	debug_led(4);
 	usb_peripheral_reset();
-	debug_led(5);
 	
 	usb_device_init(0, &usb_device);
-	debug_led(6);
 	
 	usb_queue_init(&usb_endpoint_control_out_queue);
 	usb_queue_init(&usb_endpoint_control_in_queue);
-	debug_led(7);
 	usb_queue_init(&usb_endpoint_bulk_out_queue);
 	usb_queue_init(&usb_endpoint_bulk_in_queue);
-	debug_led(8);
 
 	usb_endpoint_init(&usb_endpoint_control_out);
 	usb_endpoint_init(&usb_endpoint_control_in);
-	debug_led(9);
 	
 	nvic_set_priority(NVIC_USB0_IRQ, 255);
-	debug_led(10);
 
 	usb_run(&usb_device);
-	debug_led(11);
 	
 	int i;
+	unsigned int phase = 0;
 	while(true) {
-		led_on(LED1);
-		led_off(LED2);
 		led_on(LED3);
 		led_off(LED4);
 
-		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
+		for (i = 0; i < 20000000; i++)	/* Wait a bit. */
 			__asm__("nop");
 		
-		led_off(LED1);
-		led_on(LED2);
 		led_off(LED3);
 		led_on(LED4);
 		
-		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
+		for (i = 0; i < 20000000; i++)	/* Wait a bit. */
 			__asm__("nop");
+		
+		// Set up IN transfer of buffer 0.
+		if ( usb_bulk_buffer_offset >= 16384
+		     && phase == 1) {
+			usb_transfer_schedule_block(
+				1
+				? &usb_endpoint_bulk_in : &usb_endpoint_bulk_out,
+				&usb_bulk_buffer[0x0000],
+				0x4000,
+				NULL, NULL
+				);
+			phase = 0;
+		}
+	
+		// Set up IN transfer of buffer 1.
+		if ( usb_bulk_buffer_offset < 16384
+		     && phase == 0) {
+			usb_transfer_schedule_block(
+				1
+				? &usb_endpoint_bulk_in : &usb_endpoint_bulk_out,
+				&usb_bulk_buffer[0x4000],
+				0x4000,
+				NULL, NULL
+			);
+			phase = 1;
+		}
 	}
 	
 	return 0;

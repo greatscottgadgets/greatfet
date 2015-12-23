@@ -47,6 +47,10 @@
 
 #define W25Q80BV_DEVICE_ID_RES  0x13 /* Expected device_id for W25Q16DV */
 
+#define W25Q80BV_PAGE_LEN 256U
+#define W25Q80BV_NUM_PAGES 8192U
+#define W25Q80BV_NUM_BYTES (W25Q80BV_PAGE_LEN * W25Q80BV_NUM_PAGES)
+
 /*
  * Set up pins for GPIO and SPI control, configure SSP0 peripheral for SPI.
  * SSP0_SSEL is controlled by GPIO in order to handle various transfer lengths.
@@ -55,9 +59,9 @@ void w25q80bv_setup(w25q80bv_driver_t* const drv)
 {
 	uint8_t device_id;
 
-	drv->page_len = 256U;
-	drv->num_pages = 8192U;
-	drv->num_bytes = 2097152U;
+	drv->page_len = W25Q80BV_PAGE_LEN;
+	drv->num_pages = W25Q80BV_NUM_PAGES;
+	drv->num_bytes = W25Q80BV_NUM_BYTES;
 
 	drv->target_init(drv);
 

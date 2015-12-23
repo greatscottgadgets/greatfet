@@ -23,6 +23,7 @@
  */
 
 #include "greatfet_core.h"
+#include "greatfet_pins.h"
 #include "spi_ssp.h"
 #include "w25q80bv.h"
 #include "w25q80bv_target.h"
@@ -54,10 +55,10 @@ static struct gpio_t gpio_w25q80bv_wp		= GPIO(1, 15);
 static struct gpio_t gpio_w25q80bv_select	= GPIO(5, 11);
 
 /* CPLD JTAG interface GPIO pins */
-static struct gpio_t gpio_cpld_tdo			= GPIO(5, 18);
-static struct gpio_t gpio_cpld_tck			= GPIO(3,  0);
-static struct gpio_t gpio_cpld_tms			= GPIO(3,  4);
-static struct gpio_t gpio_cpld_tdi			= GPIO(3,  1);
+static struct gpio_t gpio_tdo			= GPIO(5, 18);
+static struct gpio_t gpio_tck			= GPIO(3,  0);
+static struct gpio_t gpio_tms			= GPIO(3,  4);
+static struct gpio_t gpio_tdi			= GPIO(3,  1);
 
 i2c_bus_t i2c0 = {
 	.obj = (void*)I2C0_BASE,
@@ -277,15 +278,15 @@ void cpu_clock_pll1_max_speed(void)
 
 void pin_setup(void) {
 	/* Release CPLD JTAG pins */
-	scu_pinmux(SCU_PINMUX_CPLD_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);
-	scu_pinmux(SCU_PINMUX_CPLD_TCK, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
-	scu_pinmux(SCU_PINMUX_CPLD_TMS, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
-	scu_pinmux(SCU_PINMUX_CPLD_TDI, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);
+	scu_pinmux(SCU_PINMUX_TCK, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_TMS, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_TDI, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
 	
-	gpio_input(&gpio_cpld_tdo);
-	gpio_input(&gpio_cpld_tck);
-	gpio_input(&gpio_cpld_tms);
-	gpio_input(&gpio_cpld_tdi);
+	gpio_input(&gpio_tdo);
+	gpio_input(&gpio_tck);
+	gpio_input(&gpio_tms);
+	gpio_input(&gpio_tdi);
 	
 	/* Configure SCU Pin Mux as GPIO */
 	scu_pinmux(SCU_PINMUX_LED1, SCU_GPIO_NOPULL);

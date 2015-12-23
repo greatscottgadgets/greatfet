@@ -22,7 +22,7 @@
 #include "w25q80bv_target.h"
 
 #include <libopencm3/lpc43xx/scu.h>
-#include "greatfet_core.h"
+#include "greatfet_pins.h"
 
 /* TODO: Why is SSEL being controlled manually when SSP0 could do it
  * automatically?
