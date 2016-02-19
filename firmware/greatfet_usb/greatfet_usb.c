@@ -97,14 +97,16 @@ const usb_request_handlers_t usb_request_handlers = {
 
 void usb_configuration_changed(usb_device_t* const device)
 {
+	//FIXME - make this work
+	//return;
 	if( device->configuration->number == 1 ) {
 		// transceiver configuration
 		cpu_clock_pll1_max_speed();
-		led_on(LED1);
+		led_on(LED3);
 	} else {
 		/* Configuration number equal 0 means usb bus reset. */
 		cpu_clock_pll1_low_speed();
-		led_off(LED1);
+		led_off(LED3);
 	}
 }
 
@@ -128,8 +130,14 @@ void usb_set_descriptor_by_serial_number(void)
 			usb_descriptor_string_serial_number[3 + i * 2] = 0x00;
 		}
 	} else {
-		usb_descriptor_string_serial_number[0] = 2;
+		usb_descriptor_string_serial_number[0] = 8;
 		usb_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
+		usb_descriptor_string_serial_number[2] = 'G';
+		usb_descriptor_string_serial_number[3] = 0x00;
+		usb_descriptor_string_serial_number[4] = 'S';
+		usb_descriptor_string_serial_number[5] = 0x00;
+		usb_descriptor_string_serial_number[6] = 'G';
+		usb_descriptor_string_serial_number[7] = 0x00;
 	}
 }
 
@@ -159,13 +167,13 @@ int main(void) {
 	int i;
 	unsigned int phase = 0;
 	while(true) {
-		led_on(LED3);
+		//led_on(LED3);
 		led_off(LED4);
 
 		for (i = 0; i < 20000000; i++)	/* Wait a bit. */
 			__asm__("nop");
 		
-		led_off(LED3);
+		//led_off(LED3);
 		led_on(LED4);
 		
 		for (i = 0; i < 20000000; i++)	/* Wait a bit. */
