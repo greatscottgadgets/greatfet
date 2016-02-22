@@ -322,11 +322,11 @@ void disable_1v8_power(void) {
 }
 
 void led_on(const led_t led) {
-	gpio_set(&gpio_led[led]);
+	gpio_clear(&gpio_led[led]);
 }
 
 void led_off(const led_t led) {
-	gpio_clear(&gpio_led[led]);
+	gpio_set(&gpio_led[led]);
 }
 
 void led_toggle(const led_t led) {
