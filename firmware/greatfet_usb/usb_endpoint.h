@@ -26,16 +26,16 @@
 #include <usb_type.h>
 #include <usb_queue.h>
 
-extern usb_endpoint_t usb_endpoint_control_out;
-extern USB_DECLARE_QUEUE(usb_endpoint_control_out);
+extern usb_endpoint_t usb0_endpoint_control_out;
+extern USB_DECLARE_QUEUE(usb0_endpoint_control_out);
 
-extern usb_endpoint_t usb_endpoint_control_in;
-extern USB_DECLARE_QUEUE(usb_endpoint_control_in);
+extern usb_endpoint_t usb0_endpoint_control_in;
+extern USB_DECLARE_QUEUE(usb0_endpoint_control_in);
 
-extern usb_endpoint_t usb_endpoint_bulk_in;
-extern USB_DECLARE_QUEUE(usb_endpoint_bulk_in);
+extern usb_endpoint_t usb0_endpoint_bulk_in;
+extern USB_DECLARE_QUEUE(usb0_endpoint_bulk_in);
 
-extern usb_endpoint_t usb_endpoint_bulk_out;
-extern USB_DECLARE_QUEUE(usb_endpoint_bulk_out);
+extern usb_endpoint_t usb0_endpoint_bulk_out;
+extern USB_DECLARE_QUEUE(usb0_endpoint_bulk_out);
 
 #endif /* end of include guard: __USB_ENDPOINT_H__ */

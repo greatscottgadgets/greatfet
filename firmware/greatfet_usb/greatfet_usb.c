@@ -62,7 +62,7 @@ void debug_led(uint8_t val) {
 		led_off(LED4);
 }
 
-static const usb_request_handler_fn vendor_request_handler[] = {
+static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_erase_spiflash,
 	usb_vendor_request_write_spiflash,
 	usb_vendor_request_read_spiflash,
@@ -71,16 +71,16 @@ static const usb_request_handler_fn vendor_request_handler[] = {
 	usb_vendor_request_read_partid_serialno,
 };
 
-static const uint32_t vendor_request_handler_count =
-	sizeof(vendor_request_handler) / sizeof(vendor_request_handler[0]);
+static const uint32_t usb0_vendor_request_handler_count =
+	sizeof(usb0_vendor_request_handler) / sizeof(usb0_vendor_request_handler[0]);
 
-usb_request_status_t usb_vendor_request(
+usb_request_status_t usb0_vendor_request(
 	usb_endpoint_t* const endpoint,
 	const usb_transfer_stage_t stage) {
 	usb_request_status_t status = USB_REQUEST_STATUS_STALL;
 	
-	if( endpoint->setup.request < vendor_request_handler_count ) {
-		usb_request_handler_fn handler = vendor_request_handler[endpoint->setup.request];
+	if( endpoint->setup.request < usb0_vendor_request_handler_count ) {
+		usb_request_handler_fn handler = usb0_vendor_request_handler[endpoint->setup.request];
 		if( handler ) {
 			status = handler(endpoint, stage);
 		}
@@ -88,14 +88,21 @@ usb_request_status_t usb_vendor_request(
 	return status;
 }
 
-const usb_request_handlers_t usb_request_handlers = {
+const usb_request_handlers_t usb0_request_handlers = {
 	.standard = usb_standard_request,
 	.class = 0,
-	.vendor = usb_vendor_request,
+	.vendor = usb0_vendor_request,
 	.reserved = 0,
 };
 
-void usb_configuration_changed(usb_device_t* const device)
+const usb_request_handlers_t usb1_request_handlers = {
+	.standard = usb_standard_request,
+	.class = 0,
+	.vendor = 0,
+	.reserved = 0,
+};
+
+void usb0_configuration_changed(usb_device_t* const device)
 {
 	if( device->configuration->number == 1 ) {
 		// transceiver configuration
@@ -115,25 +122,25 @@ void usb_set_descriptor_by_serial_number(void)
 	iap_cmd_call(&iap_cmd_res);
 		
 	if (iap_cmd_res.status_res.status_ret == CMD_SUCCESS) {
-		usb_descriptor_string_serial_number[0] = USB_DESCRIPTOR_STRING_SERIAL_BUF_LEN;
-		usb_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
+		usb0_descriptor_string_serial_number[0] = USB_DESCRIPTOR_STRING_SERIAL_BUF_LEN;
+		usb0_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
 		
 		/* 32 characters of serial number, convert to UTF-16LE */
 		for (size_t i=0; i<USB_DESCRIPTOR_STRING_SERIAL_LEN; i++) {
 			const uint_fast8_t nibble = (iap_cmd_res.status_res.iap_result[i >> 3] >> (28 - (i & 7) * 4)) & 0xf;
 			const char c = (nibble > 9) ? ('a' + nibble - 10) : ('0' + nibble);
-			usb_descriptor_string_serial_number[2 + i * 2] = c;
-			usb_descriptor_string_serial_number[3 + i * 2] = 0x00;
+			usb0_descriptor_string_serial_number[2 + i * 2] = c;
+			usb0_descriptor_string_serial_number[3 + i * 2] = 0x00;
 		}
 	} else {
-		usb_descriptor_string_serial_number[0] = 8;
-		usb_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
-		usb_descriptor_string_serial_number[2] = 'G';
-		usb_descriptor_string_serial_number[3] = 0x00;
-		usb_descriptor_string_serial_number[4] = 'S';
-		usb_descriptor_string_serial_number[5] = 0x00;
-		usb_descriptor_string_serial_number[6] = 'G';
-		usb_descriptor_string_serial_number[7] = 0x00;
+		usb0_descriptor_string_serial_number[0] = 8;
+		usb0_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
+		usb0_descriptor_string_serial_number[2] = 'G';
+		usb0_descriptor_string_serial_number[3] = 0x00;
+		usb0_descriptor_string_serial_number[4] = 'S';
+		usb0_descriptor_string_serial_number[5] = 0x00;
+		usb0_descriptor_string_serial_number[6] = 'G';
+		usb0_descriptor_string_serial_number[7] = 0x00;
 	}
 }
 
@@ -146,22 +153,22 @@ int main(void) {
 
 	usb_set_descriptor_by_serial_number();
 
-	usb_set_configuration_changed_cb(usb_configuration_changed);
+	usb_set_configuration_changed_cb(usb0_configuration_changed);
 	usb_peripheral_reset();
 	
-	usb_device_init(0, &usb_device);
+	usb_device_init(&usb0_device);
 	
-	usb_queue_init(&usb_endpoint_control_out_queue);
-	usb_queue_init(&usb_endpoint_control_in_queue);
-	usb_queue_init(&usb_endpoint_bulk_out_queue);
-	usb_queue_init(&usb_endpoint_bulk_in_queue);
+	usb_queue_init(&usb0_endpoint_control_out_queue);
+	usb_queue_init(&usb0_endpoint_control_in_queue);
+	usb_queue_init(&usb0_endpoint_bulk_out_queue);
+	usb_queue_init(&usb0_endpoint_bulk_in_queue);
 
-	usb_endpoint_init(&usb_endpoint_control_out);
-	usb_endpoint_init(&usb_endpoint_control_in);
+	usb_endpoint_init(&usb0_endpoint_control_out);
+	usb_endpoint_init(&usb0_endpoint_control_in);
 	
 	nvic_set_priority(NVIC_USB0_IRQ, 255);
 
-	usb_run(&usb_device);
+	usb_run(&usb0_device);
 	
 	unsigned int phase = 0;
 	while(true) {
@@ -176,7 +183,7 @@ int main(void) {
 		     && phase == 1) {
 			usb_transfer_schedule_block(
 				1
-				? &usb_endpoint_bulk_in : &usb_endpoint_bulk_out,
+				? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
 				&usb_bulk_buffer[0x0000],
 				0x4000,
 				NULL, NULL
@@ -189,7 +196,7 @@ int main(void) {
 		     && phase == 0) {
 			usb_transfer_schedule_block(
 				1
-				? &usb_endpoint_bulk_in : &usb_endpoint_bulk_out,
+				? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
 				&usb_bulk_buffer[0x4000],
 				0x4000,
 				NULL, NULL

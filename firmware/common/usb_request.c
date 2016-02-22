@@ -29,24 +29,32 @@ static void usb_request(
 	usb_endpoint_t* const endpoint,
 	const usb_transfer_stage_t stage
 ) {
+	const usb_request_handlers_t* usb_request_handlers;
+	if(endpoint->device->controller == 0) {
+		usb_request_handlers = &usb0_request_handlers;
+	}
+	if(endpoint->device->controller == 1) {
+		usb_request_handlers = &usb1_request_handlers;
+	}
+	
 	usb_request_status_t status = USB_REQUEST_STATUS_STALL;
 	usb_request_handler_fn handler = 0;
 	
 	switch( endpoint->setup.request_type & USB_SETUP_REQUEST_TYPE_mask ) {
 	case USB_SETUP_REQUEST_TYPE_STANDARD:
-		handler = usb_request_handlers.standard;
+		handler = usb_request_handlers->standard;
 		break;
 	
 	case USB_SETUP_REQUEST_TYPE_CLASS:
-		handler = usb_request_handlers.class;
+		handler = usb_request_handlers->class;
 		break;
 	
 	case USB_SETUP_REQUEST_TYPE_VENDOR:
-		handler = usb_request_handlers.vendor;
+		handler = usb_request_handlers->vendor;
 		break;
 		
 	case USB_SETUP_REQUEST_TYPE_RESERVED:
-		handler = usb_request_handlers.reserved;
+		handler = usb_request_handlers->reserved;
 		break;
 	}
 	

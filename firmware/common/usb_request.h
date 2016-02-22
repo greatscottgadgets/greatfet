@@ -54,7 +54,8 @@ typedef struct {
 	usb_request_handler_fn reserved;
 } usb_request_handlers_t;
 
-extern const usb_request_handlers_t usb_request_handlers;
+extern const usb_request_handlers_t usb0_request_handlers;
+extern const usb_request_handlers_t usb1_request_handlers;
 
 void usb_setup_complete(
 	usb_endpoint_t* const endpoint

@@ -31,7 +31,6 @@
 void usb_peripheral_reset();
 
 void usb_device_init(
-	const uint_fast8_t device_ordinal,
 	usb_device_t* const device
 );
 

@@ -33,6 +33,7 @@
 #include <libopencm3/lpc43xx/usb.h>
 
 usb_device_t* usb_device_usb0 = 0;
+usb_device_t* usb_device_usb1 = 0;
 
 usb_queue_head_t usb_qh[12] ATTR_ALIGNED(2048);
 
@@ -327,7 +328,7 @@ static void usb_controller_set_device_mode() {
 usb_speed_t usb_speed(
 	const usb_device_t* const device
 ) {
-	if( device == usb_device_usb0 ) {
+	if( device->controller == 0 ) {
 		switch( USB0_PORTSC1_D & USB0_PORTSC1_D_PSPD_MASK ) {
 		case USB0_PORTSC1_D_PSPD(0):
 			return USB_SPEED_FULL;
@@ -392,8 +393,11 @@ void usb_set_address_immediate(
 	const usb_device_t* const device,
 	const uint_fast8_t address
 ) {
-	if( device == usb_device_usb0 ) {
+	if( device->controller == 0 ) {
 		USB0_DEVICEADDR = USB0_DEVICEADDR_USBADR(address);
+	}
+	if( device->controller == 1 ) {
+		USB1_DEVICEADDR = USB1_DEVICEADDR_USBADR(address);
 	}
 }
 
@@ -454,13 +458,15 @@ static void usb_interrupt_enable(
 	if( device == usb_device_usb0 ) {
 		nvic_enable_irq(NVIC_USB0_IRQ);
 	}
+	if( device == usb_device_usb1 ) {
+		nvic_enable_irq(NVIC_USB1_IRQ);
+	}
 }
 
 void usb_device_init(
-	const uint_fast8_t device_ordinal,
 	usb_device_t* const device
 ) {
-	if( device_ordinal == 0 ) {
+	if( device->controller == 0 ) {
 		usb_device_usb0 = device;
 	
 		usb_phy_enable();
@@ -482,6 +488,30 @@ void usb_device_init(
 			//| USB0_USBINTR_D_SRE
 			| USB0_USBINTR_D_SLE
 			//| USB0_USBINTR_D_NAKE
+			;
+	}
+	if( device->controller == 1 ) {
+		usb_device_usb1 = device;
+	
+		usb_phy_enable();
+		usb_controller_reset();
+		usb_controller_set_device_mode();
+	
+		// Set interrupt threshold interval to 0
+		USB1_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
+
+		// Configure endpoint list address 
+		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh;
+	
+		// Enable interrupts
+		USB1_USBINTR_D =
+			  USB1_USBINTR_D_UE
+			| USB1_USBINTR_D_UEE
+			| USB1_USBINTR_D_PCE
+			| USB1_USBINTR_D_URE
+			//| USB1_USBINTR_D_SRE
+			| USB1_USBINTR_D_SLE
+			//| USB1_USBINTR_D_NAKE
 			;
 	}
 }
