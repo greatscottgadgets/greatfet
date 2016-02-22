@@ -67,10 +67,6 @@ bool iap_is_implemented(void)
 isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res) 
 {
 	uint32_t* p_u32_data;
-    
-    /* aborting because this isn't working for some reason on Azalea */
-    iap_cmd_res->status_res.status_ret = ERROR_IAP_NOT_IMPLEMENTED;
-    return iap_cmd_res->status_res.status_ret;
 	
 	if( iap_is_implemented() )
 	{

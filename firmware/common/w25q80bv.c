@@ -45,7 +45,7 @@
 
 #define W25Q80BV_STATUS_BUSY  0x01
 
-#define W25Q80BV_DEVICE_ID_RES  0x13 /* Expected device_id for W25Q16DV */
+#define W25Q80BV_DEVICE_ID_RES  0x14 /* Expected device_id for W25Q16DV */
 
 #define W25Q80BV_PAGE_LEN 256U
 #define W25Q80BV_NUM_PAGES 8192U
@@ -219,7 +219,8 @@ void w25q80bv_read(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len, ui
 		W25Q80BV_FAST_READ,
 		(addr & 0xFF0000) >> 16,
 		(addr & 0xFF00) >> 8,
-		addr & 0xFF
+		addr & 0xFF,
+		0x00
 	};
 
 	const spi_transfer_t transfers[] = {
