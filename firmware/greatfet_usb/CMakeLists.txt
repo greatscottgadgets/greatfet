@@ -29,6 +29,7 @@ set(SRC_M4
 	greatfet_usb.c
 	usb_bulk_buffer.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/usb1.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_request.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_standard_request.c"
 	usb_descriptor.c

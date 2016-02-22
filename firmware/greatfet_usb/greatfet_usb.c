@@ -97,16 +97,12 @@ const usb_request_handlers_t usb_request_handlers = {
 
 void usb_configuration_changed(usb_device_t* const device)
 {
-	//FIXME - make this work
-	//return;
 	if( device->configuration->number == 1 ) {
 		// transceiver configuration
 		cpu_clock_pll1_max_speed();
-		led_on(LED3);
 	} else {
 		/* Configuration number equal 0 means usb bus reset. */
 		cpu_clock_pll1_low_speed();
-		led_off(LED3);
 	}
 }
 
@@ -117,7 +113,7 @@ void usb_set_descriptor_by_serial_number(void)
 	/* Read IAP Serial Number Identification */
 	iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_SERIAL_NO;
 	iap_cmd_call(&iap_cmd_res);
-	
+		
 	if (iap_cmd_res.status_res.status_ret == CMD_SUCCESS) {
 		usb_descriptor_string_serial_number[0] = USB_DESCRIPTOR_STRING_SERIAL_BUF_LEN;
 		usb_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
@@ -144,6 +140,9 @@ void usb_set_descriptor_by_serial_number(void)
 int main(void) {
 	pin_setup();
 	cpu_clock_init();
+	led_off(LED2);
+	led_on(LED3);
+	led_off(LED4);
 
 	usb_set_descriptor_by_serial_number();
 
@@ -164,20 +163,13 @@ int main(void) {
 
 	usb_run(&usb_device);
 	
-	int i;
 	unsigned int phase = 0;
 	while(true) {
-		//led_on(LED3);
-		led_off(LED4);
-
-		for (i = 0; i < 20000000; i++)	/* Wait a bit. */
-			__asm__("nop");
-		
-		//led_off(LED3);
-		led_on(LED4);
-		
-		for (i = 0; i < 20000000; i++)	/* Wait a bit. */
-			__asm__("nop");
+		/* Blink LED1 to let us know we're alive */
+		led_off(LED1);
+		delay(20000000);
+		led_on(LED1);
+		delay(20000000);
 		
 		// Set up IN transfer of buffer 0.
 		if ( usb_bulk_buffer_offset >= 16384
