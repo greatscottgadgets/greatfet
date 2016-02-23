@@ -31,7 +31,7 @@
 #include "usb.h"
 #include "usb_queue.h"
 
-usb_queue_t* endpoint_queues[12] = {};
+usb_queue_t* endpoint_queues[NUM_USB_CONTROLLERS][12] = {};
 
 #define USB_ENDPOINT_INDEX(endpoint_address) (((endpoint_address & 0xF) * 2) + ((endpoint_address >> 7) & 1))
 
@@ -39,16 +39,16 @@ static usb_queue_t* endpoint_queue(
         const usb_endpoint_t* const endpoint
 ) {
         uint32_t index = USB_ENDPOINT_INDEX(endpoint->address);
-        if (endpoint_queues[index] == NULL) while (1);
-        return endpoint_queues[index];
+        if (endpoint_queues[endpoint->device->controller][index] == NULL) while (1);
+        return endpoint_queues[endpoint->device->controller][index];
 }
 
 void usb_queue_init(
         usb_queue_t* const queue
 ) {
         uint32_t index = USB_ENDPOINT_INDEX(queue->endpoint->address);
-        if (endpoint_queues[index] != NULL) while (1);
-        endpoint_queues[index] = queue;
+        if (endpoint_queues[queue->endpoint->device->controller][index] != NULL) while (1);
+        endpoint_queues[queue->endpoint->device->controller][index] = queue;
 
         usb_transfer_t* t = queue->free_transfers;
         for (unsigned int i=0; i < queue->pool_size - 1; i++, t++) {

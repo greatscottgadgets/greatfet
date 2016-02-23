@@ -32,11 +32,9 @@
 #include <libopencm3/lpc43xx/rgu.h>
 #include <libopencm3/lpc43xx/usb.h>
 
-#define NUM_CONTROLLERS 2
+usb_device_t* usb_devices[NUM_USB_CONTROLLERS];
 
-usb_device_t* usb_devices[NUM_CONTROLLERS];
-
-usb_queue_head_t usb_qh[NUM_CONTROLLERS][12] ATTR_ALIGNED(2048);
+usb_queue_head_t usb_qh[NUM_USB_CONTROLLERS][12] ATTR_ALIGNED(2048);
 
 #define USB_QH_INDEX(endpoint_address) (((endpoint_address & 0xF) * 2) + ((endpoint_address >> 7) & 1))
 
@@ -69,11 +67,17 @@ static uint_fast8_t usb_endpoint_number(const uint_fast8_t endpoint_address) {
 	return (endpoint_address & 0xF);
 }
 
-void usb_peripheral_reset() {
-	RESET_CTRL0 = RESET_CTRL0_USB0_RST;
-	RESET_CTRL0 = 0;
-	
-	while( (RESET_ACTIVE_STATUS0 & RESET_CTRL0_USB0_RST) == 0 );
+void usb_peripheral_reset(const usb_device_t* const device) {
+	if( device->controller == 0 ) {
+		RESET_CTRL0 = RESET_CTRL0_USB0_RST;
+		RESET_CTRL0 = 0;
+		while( (RESET_ACTIVE_STATUS0 & RESET_CTRL0_USB0_RST) == 0 );
+	}
+	if( device->controller == 1 ) {
+		RESET_CTRL0 = RESET_CTRL0_USB1_RST;
+		RESET_CTRL0 = 0;
+		while( (RESET_ACTIVE_STATUS0 & RESET_CTRL0_USB1_RST) == 0 );
+	}
 }
 
 static void usb_phy_enable() {
@@ -597,7 +601,7 @@ void usb_device_init(
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
-		USB0_ENDPOINTLISTADDR = (uint32_t)usb_qh;
+		USB0_ENDPOINTLISTADDR = (uint32_t)usb_qh[0];
 	
 		// Enable interrupts
 		USB0_USBINTR_D =
@@ -613,14 +617,14 @@ void usb_device_init(
 	if( device->controller == 1 ) {
 		usb_devices[1] = device;
 	
-		usb_phy_enable(device);
+		//usb_phy_enable();
 		usb_controller_reset(device);
 	
 		// Set interrupt threshold interval to 0
 		USB1_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
-		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh;
+		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh[1];
 	
 		// Enable interrupts
 		USB1_USBINTR_D =

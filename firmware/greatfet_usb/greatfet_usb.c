@@ -62,6 +62,32 @@ void debug_led(uint8_t val) {
 		led_off(LED4);
 }
 
+usb_request_status_t usb_vendor_request_enable_usb1(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+
+usb_request_status_t usb_vendor_request_led_toggle(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		switch(endpoint->setup.value) {
+			case 1:
+				led_toggle(LED1);
+				break;
+			case 2:
+				led_toggle(LED2);
+				break;
+			case 3:
+				led_toggle(LED3);
+				break;
+			case 4:
+				led_toggle(LED4);
+				break;
+		}
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_erase_spiflash,
 	usb_vendor_request_write_spiflash,
@@ -69,6 +95,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_board_id,
 	usb_vendor_request_read_version_string,
 	usb_vendor_request_read_partid_serialno,
+	usb_vendor_request_enable_usb1,
+	usb_vendor_request_led_toggle,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -98,7 +126,7 @@ const usb_request_handlers_t usb0_request_handlers = {
 const usb_request_handlers_t usb1_request_handlers = {
 	.standard = usb_standard_request,
 	.class = 0,
-	.vendor = 0,
+	.vendor = usb0_vendor_request,
 	.reserved = 0,
 };
 
@@ -144,18 +172,12 @@ void usb_set_descriptor_by_serial_number(void)
 	}
 }
 
-int main(void) {
-	pin_setup();
-	cpu_clock_init();
-	led_off(LED2);
-	led_on(LED3);
-	led_off(LED4);
-
+void init_usb0(void) {
 	usb_set_descriptor_by_serial_number();
 
 	usb_set_configuration_changed_cb(usb0_configuration_changed);
-	usb_peripheral_reset();
-	
+
+	usb_peripheral_reset(&usb0_device);
 	usb_device_init(&usb0_device);
 	
 	usb_queue_init(&usb0_endpoint_control_out_queue);
@@ -169,8 +191,48 @@ int main(void) {
 	nvic_set_priority(NVIC_USB0_IRQ, 255);
 
 	usb_run(&usb0_device);
+}
+
+void init_usb1(void) {
+	usb_peripheral_reset(&usb1_device);
+	usb_device_init(&usb1_device);
 	
-	unsigned int phase = 0;
+	usb_queue_init(&usb1_endpoint_control_out_queue);
+	usb_queue_init(&usb1_endpoint_control_in_queue);
+	usb_queue_init(&usb1_endpoint_bulk_out_queue);
+	usb_queue_init(&usb1_endpoint_bulk_in_queue);
+
+	usb_endpoint_init(&usb1_endpoint_control_out);
+	usb_endpoint_init(&usb1_endpoint_control_in);
+	
+	nvic_set_priority(NVIC_USB1_IRQ, 255);
+
+	usb_run(&usb1_device);
+}
+
+usb_request_status_t usb_vendor_request_enable_usb1(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		led_on(LED2);
+		delay(2000000);
+		init_usb1();
+		led_off(LED2);
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+int main(void) {
+	pin_setup();
+	cpu_clock_init();
+	led_off(LED2);
+	led_on(LED3);
+	led_off(LED4);
+
+	init_usb1();
+	
+	//unsigned int phase = 0;
 	while(true) {
 		/* Blink LED1 to let us know we're alive */
 		led_off(LED1);
@@ -178,31 +240,31 @@ int main(void) {
 		led_on(LED1);
 		delay(20000000);
 		
-		// Set up IN transfer of buffer 0.
-		if ( usb_bulk_buffer_offset >= 16384
-		     && phase == 1) {
-			usb_transfer_schedule_block(
-				1
-				? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
-				&usb_bulk_buffer[0x0000],
-				0x4000,
-				NULL, NULL
-				);
-			phase = 0;
-		}
-	
-		// Set up IN transfer of buffer 1.
-		if ( usb_bulk_buffer_offset < 16384
-		     && phase == 0) {
-			usb_transfer_schedule_block(
-				1
-				? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
-				&usb_bulk_buffer[0x4000],
-				0x4000,
-				NULL, NULL
-			);
-			phase = 1;
-		}
+		//// Set up IN transfer of buffer 0.
+		//if ( usb_bulk_buffer_offset >= 16384
+		//     && phase == 1) {
+		//	usb_transfer_schedule_block(
+		//		1
+		//		? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
+		//		&usb_bulk_buffer[0x0000],
+		//		0x4000,
+		//		NULL, NULL
+		//		);
+		//	phase = 0;
+		//}
+		//
+		//// Set up IN transfer of buffer 1.
+		//if ( usb_bulk_buffer_offset < 16384
+		//     && phase == 0) {
+		//	usb_transfer_schedule_block(
+		//		1
+		//		? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
+		//		&usb_bulk_buffer[0x4000],
+		//		0x4000,
+		//		NULL, NULL
+		//	);
+		//	phase = 1;
+		//}
 	}
 	
 	return 0;

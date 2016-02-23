@@ -38,4 +38,17 @@ extern USB_DECLARE_QUEUE(usb0_endpoint_bulk_in);
 extern usb_endpoint_t usb0_endpoint_bulk_out;
 extern USB_DECLARE_QUEUE(usb0_endpoint_bulk_out);
 
+
+extern usb_endpoint_t usb1_endpoint_control_out;
+extern USB_DECLARE_QUEUE(usb1_endpoint_control_out);
+
+extern usb_endpoint_t usb1_endpoint_control_in;
+extern USB_DECLARE_QUEUE(usb1_endpoint_control_in);
+
+extern usb_endpoint_t usb1_endpoint_bulk_in;
+extern USB_DECLARE_QUEUE(usb1_endpoint_bulk_in);
+
+extern usb_endpoint_t usb1_endpoint_bulk_out;
+extern USB_DECLARE_QUEUE(usb1_endpoint_bulk_out);
+
 #endif /* end of include guard: __USB_ENDPOINT_H__ */

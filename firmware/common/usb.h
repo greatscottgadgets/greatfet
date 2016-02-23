@@ -28,6 +28,8 @@
 
 #include "usb_type.h"
 
+#define NUM_USB_CONTROLLERS 2
+
 void usb_peripheral_reset();
 
 void usb_device_init(

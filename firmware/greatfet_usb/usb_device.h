@@ -26,5 +26,6 @@
 #include <usb_type.h>
 
 extern usb_device_t usb0_device;
+extern usb_device_t usb1_device;
 
 #endif /* end of include guard: __USB_DEVICE_H__ */

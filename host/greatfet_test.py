@@ -29,24 +29,38 @@ usb_vendor_request_read_spiflash = 2
 usb_vendor_request_read_board_id = 3
 usb_vendor_request_read_version_string = 4
 usb_vendor_request_read_partid_serialno = 5
-    
-device = usb.core.find(idVendor=0x1d50, idProduct=0x60e6)
-if device:
-    print 'Found GreatFET'
-else:
-    print 'No GreatFET devices found'
-    sys.exit()
+usb_vendor_request_enable_usb1 = 6
+usb_vendor_request_led_toggle = 7
 
-print 'Setting configuration'
-device.set_configuration()
-print 'Configuration set'
+boards = {0:"GreatFET Azalea"}
 
-def vendor_request(request):
+def vendor_request_in(request, length=1):
     return device.ctrl_transfer(
         #0xC0,
         usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
-        request, 0, 0, 1)
+        request, 0, 0, length)
 
-print 'Attempting vendor request'
-print vendor_request(usb_vendor_request_read_board_id)
-print 'Vendor request complete'
+def vendor_request_out(request, val=0):
+    return device.ctrl_transfer(
+        usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
+        request, val, 0)
+
+if __name__ == '__main__':
+    device = usb.core.find(idVendor=0x1d50, idProduct=0x60e6)
+    if device:
+        print 'Found GreatFET'
+    else:
+        print 'No GreatFET devices found'
+        sys.exit()
+    
+    device.set_configuration()
+    
+    board_id = vendor_request_in(usb_vendor_request_read_board_id)
+    print "Board ID %d - %s" % (board_id[0], boards[board_id[0]])
+    
+    serial_no = vendor_request_in(usb_vendor_request_read_partid_serialno, length=30)
+    print "Serial no: " + ''.join(["%02X " % x for x in serial_no])
+    
+    vendor_request_out(usb_vendor_request_led_toggle, 4)
+    
+    vendor_request_out(usb_vendor_request_enable_usb1)
