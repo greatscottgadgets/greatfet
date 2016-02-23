@@ -70,6 +70,8 @@ void led_on(const led_t led);
 void led_off(const led_t led);
 void led_toggle(const led_t led);
 
+void debug_led(uint8_t val);
+
 #ifdef __cplusplus
 }
 #endif

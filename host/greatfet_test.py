@@ -61,6 +61,6 @@ if __name__ == '__main__':
     serial_no = vendor_request_in(usb_vendor_request_read_partid_serialno, length=30)
     print "Serial no: " + ''.join(["%02X " % x for x in serial_no])
     
-    vendor_request_out(usb_vendor_request_led_toggle, 4)
+    #vendor_request_out(usb_vendor_request_led_toggle, 4)
     
     vendor_request_out(usb_vendor_request_enable_usb1)

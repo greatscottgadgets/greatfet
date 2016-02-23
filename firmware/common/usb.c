@@ -368,26 +368,52 @@ void usb_endpoint_stall(
 	// TODO: Also need to reset data toggle in both directions?
 }
 
-static void usb_controller_run() {
-	USB0_USBCMD_D |= USB0_USBCMD_D_RS;
+static void usb_controller_run(const usb_device_t* const device) {
+	if( device->controller == 0) {
+		USB0_USBCMD_D |= USB0_USBCMD_D_RS;
+	}
+	if( device->controller == 1) {
+		USB1_USBCMD_D |= USB1_USBCMD_D_RS;
+	}
 }
 
-static void usb_controller_stop() {
-	USB0_USBCMD_D &= ~USB0_USBCMD_D_RS;
+static void usb_controller_stop(const usb_device_t* const device) {
+	if( device->controller == 0) {
+		USB0_USBCMD_D &= ~USB0_USBCMD_D_RS;
+	}
+	if( device->controller == 1) {
+		USB1_USBCMD_D &= ~USB1_USBCMD_D_RS;
+	}
 }
 
-static uint_fast8_t usb_controller_is_resetting() {
-	return (USB0_USBCMD_D & USB0_USBCMD_D_RST) != 0;
+static uint_fast8_t usb_controller_is_resetting(const usb_device_t* const device) {
+	if( device->controller == 0) {
+		return (USB0_USBCMD_D & USB0_USBCMD_D_RST) != 0;
+	}
+	if( device->controller == 1) {
+		return (USB1_USBCMD_D & USB1_USBCMD_D_RST) != 0;
+	}
 }
 
-static void usb_controller_set_device_mode() {
-	// Set USB0 peripheral mode
-	USB0_USBMODE_D = USB0_USBMODE_D_CM1_0(2);
-	
-	// Set device-related OTG flags
-	// OTG termination: controls pull-down on USB_DM
-	// VBUS_Discharge: VBUS discharges through resistor
-	USB0_OTGSC = USB0_OTGSC_OT | USB0_OTGSC_VD;
+static void usb_controller_set_device_mode(const usb_device_t* const device) {
+	if( device->controller == 0) {
+		// Set USB0 peripheral mode
+		USB0_USBMODE_D = USB0_USBMODE_D_CM1_0(2);
+		
+		// Set device-related OTG flags
+		// OTG termination: controls pull-down on USB_DM
+		// VBUS_Discharge: VBUS discharges through resistor
+		USB0_OTGSC = USB0_OTGSC_OT | USB0_OTGSC_VD;
+	}
+	if( device->controller == 1) {
+		// Set USB0 peripheral mode
+		USB1_USBMODE_D = USB1_USBMODE_D_CM1_0(2);
+		
+		// Set device-related OTG flags
+		// OTG termination: controls pull-down on USB_DM
+		// VBUS_Discharge: VBUS discharges through resistor
+		//USB1_OTGSC = USB1_OTGSC_OT | USB1_OTGSC_VD;
+	}
 }
 
 usb_speed_t usb_speed(
@@ -595,7 +621,7 @@ void usb_device_init(
 	
 		usb_phy_enable();
 		usb_controller_reset(device);
-		usb_controller_set_device_mode();
+		usb_controller_set_device_mode(device);
 	
 		// Set interrupt threshold interval to 0
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
@@ -619,6 +645,7 @@ void usb_device_init(
 	
 		//usb_phy_enable();
 		usb_controller_reset(device);
+		usb_controller_set_device_mode(device);
 	
 		// Set interrupt threshold interval to 0
 		USB1_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;

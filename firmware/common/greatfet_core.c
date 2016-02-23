@@ -332,3 +332,26 @@ void led_off(const led_t led) {
 void led_toggle(const led_t led) {
 	gpio_toggle(&gpio_led[led]);
 }
+
+/* Temporary LED based debugging */
+void debug_led(uint8_t val) {
+	if(val & 0x1)
+		led_on(LED1);
+	else
+		led_off(LED1);
+		
+	if(val & 0x2)
+		led_on(LED2);
+	else
+		led_off(LED2);
+		
+	if(val & 0x4)
+		led_on(LED3);
+	else
+		led_off(LED3);
+		
+	if(val & 0x8)
+		led_on(LED4);
+	else
+		led_off(LED4);
+}
