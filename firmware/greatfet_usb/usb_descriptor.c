@@ -205,7 +205,7 @@ uint8_t* usb0_descriptor_strings[] = {
 uint8_t usb1_descriptor_device[] = {
 	18,				   // bLength
 	USB_DESCRIPTOR_TYPE_DEVICE,	   // bDescriptorType
-	USB_WORD(0x0200),		   // bcdUSB
+	USB_WORD(0x0101),		   // bcdUSB
 	0x00,				   // bDeviceClass
 	0x00,				   // bDeviceSubClass
 	0x00,				   // bDeviceProtocol
@@ -268,43 +268,6 @@ uint8_t usb1_descriptor_configuration_full_speed[] = {
 	0,									// TERMINATOR
 };
 
-uint8_t usb1_descriptor_configuration_high_speed[] = {
-	9,							// bLength
-	USB_DESCRIPTOR_TYPE_CONFIGURATION,	// bDescriptorType
-	USB_WORD(32),						// wTotalLength
-	0x01,							// bNumInterfaces
-	0x01,							// bConfigurationValue
-	0x00,							// iConfiguration
-	0x80,							// bmAttributes: USB-powered
-	250,							// bMaxPower: 500mA
-
-	9,							// bLength
-	USB_DESCRIPTOR_TYPE_INTERFACE,		// bDescriptorType
-	0x00,							// bInterfaceNumber
-	0x00,							// bAlternateSetting
-	0x02,							// bNumEndpoints
-	0xFF,							// bInterfaceClass: vendor-specific
-	0xFF,							// bInterfaceSubClass
-	0xFF,							// bInterfaceProtocol: vendor-specific
-	0x00,							// iInterface
-
-	7,							// bLength
-	USB_DESCRIPTOR_TYPE_ENDPOINT,		// bDescriptorType
-	USB_BULK_IN_EP_ADDR,				// bEndpointAddress
-	0x02,							// bmAttributes: BULK
-	USB_WORD(USB_MAX_PACKET_BULK_HS),	// wMaxPacketSize
-	0x00,							// bInterval: no NAK
-
-	7,								// bLength
-	USB_DESCRIPTOR_TYPE_ENDPOINT,		// bDescriptorType
-	USB_BULK_OUT_EP_ADDR,			// bEndpointAddress
-	0x02,							// bmAttributes: BULK
-	USB_WORD(USB_MAX_PACKET_BULK_HS),	// wMaxPacketSize
-	0x00,							// bInterval: no NAK
-
-	0,									// TERMINATOR
-};
-
 uint8_t usb1_descriptor_string_languages[] = {
 	0x04,			    // bLength
 	USB_DESCRIPTOR_TYPE_STRING,	    // bDescriptorType
@@ -347,13 +310,21 @@ uint8_t usb1_descriptor_string_product[] = {
 	'E', 0x00,
 	'T', 0x00,
 };
-
-uint8_t usb1_descriptor_string_serial_number[USB_DESCRIPTOR_STRING_SERIAL_BUF_LEN];
+uint8_t usb1_descriptor_string_serial_number[] = {
+	14,						// bLength
+	USB_DESCRIPTOR_TYPE_STRING,		// bDescriptorType
+	'G', 0x00,
+	'S', 0x00,
+	'G', 0x00,
+	'1', 0x00,
+	'2', 0x00,
+	'3', 0x00,
+};
 
 uint8_t* usb1_descriptor_strings[] = {
-	usb0_descriptor_string_languages,
-	usb0_descriptor_string_manufacturer,
-	usb0_descriptor_string_product,
-	usb0_descriptor_string_serial_number,
+	usb1_descriptor_string_languages,
+	usb1_descriptor_string_manufacturer,
+	usb1_descriptor_string_product,
+	usb1_descriptor_string_serial_number,
 	0,		// TERMINATOR
 };

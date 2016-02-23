@@ -72,5 +72,5 @@ usb_device_t usb1_device = {
 	.qualifier_descriptor = usb1_descriptor_device_qualifier,
 	.configurations = &usb1_configurations,
 	.configuration = 0,
-	.controller = 0,
+	.controller = 1,
 };

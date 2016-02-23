@@ -141,6 +141,17 @@ void usb0_configuration_changed(usb_device_t* const device)
 	}
 }
 
+void usb1_configuration_changed(usb_device_t* const device)
+{
+	if( device->configuration->number == 1 ) {
+		// transceiver configuration
+		cpu_clock_pll1_max_speed();
+	} else {
+		/* Configuration number equal 0 means usb bus reset. */
+		cpu_clock_pll1_low_speed();
+	}
+}
+
 void usb_set_descriptor_by_serial_number(void)
 {
 	iap_cmd_res_t iap_cmd_res;
@@ -194,6 +205,8 @@ void init_usb0(void) {
 }
 
 void init_usb1(void) {
+	usb_set_configuration_changed_cb(usb1_configuration_changed);
+	
 	usb_peripheral_reset(&usb1_device);
 	usb_device_init(&usb1_device);
 	
@@ -230,7 +243,7 @@ int main(void) {
 	led_on(LED3);
 	led_off(LED4);
 
-	init_usb1();
+	init_usb0();
 	
 	//unsigned int phase = 0;
 	while(true) {
