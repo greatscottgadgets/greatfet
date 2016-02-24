@@ -194,9 +194,9 @@ void cpu_clock_init(void)
 			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
 
 	/* use PLL0AUDIO as clock source for IDIVA */
-	//CGU_IDIVA_CTRL = CGU_IDIVA_CTRL_IDIV(4)
+	//CGU_IDIVA_CTRL = CGU_IDIVA_CTRL_IDIV(9)
 	//		| CGU_IDIVA_CTRL_AUTOBLOCK(1)
-	//		| CGU_IDIVA_CTRL_CLK_SEL(CGU_SRC_PLL0AUDIO);
+	//		| CGU_IDIVA_CTRL_CLK_SEL(CGU_SRC_PLL0USB);
 
 	/* Use IDIVA for CLKOUT */
 	//CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
@@ -344,8 +344,8 @@ void pin_setup(void) {
 	SCU_SFSI2C0 = SCU_I2C0_NOMINAL;
 
 	///* Configure external clock in */
-	scu_pinmux(CLK0, SCU_CONF_FUNCTION5);
-	scu_pinmux(CLK2, SCU_CONF_FUNCTION5 | SCU_CLK_OUT);
+	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
+	scu_pinmux(CLK2, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
 }
 
 void led_on(const led_t led) {
