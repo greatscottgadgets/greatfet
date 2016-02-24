@@ -37,6 +37,7 @@
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
 #include "usb_api_spiflash.h"
+//#include "usb_api_spi.h"
 #include "usb_bulk_buffer.h"
 
 usb_request_status_t usb_vendor_request_enable_usb1(
