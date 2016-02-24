@@ -48,8 +48,6 @@ static struct gpio_t gpio_led[4] = {
 	GPIO(PORT_LED1_3_4,  PIN_LED4)
 };
 
-static struct gpio_t gpio_1v8_enable		= GPIO(3,  6);
-
 static struct gpio_t gpio_w25q80bv_hold		= GPIO(1, 14);
 static struct gpio_t gpio_w25q80bv_wp		= GPIO(1, 15);
 static struct gpio_t gpio_w25q80bv_select	= GPIO(5, 11);
@@ -165,6 +163,37 @@ void cpu_clock_init(void)
 	/* use PLL0USB as clock source for USB0 */
 	CGU_BASE_USB0_CLK = CGU_BASE_USB0_CLK_AUTOBLOCK(1)
 			| CGU_BASE_USB0_CLK_CLK_SEL(CGU_SRC_PLL0USB);
+	
+	/* PLL0AUDIO */
+	/* use XTAL_OSC as clock source for PLL0AUDIO */
+	CGU_PLL0AUDIO_CTRL = CGU_PLL0AUDIO_CTRL_PD(1)
+			| CGU_PLL0AUDIO_CTRL_AUTOBLOCK(1)
+			| CGU_PLL0AUDIO_CTRL_CLK_SEL(CGU_SRC_XTAL);
+	while (CGU_PLL0AUDIO_STAT & CGU_PLL0AUDIO_STAT_LOCK_MASK);
+
+	/* configure PLL0AUDIO to produce 60 MHz clock from 12 MHz XTAL_OSC */
+	/* Values from User Manual v1.9 Table 153, for 12MHz oscillator. */
+	CGU_PLL0AUDIO_MDIV = 0x05123FFF;
+	CGU_PLL0AUDIO_NP_DIV = 0x00001003;
+	CGU_PLL0AUDIO_CTRL |= (CGU_PLL0AUDIO_CTRL_PD(1)
+			| CGU_PLL0AUDIO_CTRL_DIRECTI(1)
+			| CGU_PLL0AUDIO_CTRL_DIRECTO(1)
+			| CGU_PLL0AUDIO_CTRL_CLKEN(1)
+			| CGU_PLL0AUDIO_CTRL_SEL_EXT(1));
+	
+	/* use PLL1USB as clock source for USB1 */
+	CGU_BASE_USB1_CLK = CGU_BASE_USB1_CLK_AUTOBLOCK(1)
+			| CGU_BASE_USB1_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
+
+	/* use PLL0AUDIO as clock source for IDIVA */
+	CGU_IDIVA_CTRL = CGU_IDIVA_CTRL_PD(1)
+			| CGU_IDIVA_CTRL_IDIV(4)
+			| CGU_IDIVA_CTRL_AUTOBLOCK(1)
+			| CGU_IDIVA_CTRL_CLK_SEL(CGU_SRC_PLL0AUDIO);
+	
+	/* Use IDIVA for CLKOUT */
+	CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_IDIVA);
 
 	/* Switch peripheral clock over to use PLL1 (204MHz) */
 	CGU_BASE_PERIPH_CLK = CGU_BASE_PERIPH_CLK_AUTOBLOCK(1)
@@ -304,21 +333,12 @@ void pin_setup(void) {
 	gpio_output(&gpio_led[2]);
 	gpio_output(&gpio_led[3]);
 
-	gpio_output(&gpio_1v8_enable);
-
 	/* enable input on SCL and SDA pins */
 	SCU_SFSI2C0 = SCU_I2C0_NOMINAL;
 
-	/* Configure external clock in */
-	scu_pinmux(SCU_PINMUX_GP_CLKIN, SCU_CLK_IN | SCU_CONF_FUNCTION1);
-}
-
-void enable_1v8_power(void) {
-	gpio_set(&gpio_1v8_enable);
-}
-
-void disable_1v8_power(void) {
-	gpio_clear(&gpio_1v8_enable);
+	///* Configure external clock in */
+	scu_pinmux(CLK0, SCU_CONF_FUNCTION5);
+	scu_pinmux(CLK2, SCU_CONF_FUNCTION5 | SCU_CLK_OUT);
 }
 
 void led_on(const led_t led) {

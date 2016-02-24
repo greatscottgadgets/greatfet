@@ -159,8 +159,8 @@ void init_usb0(void) {
 
 	usb_queue_init(&usb0_endpoint_control_out_queue);
 	usb_queue_init(&usb0_endpoint_control_in_queue);
-	usb_queue_init(&usb0_endpoint_bulk_out_queue);
-	usb_queue_init(&usb0_endpoint_bulk_in_queue);
+	//usb_queue_init(&usb0_endpoint_bulk_out_queue);
+	//usb_queue_init(&usb0_endpoint_bulk_in_queue);
 
 	usb_endpoint_init(&usb0_endpoint_control_out);
 	usb_endpoint_init(&usb0_endpoint_control_in);
@@ -213,7 +213,6 @@ int main(void) {
 		delay(20000000);
 		led_on(LED1);
 		delay(20000000);
-
 	}
 	
 	return 0;
