@@ -202,17 +202,17 @@ usb_request_status_t usb_vendor_request_enable_usb1(
 int main(void) {
 	pin_setup();
 	cpu_clock_init();
+	led_off(LED1);
 	led_off(LED2);
 	led_off(LED3);
-	led_off(LED4);
 
 	init_usb0();
 	
 	while(true) {
-		/* Blink LED1 to let us know we're alive */
-		led_off(LED1);
+		/* Blink LED4 to let us know we're alive */
+		led_off(LED4);
 		delay(20000000);
-		led_on(LED1);
+		led_on(LED4);
 		delay(20000000);
 	}
 	

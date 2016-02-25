@@ -26,6 +26,7 @@
 #include "usb_type.h"
 #include "usb_queue.h"
 #include "usb_standard_request.h"
+#include "greatfet_core.h"
 
 #include <libopencm3/lpc43xx/creg.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
@@ -80,48 +81,84 @@ void usb_peripheral_reset(const usb_device_t* const device) {
 	}
 }
 
-static void usb_phy_enable() {
-	CREG_CREG0 &= ~CREG_CREG0_USB0PHY;
+static void usb_phy_enable(const usb_device_t* const device) {
+	if(device->controller == 0) {
+		CREG_CREG0 &= ~CREG_CREG0_USB0PHY;
+	}
+	if(device->controller == 1) {
+		// FIXME: DGS - the 2 below  is USB_ESEA
+		//SCU_SFSUSB != 2;
+		;
+	}
 }
 
-static void usb_clear_pending_interrupts(const uint32_t mask) {
-	USB0_ENDPTNAK = mask;
-	USB0_ENDPTNAKEN = mask;
-	USB0_USBSTS_D = mask;
-	USB0_ENDPTSETUPSTAT = USB0_ENDPTSETUPSTAT & mask;
-	USB0_ENDPTCOMPLETE = USB0_ENDPTCOMPLETE & mask;
+static void usb_clear_pending_interrupts(const uint32_t mask,
+										 const usb_device_t* const device) {
+	if(device->controller == 0) {
+		USB0_ENDPTNAK = mask;
+		USB0_ENDPTNAKEN = mask;
+		USB0_USBSTS_D = mask;
+		USB0_ENDPTSETUPSTAT = USB0_ENDPTSETUPSTAT & mask;
+		USB0_ENDPTCOMPLETE = USB0_ENDPTCOMPLETE & mask;
+	}
+	if(device->controller == 1) {
+		USB1_ENDPTNAK = mask;
+		USB1_ENDPTNAKEN = mask;
+		USB1_USBSTS_D = mask;
+		USB1_ENDPTSETUPSTAT = USB1_ENDPTSETUPSTAT & mask;
+		USB1_ENDPTCOMPLETE = USB1_ENDPTCOMPLETE & mask;
+	}
 }
 
-static void usb_clear_all_pending_interrupts() {
-	usb_clear_pending_interrupts(0xFFFFFFFF);
+static void usb_clear_all_pending_interrupts(const usb_device_t* const device) {
+	usb_clear_pending_interrupts(0xFFFFFFFF, device);
 }
 
-static void usb_wait_for_endpoint_priming_to_finish(const uint32_t mask) {
+static void usb_wait_for_endpoint_priming_to_finish(const uint32_t mask,
+													const usb_device_t* const device) {
 	// Wait until controller has parsed new transfer descriptors and prepared
 	// receive buffers.
-	while( USB0_ENDPTPRIME & mask );
+	if(device->controller == 0) {
+		while( USB0_ENDPTPRIME & mask );		
+	}
+	if(device->controller == 1) {
+		while( USB1_ENDPTPRIME & mask );
+	}
 }
 
-static void usb_flush_endpoints(const uint32_t mask) {
+static void usb_flush_endpoints(const uint32_t mask,
+								const usb_device_t* const device) {
 	// Clear any primed buffers. If a packet is in progress, that transfer
 	// will continue until completion.
-	USB0_ENDPTFLUSH = mask;
+	if(device->controller == 0) {
+		USB0_ENDPTFLUSH = mask;		
+	}
+	if(device->controller == 1) {
+		USB1_ENDPTFLUSH = mask;
+	}
 }
 
-static void usb_wait_for_endpoint_flushing_to_finish(const uint32_t mask) {
+static void usb_wait_for_endpoint_flushing_to_finish(const uint32_t mask,
+													 const usb_device_t* const device) {
 	// Wait until controller has flushed all endpoints / cleared any primed
 	// buffers.
-	while( USB0_ENDPTFLUSH & mask );
+	if(device->controller == 0) {
+		while( USB0_ENDPTFLUSH & mask );		
+	}
+	if(device->controller == 1) {
+		while( USB1_ENDPTFLUSH & mask );
+	}
 }
 
-static void usb_flush_primed_endpoints(const uint32_t mask) {
-	usb_wait_for_endpoint_priming_to_finish(mask);
-	usb_flush_endpoints(mask);
-	usb_wait_for_endpoint_flushing_to_finish(mask);
+static void usb_flush_primed_endpoints(const uint32_t mask,
+									   const usb_device_t* const device) {
+	usb_wait_for_endpoint_priming_to_finish(mask, device);
+	usb_flush_endpoints(mask, device);
+	usb_wait_for_endpoint_flushing_to_finish(mask, device);
 }
 
-static void usb_flush_all_primed_endpoints() {
-	usb_flush_primed_endpoints(0xFFFFFFFF);
+static void usb_flush_all_primed_endpoints(const usb_device_t* const device) {
+	usb_flush_primed_endpoints(0xFFFFFFFF, device);
 }
 
 static void usb_endpoint_set_type(
@@ -178,16 +215,20 @@ static void usb_endpoint_clear_pending_interrupts(
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
 	if(endpoint->device->controller == 0) {
 		if( usb_endpoint_is_in(endpoint->address) ) {
-			usb_clear_pending_interrupts(USB0_ENDPTCOMPLETE_ETCE(1 << endpoint_number));
+			usb_clear_pending_interrupts(USB0_ENDPTCOMPLETE_ETCE(1 << endpoint_number),
+										 endpoint->device);
 		} else {
-			usb_clear_pending_interrupts(USB0_ENDPTCOMPLETE_ERCE(1 << endpoint_number));
+			usb_clear_pending_interrupts(USB0_ENDPTCOMPLETE_ERCE(1 << endpoint_number),
+										 endpoint->device);
 		}
 	}
 	if(endpoint->device->controller == 1) {
 		if( usb_endpoint_is_in(endpoint->address) ) {
-			usb_clear_pending_interrupts(USB1_ENDPTCOMPLETE_ETCE(1 << endpoint_number));
+			usb_clear_pending_interrupts(USB1_ENDPTCOMPLETE_ETCE(1 << endpoint_number),
+										 endpoint->device);
 		} else {
-			usb_clear_pending_interrupts(USB1_ENDPTCOMPLETE_ERCE(1 << endpoint_number));
+			usb_clear_pending_interrupts(USB1_ENDPTCOMPLETE_ERCE(1 << endpoint_number),
+										 endpoint->device);
 		}
 	}
 		
@@ -293,7 +334,7 @@ void usb_endpoint_schedule_append(
 	usb_transfer_descriptor_t* const tail_td,
 	usb_transfer_descriptor_t* const new_td
 ) {
-	bool done;
+	bool done = 0;
 
 	tail_td->next_dtd_pointer = new_td;
 
@@ -301,12 +342,22 @@ void usb_endpoint_schedule_append(
 		return;
 	}
 
-	do {
-		USB0_USBCMD_D |= USB0_USBCMD_D_ATDTW;
-		done = usb_endpoint_is_ready(endpoint);
-	} while (!(USB0_USBCMD_D & USB0_USBCMD_D_ATDTW));
-
-	USB0_USBCMD_D &= ~USB0_USBCMD_D_ATDTW;
+	if(endpoint->device->controller == 0) {
+		do {
+			USB0_USBCMD_D |= USB0_USBCMD_D_ATDTW;
+			done = usb_endpoint_is_ready(endpoint);
+		} while (!(USB0_USBCMD_D & USB0_USBCMD_D_ATDTW));
+	
+		USB0_USBCMD_D &= ~USB0_USBCMD_D_ATDTW;
+	}
+	if(endpoint->device->controller == 1) {
+		do {
+			USB1_USBCMD_D |= USB1_USBCMD_D_ATDTW;
+			done = usb_endpoint_is_ready(endpoint);
+		} while (!(USB1_USBCMD_D & USB1_USBCMD_D_ATDTW));
+	
+		USB1_USBCMD_D &= ~USB1_USBCMD_D_ATDTW;
+	}
 	if(!done) {
 		usb_endpoint_prime(endpoint, new_td);
 	}
@@ -317,10 +368,23 @@ void usb_endpoint_flush(
 ) {
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
 	usb_queue_flush_endpoint(endpoint);
-	if( usb_endpoint_is_in(endpoint->address) ) {
-		usb_flush_primed_endpoints(USB0_ENDPTFLUSH_FETB(1 << endpoint_number));
-	} else {
-		usb_flush_primed_endpoints(USB0_ENDPTFLUSH_FERB(1 << endpoint_number));
+	if(endpoint->device->controller == 0) {
+		if( usb_endpoint_is_in(endpoint->address) ) {
+			usb_flush_primed_endpoints(USB0_ENDPTFLUSH_FETB(1 << endpoint_number),
+									   endpoint->device);
+		} else {
+			usb_flush_primed_endpoints(USB0_ENDPTFLUSH_FERB(1 << endpoint_number),
+									   endpoint->device);
+		}
+	}
+	if(endpoint->device->controller == 1) {
+		if( usb_endpoint_is_in(endpoint->address) ) {
+			usb_flush_primed_endpoints(USB1_ENDPTFLUSH_FETB(1 << endpoint_number),
+									   endpoint->device);
+		} else {
+			usb_flush_primed_endpoints(USB1_ENDPTFLUSH_FERB(1 << endpoint_number),
+									   endpoint->device);
+		}
 	}
 }
 /*
@@ -339,10 +403,19 @@ bool usb_endpoint_is_ready(
 	const usb_endpoint_t* const endpoint
 ) {
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
+	if(endpoint->device->controller == 0) {
 	if( usb_endpoint_is_in(endpoint->address) ) {
-		return USB0_ENDPTSTAT & USB0_ENDPTSTAT_ETBR(1 << endpoint_number);
-	} else {
-		return USB0_ENDPTSTAT & USB0_ENDPTSTAT_ERBR(1 << endpoint_number);
+			return USB0_ENDPTSTAT & USB0_ENDPTSTAT_ETBR(1 << endpoint_number);
+		} else {
+			return USB0_ENDPTSTAT & USB0_ENDPTSTAT_ERBR(1 << endpoint_number);
+		}
+	}
+	if(endpoint->device->controller == 1) {
+	if( usb_endpoint_is_in(endpoint->address) ) {
+			return USB1_ENDPTSTAT & USB1_ENDPTSTAT_ETBR(1 << endpoint_number);
+		} else {
+			return USB1_ENDPTSTAT & USB1_ENDPTSTAT_ERBR(1 << endpoint_number);
+		}
 	}
 }
 
@@ -350,10 +423,19 @@ bool usb_endpoint_is_complete(
 	const usb_endpoint_t* const endpoint
 ) {
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
-	if( usb_endpoint_is_in(endpoint->address) ) {
-		return USB0_ENDPTCOMPLETE & USB0_ENDPTCOMPLETE_ETCE(1 << endpoint_number);
-	} else {
-		return USB0_ENDPTCOMPLETE & USB0_ENDPTCOMPLETE_ERCE(1 << endpoint_number);
+	if(endpoint->device->controller == 0) {
+		if( usb_endpoint_is_in(endpoint->address) ) {
+			return USB0_ENDPTCOMPLETE & USB0_ENDPTCOMPLETE_ETCE(1 << endpoint_number);
+		} else {
+			return USB0_ENDPTCOMPLETE & USB0_ENDPTCOMPLETE_ERCE(1 << endpoint_number);
+		}
+	}
+	if(endpoint->device->controller == 1) {
+		if( usb_endpoint_is_in(endpoint->address) ) {
+			return USB1_ENDPTCOMPLETE & USB1_ENDPTCOMPLETE_ETCE(1 << endpoint_number);
+		} else {
+			return USB1_ENDPTCOMPLETE & USB1_ENDPTCOMPLETE_ERCE(1 << endpoint_number);
+		}
 	}
 }
 
@@ -449,13 +531,13 @@ static void usb_clear_status(const uint32_t status,
 }
 
 static uint32_t usb_get_status(const usb_device_t* const device) {
-    uint32_t status;
+    uint32_t status = 0;
 	// Mask status flags with enabled flag interrupts.
  	if( device->controller == 0 ) {
 		status = USB0_USBSTS_D & USB0_USBINTR_D;
 	}
 	if( device->controller == 1 ) {
-		status = USB0_USBSTS_D & USB0_USBINTR_D;
+		status = USB1_USBSTS_D & USB1_USBINTR_D;
 	}
 
     // Clear flags that were just read, leaving alone any flags that
@@ -481,7 +563,7 @@ static uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) 
 		return USB0_ENDPTSETUPSTAT;
 	}
 	if( device->controller == 1 ) {
-		return USB0_ENDPTSETUPSTAT;
+		return USB1_ENDPTSETUPSTAT;
 	}
 }
 
@@ -619,7 +701,7 @@ void usb_device_init(
 	if( device->controller == 0 ) {
 		usb_devices[0] = device;
 	
-		usb_phy_enable();
+		usb_phy_enable(device);
 		usb_controller_reset(device);
 		usb_controller_set_device_mode(device);
 	
@@ -643,12 +725,12 @@ void usb_device_init(
 	if( device->controller == 1 ) {
 		usb_devices[1] = device;
 	
-		//usb_phy_enable();
+		usb_phy_enable(device);
 		usb_controller_reset(device);
 		usb_controller_set_device_mode(device);
 	
 		// Set interrupt threshold interval to 0
-		USB1_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
+		USB1_USBCMD_D &= ~USB1_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
 		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh[1];
@@ -757,7 +839,7 @@ static void usb_check_for_setup_events(const usb_device_t* const device) {
 	}
 }
 
-static void usb_check_for_transfer_events(const usb_device_t* const device) {	
+static void usb_check_for_transfer_events(const usb_device_t* const device) {
 	const uint32_t endptcomplete = usb_get_endpoint_complete(device);
 	if( endptcomplete ) {
 		for( uint_fast8_t i=0; i<6; i++ ) {
@@ -842,6 +924,7 @@ void usb0_isr() {
 }
 
 void usb1_isr() {
+	led_on(LED3);
 	const uint32_t status = usb_get_status(usb_devices[1]);
 	
 	if( status == 0 ) {

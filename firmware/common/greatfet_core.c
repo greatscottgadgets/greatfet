@@ -325,9 +325,10 @@ void pin_setup(void) {
 	/* enable input on SCL and SDA pins */
 	SCU_SFSI2C0 = SCU_I2C0_NOMINAL;
 
-	///* Configure external clock in */
+	/* Configure external clock in */
 	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
-	scu_pinmux(CLK2, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
+	
+	SCU_SFSUSB != 2;
 }
 
 void led_on(const led_t led) {
