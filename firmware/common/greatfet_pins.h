@@ -41,8 +41,6 @@
 #define PORT_LED1_3_4       (3) /* PORT for LED1, 3, 4 */
 #define PORT_LED2           (2) /* PORT for LED1, 3, 4 */
 
-#define SCU_PINMUX_EN1V8    (P6_10) /* GPIO3[6] on P6_10 */
-
 /* GPIO Input PinMux */
 #define SCU_PINMUX_BOOT0    (P1_1)  /* GPIO0[8] on P1_1 */
 #define SCU_PINMUX_BOOT1    (P1_2)  /* GPIO0[9] on P1_2 */
@@ -114,4 +112,7 @@
 
 #define SCU_PINMUX_GP_CLKIN	(P4_7)
 
+#define SCU_PINMUX_USB1_SENSE    (P6_11) /* GPIO3[7] */
+#define SCU_PINMUX_USB1_EN       (P6_12) /* GPIO2[8] */
+#define SCU_PINMUX_USB1_FAULT    (P7_3)  /* GPIO3[11] */
 #endif /* __GREATFET_PINS_H */

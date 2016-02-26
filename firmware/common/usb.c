@@ -87,6 +87,7 @@ static void usb_phy_enable(const usb_device_t* const device) {
 	}
 	if(device->controller == 1) {
 		// FIXME: DGS - the 2 below  is USB_ESEA
+		// This is in greatfet_core.c for now
 		//SCU_SFSUSB != 2;
 		;
 	}
@@ -179,7 +180,7 @@ static void usb_endpoint_set_type(
 			  );
 	}
 	if(endpoint->device->controller == 1) {
-		USB0_ENDPTCTRL(endpoint_number)
+		USB1_ENDPTCTRL(endpoint_number)
 			= ( USB1_ENDPTCTRL(endpoint_number)
 			  & ~(USB1_ENDPTCTRL_TXT1_0_MASK | USB1_ENDPTCTRL_RXT_MASK)
 			  )
@@ -445,7 +446,12 @@ void usb_endpoint_stall(
 	// Endpoint is to be stalled as a pair -- both OUT and IN.
 	// See UM10503 section 23.10.5.2 "Stalling"
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
-	USB0_ENDPTCTRL(endpoint_number) |= (USB0_ENDPTCTRL_RXS | USB0_ENDPTCTRL_TXS);
+	if(endpoint->device->controller == 0) {
+		USB0_ENDPTCTRL(endpoint_number) |= (USB0_ENDPTCTRL_RXS | USB0_ENDPTCTRL_TXS);
+	}
+	if(endpoint->device->controller == 1) {
+		USB1_ENDPTCTRL(endpoint_number) |= (USB1_ENDPTCTRL_RXS | USB1_ENDPTCTRL_TXS);
+	}
 	
 	// TODO: Also need to reset data toggle in both directions?
 }
@@ -488,13 +494,8 @@ static void usb_controller_set_device_mode(const usb_device_t* const device) {
 		USB0_OTGSC = USB0_OTGSC_OT | USB0_OTGSC_VD;
 	}
 	if( device->controller == 1) {
-		// Set USB0 peripheral mode
+		// Set USB1 peripheral mode
 		USB1_USBMODE_D = USB1_USBMODE_D_CM1_0(2);
-		
-		// Set device-related OTG flags
-		// OTG termination: controls pull-down on USB_DM
-		// VBUS_Discharge: VBUS discharges through resistor
-		//USB1_OTGSC = USB1_OTGSC_OT | USB1_OTGSC_VD;
 	}
 }
 
@@ -814,9 +815,15 @@ void usb_endpoint_init(
 
 static void usb_check_for_setup_events(const usb_device_t* const device) {
 	const uint32_t endptsetupstat = usb_get_endpoint_setup_status(device);
+	uint32_t endptsetupstat_bit = 0;
 	if( endptsetupstat ) {
 		for( uint_fast8_t i=0; i<6; i++ ) {
-			const uint32_t endptsetupstat_bit = USB0_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << i);
+			if(device->controller == 0) {
+				endptsetupstat_bit = USB0_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << i);
+			}
+			if(device->controller == 1) {
+				endptsetupstat_bit = USB1_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << i);
+			}
 			if( endptsetupstat & endptsetupstat_bit ) {
 				usb_endpoint_t* const endpoint = 
 					usb_endpoint_from_address(
@@ -841,10 +848,16 @@ static void usb_check_for_setup_events(const usb_device_t* const device) {
 
 static void usb_check_for_transfer_events(const usb_device_t* const device) {
 	const uint32_t endptcomplete = usb_get_endpoint_complete(device);
+	uint32_t endptcomplete_out_bit = 0;
+	uint32_t endptcomplete_in_bit = 0;
 	if( endptcomplete ) {
 		for( uint_fast8_t i=0; i<6; i++ ) {
-			
-			const uint32_t endptcomplete_out_bit = USB0_ENDPTCOMPLETE_ERCE(1 << i);
+			if(device->controller == 0) {
+				endptcomplete_out_bit = USB0_ENDPTCOMPLETE_ERCE(1 << i);
+			}
+			if(device->controller == 1) {
+				endptcomplete_out_bit = USB1_ENDPTCOMPLETE_ERCE(1 << i);
+			}
 			if( endptcomplete & endptcomplete_out_bit ) {
 				usb_clear_endpoint_complete(endptcomplete_out_bit, device);
 			 	usb_endpoint_t* const endpoint = 
@@ -856,7 +869,12 @@ static void usb_check_for_transfer_events(const usb_device_t* const device) {
 				}
 			}
 
-			const uint32_t endptcomplete_in_bit = USB0_ENDPTCOMPLETE_ETCE(1 << i);
+			if(device->controller == 0) {
+				endptcomplete_in_bit = USB0_ENDPTCOMPLETE_ETCE(1 << i);
+			}
+			if(device->controller == 1) {
+				endptcomplete_in_bit = USB1_ENDPTCOMPLETE_ETCE(1 << i);
+			}
 			if( endptcomplete & endptcomplete_in_bit ) {
 				usb_clear_endpoint_complete(endptcomplete_in_bit, device);
 				usb_endpoint_t* const endpoint = 

@@ -37,7 +37,7 @@
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
 #include "usb_api_spiflash.h"
-//#include "usb_api_spi.h"
+#include "usb_api_spiflash_spansion.h"
 #include "usb_bulk_buffer.h"
 
 usb_request_status_t usb_vendor_request_enable_usb1(
@@ -75,6 +75,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_partid_serialno,
 	usb_vendor_request_enable_usb1,
 	usb_vendor_request_led_toggle,
+	usb_vendor_request_read_spiflash_spansion,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -111,7 +112,6 @@ const usb_request_handlers_t usb1_request_handlers = {
 void usb0_configuration_changed(usb_device_t* const device)
 {
 	if( device->configuration->number == 1 ) {
-		// transceiver configuration
 		cpu_clock_pll1_max_speed();
 	} else {
 		/* Configuration number equal 0 means usb bus reset. */
@@ -166,13 +166,20 @@ void init_usb0(void) {
 	usb_endpoint_init(&usb0_endpoint_control_out);
 	usb_endpoint_init(&usb0_endpoint_control_in);
 
-	nvic_set_priority(NVIC_USB0_IRQ, 255);
+	nvic_set_priority(NVIC_USB0_IRQ, 254);
 
 	usb_run(&usb0_device);
 }
 
+void usb1_configuration_changed(usb_device_t* const device)
+{
+	if( device->configuration->number == 1 ) {
+		led_on(LED1);
+	}
+}
+
 void init_usb1(void) {
-	//usb_set_configuration_changed_cb(usb1_configuration_changed);
+	usb_set_configuration_changed_cb(usb1_configuration_changed);
 
 	usb_peripheral_reset(&usb1_device);
 
@@ -184,7 +191,7 @@ void init_usb1(void) {
 	usb_endpoint_init(&usb1_endpoint_control_out);
 	usb_endpoint_init(&usb1_endpoint_control_in);
 
-	nvic_set_priority(NVIC_USB1_IRQ, 254);
+	nvic_set_priority(NVIC_USB1_IRQ, 255);
 	usb_run(&usb1_device);
 }
 
@@ -201,9 +208,9 @@ usb_request_status_t usb_vendor_request_enable_usb1(
 
 int main(void) {
 	pin_setup();
+	led_on(LED1);
 	cpu_clock_init();
-	led_off(LED1);
-	led_off(LED2);
+	led_on(LED2);
 	led_off(LED3);
 
 	init_usb0();

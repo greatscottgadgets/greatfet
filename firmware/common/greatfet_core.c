@@ -27,6 +27,8 @@
 #include "spi_ssp.h"
 #include "w25q80bv.h"
 #include "w25q80bv_target.h"
+#include "s25fl064p.h"
+#include "s25fl064p_target.h"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 #include <libopencm3/lpc43xx/cgu.h>
@@ -48,9 +50,13 @@ static struct gpio_t gpio_led[4] = {
 	GPIO(PORT_LED1_3_4,  PIN_LED4)
 };
 
+static struct gpio_t gpio_usb1_en		= GPIO(2, 8);
+
 static struct gpio_t gpio_w25q80bv_hold		= GPIO(1, 14);
 static struct gpio_t gpio_w25q80bv_wp		= GPIO(1, 15);
 static struct gpio_t gpio_w25q80bv_select	= GPIO(5, 11);
+
+static struct gpio_t gpio_s25fl064p_select	= GPIO(2, 10); /* P5_1 */
 
 /* CPLD JTAG interface GPIO pins */
 static struct gpio_t gpio_tdo			= GPIO(5, 18);
@@ -93,6 +99,30 @@ w25q80bv_driver_t spi_flash = {
 	.gpio_hold = &gpio_w25q80bv_hold,
 	.gpio_wp = &gpio_w25q80bv_wp,
 	.target_init = w25q80bv_target_init,
+};
+
+/* s25fl064p from my technicolor router */
+const ssp_config_t ssp_config_s25fl064p = {
+	.data_bits = SSP_DATA_8BITS,
+	.serial_clock_rate = 2,
+	.clock_prescale_rate = 2,
+	.gpio_select = &gpio_s25fl064p_select,
+};
+
+spi_bus_t spi_bus_ssp1 = {
+	.obj = (void*)SSP1_BASE,
+	.config = &ssp_config_s25fl064p,
+	.start = spi_ssp_start,
+	.stop = spi_ssp_stop,
+	.transfer = spi_ssp_transfer,
+	.transfer_gather = spi_ssp_transfer_gather,
+};
+
+s25fl064p_driver_t spi_flash_spansion = {
+	.bus = &spi_bus_ssp1,
+	.gpio_hold = &gpio_w25q80bv_hold,
+	.gpio_wp = &gpio_w25q80bv_wp,
+	.target_init = s25fl064p_target_init,
 };
 
 void delay(uint32_t duration)
@@ -312,8 +342,6 @@ void pin_setup(void) {
 	scu_pinmux(SCU_PINMUX_LED3, SCU_GPIO_NOPULL);
 	scu_pinmux(SCU_PINMUX_LED4, SCU_GPIO_NOPULL);
 	
-	scu_pinmux(SCU_PINMUX_EN1V8, SCU_GPIO_NOPULL);
-	
 	/* Configure all GPIO as Input (safe state) */
 	gpio_init();
 
@@ -328,7 +356,11 @@ void pin_setup(void) {
 	/* Configure external clock in */
 	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
 	
-	SCU_SFSUSB != 2;
+	/* Enable USB1 controller */
+	SCU_SFSUSB = 0x2;
+	scu_pinmux(SCU_PINMUX_USB1_EN, SCU_CONF_FUNCTION0);
+	gpio_output(&gpio_usb1_en);
+	gpio_set(&gpio_usb1_en);
 }
 
 void led_on(const led_t led) {

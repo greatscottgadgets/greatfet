@@ -70,7 +70,7 @@ usb_endpoint_t usb0_endpoint_bulk_out = {
 };
 static USB_DEFINE_QUEUE(usb0_endpoint_bulk_out, 1);
 
-
+/* USB1 */
 usb_endpoint_t usb1_endpoint_control_out = {
 	.address = 0x00,
 	.device = &usb1_device,
