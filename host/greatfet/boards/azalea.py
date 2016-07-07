@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 #
-# Copyright 2015 Dominic Spill <dominicgs@gmail.com)
+# Copyright 2016 Kyle J. Temkin <kyle@ktemkin.com>
 #
 # This file is part of GreatFET.
 #
@@ -20,23 +19,11 @@
 # Boston, MA 02110-1301, USA.
 #
 
-import sys
+from ..board import GreatFETBoard
 
-from greatfet import GreatFET
+class GreatFETAzalea(GreatFETBoard):
+    """ Class representing GreatFET Azalea base-boards. """
 
-if __name__ == '__main__':
-    device = GreatFET()
-    if device:
-        print 'Found GreatFET!'
-    else:
-        print 'No GreatFET devices found.'
-        sys.exit()
-
-    print "Board ID %d - %s" % (device.board_id(), device.board_name())
-
-    #serial_no = vendor_request_in(usb_vendor_request_read_partid_serialno, length=30)
-    #print "Serial no: " + ''.join(["%02X " % x for x in serial_no])
-    #
-    ##vendor_request_out(usb_vendor_request_led_toggle, 4)
-    #
-    #vendor_request_out(usb_vendor_request_enable_usb1)
+    # Currently, all GreatFET Azalea boards have an ID of zero.
+    HANDLED_BOARD_IDS = [0]
+    BOARD_NAME = "GreatFET Azalea"
