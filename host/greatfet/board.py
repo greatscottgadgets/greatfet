@@ -31,6 +31,9 @@ from .errors import DeviceNotFoundError
 GREATFET_VENDOR_ID = 0x1d50
 GREATFET_PRODUCT_ID = 0x60e6
 
+# Quirk constant that helps us identify libusb's pipe errors, which bubble
+# up as generic USBErrors with errno 32 on affected platforms.
+LIBUSB_PIPE_ERROR = 32
 
 class GreatFETBoard(object):
     """
@@ -114,7 +117,16 @@ class GreatFETBoard(object):
 
         # Connect to the first available GreatFET device.
         identifiers.update(device_identifiers)
-        self.device = usb.core.find(**identifiers)
+        try:
+            self.device = usb.core.find(**identifiers)
+        except usb.core.USBError as e:
+            # On some platforms, providing identifiers that don't match with any
+            # real device produces a USBError/Pipe Error. We'll convert it into a
+            # DeviceNotFoundError.
+            if e.errno == LIBUSB_PIPE_ERROR:
+                raise DeviceNotFoundError()
+            else:
+                raise e
 
         # If we couldn't find a GreatFET, bail out early.
         if self.device is None:

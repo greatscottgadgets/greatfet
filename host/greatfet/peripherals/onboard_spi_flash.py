@@ -91,7 +91,7 @@ class OnboardSPIFlash(object):
         if address < 0:
             raise ValueError("Trying to write before the beginning of flash!")
 
-        if (address + length) > self.maximum_address:
+        if (address + length - 1) > self.maximum_address:
             raise ValueError("Attempting to write past the end of flash!")
 
         if erase_first:
@@ -128,7 +128,7 @@ class OnboardSPIFlash(object):
         if address < 0:
             raise ValueError("Trying to read before the beginning of flash!")
 
-        if (address + length) > self.maximum_address:
+        if (address + length - 1) > self.maximum_address:
             raise ValueError("Attempting to read past the end of flash!")
 
         # And execute our write callback on each of the data sections.
@@ -202,7 +202,7 @@ class OnboardSPIFlash(object):
         if address < 0:
             raise ValueError("Trying to write before the beginning of flash!")
 
-        if (address + length) > self.maximum_address:
+        if (address + length - 1) > self.maximum_address:
             raise ValueError("Attempting to write past the end of flash!")
 
         if (length > self.page_size):
@@ -235,8 +235,8 @@ class OnboardSPIFlash(object):
 
         Returns the read data as an array of bytes.
         """
-        if (address + length) > self.maximum_address:
-            raise ValueError("Attempting to write past the end of flash!")
+        if (address + length - 1) > self.maximum_address:
+            raise ValueError("Attempting to read past the end of flash!")
 
         if (length > self.page_size):
             raise ValueError("Attempting to use page function to read more than a page!")
