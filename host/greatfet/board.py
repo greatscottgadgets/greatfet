@@ -115,9 +115,15 @@ class GreatFETBoard(object):
             'idVendor': GREATFET_VENDOR_ID,
             'idProduct': GREATFET_PRODUCT_ID,
         }
+        identifiers.update(device_identifiers)
+
+        # For convenience, allow serial_number=None to be equivalent to not
+        # providing a serial number: a  GreatFET with any serail number will be
+        # accepted.
+        if 'serial_number' in identifiers and identifiers['serial_number'] is None:
+            del identifiers['serial_number']
 
         # Connect to the first available GreatFET device.
-        identifiers.update(device_identifiers)
         try:
             self.device = usb.core.find(**identifiers)
         except usb.core.USBError as e:
