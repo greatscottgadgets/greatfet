@@ -35,6 +35,7 @@ GREATFET_PRODUCT_ID = 0x60e6
 # up as generic USBErrors with errno 32 on affected platforms.
 LIBUSB_PIPE_ERROR = 32
 
+    
 class GreatFETBoard(object):
     """
     Class representing a USB-connected GreatFET device.
@@ -166,15 +167,28 @@ class GreatFETBoard(object):
 
     def serial_number(self, as_hex_string=True):
         """Reads the board's unique serial number."""
-        result = self.vendor_request_in(vendor_requests.READ_PARTID_SERIALNO, length=255)
+        result = self.vendor_request_in(vendor_requests.READ_PARTID_SERIALNO, length=24)
+
+        # The serial number starts eight bytes in.
+        result = result[8:]
 
         # If we've been asked to convert this to a hex string, do so.
         if as_hex_string:
-            hex_generator = ('{:02x}'.format(x) for x in result)
-            result = ''.join(hex_generator)
+            result = _to_hex_string(result)
 
         return result
 
+
+    def part_id(self, as_hex_string=True):
+        """Reads the board's unique serial number."""
+        result = self.vendor_request_in(vendor_requests.READ_PARTID_SERIALNO, length=24)
+
+        # The part ID constitues the first eight bytes of the response.
+        result = result[0:7]
+        if as_hex_string:
+            result = _to_hex_string(result)
+
+        return result
 
 
     def _vendor_request(self, direction, request, length_or_data=0, value=0, index=0, timeout=1000):
@@ -238,3 +252,7 @@ class GreatFETBoard(object):
 
 
 
+def _to_hex_string(byte_array):
+    """Convert a byte array to a hex string."""
+    hex_generator = ('{:02x}'.format(x) for x in byte_array)
+    return ''.join(hex_generator)

@@ -39,6 +39,7 @@ if __name__ == '__main__':
     print("Found a {}!".format(device.board_name()))
     print("  Board ID: {}".format(device.board_id()))
     print("  Firmware version: {}".format(device.firmware_version()))
+    print("  Part ID: {}".format(device.part_id()))
     print("  Serial number: {}".format(device.serial_number()))
 
     # ... and toggle it's third LED, for fun.
