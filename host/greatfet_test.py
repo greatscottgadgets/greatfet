@@ -20,23 +20,33 @@
 # Boston, MA 02110-1301, USA.
 #
 
+from __future__ import print_function
+
 import sys
 
+import greatfet
 from greatfet import GreatFET
+from greatfet.protocol import vendor_requests
 
 if __name__ == '__main__':
+
     device = GreatFET()
-    if device:
-        print 'Found GreatFET!'
-    else:
-        print 'No GreatFET devices found.'
+    if not device:
+        print('No GreatFET devices found!')
         sys.exit()
 
-    print "Board ID %d - %s" % (device.board_id(), device.board_name())
+    # Print the board's information...
+    print("Found a {}!".format(device.board_name()))
+    print("  Board ID: {}".format(device.board_id()))
+    print("  Firmware version: {}".format(device.firmware_version()))
+    print("  Serial number: {}".format(device.serial_number()))
 
-    #serial_no = vendor_request_in(usb_vendor_request_read_partid_serialno, length=30)
-    #print "Serial no: " + ''.join(["%02X " % x for x in serial_no])
+    # ... and toggle it's third LED, for fun.
+    device._vendor_request_out(vendor_requests.LED_TOGGLE, 3)
+
+    # Dev note: you can still easily use this to test low-level interfaces.
+    # For example, to send the ENABLE_USB1 request, use:
     #
-    ##vendor_request_out(usb_vendor_request_led_toggle, 4)
+    #   device._vendor_request_out(vendor_requests.ENABLE_USB1)
     #
-    #vendor_request_out(usb_vendor_request_enable_usb1)
+    # where ENABLE_USB1 is just an integer constant.

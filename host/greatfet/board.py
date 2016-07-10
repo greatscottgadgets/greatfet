@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
+# the Free Software Foundation; either version 2, or (at your option)gt
 # any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -18,25 +18,19 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 #
+"""
+Module containing the core definitions for a GreatFET board.
+"""
 
 import usb
 
+from .protocol import vendor_requests
+from .errors import DeviceNotFoundError
+
+# Default device identifiers.
 GREATFET_VENDOR_ID = 0x1d50
 GREATFET_PRODUCT_ID = 0x60e6
 
-# XXX: Move me!
-usb_vendor_request_erase_spiflash = 0
-usb_vendor_request_write_spiflash = 1
-usb_vendor_request_read_spiflash = 2
-usb_vendor_request_read_board_id = 3
-usb_vendor_request_read_version_string = 4
-usb_vendor_request_read_partid_serialno = 5
-usb_vendor_request_enable_usb1 = 6
-usb_vendor_request_led_toggle = 7
-
-#TODO: Move this.
-class DeviceNotFoundError(IOError):
-    pass
 
 class GreatFETBoard(object):
     """
@@ -129,13 +123,9 @@ class GreatFETBoard(object):
         # Ensure that we have an active USB connection to the device.
         self._initialize_usb()
 
-        # TODO: Initialize package drivers.
-
 
     def _initialize_usb(self):
-        """
-        Sets up our USB connection to the GreatFET device.
-        """
+        """Sets up our USB connection to the GreatFET device."""
 
         # For now, the GreatFET is only providing a single configuration, so we
         # can accept the first configuration provided.
@@ -143,38 +133,89 @@ class GreatFETBoard(object):
 
 
     def board_id(self):
-        """
-        Reads the board ID number for the GreatFET device.
-        """
+        """Reads the board ID number for the GreatFET device."""
 
         # Query the board for its ID number.
-        response = self._vendor_request_in(usb_vendor_request_read_board_id)
+        response = self._vendor_request_in(vendor_requests.READ_BOARD_ID)
         return response[0]
 
 
     def board_name(self):
-        """
-        Returns the human-readable product-name for the GreatFET device.
-        """
+        """Returns the human-readable product-name for the GreatFET device."""
         return self.BOARD_NAME
 
 
-    def _vendor_request(self, request, direction, length=0, val=0):
+    def firmware_version(self):
+        """Reads the board's firmware version."""
+
+        # Query the board for its firmware version, and convert that to a string.
+        return self._vendor_request_in_string(vendor_requests.READ_VERSION_STRING, length=255)
+
+
+    def serial_number(self, as_hex_string=True):
+        """Reads the board's unique serial number."""
+        result = self._vendor_request_in(vendor_requests.READ_PARTID_SERIALNO, length=255)
+
+        # If we've been asked to convert this to a hex string, do so.
+        if as_hex_string:
+            hex_generator = ('{:02x}'.format(x) for x in result)
+            result = ''.join(hex_generator)
+
+        return result
+
+
+
+    def _vendor_request(self, direction, request, length=0, value=0):
+        """Performs a USB vendor-specific control request.
+
+        See also _vendor_request_in()/_vendor_request_out(), which provide a
+        simpler syntax for simple requests.
+
+        Args:
+            request -- The number of the vendor request to be performed. Usually
+                a constant from the protocol.vendor_requests module.
+            value -- The value to be passed to the vendor request.
+            length -- The length of the data expected in response from the request.
         """
-        """
-        pass
+        return self.device.ctrl_transfer(
+            direction | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
+            request, value, 0, length)
+
 
     def _vendor_request_in(self, request, length=1):
-        """
-        """
-        return self.device.ctrl_transfer(
-            usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
-            request, 0, 0, length)
+        """Performs a USB control request that expects a respnose from the GreatFET.
 
-    def _vendor_request_out(self, request, val=0):
-        return self.device.ctrl_transfer(
-            usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
-            request, val, 0)
+        Args:
+            request -- The number of the vendor request to be performed. Usually
+                a constant from the protocol.vendor_requests module.
+            length -- The length of the data expected in response from the request.
+        """
+        return self._vendor_request(usb.ENDPOINT_IN, request, length)
+
+
+    def _vendor_request_in_string(self, request, length=255):
+        """Performs a USB control request that expects a respnose from the GreatFET.
+
+        Interprets the result as a UTF-8 encoded string.
+
+        Args:
+            request -- The number of the vendor request to be performed. Usually
+                a constant from the protocol.vendor_requests module.
+            length -- The length of the data expected in response from the request.
+        """
+        raw = self._vendor_request(usb.ENDPOINT_IN, request, length)
+        return raw.tostring().decode('utf-8')
+
+
+    def _vendor_request_out(self, request, value=0):
+        """Performs a USB control request that provides data to the GreatFET.
+
+        Args:
+            request -- The number of the vendor request to be performed. Usually
+                a constant from the protocol.vendor_requests module.
+            value -- The value to be passed to the vendor request.
+        """
+        return self._vendor_request(usb.ENDPOINT_OUT, request, value=value)
 
 
 
