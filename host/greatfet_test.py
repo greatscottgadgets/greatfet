@@ -42,11 +42,11 @@ if __name__ == '__main__':
     print("  Serial number: {}".format(device.serial_number()))
 
     # ... and toggle it's third LED, for fun.
-    device._vendor_request_out(vendor_requests.LED_TOGGLE, 3)
+    device.vendor_request_out(vendor_requests.LED_TOGGLE, 3)
 
     # Dev note: you can still easily use this to test low-level interfaces.
     # For example, to send the ENABLE_USB1 request, use:
     #
-    #   device._vendor_request_out(vendor_requests.ENABLE_USB1)
+    #   device.vendor_request_out(vendor_requests.ENABLE_USB1)
     #
     # where ENABLE_USB1 is just an integer constant.

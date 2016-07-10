@@ -20,6 +20,7 @@
 #
 
 from ..board import GreatFETBoard
+from ..peripherals.onboard_spi_flash import OnboardSPIFlash
 
 class GreatFETAzalea(GreatFETBoard):
     """ Class representing GreatFET Azalea base-boards. """
@@ -27,3 +28,15 @@ class GreatFETAzalea(GreatFETBoard):
     # Currently, all GreatFET Azalea boards have an ID of zero.
     HANDLED_BOARD_IDS = [0]
     BOARD_NAME = "GreatFET Azalea"
+
+
+    def __init__(self, **device_identifiers):
+        """ Initialize a new GreatFET Azalea connection. """
+
+        # Set up the core connection.
+        super(GreatFETAzalea, self).__init__(**device_identifiers)
+
+        # Initialize the fixed peripherals that come on the board.
+        # TODO: Use a self.add_peripheral mechanism, so peripherals can
+        # be dynamically listed?
+        self.onboard_flash = OnboardSPIFlash(self)

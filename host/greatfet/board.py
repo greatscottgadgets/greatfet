@@ -136,7 +136,7 @@ class GreatFETBoard(object):
         """Reads the board ID number for the GreatFET device."""
 
         # Query the board for its ID number.
-        response = self._vendor_request_in(vendor_requests.READ_BOARD_ID)
+        response = self.vendor_request_in(vendor_requests.READ_BOARD_ID, length=1)
         return response[0]
 
 
@@ -149,12 +149,12 @@ class GreatFETBoard(object):
         """Reads the board's firmware version."""
 
         # Query the board for its firmware version, and convert that to a string.
-        return self._vendor_request_in_string(vendor_requests.READ_VERSION_STRING, length=255)
+        return self.vendor_request_in_string(vendor_requests.READ_VERSION_STRING, length=255)
 
 
     def serial_number(self, as_hex_string=True):
         """Reads the board's unique serial number."""
-        result = self._vendor_request_in(vendor_requests.READ_PARTID_SERIALNO, length=255)
+        result = self.vendor_request_in(vendor_requests.READ_PARTID_SERIALNO, length=255)
 
         # If we've been asked to convert this to a hex string, do so.
         if as_hex_string:
@@ -165,7 +165,7 @@ class GreatFETBoard(object):
 
 
 
-    def _vendor_request(self, direction, request, length=0, value=0):
+    def _vendor_request(self, direction, request, length_or_data=0, value=0, index=0, timeout=1000):
         """Performs a USB vendor-specific control request.
 
         See also _vendor_request_in()/_vendor_request_out(), which provide a
@@ -175,14 +175,18 @@ class GreatFETBoard(object):
             request -- The number of the vendor request to be performed. Usually
                 a constant from the protocol.vendor_requests module.
             value -- The value to be passed to the vendor request.
-            length -- The length of the data expected in response from the request.
+
+        For IN requests:
+            length_or_data -- The length of the data expected in response from the request.
+        For OUT requests:
+            length_or_data -- The data to be sent to the device.
         """
         return self.device.ctrl_transfer(
             direction | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
-            request, value, 0, length)
+            request, value, index, length_or_data, timeout)
 
 
-    def _vendor_request_in(self, request, length=1):
+    def vendor_request_in(self, request, length, value=0, index=0):
         """Performs a USB control request that expects a respnose from the GreatFET.
 
         Args:
@@ -190,10 +194,11 @@ class GreatFETBoard(object):
                 a constant from the protocol.vendor_requests module.
             length -- The length of the data expected in response from the request.
         """
-        return self._vendor_request(usb.ENDPOINT_IN, request, length)
+        return self._vendor_request(usb.ENDPOINT_IN, request, length,
+            value=value, index=index)
 
 
-    def _vendor_request_in_string(self, request, length=255):
+    def vendor_request_in_string(self, request, length=255, value=0, index=0):
         """Performs a USB control request that expects a respnose from the GreatFET.
 
         Interprets the result as a UTF-8 encoded string.
@@ -203,11 +208,12 @@ class GreatFETBoard(object):
                 a constant from the protocol.vendor_requests module.
             length -- The length of the data expected in response from the request.
         """
-        raw = self._vendor_request(usb.ENDPOINT_IN, request, length)
+        raw = self._vendor_request(usb.ENDPOINT_IN, request, length_or_data=length,
+            value=value, index=index)
         return raw.tostring().decode('utf-8')
 
 
-    def _vendor_request_out(self, request, value=0):
+    def vendor_request_out(self, request, value=0, index=0, data=None, timeout=1000):
         """Performs a USB control request that provides data to the GreatFET.
 
         Args:
@@ -215,7 +221,8 @@ class GreatFETBoard(object):
                 a constant from the protocol.vendor_requests module.
             value -- The value to be passed to the vendor request.
         """
-        return self._vendor_request(usb.ENDPOINT_OUT, request, value=value)
+        return self._vendor_request(usb.ENDPOINT_OUT, request, value=value,
+            index=index, length_or_data=data, timeout=timeout)
 
 
 
