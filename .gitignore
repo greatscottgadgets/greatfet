@@ -7,6 +7,15 @@
 *.dfu
 host/build/
 
+# CMakeInternals
+CMakeFiles
+CMakeCache.txt
+
+# Compiled python files
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Operating system spew
 .DS_Store
 .Spotlight-V100
@@ -20,3 +29,4 @@ Thumbs.db
 *.sublime-workspace
 
 firmware/**/build
+

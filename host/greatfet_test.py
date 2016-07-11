@@ -20,47 +20,34 @@
 # Boston, MA 02110-1301, USA.
 #
 
+from __future__ import print_function
+
 import sys
-import usb
 
-usb_vendor_request_erase_spiflash = 0
-usb_vendor_request_write_spiflash = 1
-usb_vendor_request_read_spiflash = 2
-usb_vendor_request_read_board_id = 3
-usb_vendor_request_read_version_string = 4
-usb_vendor_request_read_partid_serialno = 5
-usb_vendor_request_enable_usb1 = 6
-usb_vendor_request_led_toggle = 7
-
-boards = {0:"GreatFET Azalea"}
-
-def vendor_request_in(request, length=1):
-    return device.ctrl_transfer(
-        #0xC0,
-        usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
-        request, 0, 0, length)
-
-def vendor_request_out(request, val=0):
-    return device.ctrl_transfer(
-        usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_DEVICE,
-        request, val, 0)
+import greatfet
+from greatfet import GreatFET
+from greatfet.protocol import vendor_requests
 
 if __name__ == '__main__':
-    device = usb.core.find(idVendor=0x1d50, idProduct=0x60e6)
-    if device:
-        print 'Found GreatFET'
-    else:
-        print 'No GreatFET devices found'
+
+    device = GreatFET()
+    if not device:
+        print('No GreatFET devices found!')
         sys.exit()
-    
-    device.set_configuration()
-    
-    board_id = vendor_request_in(usb_vendor_request_read_board_id)
-    print "Board ID %d - %s" % (board_id[0], boards[board_id[0]])
-    
-    serial_no = vendor_request_in(usb_vendor_request_read_partid_serialno, length=30)
-    print "Serial no: " + ''.join(["%02X " % x for x in serial_no])
-    
-    #vendor_request_out(usb_vendor_request_led_toggle, 4)
-    
-    vendor_request_out(usb_vendor_request_enable_usb1)
+
+    # Print the board's information...
+    print("Found a {}!".format(device.board_name()))
+    print("  Board ID: {}".format(device.board_id()))
+    print("  Firmware version: {}".format(device.firmware_version()))
+    print("  Part ID: {}".format(device.part_id()))
+    print("  Serial number: {}".format(device.serial_number()))
+
+    # ... and toggle it's third LED, for fun.
+    device.vendor_request_out(vendor_requests.LED_TOGGLE, 3)
+
+    # Dev note: you can still easily use this to test low-level interfaces.
+    # For example, to send the ENABLE_USB1 request, use:
+    #
+    #   device.vendor_request_out(vendor_requests.ENABLE_USB1)
+    #
+    # where ENABLE_USB1 is just an integer constant.
