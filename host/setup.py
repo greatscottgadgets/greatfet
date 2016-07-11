@@ -10,7 +10,7 @@ setup(
     name='GreatFET',
     version='0.0', #TODO: Derive this from the main module.
     url='https://greatscottgadgets.com/greatfet/',
-    license='GPLv2',
+    license='BSD',
     #author='', #TODO: Figure out whose name should go here!
     #author_email='',
     tests_require=[''],
