@@ -24,18 +24,46 @@
 #include "usb_api_spiflash.h"
 #include "usb_queue.h"
 
+#include <gpio.h>
 #include <stddef.h>
 #include <greatfet_core.h>
 #include <s25fl064p.h>
+#include <s25fl064p_target.h>
 
 /* Buffer size == spi_flash_spansion.page_len */
 uint8_t spiflash_spansion_buffer[256U];
+static struct gpio_t gpio_s25fl064p_select	= GPIO(2, 10); /* P5_1 */
 
 usb_request_status_t usb_vendor_request_read_spiflash_spansion(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	uint32_t addr;
 	uint16_t len;
+
+	/* s25fl064p from my technicolor router */
+	const ssp_config_t ssp_config_s25fl064p = {
+		.data_bits = SSP_DATA_8BITS,
+		.serial_clock_rate = 2,
+		.clock_prescale_rate = 2,
+		.gpio_select = &gpio_s25fl064p_select,
+	};
+	
+	spi_bus_t spi_bus_ssp1 = {
+		.obj = (void*)SSP1_BASE,
+		.config = &ssp_config_s25fl064p,
+		.start = spi_ssp_start,
+		.stop = spi_ssp_stop,
+		.transfer = spi_ssp_transfer,
+		.transfer_gather = spi_ssp_transfer_gather,
+	};
+	
+	s25fl064p_driver_t spi_flash_spansion = {
+		.bus = &spi_bus_ssp1,
+		.gpio_hold = NULL,
+		.gpio_wp = NULL,
+		.target_init = s25fl064p_target_init,
+	};
+	
 	spi_bus_start(spi_flash_spansion.bus, &ssp_config_s25fl064p);
 	s25fl064p_setup(&spi_flash_spansion);
 

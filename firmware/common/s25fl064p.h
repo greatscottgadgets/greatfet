@@ -29,14 +29,6 @@
 #include <stddef.h>
 
 #include "spi_bus.h"
-#include "gpio.h"
-
-typedef union
-{
-	uint64_t id_64b;
-	uint32_t id_32b[2]; /* 2*32bits 64bits Unique ID */
-	uint8_t id_8b[8]; /* 8*8bits 64bits Unique ID */
-} s25fl064p_unique_id_t;
 
 struct s25fl064p_driver_t;
 typedef struct s25fl064p_driver_t s25fl064p_driver_t;

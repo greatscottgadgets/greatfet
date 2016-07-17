@@ -56,8 +56,6 @@ static struct gpio_t gpio_w25q80bv_hold		= GPIO(1, 14);
 static struct gpio_t gpio_w25q80bv_wp		= GPIO(1, 15);
 static struct gpio_t gpio_w25q80bv_select	= GPIO(5, 11);
 
-static struct gpio_t gpio_s25fl064p_select	= GPIO(2, 10); /* P5_1 */
-
 /* CPLD JTAG interface GPIO pins */
 static struct gpio_t gpio_tdo			= GPIO(5, 18);
 static struct gpio_t gpio_tck			= GPIO(3,  0);
@@ -99,30 +97,6 @@ w25q80bv_driver_t spi_flash = {
 	.gpio_hold = &gpio_w25q80bv_hold,
 	.gpio_wp = &gpio_w25q80bv_wp,
 	.target_init = w25q80bv_target_init,
-};
-
-/* s25fl064p from my technicolor router */
-const ssp_config_t ssp_config_s25fl064p = {
-	.data_bits = SSP_DATA_8BITS,
-	.serial_clock_rate = 2,
-	.clock_prescale_rate = 2,
-	.gpio_select = &gpio_s25fl064p_select,
-};
-
-spi_bus_t spi_bus_ssp1 = {
-	.obj = (void*)SSP1_BASE,
-	.config = &ssp_config_s25fl064p,
-	.start = spi_ssp_start,
-	.stop = spi_ssp_stop,
-	.transfer = spi_ssp_transfer,
-	.transfer_gather = spi_ssp_transfer_gather,
-};
-
-s25fl064p_driver_t spi_flash_spansion = {
-	.bus = &spi_bus_ssp1,
-	.gpio_hold = &gpio_w25q80bv_hold,
-	.gpio_wp = &gpio_w25q80bv_wp,
-	.target_init = s25fl064p_target_init,
 };
 
 void delay(uint32_t duration)
