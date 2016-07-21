@@ -28,7 +28,7 @@ setup(
         'Environment :: Plugins',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
         'Topic :: Security',
