@@ -37,7 +37,8 @@
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
 #include "usb_api_spiflash.h"
-#include "usb_api_spiflash_spansion.h"
+#include "usb_api_gpio.h"
+//#include "usb_api_spiflash_spansion.h"
 #include "usb_bulk_buffer.h"
 
 usb_request_status_t usb_vendor_request_enable_usb1(
@@ -75,7 +76,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_partid_serialno,
 	usb_vendor_request_enable_usb1,
 	usb_vendor_request_led_toggle,
-	usb_vendor_request_read_spiflash_spansion,
+	//usb_vendor_request_read_spiflash_spansion,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -160,11 +161,13 @@ void init_usb0(void) {
 
 	usb_queue_init(&usb0_endpoint_control_out_queue);
 	usb_queue_init(&usb0_endpoint_control_in_queue);
-	//usb_queue_init(&usb0_endpoint_bulk_out_queue);
-	//usb_queue_init(&usb0_endpoint_bulk_in_queue);
+	usb_queue_init(&usb0_endpoint_bulk_out_queue);
+	usb_queue_init(&usb0_endpoint_bulk_in_queue);
 
 	usb_endpoint_init(&usb0_endpoint_control_out);
 	usb_endpoint_init(&usb0_endpoint_control_in);
+	usb_endpoint_init(&usb0_endpoint_bulk_out);
+	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
 	nvic_set_priority(NVIC_USB0_IRQ, 254);
 
