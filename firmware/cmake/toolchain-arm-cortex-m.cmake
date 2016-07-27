@@ -24,7 +24,7 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 
 include(CMakeForceCompiler)
 
-CMAKE_FORCE_C_COMPILER(/opt/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-gcc GNU)
+CMAKE_FORCE_C_COMPILER(arm-none-eabi-gcc GNU)
 CMAKE_FORCE_CXX_COMPILER(arm-none-eabi-g++ GNU)
 
 execute_process(
