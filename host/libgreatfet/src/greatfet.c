@@ -21,7 +21,7 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABI
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "hackrf.h"
+#include "greatfet.h"
 
 #include <stdlib.h>
 
@@ -34,7 +34,7 @@ typedef int bool;
 #define false 0
 #endif
 
-#ifdef HACKRF_BIG_ENDIAN
+#ifdef GREATFET_BIG_ENDIAN
 #define TO_LE(x) __builtin_bswap32(x)
 #define TO_LE64(x) __builtin_bswap64(x)
 #else
@@ -45,45 +45,45 @@ typedef int bool;
 // TODO: Factor this into a shared #include so that firmware can use
 // the same values.
 typedef enum {
-	HACKRF_VENDOR_REQUEST_SET_TRANSCEIVER_MODE = 1,
-	HACKRF_VENDOR_REQUEST_MAX2837_WRITE = 2,
-	HACKRF_VENDOR_REQUEST_MAX2837_READ = 3,
-	HACKRF_VENDOR_REQUEST_SI5351C_WRITE = 4,
-	HACKRF_VENDOR_REQUEST_SI5351C_READ = 5,
-	HACKRF_VENDOR_REQUEST_SAMPLE_RATE_SET = 6,
-	HACKRF_VENDOR_REQUEST_BASEBAND_FILTER_BANDWIDTH_SET = 7,
-	HACKRF_VENDOR_REQUEST_RFFC5071_WRITE = 8,
-	HACKRF_VENDOR_REQUEST_RFFC5071_READ = 9,
-	HACKRF_VENDOR_REQUEST_SPIFLASH_ERASE = 10,
-	HACKRF_VENDOR_REQUEST_SPIFLASH_WRITE = 11,
-	HACKRF_VENDOR_REQUEST_SPIFLASH_READ = 12,
-	HACKRF_VENDOR_REQUEST_BOARD_ID_READ = 14,
-	HACKRF_VENDOR_REQUEST_VERSION_STRING_READ = 15,
-	HACKRF_VENDOR_REQUEST_SET_FREQ = 16,
-	HACKRF_VENDOR_REQUEST_AMP_ENABLE = 17,
-	HACKRF_VENDOR_REQUEST_BOARD_PARTID_SERIALNO_READ = 18,
-	HACKRF_VENDOR_REQUEST_SET_LNA_GAIN = 19,
-	HACKRF_VENDOR_REQUEST_SET_VGA_GAIN = 20,
-	HACKRF_VENDOR_REQUEST_SET_TXVGA_GAIN = 21,
-	HACKRF_VENDOR_REQUEST_ANTENNA_ENABLE = 23,
-	HACKRF_VENDOR_REQUEST_SET_FREQ_EXPLICIT = 24,
-} hackrf_vendor_request;
+	GREATFET_VENDOR_REQUEST_SET_TRANSCEIVER_MODE = 1,
+	GREATFET_VENDOR_REQUEST_MAX2837_WRITE = 2,
+	GREATFET_VENDOR_REQUEST_MAX2837_READ = 3,
+	GREATFET_VENDOR_REQUEST_SI5351C_WRITE = 4,
+	GREATFET_VENDOR_REQUEST_SI5351C_READ = 5,
+	GREATFET_VENDOR_REQUEST_SAMPLE_RATE_SET = 6,
+	GREATFET_VENDOR_REQUEST_BASEBAND_FILTER_BANDWIDTH_SET = 7,
+	GREATFET_VENDOR_REQUEST_RFFC5071_WRITE = 8,
+	GREATFET_VENDOR_REQUEST_RFFC5071_READ = 9,
+	GREATFET_VENDOR_REQUEST_SPIFLASH_ERASE = 10,
+	GREATFET_VENDOR_REQUEST_SPIFLASH_WRITE = 11,
+	GREATFET_VENDOR_REQUEST_SPIFLASH_READ = 12,
+	GREATFET_VENDOR_REQUEST_BOARD_ID_READ = 14,
+	GREATFET_VENDOR_REQUEST_VERSION_STRING_READ = 15,
+	GREATFET_VENDOR_REQUEST_SET_FREQ = 16,
+	GREATFET_VENDOR_REQUEST_AMP_ENABLE = 17,
+	GREATFET_VENDOR_REQUEST_BOARD_PARTID_SERIALNO_READ = 18,
+	GREATFET_VENDOR_REQUEST_SET_LNA_GAIN = 19,
+	GREATFET_VENDOR_REQUEST_SET_VGA_GAIN = 20,
+	GREATFET_VENDOR_REQUEST_SET_TXVGA_GAIN = 21,
+	GREATFET_VENDOR_REQUEST_ANTENNA_ENABLE = 23,
+	GREATFET_VENDOR_REQUEST_SET_FREQ_EXPLICIT = 24,
+} greatfet_vendor_request;
 
 typedef enum {
 	USB_CONFIG_STANDARD = 0x1,
 	USB_CONFIG_CPLD_UPDATE  = 0x2,
-} hackrf_usb_configurations;
+} greatfet_usb_configurations;
 
 typedef enum {
-	HACKRF_TRANSCEIVER_MODE_OFF = 0,
-	HACKRF_TRANSCEIVER_MODE_RECEIVE = 1,
-	HACKRF_TRANSCEIVER_MODE_TRANSMIT = 2,
-} hackrf_transceiver_mode;
+	GREATFET_TRANSCEIVER_MODE_OFF = 0,
+	GREATFET_TRANSCEIVER_MODE_RECEIVE = 1,
+	GREATFET_TRANSCEIVER_MODE_TRANSMIT = 2,
+} greatfet_transceiver_mode;
 
-struct hackrf_device {
+struct greatfet_device {
 	libusb_device_handle* usb_device;
 	struct libusb_transfer** transfers;
-	hackrf_sample_block_cb_fn callback;
+	greatfet_sample_block_cb_fn callback;
 	volatile bool transfer_thread_started; /* volatile shared between threads (read only) */
 	pthread_t transfer_thread;
 	uint32_t transfer_count;
@@ -119,10 +119,8 @@ static const max2837_ft_t max2837_ft[] = {
 
 volatile bool do_exit = false;
 
-static const uint16_t hackrf_usb_vid = 0x1d50;
-static const uint16_t hackrf_jawbreaker_usb_pid = 0x604b;
-static const uint16_t hackrf_one_usb_pid = 0x6089;
-static const uint16_t rad1o_usb_pid = 0xcc15;
+static const uint16_t greatfet_usb_vid = 0x1d50;
+static const uint16_t greatfet_azalea_usb_pid = 0x1337;
 
 static libusb_context* g_libusb_context = NULL;
 
@@ -131,7 +129,7 @@ static void request_exit(void)
 	do_exit = true;
 }
 
-static int cancel_transfers(hackrf_device* device)
+static int cancel_transfers(greatfet_device* device)
 {
 	uint32_t transfer_index;
 
@@ -144,13 +142,13 @@ static int cancel_transfers(hackrf_device* device)
 				libusb_cancel_transfer(device->transfers[transfer_index]);
 			}
 		}
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	} else {
-		return HACKRF_ERROR_OTHER;
+		return GREATFET_ERROR_OTHER;
 	}
 }
 
-static int free_transfers(hackrf_device* device)
+static int free_transfers(greatfet_device* device)
 {
 	uint32_t transfer_index;
 
@@ -168,10 +166,10 @@ static int free_transfers(hackrf_device* device)
 		free(device->transfers);
 		device->transfers = NULL;
 	}
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
-static int allocate_transfers(hackrf_device* const device)
+static int allocate_transfers(greatfet_device* const device)
 {
 	if( device->transfers == NULL )
 	{
@@ -179,7 +177,7 @@ static int allocate_transfers(hackrf_device* const device)
 		device->transfers = (struct libusb_transfer**) calloc(device->transfer_count, sizeof(struct libusb_transfer));
 		if( device->transfers == NULL )
 		{
-			return HACKRF_ERROR_NO_MEM;
+			return GREATFET_ERROR_NO_MEM;
 		}
 
 		for(transfer_index=0; transfer_index<device->transfer_count; transfer_index++)
@@ -187,7 +185,7 @@ static int allocate_transfers(hackrf_device* const device)
 			device->transfers[transfer_index] = libusb_alloc_transfer(0);
 			if( device->transfers[transfer_index] == NULL )
 			{
-				return HACKRF_ERROR_LIBUSB;
+				return GREATFET_ERROR_LIBUSB;
 			}
 
 			libusb_fill_bulk_transfer(
@@ -203,17 +201,17 @@ static int allocate_transfers(hackrf_device* const device)
 
 			if( device->transfers[transfer_index]->buffer == NULL )
 			{
-				return HACKRF_ERROR_NO_MEM;
+				return GREATFET_ERROR_NO_MEM;
 			}
 		}
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	} else {
-		return HACKRF_ERROR_BUSY;
+		return GREATFET_ERROR_BUSY;
 	}
 }
 
 static int prepare_transfers(
-	hackrf_device* device,
+	greatfet_device* device,
 	const uint_fast8_t endpoint_address,
 	libusb_transfer_cb_fn callback)
 {
@@ -229,13 +227,13 @@ static int prepare_transfers(
 			error = libusb_submit_transfer(device->transfers[transfer_index]);
 			if( error != 0 )
 			{
-				return HACKRF_ERROR_LIBUSB;
+				return GREATFET_ERROR_LIBUSB;
 			}
 		}
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	} else {
 		// This shouldn't happen.
-		return HACKRF_ERROR_OTHER;
+		return GREATFET_ERROR_OTHER;
 	}
 }
 
@@ -249,7 +247,7 @@ static int detach_kernel_drivers(libusb_device_handle* usb_device_handle)
 	result = libusb_get_active_config_descriptor(dev, &config);
 	if( result < 0 )
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	}
 
 	num_interfaces = config->bNumInterfaces;
@@ -262,25 +260,25 @@ static int detach_kernel_drivers(libusb_device_handle* usb_device_handle)
 			if( result == LIBUSB_ERROR_NOT_SUPPORTED ) {
 				return 0;
 			}
-			return HACKRF_ERROR_LIBUSB;
+			return GREATFET_ERROR_LIBUSB;
 		} else if( result == 1 ) {
 			result = libusb_detach_kernel_driver(usb_device_handle, i);
 			if( result != 0 )
 			{
-				return HACKRF_ERROR_LIBUSB;
+				return GREATFET_ERROR_LIBUSB;
 			}
 		}
 	}
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
-static int set_hackrf_configuration(libusb_device_handle* usb_device, int config)
+static int set_greatfet_configuration(libusb_device_handle* usb_device, int config)
 {
 	int result, curr_config;
 	result = libusb_get_configuration(usb_device, &curr_config);
 	if( result != 0 )
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	}
 
 	if(curr_config != config)
@@ -293,7 +291,7 @@ static int set_hackrf_configuration(libusb_device_handle* usb_device, int config
 		result = libusb_set_configuration(usb_device, config);
 		if( result != 0 )
 		{
-			return HACKRF_ERROR_LIBUSB;
+			return GREATFET_ERROR_LIBUSB;
 		}
 	}
 
@@ -310,23 +308,23 @@ extern "C"
 {
 #endif
 
-int ADDCALL hackrf_init(void)
+int ADDCALL greatfet_init(void)
 {
 	int libusb_error;
 	if (g_libusb_context != NULL) {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 	
 	libusb_error = libusb_init(&g_libusb_context);
 	if( libusb_error != 0 )
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_exit(void)
+int ADDCALL greatfet_exit(void)
 {
 	if( g_libusb_context != NULL )
 	{
@@ -334,13 +332,13 @@ int ADDCALL hackrf_exit(void)
 		g_libusb_context = NULL;
 	}
 
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
 #include <stdio.h>
 #include <string.h>
 
-hackrf_device_list_t* ADDCALL hackrf_device_list()
+greatfet_device_list_t* ADDCALL greatfet_device_list()
 {
 	ssize_t i;
 	libusb_device_handle* usb_device = NULL;
@@ -348,18 +346,18 @@ hackrf_device_list_t* ADDCALL hackrf_device_list()
 	char serial_number[64];
 	int serial_number_length;
 
-	hackrf_device_list_t* list = calloc(1, sizeof(*list));
+	greatfet_device_list_t* list = calloc(1, sizeof(*list));
 	if ( list == NULL )
 		return NULL;
 		
 	list->usb_devicecount = libusb_get_device_list(g_libusb_context, (libusb_device ***)&list->usb_devices);
 	
 	list->serial_numbers = calloc(list->usb_devicecount, sizeof(void *));
-	list->usb_board_ids = calloc(list->usb_devicecount, sizeof(enum hackrf_usb_board_id));
+	list->usb_board_ids = calloc(list->usb_devicecount, sizeof(enum greatfet_usb_board_id));
 	list->usb_device_index = calloc(list->usb_devicecount, sizeof(int));
 	
 	if ( list->serial_numbers == NULL || list->usb_board_ids == NULL || list->usb_device_index == NULL) {
-		hackrf_device_list_free(list);
+		greatfet_device_list_free(list);
 		return NULL;
 	}
 	
@@ -367,10 +365,8 @@ hackrf_device_list_t* ADDCALL hackrf_device_list()
 		struct libusb_device_descriptor device_descriptor;
 		libusb_get_device_descriptor(list->usb_devices[i], &device_descriptor);
 		
-		if( device_descriptor.idVendor == hackrf_usb_vid ) {
-			if((device_descriptor.idProduct == hackrf_one_usb_pid) ||
-			   (device_descriptor.idProduct == hackrf_jawbreaker_usb_pid) ||
-			   (device_descriptor.idProduct == rad1o_usb_pid)) {
+		if( device_descriptor.idVendor == greatfet_usb_vid ) {
+			if((device_descriptor.idProduct == greatfet_azalea_usb_pid)) {
 				int idx = list->devicecount++;
 				list->usb_board_ids[idx] = device_descriptor.idProduct;
 				list->usb_device_index[idx] = i;
@@ -397,7 +393,7 @@ hackrf_device_list_t* ADDCALL hackrf_device_list()
 	return list;
 }
 
-void ADDCALL hackrf_device_list_free(hackrf_device_list_t *list)
+void ADDCALL greatfet_device_list_free(greatfet_device_list_t *list)
 {
 	int i;
 	
@@ -414,7 +410,7 @@ void ADDCALL hackrf_device_list_free(hackrf_device_list_t *list)
 	free(list);
 }
 
-libusb_device_handle* hackrf_open_usb(const char* const desired_serial_number)
+libusb_device_handle* greatfet_open_usb(const char* const desired_serial_number)
 {
 	libusb_device_handle* usb_device = NULL;
 	libusb_device** devices = NULL;
@@ -439,10 +435,8 @@ libusb_device_handle* hackrf_open_usb(const char* const desired_serial_number)
 		struct libusb_device_descriptor device_descriptor;
 		libusb_get_device_descriptor(devices[i], &device_descriptor);
 		
-		if( device_descriptor.idVendor == hackrf_usb_vid ) {
-			if((device_descriptor.idProduct == hackrf_one_usb_pid) ||
-			   (device_descriptor.idProduct == hackrf_jawbreaker_usb_pid) ||
-			   (device_descriptor.idProduct == rad1o_usb_pid)) {
+		if( device_descriptor.idVendor == greatfet_usb_vid ) {
+			if((device_descriptor.idProduct == greatfet_azalea_usb_pid)) {
 				printf("USB device %4x:%4x:", device_descriptor.idVendor, device_descriptor.idProduct);
 				
 				if( desired_serial_number != NULL ) {
@@ -484,15 +478,15 @@ libusb_device_handle* hackrf_open_usb(const char* const desired_serial_number)
 	return usb_device;
 }
 
-static int hackrf_open_setup(libusb_device_handle* usb_device, hackrf_device** device)
+static int greatfet_open_setup(libusb_device_handle* usb_device, greatfet_device** device)
 {
 	int result;
-	hackrf_device* lib_device;
+	greatfet_device* lib_device;
 
 	//int speed = libusb_get_device_speed(usb_device);
 	// TODO: Error or warning if not high speed USB?
 	
-	result = set_hackrf_configuration(usb_device, USB_CONFIG_STANDARD);
+	result = set_greatfet_configuration(usb_device, USB_CONFIG_STANDARD);
 	if( result != LIBUSB_SUCCESS )
 	{
 		libusb_close(usb_device);
@@ -503,16 +497,16 @@ static int hackrf_open_setup(libusb_device_handle* usb_device, hackrf_device** d
 	if( result != LIBUSB_SUCCESS )
 	{
 		libusb_close(usb_device);
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	}
 
 	lib_device = NULL;
-	lib_device = (hackrf_device*)malloc(sizeof(*lib_device));
+	lib_device = (greatfet_device*)malloc(sizeof(*lib_device));
 	if( lib_device == NULL )
 	{
 		libusb_release_interface(usb_device, 0);
 		libusb_close(usb_device);
-		return HACKRF_ERROR_NO_MEM;
+		return GREATFET_ERROR_NO_MEM;
 	}
 
 	lib_device->usb_device = usb_device;
@@ -534,94 +528,84 @@ static int hackrf_open_setup(libusb_device_handle* usb_device, hackrf_device** d
 		free(lib_device);
 		libusb_release_interface(usb_device, 0);
 		libusb_close(usb_device);
-		return HACKRF_ERROR_NO_MEM;
+		return GREATFET_ERROR_NO_MEM;
 	}
 
 	*device = lib_device;
 
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_open(hackrf_device** device)
+int ADDCALL greatfet_open(greatfet_device** device)
 {
 	libusb_device_handle* usb_device;
 	
 	if( device == NULL )
 	{
-		return HACKRF_ERROR_INVALID_PARAM;
+		return GREATFET_ERROR_INVALID_PARAM;
 	}
 	
-	usb_device = libusb_open_device_with_vid_pid(g_libusb_context, hackrf_usb_vid, hackrf_one_usb_pid);
+	usb_device = libusb_open_device_with_vid_pid(g_libusb_context, greatfet_usb_vid, greatfet_azalea_usb_pid);
 	
 	if( usb_device == NULL )
 	{
-		usb_device = libusb_open_device_with_vid_pid(g_libusb_context, hackrf_usb_vid, hackrf_jawbreaker_usb_pid);
+		return GREATFET_ERROR_NOT_FOUND;
 	}
 	
-	if( usb_device == NULL )
-	{
-		usb_device = libusb_open_device_with_vid_pid(g_libusb_context, hackrf_usb_vid, rad1o_usb_pid);
-	}
-	
-	if( usb_device == NULL )
-	{
-		return HACKRF_ERROR_NOT_FOUND;
-	}
-	
-	return hackrf_open_setup(usb_device, device);
+	return greatfet_open_setup(usb_device, device);
 }
 
-int ADDCALL hackrf_open_by_serial(const char* const desired_serial_number, hackrf_device** device)
+int ADDCALL greatfet_open_by_serial(const char* const desired_serial_number, greatfet_device** device)
 {
 	libusb_device_handle* usb_device;
 	
 	if( desired_serial_number == NULL )
 	{
-		return hackrf_open(device);
+		return greatfet_open(device);
 	}
 	
 	if( device == NULL )
 	{
-		return HACKRF_ERROR_INVALID_PARAM;
+		return GREATFET_ERROR_INVALID_PARAM;
 	}
 	
-	usb_device = hackrf_open_usb(desired_serial_number);
+	usb_device = greatfet_open_usb(desired_serial_number);
 	
 	if( usb_device == NULL )
 	{
-		return HACKRF_ERROR_NOT_FOUND;
+		return GREATFET_ERROR_NOT_FOUND;
 	}
 	
-	return hackrf_open_setup(usb_device, device);
+	return greatfet_open_setup(usb_device, device);
 }
 
-int ADDCALL hackrf_device_list_open(hackrf_device_list_t *list, int idx, hackrf_device** device)
+int ADDCALL greatfet_device_list_open(greatfet_device_list_t *list, int idx, greatfet_device** device)
 {
 	libusb_device_handle* usb_device;
 	int i;
 	
 	if( device == NULL || list == NULL || idx < 0 || idx >= list->devicecount )
 	{
-		return HACKRF_ERROR_INVALID_PARAM;
+		return GREATFET_ERROR_INVALID_PARAM;
 	}
 	
 	i = list->usb_device_index[idx];
 
 	if( libusb_open(list->usb_devices[i], &usb_device) != 0 ) {
 		usb_device = NULL;
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	}
 	
-	return hackrf_open_setup(usb_device, device);
+	return greatfet_open_setup(usb_device, device);
 }
 
-int ADDCALL hackrf_set_transceiver_mode(hackrf_device* device, hackrf_transceiver_mode value)
+int ADDCALL greatfet_set_transceiver_mode(greatfet_device* device, greatfet_transceiver_mode value)
 {
 	int result;
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SET_TRANSCEIVER_MODE,
+		GREATFET_VENDOR_REQUEST_SET_TRANSCEIVER_MODE,
 		value,
 		0,
 		NULL,
@@ -631,220 +615,55 @@ int ADDCALL hackrf_set_transceiver_mode(hackrf_device* device, hackrf_transceive
 
 	if( result != 0 )
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_max2837_read(hackrf_device* device, uint8_t register_number, uint16_t* value)
+int ADDCALL greatfet_max2837_read(greatfet_device* device, uint8_t register_number, uint16_t* value)
 {
-	int result;
-
-	if( register_number >= 32 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_MAX2837_READ,
-		0,
-		register_number,
-		(unsigned char*)value,
-		2,
-		0
-	);
-
-	if( result < 2 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_max2837_write(hackrf_device* device, uint8_t register_number, uint16_t value)
+int ADDCALL greatfet_max2837_write(greatfet_device* device, uint8_t register_number, uint16_t value)
 {
-	int result;
-	
-	if( register_number >= 32 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-	if( value >= 0x400 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_MAX2837_WRITE,
-		value,
-		register_number,
-		NULL,
-		0,
-		0
-	);
-
-	if( result != 0 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_si5351c_read(hackrf_device* device, uint16_t register_number, uint16_t* value)
+int ADDCALL greatfet_si5351c_read(greatfet_device* device, uint16_t register_number, uint16_t* value)
 {
-	uint8_t temp_value;
-	int result;
-	
-	if( register_number >= 256 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	temp_value = 0;
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SI5351C_READ,
-		0,
-		register_number,
-		(unsigned char*)&temp_value,
-		1,
-		0
-	);
-
-	if( result < 1 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		*value = temp_value;
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_si5351c_write(hackrf_device* device, uint16_t register_number, uint16_t value)
+int ADDCALL greatfet_si5351c_write(greatfet_device* device, uint16_t register_number, uint16_t value)
 {
-	int result;
-	
-	if( register_number >= 256 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-	if( value >= 256 ) {
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SI5351C_WRITE,
-		value,
-		register_number,
-		NULL,
-		0,
-		0
-	);
-
-	if( result != 0 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_set_baseband_filter_bandwidth(hackrf_device* device, const uint32_t bandwidth_hz)
+int ADDCALL greatfet_set_baseband_filter_bandwidth(greatfet_device* device, const uint32_t bandwidth_hz)
+{
+		return GREATFET_SUCCESS;
+}
+
+
+int ADDCALL greatfet_rffc5071_read(greatfet_device* device, uint8_t register_number, uint16_t* value)
+{
+		return GREATFET_SUCCESS;
+}
+
+int ADDCALL greatfet_rffc5071_write(greatfet_device* device, uint8_t register_number, uint16_t value)
+{
+		return GREATFET_SUCCESS;
+}
+
+int ADDCALL greatfet_spiflash_erase(greatfet_device* device)
 {
 	int result;
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_BASEBAND_FILTER_BANDWIDTH_SET,
-		bandwidth_hz & 0xffff,
-		bandwidth_hz >> 16,
-		NULL,
-		0,
-		0
-	);
-
-	if( result != 0 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
-}
-
-
-int ADDCALL hackrf_rffc5071_read(hackrf_device* device, uint8_t register_number, uint16_t* value)
-{
-	int result;
-	
-	if( register_number >= 31 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_RFFC5071_READ,
-		0,
-		register_number,
-		(unsigned char*)value,
-		2,
-		0
-	);
-
-	if( result < 2 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
-}
-
-int ADDCALL hackrf_rffc5071_write(hackrf_device* device, uint8_t register_number, uint16_t value)
-{
-	int result;
-	
-	if( register_number >= 31 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_RFFC5071_WRITE,
-		value,
-		register_number,
-		NULL,
-		0,
-		0
-	);
-
-	if( result != 0 )
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
-}
-
-int ADDCALL hackrf_spiflash_erase(hackrf_device* device)
-{
-	int result;
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SPIFLASH_ERASE,
+		GREATFET_VENDOR_REQUEST_SPIFLASH_ERASE,
 		0,
 		0,
 		NULL,
@@ -854,26 +673,26 @@ int ADDCALL hackrf_spiflash_erase(hackrf_device* device)
 
 	if (result != 0)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_spiflash_write(hackrf_device* device, const uint32_t address,
+int ADDCALL greatfet_spiflash_write(greatfet_device* device, const uint32_t address,
 		const uint16_t length, unsigned char* const data)
 {
 	int result;
 	
 	if (address > 0x0FFFFF)
 	{
-		return HACKRF_ERROR_INVALID_PARAM;
+		return GREATFET_ERROR_INVALID_PARAM;
 	}
 
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SPIFLASH_WRITE,
+		GREATFET_VENDOR_REQUEST_SPIFLASH_WRITE,
 		address >> 16,
 		address & 0xFFFF,
 		data,
@@ -883,26 +702,26 @@ int ADDCALL hackrf_spiflash_write(hackrf_device* device, const uint32_t address,
 
 	if (result < length)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_spiflash_read(hackrf_device* device, const uint32_t address,
+int ADDCALL greatfet_spiflash_read(greatfet_device* device, const uint32_t address,
 		const uint16_t length, unsigned char* data)
 {
 	int result;
 	
 	if (address > 0x0FFFFF)
 	{
-		return HACKRF_ERROR_INVALID_PARAM;
+		return GREATFET_ERROR_INVALID_PARAM;
 	}
 
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SPIFLASH_READ,
+		GREATFET_VENDOR_REQUEST_SPIFLASH_READ,
 		address >> 16,
 		address & 0xFFFF,
 		data,
@@ -912,49 +731,25 @@ int ADDCALL hackrf_spiflash_read(hackrf_device* device, const uint32_t address,
 
 	if (result < length)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_cpld_write(hackrf_device* device,
+int ADDCALL greatfet_cpld_write(greatfet_device* device,
 		unsigned char* const data, const unsigned int total_length)
 {
-	const unsigned int chunk_size = 512;
-	unsigned int i;
-	int result, transferred = 0;
-	
-	result = hackrf_set_transceiver_mode(device, TRANSCEIVER_MODE_CPLD_UPDATE);
-	if (result != 0)
-		return result;
-	
-	for (i = 0; i < total_length; i += chunk_size)
-	{
-		result = libusb_bulk_transfer(
-			device->usb_device,
-			LIBUSB_ENDPOINT_OUT | 2,
-			&data[i],
-			chunk_size,
-			&transferred,
-			10000 // long timeout to allow for CPLD programming
-		);
-
-		if (result != LIBUSB_SUCCESS) {
-			return HACKRF_ERROR_LIBUSB;
-		}
-	}
-
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_board_id_read(hackrf_device* device, uint8_t* value)
+int ADDCALL greatfet_board_id_read(greatfet_device* device, uint8_t* value)
 {
 	int result;
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_BOARD_ID_READ,
+		GREATFET_VENDOR_REQUEST_BOARD_ID_READ,
 		0,
 		0,
 		value,
@@ -964,20 +759,20 @@ int ADDCALL hackrf_board_id_read(hackrf_device* device, uint8_t* value)
 
 	if (result < 1)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_version_string_read(hackrf_device* device, char* version,
+int ADDCALL greatfet_version_string_read(greatfet_device* device, char* version,
 		uint8_t length)
 {
 	int result;
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_VERSION_STRING_READ,
+		GREATFET_VENDOR_REQUEST_VERSION_STRING_READ,
 		0,
 		0,
 		(unsigned char*)version,
@@ -987,10 +782,10 @@ int ADDCALL hackrf_version_string_read(hackrf_device* device, char* version,
 
 	if (result < 0)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
 		version[result] = '\0';
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
@@ -1001,38 +796,9 @@ typedef struct {
 } set_freq_params_t;
 #define FREQ_ONE_MHZ	(1000*1000ull)
 
-int ADDCALL hackrf_set_freq(hackrf_device* device, const uint64_t freq_hz)
+int ADDCALL greatfet_set_freq(greatfet_device* device, const uint64_t freq_hz)
 {
-	uint32_t l_freq_mhz;
-	uint32_t l_freq_hz;
-	set_freq_params_t set_freq_params;
-	uint8_t length;
-	int result;
-	
-	/* Convert Freq Hz 64bits to Freq MHz (32bits) & Freq Hz (32bits) */
-	l_freq_mhz = (uint32_t)(freq_hz / FREQ_ONE_MHZ);
-	l_freq_hz = (uint32_t)(freq_hz - (((uint64_t)l_freq_mhz) * FREQ_ONE_MHZ));
-	set_freq_params.freq_mhz = TO_LE(l_freq_mhz);
-	set_freq_params.freq_hz = TO_LE(l_freq_hz);
-	length = sizeof(set_freq_params_t);
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SET_FREQ,
-		0,
-		0,
-		(unsigned char*)&set_freq_params,
-		length,
-		0
-	);
-
-	if (result < length)
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
 struct set_freq_explicit_params {
@@ -1041,49 +807,11 @@ struct set_freq_explicit_params {
 	uint8_t path;        /* image rejection filter path */
 };
 
-int ADDCALL hackrf_set_freq_explicit(hackrf_device* device,
+int ADDCALL greatfet_set_freq_explicit(greatfet_device* device,
 		const uint64_t if_freq_hz, const uint64_t lo_freq_hz,
 		const enum rf_path_filter path)
 {
-	struct set_freq_explicit_params params;
-	uint8_t length;
-	int result;
-
-	if (if_freq_hz < 2150000000 || if_freq_hz > 2750000000) {
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	if ((path != RF_PATH_FILTER_BYPASS) &&
-			(lo_freq_hz < 84375000 || lo_freq_hz > 5400000000)) {
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	if (path > 2) {
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	params.if_freq_hz = TO_LE(if_freq_hz);
-	params.lo_freq_hz = TO_LE(lo_freq_hz);
-	params.path = (uint8_t)path;
-	length = sizeof(struct set_freq_explicit_params);
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SET_FREQ_EXPLICIT,
-		0,
-		0,
-		(unsigned char*)&params,
-		length,
-		0
-	);
-
-	if (result < length)
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
 typedef struct {
@@ -1092,7 +820,7 @@ typedef struct {
 } set_fracrate_params_t;
 
 
-int ADDCALL hackrf_set_sample_rate_manual(hackrf_device* device,
+int ADDCALL greatfet_set_sample_rate_manual(greatfet_device* device,
                                        const uint32_t freq_hz, uint32_t divider)
 {
 	set_fracrate_params_t set_fracrate_params;
@@ -1106,7 +834,7 @@ int ADDCALL hackrf_set_sample_rate_manual(hackrf_device* device,
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SAMPLE_RATE_SET,
+		GREATFET_VENDOR_REQUEST_SAMPLE_RATE_SET,
 		0,
 		0,
 		(unsigned char*)&set_fracrate_params,
@@ -1116,13 +844,13 @@ int ADDCALL hackrf_set_sample_rate_manual(hackrf_device* device,
 
 	if (result < length)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_set_sample_rate(hackrf_device* device, const double freq)
+int ADDCALL greatfet_set_sample_rate(greatfet_device* device, const double freq)
 {
 	const int MAX_N = 32;
 	uint32_t freq_hz, divider;
@@ -1159,32 +887,15 @@ int ADDCALL hackrf_set_sample_rate(hackrf_device* device, const double freq)
 	freq_hz = (uint32_t)(freq * i + 0.5);
 	divider = i;
 
-	return hackrf_set_sample_rate_manual(device, freq_hz, divider);
+	return greatfet_set_sample_rate_manual(device, freq_hz, divider);
 }
 
-int ADDCALL hackrf_set_amp_enable(hackrf_device* device, const uint8_t value)
+int ADDCALL greatfet_set_amp_enable(greatfet_device* device, const uint8_t value)
 {
-	int result;
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_AMP_ENABLE,
-		value,
-		0,
-		NULL,
-		0,
-		0
-	);
-
-	if (result != 0)
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_board_partid_serialno_read(hackrf_device* device, read_partid_serialno_t* read_partid_serialno)
+int ADDCALL greatfet_board_partid_serialno_read(greatfet_device* device, read_partid_serialno_t* read_partid_serialno)
 {
 	uint8_t length;
 	int result;
@@ -1193,7 +904,7 @@ int ADDCALL hackrf_board_partid_serialno_read(hackrf_device* device, read_partid
 	result = libusb_control_transfer(
 		device->usb_device,
 		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_BOARD_PARTID_SERIALNO_READ,
+		GREATFET_VENDOR_REQUEST_BOARD_PARTID_SERIALNO_READ,
 		0,
 		0,
 		(unsigned char*)read_partid_serialno,
@@ -1203,7 +914,7 @@ int ADDCALL hackrf_board_partid_serialno_read(hackrf_device* device, read_partid
 
 	if (result < length)
 	{
-		return HACKRF_ERROR_LIBUSB;
+		return GREATFET_ERROR_LIBUSB;
 	} else {
 
 		read_partid_serialno->part_id[0] = TO_LE(read_partid_serialno->part_id[0]);
@@ -1213,124 +924,33 @@ int ADDCALL hackrf_board_partid_serialno_read(hackrf_device* device, read_partid
 		read_partid_serialno->serial_no[2] = TO_LE(read_partid_serialno->serial_no[2]);
 		read_partid_serialno->serial_no[3] = TO_LE(read_partid_serialno->serial_no[3]);
 
-		return HACKRF_SUCCESS;
+		return GREATFET_SUCCESS;
 	}
 }
 
-int ADDCALL hackrf_set_lna_gain(hackrf_device* device, uint32_t value)
+int ADDCALL greatfet_set_lna_gain(greatfet_device* device, uint32_t value)
 {
-	int result;
-	uint8_t retval;
-	
-	if( value > 40 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	value &= ~0x07;
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SET_LNA_GAIN,
-		0,
-		value,
-		&retval,
-		1,
-		0
-	);
-
-	if( result != 1 || !retval )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_set_vga_gain(hackrf_device* device, uint32_t value)
+int ADDCALL greatfet_set_vga_gain(greatfet_device* device, uint32_t value)
 {
-	int result;
-	uint8_t retval;
-	
-	if( value > 62 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	value &= ~0x01;
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SET_VGA_GAIN,
-		0,
-		value,
-		&retval,
-		1,
-		0
-	);
-
-	if( result != 1 || !retval )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_set_txvga_gain(hackrf_device* device, uint32_t value)
+int ADDCALL greatfet_set_txvga_gain(greatfet_device* device, uint32_t value)
 {
-	int result;
-	uint8_t retval;
-	
-	if( value > 47 )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	}
-
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_SET_TXVGA_GAIN,
-		0,
-		value,
-		&retval,
-		1,
-		0
-	);
-
-	if( result != 1 || !retval )
-	{
-		return HACKRF_ERROR_INVALID_PARAM;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_set_antenna_enable(hackrf_device* device, const uint8_t value)
+int ADDCALL greatfet_set_antenna_enable(greatfet_device* device, const uint8_t value)
 {
-	int result;
-	result = libusb_control_transfer(
-		device->usb_device,
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		HACKRF_VENDOR_REQUEST_ANTENNA_ENABLE,
-		value,
-		0,
-		NULL,
-		0,
-		0
-	);
-
-	if (result != 0)
-	{
-		return HACKRF_ERROR_LIBUSB;
-	} else {
-		return HACKRF_SUCCESS;
-	}
+		return GREATFET_SUCCESS;
 }
 
 static void* transfer_threadproc(void* arg)
 {
-	hackrf_device* device = (hackrf_device*)arg;
+	greatfet_device* device = (greatfet_device*)arg;
 	int error;
 	struct timeval timeout = { 0, 500000 };
 
@@ -1346,13 +966,13 @@ static void* transfer_threadproc(void* arg)
 	return NULL;
 }
 
-static void hackrf_libusb_transfer_callback(struct libusb_transfer* usb_transfer)
+static void greatfet_libusb_transfer_callback(struct libusb_transfer* usb_transfer)
 {
-	hackrf_device* device = (hackrf_device*)usb_transfer->user_data;
+	greatfet_device* device = (greatfet_device*)usb_transfer->user_data;
 
 	if(usb_transfer->status == LIBUSB_TRANSFER_COMPLETED)
 	{
-		hackrf_transfer transfer = {
+		greatfet_transfer transfer = {
 			transfer.device = device,
 			transfer.buffer = usb_transfer->buffer,
 			transfer.buffer_length = usb_transfer->length,
@@ -1382,7 +1002,7 @@ static void hackrf_libusb_transfer_callback(struct libusb_transfer* usb_transfer
 	}
 }
 
-static int kill_transfer_thread(hackrf_device* device)
+static int kill_transfer_thread(greatfet_device* device)
 {
 	void* value;
 	int result;
@@ -1395,7 +1015,7 @@ static int kill_transfer_thread(hackrf_device* device)
 		result = pthread_join(device->transfer_thread, &value);
 		if( result != 0 )
 		{
-			return HACKRF_ERROR_THREAD;
+			return GREATFET_ERROR_THREAD;
 		}
 		device->transfer_thread_started = false;
 
@@ -1403,12 +1023,12 @@ static int kill_transfer_thread(hackrf_device* device)
 		cancel_transfers(device);
 	}
 
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
-static int create_transfer_thread(hackrf_device* device,
+static int create_transfer_thread(greatfet_device* device,
 									const uint8_t endpoint_address,
-									hackrf_sample_block_cb_fn callback)
+									greatfet_sample_block_cb_fn callback)
 {
 	int result;
 	
@@ -1418,10 +1038,10 @@ static int create_transfer_thread(hackrf_device* device,
 
 		result = prepare_transfers(
 			device, endpoint_address,
-			(libusb_transfer_cb_fn)hackrf_libusb_transfer_callback
+			(libusb_transfer_cb_fn)greatfet_libusb_transfer_callback
 		);
 
-		if( result != HACKRF_SUCCESS )
+		if( result != GREATFET_SUCCESS )
 		{
 			return result;
 		}
@@ -1433,46 +1053,46 @@ static int create_transfer_thread(hackrf_device* device,
 		{
 			device->transfer_thread_started = true;
 		}else {
-			return HACKRF_ERROR_THREAD;
+			return GREATFET_ERROR_THREAD;
 		}
 	} else {
-		return HACKRF_ERROR_BUSY;
+		return GREATFET_ERROR_BUSY;
 	}
 
-	return HACKRF_SUCCESS;
+	return GREATFET_SUCCESS;
 }
 
-int ADDCALL hackrf_is_streaming(hackrf_device* device)
+int ADDCALL greatfet_is_streaming(greatfet_device* device)
 {
-	/* return hackrf is streaming only when streaming, transfer_thread_started are true and do_exit equal false */
+	/* return greatfet is streaming only when streaming, transfer_thread_started are true and do_exit equal false */
 	
 	if( (device->transfer_thread_started == true) &&
 		(device->streaming == true) && 
 		(do_exit == false) )
 	{
-		return HACKRF_TRUE;
+		return GREATFET_TRUE;
 	} else {
 	
 		if(device->transfer_thread_started == false)
 		{
-			return HACKRF_ERROR_STREAMING_THREAD_ERR;
+			return GREATFET_ERROR_STREAMING_THREAD_ERR;
 		}
 
 		if(device->streaming == false)
 		{
-			return HACKRF_ERROR_STREAMING_STOPPED;
+			return GREATFET_ERROR_STREAMING_STOPPED;
 		}
 
-		return HACKRF_ERROR_STREAMING_EXIT_CALLED;
+		return GREATFET_ERROR_STREAMING_EXIT_CALLED;
 	}
 }
 
-int ADDCALL hackrf_start_rx(hackrf_device* device, hackrf_sample_block_cb_fn callback, void* rx_ctx)
+int ADDCALL greatfet_start_rx(greatfet_device* device, greatfet_sample_block_cb_fn callback, void* rx_ctx)
 {
 	int result;
 	const uint8_t endpoint_address = LIBUSB_ENDPOINT_IN | 1;
-	result = hackrf_set_transceiver_mode(device, HACKRF_TRANSCEIVER_MODE_RECEIVE);
-	if( result == HACKRF_SUCCESS )
+	result = greatfet_set_transceiver_mode(device, GREATFET_TRANSCEIVER_MODE_RECEIVE);
+	if( result == GREATFET_SUCCESS )
 	{
 		device->rx_ctx = rx_ctx;
 		result = create_transfer_thread(device, endpoint_address, callback);
@@ -1480,23 +1100,23 @@ int ADDCALL hackrf_start_rx(hackrf_device* device, hackrf_sample_block_cb_fn cal
 	return result;
 }
 
-int ADDCALL hackrf_stop_rx(hackrf_device* device)
+int ADDCALL greatfet_stop_rx(greatfet_device* device)
 {
 	int result;
-	result = hackrf_set_transceiver_mode(device, HACKRF_TRANSCEIVER_MODE_OFF);
-	if (result != HACKRF_SUCCESS)
+	result = greatfet_set_transceiver_mode(device, GREATFET_TRANSCEIVER_MODE_OFF);
+	if (result != GREATFET_SUCCESS)
 	{
 		return result;
 	}
 	return kill_transfer_thread(device);
 }
 
-int ADDCALL hackrf_start_tx(hackrf_device* device, hackrf_sample_block_cb_fn callback, void* tx_ctx)
+int ADDCALL greatfet_start_tx(greatfet_device* device, greatfet_sample_block_cb_fn callback, void* tx_ctx)
 {
 	int result;
 	const uint8_t endpoint_address = LIBUSB_ENDPOINT_OUT | 2;
-	result = hackrf_set_transceiver_mode(device, HACKRF_TRANSCEIVER_MODE_TRANSMIT);
-	if( result == HACKRF_SUCCESS )
+	result = greatfet_set_transceiver_mode(device, GREATFET_TRANSCEIVER_MODE_TRANSMIT);
+	if( result == GREATFET_SUCCESS )
 	{
 		device->tx_ctx = tx_ctx;
 		result = create_transfer_thread(device, endpoint_address, callback);
@@ -1504,29 +1124,29 @@ int ADDCALL hackrf_start_tx(hackrf_device* device, hackrf_sample_block_cb_fn cal
 	return result;
 }
 
-int ADDCALL hackrf_stop_tx(hackrf_device* device)
+int ADDCALL greatfet_stop_tx(greatfet_device* device)
 {
 	int result1, result2;
 	result1 = kill_transfer_thread(device);
-	result2 = hackrf_set_transceiver_mode(device, HACKRF_TRANSCEIVER_MODE_OFF);
-	if (result2 != HACKRF_SUCCESS)
+	result2 = greatfet_set_transceiver_mode(device, GREATFET_TRANSCEIVER_MODE_OFF);
+	if (result2 != GREATFET_SUCCESS)
 	{
 		return result2;
 	}
 	return result1;
 }
 
-int ADDCALL hackrf_close(hackrf_device* device)
+int ADDCALL greatfet_close(greatfet_device* device)
 {
 	int result1, result2;
 
-	result1 = HACKRF_SUCCESS;
-	result2 = HACKRF_SUCCESS;
+	result1 = GREATFET_SUCCESS;
+	result2 = GREATFET_SUCCESS;
 	
 	if( device != NULL )
 	{
-		result1 = hackrf_stop_rx(device);
-		result2 = hackrf_stop_tx(device);
+		result1 = greatfet_stop_rx(device);
+		result2 = greatfet_stop_tx(device);
 		if( device->usb_device != NULL )
 		{
 			libusb_release_interface(device->usb_device, 0);
@@ -1539,70 +1159,64 @@ int ADDCALL hackrf_close(hackrf_device* device)
 		free(device);
 	}
 
-	if (result2 != HACKRF_SUCCESS)
+	if (result2 != GREATFET_SUCCESS)
 	{
 		return result2;
 	}
 	return result1;
 }
 
-const char* ADDCALL hackrf_error_name(enum hackrf_error errcode)
+const char* ADDCALL greatfet_error_name(enum greatfet_error errcode)
 {
 	switch(errcode)
 	{
-	case HACKRF_SUCCESS:
-		return "HACKRF_SUCCESS";
+	case GREATFET_SUCCESS:
+		return "GREATFET_SUCCESS";
 
-	case HACKRF_TRUE:
-		return "HACKRF_TRUE";
+	case GREATFET_TRUE:
+		return "GREATFET_TRUE";
 
-	case HACKRF_ERROR_INVALID_PARAM:
-		return "HACKRF_ERROR_INVALID_PARAM";
+	case GREATFET_ERROR_INVALID_PARAM:
+		return "GREATFET_ERROR_INVALID_PARAM";
 
-	case HACKRF_ERROR_NOT_FOUND:
-		return "HACKRF_ERROR_NOT_FOUND";
+	case GREATFET_ERROR_NOT_FOUND:
+		return "GREATFET_ERROR_NOT_FOUND";
 
-	case HACKRF_ERROR_BUSY:
-		return "HACKRF_ERROR_BUSY";
+	case GREATFET_ERROR_BUSY:
+		return "GREATFET_ERROR_BUSY";
 
-	case HACKRF_ERROR_NO_MEM:
-		return "HACKRF_ERROR_NO_MEM";
+	case GREATFET_ERROR_NO_MEM:
+		return "GREATFET_ERROR_NO_MEM";
 
-	case HACKRF_ERROR_LIBUSB:
-		return "HACKRF_ERROR_LIBUSB";
+	case GREATFET_ERROR_LIBUSB:
+		return "GREATFET_ERROR_LIBUSB";
 
-	case HACKRF_ERROR_THREAD:
-		return "HACKRF_ERROR_THREAD";
+	case GREATFET_ERROR_THREAD:
+		return "GREATFET_ERROR_THREAD";
 
-	case HACKRF_ERROR_STREAMING_THREAD_ERR:
-		return "HACKRF_ERROR_STREAMING_THREAD_ERR";
+	case GREATFET_ERROR_STREAMING_THREAD_ERR:
+		return "GREATFET_ERROR_STREAMING_THREAD_ERR";
 
-	case HACKRF_ERROR_STREAMING_STOPPED:
-		return "HACKRF_ERROR_STREAMING_STOPPED";
+	case GREATFET_ERROR_STREAMING_STOPPED:
+		return "GREATFET_ERROR_STREAMING_STOPPED";
 
-	case HACKRF_ERROR_STREAMING_EXIT_CALLED:
-		return "HACKRF_ERROR_STREAMING_EXIT_CALLED";
+	case GREATFET_ERROR_STREAMING_EXIT_CALLED:
+		return "GREATFET_ERROR_STREAMING_EXIT_CALLED";
 
-	case HACKRF_ERROR_OTHER:
-		return "HACKRF_ERROR_OTHER";
+	case GREATFET_ERROR_OTHER:
+		return "GREATFET_ERROR_OTHER";
 
 	default:
-		return "HACKRF unknown error";
+		return "GREATFET unknown error";
 	}
 }
 
-const char* ADDCALL hackrf_board_id_name(enum hackrf_board_id board_id)
+const char* ADDCALL greatfet_board_id_name(enum greatfet_board_id board_id)
 {
 	switch(board_id)
 	{
-	case BOARD_ID_JELLYBEAN:
-		return "Jellybean";
-
-	case BOARD_ID_JAWBREAKER:
-		return "Jawbreaker";
-
-	case BOARD_ID_HACKRF_ONE:
-		return "HackRF One";
+	case BOARD_ID_AZALEA:
+		return "Azalea";
 
 	case BOARD_ID_INVALID:
 		return "Invalid Board ID";
@@ -1612,15 +1226,12 @@ const char* ADDCALL hackrf_board_id_name(enum hackrf_board_id board_id)
 	}
 }
 
-extern ADDAPI const char* ADDCALL hackrf_usb_board_id_name(enum hackrf_usb_board_id usb_board_id)
+extern ADDAPI const char* ADDCALL greatfet_usb_board_id_name(enum greatfet_usb_board_id usb_board_id)
 {
 	switch(usb_board_id)
 	{
-	case USB_BOARD_ID_JAWBREAKER:
-		return "Jawbreaker";
-
-	case USB_BOARD_ID_HACKRF_ONE:
-		return "HackRF One";
+	case USB_BOARD_ID_AZALEA:
+		return "Azalea";
 
 	case USB_BOARD_ID_INVALID:
 		return "Invalid Board ID";
@@ -1630,7 +1241,7 @@ extern ADDAPI const char* ADDCALL hackrf_usb_board_id_name(enum hackrf_usb_board
 	}
 }
 
-const char* ADDCALL hackrf_filter_path_name(const enum rf_path_filter path)
+const char* ADDCALL greatfet_filter_path_name(const enum rf_path_filter path)
 {
 	switch(path) {
 	case RF_PATH_FILTER_BYPASS:
@@ -1645,7 +1256,7 @@ const char* ADDCALL hackrf_filter_path_name(const enum rf_path_filter path)
 }
 
 /* Return final bw round down and less than expected bw. */
-uint32_t ADDCALL hackrf_compute_baseband_filter_bw_round_down_lt(const uint32_t bandwidth_hz)
+uint32_t ADDCALL greatfet_compute_baseband_filter_bw_round_down_lt(const uint32_t bandwidth_hz)
 {
 	const max2837_ft_t* p = max2837_ft;
 	while( p->bandwidth_hz != 0 )
@@ -1665,7 +1276,7 @@ uint32_t ADDCALL hackrf_compute_baseband_filter_bw_round_down_lt(const uint32_t 
 }
 
 /* Return final bw. */
-uint32_t ADDCALL hackrf_compute_baseband_filter_bw(const uint32_t bandwidth_hz)
+uint32_t ADDCALL greatfet_compute_baseband_filter_bw(const uint32_t bandwidth_hz)
 {
 	const max2837_ft_t* p = max2837_ft;
 	while( p->bandwidth_hz != 0 )
