@@ -35,7 +35,6 @@ extern "C"
 
 #include "spi_ssp.h"
 #include "w25q80bv.h"
-#include "s25fl064p.h"
 
 /* hardware identification number */
 #define BOARD_ID_AZALEA  0
@@ -50,11 +49,6 @@ void delay(uint32_t duration);
 extern const ssp_config_t ssp_config_w25q80bv;
 
 extern w25q80bv_driver_t spi_flash;
-
-/* TODO: Hide these configurations */
-extern const ssp_config_t ssp_config_s25fl064p;
-
-extern s25fl064p_driver_t spi_flash_spansion;
 
 void cpu_clock_init(void);
 void cpu_clock_pll1_low_speed(void);

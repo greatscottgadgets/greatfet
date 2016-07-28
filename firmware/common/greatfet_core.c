@@ -27,8 +27,6 @@
 #include "spi_ssp.h"
 #include "w25q80bv.h"
 #include "w25q80bv_target.h"
-#include "s25fl064p.h"
-#include "s25fl064p_target.h"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 #include <libopencm3/lpc43xx/cgu.h>
