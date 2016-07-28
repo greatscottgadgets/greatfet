@@ -7,5 +7,5 @@ Name: GreatFET Library
 Description: C Utility Library
 Version: @VERSION@
 Cflags: -I${includedir}/ @GREATFET_PC_CFLAGS@
-Libs: -L${libdir} -lhackrf
+Libs: -L${libdir} -lgreatfet
 Libs.private: @GREATFET_PC_LIBS@

@@ -23,26 +23,26 @@
 # Based heavily upon the libftdi cmake setup.
 
 # Targets
-set(c_sources ${CMAKE_CURRENT_SOURCE_DIR}/hackrf.c CACHE INTERNAL "List of C sources")
-set(c_headers ${CMAKE_CURRENT_SOURCE_DIR}/hackrf.h CACHE INTERNAL "List of C headers")
+set(c_sources ${CMAKE_CURRENT_SOURCE_DIR}/greatfet.c CACHE INTERNAL "List of C sources")
+set(c_headers ${CMAKE_CURRENT_SOURCE_DIR}/greatfet.h CACHE INTERNAL "List of C headers")
 
 # Dynamic library
-add_library(hackrf SHARED ${c_sources})
-set_target_properties(hackrf PROPERTIES VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.0 SOVERSION 0)
+add_library(greatfet SHARED ${c_sources})
+set_target_properties(greatfet PROPERTIES VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.0 SOVERSION 0)
 
 # Static library
-add_library(hackrf-static STATIC ${c_sources})
+add_library(greatfet-static STATIC ${c_sources})
 if(MSVC)
-	set_target_properties(hackrf-static PROPERTIES OUTPUT_NAME "hackrf_static")
+	set_target_properties(greatfet-static PROPERTIES OUTPUT_NAME "greatfet_static")
 else()
-	set_target_properties(hackrf-static PROPERTIES OUTPUT_NAME "hackrf")
+	set_target_properties(greatfet-static PROPERTIES OUTPUT_NAME "greatfet")
 endif()
 
-set_target_properties(hackrf PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-set_target_properties(hackrf-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+set_target_properties(greatfet PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+set_target_properties(greatfet-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 # Dependencies
-target_link_libraries(hackrf ${LIBUSB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(greatfet ${LIBUSB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
    
 # For cygwin just force UNIX OFF and WIN32 ON
 if( ${CYGWIN} )
@@ -51,11 +51,11 @@ if( ${CYGWIN} )
 endif( ${CYGWIN} )
 
 if( ${UNIX} )
-   install(TARGETS hackrf
+   install(TARGETS greatfet
            LIBRARY DESTINATION lib${LIB_SUFFIX}
            COMPONENT sharedlibs
            )
-   install(TARGETS hackrf-static
+   install(TARGETS greatfet-static
            ARCHIVE DESTINATION lib${LIB_SUFFIX}
            COMPONENT staticlibs
            )
@@ -66,11 +66,11 @@ if( ${UNIX} )
 endif( ${UNIX} )
 
 if( ${WIN32} )
-   install(TARGETS hackrf
+   install(TARGETS greatfet
            DESTINATION bin
            COMPONENT sharedlibs
            )
-   install(TARGETS hackrf-static
+   install(TARGETS greatfet-static
            DESTINATION bin
            COMPONENT staticlibs
            )
