@@ -26,16 +26,24 @@
 #include <greatfet_core.h>
 #include <gpio.h>
 
+volatile bool start_gpio_mode = false;
+
+/* Set pin directions */
 usb_request_status_t usb_vendor_request_register_gpio(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		// Do stuff
 		usb_transfer_schedule_ack(endpoint->in);
+		return USB_REQUEST_STATUS_OK;
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		usb_transfer_schedule_ack(endpoint->in);
+		return USB_REQUEST_STATUS_OK;
+	} else {
+		return USB_REQUEST_STATUS_OK;
 	}
-	return USB_REQUEST_STATUS_OK;
 }
 
+/* Toggle out pins */
 usb_request_status_t usb_vendor_request_write_gpio(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
@@ -48,4 +56,8 @@ usb_request_status_t usb_vendor_request_write_gpio(
 	} else {
 		return USB_REQUEST_STATUS_OK;
 	}
+}
+
+void gpio_monitor_mode(void) {
+	;
 }
