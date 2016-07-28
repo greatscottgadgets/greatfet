@@ -68,7 +68,7 @@ enum greatfet_board_id {
 };
 
 enum greatfet_usb_board_id {
-	USB_BOARD_ID_AZALEA = 0x1337,
+	USB_BOARD_ID_AZALEA = 0x60E6,
 	USB_BOARD_ID_INVALID = 0xFFFF,
 };
 
