@@ -32,8 +32,8 @@ endif()
 add_executable(greatfet_transfer greatfet_transfer.c)
 install(TARGETS greatfet_transfer RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
 
-#add_executable(greatfet_info greatfet_info.c)
-#install(TARGETS greatfet_info RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
+add_executable(greatfet_info greatfet_info.c)
+install(TARGETS greatfet_info RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
 
 if(NOT libgreatfet_SOURCE_DIR)
 include_directories(${LIBGREATFET_INCLUDE_DIR})
@@ -48,4 +48,4 @@ endif()
 
 
 target_link_libraries(greatfet_transfer ${TOOLS_LINK_LIBS})
-#target_link_libraries(greatfet_info ${TOOLS_LINK_LIBS})
+target_link_libraries(greatfet_info ${TOOLS_LINK_LIBS})

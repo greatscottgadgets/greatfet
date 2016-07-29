@@ -365,18 +365,25 @@ greatfet_device_list_t* ADDCALL greatfet_device_list()
 		struct libusb_device_descriptor device_descriptor;
 		libusb_get_device_descriptor(list->usb_devices[i], &device_descriptor);
 		
+		printf("vid (0x%x) pid (0x%x)\n", device_descriptor.idVendor, device_descriptor.idProduct);
 		if( device_descriptor.idVendor == greatfet_usb_vid ) {
+			printf("Matched vendor\n");
 			if((device_descriptor.idProduct == greatfet_azalea_usb_pid)) {
+				printf("Matched board\n");
 				int idx = list->devicecount++;
 				list->usb_board_ids[idx] = device_descriptor.idProduct;
 				list->usb_device_index[idx] = i;
 				
 				serial_descriptor_index = device_descriptor.iSerialNumber;
 				if( serial_descriptor_index > 0 ) {
-					if( libusb_open(list->usb_devices[i], &usb_device) != 0 ) {
+					printf("Got serial description\n");
+					int device_open_rv = -1;
+					if( (device_open_rv = libusb_open(list->usb_devices[i], &usb_device)) != 0 ) {
+						printf("Couldn't open device using libusb_open: error (%d)\n", device_open_rv);
 						usb_device = NULL;
 						continue;
 					}
+					printf("Getting serial number\n");
 					serial_number_length = libusb_get_string_descriptor_ascii(usb_device, serial_descriptor_index, (unsigned char*)serial_number, sizeof(serial_number));
 					if( serial_number_length == 32 ) {
 						serial_number[32] = 0;
@@ -545,6 +552,8 @@ int ADDCALL greatfet_open(greatfet_device** device)
 		return GREATFET_ERROR_INVALID_PARAM;
 	}
 	
+        printf("Opening device with vid (%x) and pid (%x)\n", greatfet_usb_vid, greatfet_azalea_usb_pid);
+
 	usb_device = libusb_open_device_with_vid_pid(g_libusb_context, greatfet_usb_vid, greatfet_azalea_usb_pid);
 	
 	if( usb_device == NULL )

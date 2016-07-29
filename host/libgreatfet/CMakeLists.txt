@@ -125,16 +125,16 @@ if(SYSTEM_IS_LINUX)
             endforeach(group)
         endif(NOT DEFINED UDEV_RULES_GROUP)
         if(DEFINED UDEV_RULES_GROUP)
-#            set(GREATFET_GROUP "${UDEV_RULES_GROUP}"
-#                CACHE STRING "Group to associate GreatFET devices with in udev rules")
-#            configure_file(${CMAKE_CURRENT_SOURCE_DIR}/53-greatfet.rules.in
-#                        ${CMAKE_CURRENT_BINARY_DIR}/53-greatfet.rules
-#                        @ONLY
-#                        )
-#            message(STATUS  "GreatFET udev rules will be installed to '${UDEV_RULES_PATH}' upon running 'make install'")
-#            install(FILES ${CMAKE_CURRENT_BINARY_DIR}/53-greatfet.rules
-#                    DESTINATION ${UDEV_RULES_PATH}
-#                    COMPONENT "udev_rules")
+            set(GREATFET_GROUP "${UDEV_RULES_GROUP}"
+                CACHE STRING "Group to associate GreatFET devices with in udev rules")
+            configure_file(${CMAKE_CURRENT_SOURCE_DIR}/53-greatfet.rules.in
+                        ${CMAKE_CURRENT_BINARY_DIR}/53-greatfet.rules
+                        @ONLY
+                        )
+            message(STATUS  "GreatFET udev rules will be installed to '${UDEV_RULES_PATH}' upon running 'make install'")
+            install(FILES ${CMAKE_CURRENT_BINARY_DIR}/53-greatfet.rules
+                    DESTINATION ${UDEV_RULES_PATH}
+                    COMPONENT "udev_rules")
         else(UDEV_RULES_GROUP)
             message(STATUS "GreatFET udev rules will not be installed because no suitable group was found")
             message(STATUS "A group can be specified with -DUDEV_RULES_GROUP=<group>")
