@@ -36,7 +36,7 @@
 #include "usb_device.h"
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
-#include "usb_api_spiflash_generic.h"
+#include "usb_api_spiflash.h"
 #include "usb_api_gpio.h"
 #include "usb_bulk_buffer.h"
 
