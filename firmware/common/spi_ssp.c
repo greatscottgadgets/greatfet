@@ -24,7 +24,8 @@
 #include <libopencm3/lpc43xx/rgu.h>
 #include <libopencm3/lpc43xx/ssp.h>
 
-void spi_ssp_start(spi_bus_t* const bus, const void* const _config) {
+void spi_ssp_start(spi_target_t* target, const void* const _config) {
+	spi_bus_t* const bus = target->bus;
 	const ssp_config_t* const config = _config;
 
 	if( bus->obj == (void*)SSP0_BASE ) {
@@ -32,8 +33,8 @@ void spi_ssp_start(spi_bus_t* const bus, const void* const _config) {
 		RESET_CTRL1 = RESET_CTRL1_SPIFI_RST;
 	}
 
-	gpio_set(config->gpio_select);
-	gpio_output(config->gpio_select);
+	gpio_set(target->gpio_select);
+	gpio_output(target->gpio_select);
 
 	SSP_CR1(bus->obj) = 0;
 	SSP_CPSR(bus->obj) = config->clock_prescale_rate;
@@ -53,7 +54,8 @@ void spi_ssp_start(spi_bus_t* const bus, const void* const _config) {
 	bus->config = config;
 }
 
-void spi_ssp_stop(spi_bus_t* const bus) {
+void spi_ssp_stop(spi_target_t* target) {
+	spi_bus_t* bus = target->bus;
 	SSP_CR1(bus->obj) = 0;
 }
 
@@ -77,12 +79,13 @@ static uint32_t spi_ssp_transfer_word(spi_bus_t* const bus, const uint32_t data)
 	return SSP_DR(bus->obj);
 }
 
-void spi_ssp_transfer_gather(spi_bus_t* const bus, const spi_transfer_t* const transfers, const size_t count) {
-	const ssp_config_t* const config = bus->config;
-
+void spi_ssp_transfer_gather(spi_target_t* target,
+							 const spi_transfer_t* const transfers,
+							 const size_t count) {
+	spi_bus_t* const bus = target->bus;
 	const bool word_size_u16 = (SSP_CR0(bus->obj) & 0xf) > SSP_DATA_8BITS;
 
-	gpio_clear(config->gpio_select);
+	gpio_clear(target->gpio_select);
 	for(size_t i=0; i<count; i++) {
 		const size_t data_count = transfers[i].count;
 
@@ -98,12 +101,13 @@ void spi_ssp_transfer_gather(spi_bus_t* const bus, const spi_transfer_t* const t
 			}
 		}
 	}
-	gpio_set(config->gpio_select);
+	gpio_set(target->gpio_select);
 }
 
-void spi_ssp_transfer(spi_bus_t* const bus, void* const data, const size_t count) {
+void spi_ssp_transfer(spi_target_t* target, void* const data,
+					  const size_t count) {
 	const spi_transfer_t transfers[] = {
 		{ data, count },
 	};
-	spi_ssp_transfer_gather(bus, transfers, 1);
+	spi_ssp_transfer_gather(target, transfers, 1);
 }

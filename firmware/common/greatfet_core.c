@@ -25,8 +25,8 @@
 #include "greatfet_core.h"
 #include "greatfet_pins.h"
 #include "spi_ssp.h"
-#include "w25q80bv.h"
-#include "w25q80bv_target.h"
+#include "spiflash.h"
+#include "spiflash_target.h"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 #include <libopencm3/lpc43xx/cgu.h>
@@ -49,10 +49,10 @@ static struct gpio_t gpio_led[4] = {
 };
 
 static struct gpio_t gpio_usb1_en		= GPIO(2, 8);
-
-static struct gpio_t gpio_w25q80bv_hold		= GPIO(1, 14);
-static struct gpio_t gpio_w25q80bv_wp		= GPIO(1, 15);
-static struct gpio_t gpio_w25q80bv_select	= GPIO(5, 11);
+//
+//static struct gpio_t gpio_spiflash_hold		= GPIO(1, 14);
+//static struct gpio_t gpio_spiflash_wp		= GPIO(1, 15);
+//static struct gpio_t gpio_spiflash_select	= GPIO(5, 11);
 
 /* CPLD JTAG interface GPIO pins */
 static struct gpio_t gpio_tdo			= GPIO(5, 18);
@@ -74,28 +74,28 @@ i2c_bus_t i2c1 = {
 	.transfer = i2c_lpc_transfer,
 };
 
-const ssp_config_t ssp_config_w25q80bv = {
+const ssp_config_t ssp_config_spi = {
 	.data_bits = SSP_DATA_8BITS,
 	.serial_clock_rate = 2,
 	.clock_prescale_rate = 2,
-	.gpio_select = &gpio_w25q80bv_select,
 };
 
 spi_bus_t spi_bus_ssp0 = {
 	.obj = (void*)SSP0_BASE,
-	.config = &ssp_config_w25q80bv,
+	.config = &ssp_config_spi,
 	.start = spi_ssp_start,
 	.stop = spi_ssp_stop,
 	.transfer = spi_ssp_transfer,
 	.transfer_gather = spi_ssp_transfer_gather,
 };
 
-w25q80bv_driver_t spi_flash = {
-	.bus = &spi_bus_ssp0,
-	.gpio_hold = &gpio_w25q80bv_hold,
-	.gpio_wp = &gpio_w25q80bv_wp,
-	.target_init = w25q80bv_target_init,
-};
+//spi_target_t spi_target = {
+//	.bus = &spi_bus_ssp0,
+//	.gpio_hold = &gpio_spiflash_hold,
+//	.gpio_wp = &gpio_spiflash_wp,
+//	.gpio_select = &gpio_spiflash_select,
+//	//.target_init = spiflash_target_init,
+//};
 
 void delay(uint32_t duration)
 {

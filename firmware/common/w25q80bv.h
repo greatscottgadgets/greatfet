@@ -24,37 +24,35 @@
 #ifndef __W25Q80BV_H__
 #define __W25Q80BV_H__
 
-#include <stdint.h>
-#include <stddef.h>
+#include "spiflash.h"
+#include "spiflash_target.h"
+#include "gpio_lpc.h"
+#include "greatfet_core.h"
 
-#include "spi_bus.h"
-#include "gpio.h"
+#define W25Q80BV_DEVICE_ID_RES  0x14 /* Expected device_id for W25Q16DV */
 
-typedef union
-{
-	uint64_t id_64b;
-	uint32_t id_32b[2]; /* 2*32bits 64bits Unique ID */
-	uint8_t id_8b[8]; /* 8*8bits 64bits Unique ID */
-} w25q80bv_unique_id_t;
+#define W25Q80BV_PAGE_LEN 256U
+#define W25Q80BV_NUM_PAGES 8192U
+#define W25Q80BV_NUM_BYTES (W25Q80BV_PAGE_LEN * W25Q80BV_NUM_PAGES)
 
-struct w25q80bv_driver_t;
-typedef struct w25q80bv_driver_t w25q80bv_driver_t;
-
-struct w25q80bv_driver_t {
-	spi_bus_t* bus;
-	gpio_t gpio_hold;
-	gpio_t gpio_wp;
-	void (*target_init)(w25q80bv_driver_t* const drv);
-	size_t page_len;
-	size_t num_pages;
-	size_t num_bytes;
+struct gpio_t gpio_spiflash_hold   = GPIO(1, 14);
+struct gpio_t gpio_spiflash_wp     = GPIO(1, 15);
+struct gpio_t gpio_spiflash_select = GPIO(5, 11);
+spi_target_t spi_target = {
+	.bus = &spi_bus_ssp0,
+	.gpio_hold = &gpio_spiflash_hold,
+	.gpio_wp = &gpio_spiflash_wp,
+	.gpio_select = &gpio_spiflash_select,
 };
 
-void w25q80bv_setup(w25q80bv_driver_t* const drv);
-void w25q80bv_chip_erase(w25q80bv_driver_t* const drv);
-void w25q80bv_program(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len, uint8_t* data);
-uint8_t w25q80bv_get_device_id(w25q80bv_driver_t* const drv);
-void w25q80bv_get_unique_id(w25q80bv_driver_t* const drv, w25q80bv_unique_id_t* unique_id);
-void w25q80bv_read(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len, uint8_t* const data);
+spiflash_driver_t spi_flash_drv = {
+	.target = &spi_target,
+    .target_init = spiflash_target_init,
+	.page_len = W25Q80BV_PAGE_LEN,
+	.num_pages = W25Q80BV_NUM_PAGES,
+	.num_bytes = W25Q80BV_NUM_BYTES,
+    .device_id = W25Q80BV_DEVICE_ID_RES,
+};
+
 
 #endif//__W25Q80BV_H__

@@ -22,8 +22,8 @@
 #ifndef __W25Q80BV_TARGET_H__
 #define __W25Q80BV_TARGET_H__
 
-#include "w25q80bv.h"
+#include "spiflash.h"
 
-void w25q80bv_target_init(w25q80bv_driver_t* const drv);
+void spiflash_target_init(spi_target_t* const drv);
 
 #endif/*__W25Q80BV_TARGET_H__*/

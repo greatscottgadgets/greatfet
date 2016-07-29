@@ -19,7 +19,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include "w25q80bv_target.h"
+#include "spiflash.h"
 
 #include <libopencm3/lpc43xx/scu.h>
 #include "greatfet_pins.h"
@@ -28,9 +28,7 @@
  * automatically?
  */
 
-void w25q80bv_target_init(w25q80bv_driver_t* const drv) {
-	(void)drv;
-
+void spiflash_target_init(spi_target_t* const target) {
 	/* Init SPIFI GPIO to Normal GPIO */
 	scu_pinmux(P3_3, (SCU_SSP_IO | SCU_CONF_FUNCTION2));    // P3_3 SPIFI_SCK => SSP0_SCK
 	scu_pinmux(P3_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION0)); // P3_4 SPIFI SPIFI_SIO3 IO3 => GPIO1[14]
@@ -50,10 +48,10 @@ void w25q80bv_target_init(w25q80bv_driver_t* const drv) {
 	scu_pinmux(SCU_SSP0_SSEL, (SCU_GPIO_FAST | SCU_CONF_FUNCTION4));
 
 	/* drive SSEL, HOLD, and WP pins high */
-	gpio_set(drv->gpio_hold);
-	gpio_set(drv->gpio_wp);
+	gpio_set(target->gpio_hold);
+	gpio_set(target->gpio_wp);
 
 	/* Set GPIO pins as outputs. */
-	gpio_output(drv->gpio_hold);
-	gpio_output(drv->gpio_wp);
+	gpio_output(target->gpio_hold);
+	gpio_output(target->gpio_wp);
 }

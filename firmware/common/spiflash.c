@@ -22,120 +22,108 @@
  */
 
 /*
- * This is a rudimentary driver for the W25Q80BV SPI Flash IC using the
- * LPC43xx's SSP0 peripheral (not quad SPIFI).  The only goal here is to allow
- * programming the flash.
+ * This is a rudimentary driver for generic SPI Flash ICs using the
+ * LPC43xx's SSP0 peripheral (not quad SPIFI).
  */
 
 #include <stdint.h>
 #include <stddef.h>
 
-#include "w25q80bv.h"
+#include "spiflash.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-#define W25Q80BV_READ_DATA    0x03
-#define W25Q80BV_FAST_READ    0x0b
-#define W25Q80BV_WRITE_ENABLE 0x06
-#define W25Q80BV_CHIP_ERASE   0xC7
-#define W25Q80BV_READ_STATUS1 0x05
-#define W25Q80BV_PAGE_PROGRAM 0x02
-#define W25Q80BV_DEVICE_ID    0xAB
-#define W25Q80BV_UNIQUE_ID    0x4B
+#define SPIFLASH_READ_DATA    0x03
+#define SPIFLASH_FAST_READ    0x0b
+#define SPIFLASH_WRITE_ENABLE 0x06
+#define SPIFLASH_CHIP_ERASE   0xC7
+#define SPIFLASH_READ_STATUS1 0x05
+#define SPIFLASH_PAGE_PROGRAM 0x02
+#define SPIFLASH_DEVICE_ID    0xAB
+#define SPIFLASH_UNIQUE_ID    0x4B
 
-#define W25Q80BV_STATUS_BUSY  0x01
+#define SPIFLASH_STATUS_BUSY  0x01
 
-#define W25Q80BV_DEVICE_ID_RES  0x14 /* Expected device_id for W25Q16DV */
-
-#define W25Q80BV_PAGE_LEN 256U
-#define W25Q80BV_NUM_PAGES 8192U
-#define W25Q80BV_NUM_BYTES (W25Q80BV_PAGE_LEN * W25Q80BV_NUM_PAGES)
 
 /*
  * Set up pins for GPIO and SPI control, configure SSP0 peripheral for SPI.
  * SSP0_SSEL is controlled by GPIO in order to handle various transfer lengths.
  */
-void w25q80bv_setup(w25q80bv_driver_t* const drv)
-{
+void spiflash_setup(spiflash_driver_t* const drv) {
 	uint8_t device_id;
 
-	drv->page_len = W25Q80BV_PAGE_LEN;
-	drv->num_pages = W25Q80BV_NUM_PAGES;
-	drv->num_bytes = W25Q80BV_NUM_BYTES;
-
-	drv->target_init(drv);
+	drv->target_init(drv->target);
 
 	device_id = 0;
-	while(device_id != W25Q80BV_DEVICE_ID_RES)
+	while(device_id != drv->device_id)
 	{
-		device_id = w25q80bv_get_device_id(drv);
+		device_id = spiflash_get_device_id(drv);
 	}
 }
 
-uint8_t w25q80bv_get_status(w25q80bv_driver_t* const drv)
+uint8_t spiflash_get_status(spiflash_driver_t* const drv)
 {
-	uint8_t data[] = { W25Q80BV_READ_STATUS1, 0xFF };
-	spi_bus_transfer(drv->bus, data, ARRAY_SIZE(data));
+	uint8_t data[] = { SPIFLASH_READ_STATUS1, 0xFF };
+	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
 	return data[1];
 }
 
 /* Release power down / Device ID */  
-uint8_t w25q80bv_get_device_id(w25q80bv_driver_t* const drv)
+uint8_t spiflash_get_device_id(spiflash_driver_t* const drv)
 {
 	uint8_t data[] = {
-		W25Q80BV_DEVICE_ID,
+		SPIFLASH_DEVICE_ID,
 		0xFF, 0xFF, 0xFF, 0xFF
 	};
-	spi_bus_transfer(drv->bus, data, ARRAY_SIZE(data));
+	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
 	return data[4];
 }
 
-void w25q80bv_get_unique_id(w25q80bv_driver_t* const drv, w25q80bv_unique_id_t* unique_id)
+void spiflash_get_unique_id(spiflash_driver_t* const drv, spiflash_unique_id_t* unique_id)
 {
 	uint8_t data[] = {
-		W25Q80BV_UNIQUE_ID,
+		SPIFLASH_UNIQUE_ID,
 		0xFF, 0xFF, 0xFF, 0xFF,
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 	};
-	spi_bus_transfer(drv->bus, data, ARRAY_SIZE(data));
+	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
 
 	for(size_t i=0; i<8; i++) {
 		unique_id->id_8b[i]  = data[5+i];
 	}
 }
 
-void w25q80bv_wait_while_busy(w25q80bv_driver_t* const drv)
+void spiflash_wait_while_busy(spiflash_driver_t* const drv)
 {
-	while (w25q80bv_get_status(drv) & W25Q80BV_STATUS_BUSY);
+	while (spiflash_get_status(drv) & SPIFLASH_STATUS_BUSY);
 }
 
-void w25q80bv_write_enable(w25q80bv_driver_t* const drv)
+void spiflash_write_enable(spiflash_driver_t* const drv)
 {
-	w25q80bv_wait_while_busy(drv);
+	spiflash_wait_while_busy(drv);
 
-	uint8_t data[] = { W25Q80BV_WRITE_ENABLE };
-	spi_bus_transfer(drv->bus, data, ARRAY_SIZE(data));
+	uint8_t data[] = { SPIFLASH_WRITE_ENABLE };
+	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
 }
 
-void w25q80bv_chip_erase(w25q80bv_driver_t* const drv)
+void spiflash_chip_erase(spiflash_driver_t* const drv)
 {
 	uint8_t device_id;
 
 	device_id = 0;
-	while(device_id != W25Q80BV_DEVICE_ID_RES)
-	{
-		device_id = w25q80bv_get_device_id(drv);
+	while(device_id != drv->device_id) {
+		device_id = spiflash_get_device_id(drv);
 	}
 
-	w25q80bv_write_enable(drv);
-	w25q80bv_wait_while_busy(drv);
+	spiflash_write_enable(drv);
+	spiflash_wait_while_busy(drv);
 
-	uint8_t data[] = { W25Q80BV_CHIP_ERASE };
-	spi_bus_transfer(drv->bus, data, ARRAY_SIZE(data));
+	uint8_t data[] = { SPIFLASH_CHIP_ERASE };
+	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
 }
 
 /* write up a 256 byte page or partial page */
-static void w25q80bv_page_program(w25q80bv_driver_t* const drv, const uint32_t addr, const uint16_t len, uint8_t* data)
+static void spiflash_page_program(spiflash_driver_t* const drv, const uint32_t addr, const uint16_t len, uint8_t* data)
 {
 	/* do nothing if asked to write beyond a page boundary */
 	if (((addr & 0xFF) + len) > drv->page_len)
@@ -145,11 +133,11 @@ static void w25q80bv_page_program(w25q80bv_driver_t* const drv, const uint32_t a
 	if (addr > (drv->num_bytes - len))
 		return;
 
-	w25q80bv_write_enable(drv);
-	w25q80bv_wait_while_busy(drv);
+	spiflash_write_enable(drv);
+	spiflash_wait_while_busy(drv);
 
 	uint8_t header[] = {
-		W25Q80BV_PAGE_PROGRAM,
+		SPIFLASH_PAGE_PROGRAM,
 		(addr & 0xFF0000) >> 16,
 		(addr & 0xFF00) >> 8,
 		addr & 0xFF
@@ -160,19 +148,18 @@ static void w25q80bv_page_program(w25q80bv_driver_t* const drv, const uint32_t a
 		{ data, len }
 	};
 
-	spi_bus_transfer_gather(drv->bus, transfers, ARRAY_SIZE(transfers));
+	spi_bus_transfer_gather(drv->target, transfers, ARRAY_SIZE(transfers));
 }
 
 /* write an arbitrary number of bytes */
-void w25q80bv_program(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len, uint8_t* data)
+void spiflash_program(spiflash_driver_t* const drv, uint32_t addr, uint32_t len, uint8_t* data)
 {
 	uint16_t first_block_len;
 	uint8_t device_id;
 
 	device_id = 0;
-	while(device_id != W25Q80BV_DEVICE_ID_RES)
-	{
-		device_id = w25q80bv_get_device_id(drv);
+	while(device_id != drv->device_id) {
+		device_id = spiflash_get_device_id(drv);
 	}	
 	
 	/* do nothing if we would overflow the flash */
@@ -185,7 +172,7 @@ void w25q80bv_program(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len,
 	if (len < first_block_len)
 		first_block_len = len;
 	if (first_block_len) {
-		w25q80bv_page_program(drv, addr, first_block_len, data);
+		spiflash_page_program(drv, addr, first_block_len, data);
 		addr += first_block_len;
 		data += first_block_len;
 		len -= first_block_len;
@@ -193,7 +180,7 @@ void w25q80bv_program(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len,
 
 	/* one page at a time on boundaries */
 	while (len >= drv->page_len) {
-		w25q80bv_page_program(drv, addr, drv->page_len, data);
+		spiflash_page_program(drv, addr, drv->page_len, data);
 		addr += drv->page_len;
 		data += drv->page_len;
 		len -= drv->page_len;
@@ -201,22 +188,22 @@ void w25q80bv_program(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len,
 
 	/* handle end not at page boundary */
 	if (len) {
-		w25q80bv_page_program(drv, addr, len, data);
+		spiflash_page_program(drv, addr, len, data);
 	}
 }
 
 /* write an arbitrary number of bytes */
-void w25q80bv_read(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len, uint8_t* const data)
+void spiflash_read(spiflash_driver_t* const drv, uint32_t addr, uint32_t len, uint8_t* const data)
 {
 	/* do nothing if we would overflow the flash */
 	if ((len > drv->num_bytes) || (addr > drv->num_bytes)
 			|| ((addr + len) > drv->num_bytes))
 		return;
 
-	w25q80bv_wait_while_busy(drv);
+	spiflash_wait_while_busy(drv);
 
 	uint8_t header[] = {
-		W25Q80BV_FAST_READ,
+		SPIFLASH_FAST_READ,
 		(addr & 0xFF0000) >> 16,
 		(addr & 0xFF00) >> 8,
 		addr & 0xFF,
@@ -228,5 +215,5 @@ void w25q80bv_read(w25q80bv_driver_t* const drv, uint32_t addr, uint32_t len, ui
 		{ data, len }
 	};
 
-	spi_bus_transfer_gather(drv->bus, transfers, ARRAY_SIZE(transfers));
+	spi_bus_transfer_gather(drv->target, transfers, ARRAY_SIZE(transfers));
 }

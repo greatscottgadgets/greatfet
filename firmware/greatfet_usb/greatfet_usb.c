@@ -36,9 +36,8 @@
 #include "usb_device.h"
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
-#include "usb_api_spiflash.h"
+#include "usb_api_spiflash_generic.h"
 #include "usb_api_gpio.h"
-//#include "usb_api_spiflash_spansion.h"
 #include "usb_bulk_buffer.h"
 
 usb_request_status_t usb_vendor_request_enable_usb1(
@@ -76,7 +75,6 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_partid_serialno,
 	usb_vendor_request_enable_usb1,
 	usb_vendor_request_led_toggle,
-	//usb_vendor_request_read_spiflash_spansion,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -221,9 +219,9 @@ int main(void) {
 	while(true) {
 		/* Blink LED4 to let us know we're alive */
 		led_off(LED4);
-		delay(20000000);
+		delay(10000000);
 		led_on(LED4);
-		delay(20000000);
+		delay(10000000);
 	}
 	
 	return 0;
