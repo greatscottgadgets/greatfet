@@ -28,11 +28,12 @@
 #
 
 import array
+import struct
 
 from .. import errors
 from ..protocol import vendor_requests
 
-class OnboardSPIFlash(object):
+class SPIFlash(object):
     """
     Class representing the onboard SPI flash used to store e.g. a GreatFET Azalea
     program. Typically used to program a w25q80bv, but the hardware provides us
@@ -42,7 +43,8 @@ class OnboardSPIFlash(object):
     want to support bulk transfer programming.)
     """
 
-    def __init__(self, board, page_size=256, maximum_address=0x0FFFFF):
+    def __init__(self, board, page_size=256, pages=8192,
+                 maximum_address=0x0FFFFF, device_id=0x14, chip_select=0x5B):
         """Set up a new SPI flash connection.
 
         Args:
@@ -56,6 +58,14 @@ class OnboardSPIFlash(object):
         # Store the limitations for this SPI flash.
         self.page_size = page_size
         self.maximum_address = maximum_address
+
+        data = struct.pack("<HHIHB", page_size, pages, page_size*pages,
+                           chip_select, device_id)
+        result = self.board.vendor_request_out(vendor_requests.INIT_SPIFLASH,
+            value=0, index=0, data=data, timeout=1000)
+
+        if result < 0:
+            raise errors.from_greatfet_error(result)
 
 
     def erase(self):

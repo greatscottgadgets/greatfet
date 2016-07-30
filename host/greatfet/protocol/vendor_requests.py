@@ -38,15 +38,16 @@ requests that may differ from base-board to base-board.
 """
 
 # Internal programming requests.
-ERASE_SPIFLASH = 0
+INIT_SPIFLASH = 0
 WRITE_SPIFLASH = 1
 READ_SPIFLASH = 2
+ERASE_SPIFLASH = 3
 
 # Board information API.
-READ_BOARD_ID = 3
-READ_VERSION_STRING = 4
-READ_PARTID_SERIALNO = 5
+READ_BOARD_ID = 4
+READ_VERSION_STRING = 5
+READ_PARTID_SERIALNO = 6
 
 # Temporary, custom stuffs?
-ENABLE_USB1 = 6
-LED_TOGGLE = 7
+ENABLE_USB1 = 7
+LED_TOGGLE = 8

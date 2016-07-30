@@ -67,9 +67,10 @@ usb_request_status_t usb_vendor_request_led_toggle(
 }
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
-	usb_vendor_request_erase_spiflash,
+	usb_vendor_request_init_spiflash,
 	usb_vendor_request_write_spiflash,
 	usb_vendor_request_read_spiflash,
+	usb_vendor_request_erase_spiflash,
 	usb_vendor_request_read_board_id,
 	usb_vendor_request_read_version_string,
 	usb_vendor_request_read_partid_serialno,
@@ -211,7 +212,7 @@ int main(void) {
 	pin_setup();
 	led_on(LED1);
 	cpu_clock_init();
-	led_on(LED2);
+	led_off(LED2);
 	led_off(LED3);
 
 	init_usb0();

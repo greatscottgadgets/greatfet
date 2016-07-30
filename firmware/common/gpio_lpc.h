@@ -47,10 +47,14 @@ typedef struct gpio_port_t {
 	volatile uint32_t not;		/* +0x300 */
 } gpio_port_t;
 
+/* Removing the "const" here is a horrible thing to do
+ * I need to find a better solution to this
+ * For the reason, see usb_api_spiflash.c
+ */
 struct gpio_t {
-	const uint32_t mask;
-	gpio_port_t* const port;
-	volatile uint32_t* const gpio_w;
+	/*const*/ uint32_t mask;
+	gpio_port_t* /*const*/ port;
+	volatile uint32_t* /*const*/ gpio_w;
 };
 
 #define GPIO_LPC_BASE (0x400f4000)

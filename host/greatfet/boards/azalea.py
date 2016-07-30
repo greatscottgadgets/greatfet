@@ -28,7 +28,7 @@
 #
 
 from ..board import GreatFETBoard
-from ..peripherals.onboard_spi_flash import OnboardSPIFlash
+from ..peripherals.spi_flash import SPIFlash
 
 class GreatFETAzalea(GreatFETBoard):
     """ Class representing GreatFET Azalea base-boards. """
@@ -47,4 +47,4 @@ class GreatFETAzalea(GreatFETBoard):
         # Initialize the fixed peripherals that come on the board.
         # TODO: Use a self.add_peripheral mechanism, so peripherals can
         # be dynamically listed?
-        self.onboard_flash = OnboardSPIFlash(self)
+        self.onboard_flash = SPIFlash(self)

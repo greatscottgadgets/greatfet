@@ -40,33 +40,61 @@ uint8_t spiflash_buffer[256U];
 
 static struct gpio_t gpio_spiflash_hold   = GPIO(1, 14);
 static struct gpio_t gpio_spiflash_wp     = GPIO(1, 15);
-static struct gpio_t gpio_spiflash_select = GPIO(5, 11);
+static struct gpio_t gpio_spiflash_select;
 static spi_target_t spi_target = {
 	.bus = &spi_bus_ssp0,
 	.gpio_hold = &gpio_spiflash_hold,
 	.gpio_wp = &gpio_spiflash_wp,
-	.gpio_select = &gpio_spiflash_select,
 };
 
 static spiflash_driver_t spi_flash_drv = {
 	.target = &spi_target,
     .target_init = spiflash_target_init,
-	.page_len = W25Q80BV_PAGE_LEN,
-	.num_pages = W25Q80BV_NUM_PAGES,
-	.num_bytes = W25Q80BV_NUM_BYTES,
-    .device_id = W25Q80BV_DEVICE_ID_RES,
 };
 
-usb_request_status_t usb_vendor_request_erase_spiflash(
-		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
+struct flash_params {
+	uint16_t page_len;
+	uint16_t num_pages;
+	uint32_t num_bytes;
+	uint16_t gpio_select;
+	uint8_t device_id;
+	
+};
+struct flash_params params;
+
+usb_request_status_t usb_vendor_request_init_spiflash(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+	if ((stage == USB_TRANSFER_STAGE_SETUP) &&
+		(endpoint->setup.length == 11)) {
+		usb_transfer_schedule_block(endpoint->out, &params,
+									sizeof(struct flash_params),
+									NULL, NULL);
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		spi_flash_drv.page_len = params.page_len;
+		spi_flash_drv.num_pages = params.num_pages;
+		spi_flash_drv.num_bytes = params.num_bytes;
+		spi_flash_drv.device_id = params.device_id;
+		// Can't use the GPIO() define as the struct alreay exists
+		gpio_spiflash_select.mask = 1UL << 11;
+		gpio_spiflash_select.port = GPIO_LPC_PORT(5);
+		gpio_spiflash_select.gpio_w = GPIO_LPC_W(5,11);
+		
+		spi_target.gpio_select = &gpio_spiflash_select;
+		led_on(LED2);
 		spi_bus_start(spi_flash_drv.target, &ssp_config_spi);
 		spiflash_setup(&spi_flash_drv);
-		/* only chip erase is implemented */
-		spiflash_chip_erase(&spi_flash_drv);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
+	return USB_REQUEST_STATUS_OK;
+}
+	
+usb_request_status_t usb_vendor_request_erase_spiflash(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+		if (stage == USB_TRANSFER_STAGE_SETUP) {
+			/* only chip erase is implemented */
+			spiflash_chip_erase(&spi_flash_drv);
+			usb_transfer_schedule_ack(endpoint->in);
+		}
 	return USB_REQUEST_STATUS_OK;
 }
 
