@@ -75,12 +75,9 @@ usb_request_status_t usb_vendor_request_init_spiflash(
 		spi_flash_drv.num_bytes = params.num_bytes;
 		spi_flash_drv.device_id = params.device_id;
 		// Can't use the GPIO() define as the struct alreay exists
-		gpio_spiflash_select.mask = 1UL << 11;
-		gpio_spiflash_select.port = GPIO_LPC_PORT(5);
-		gpio_spiflash_select.gpio_w = GPIO_LPC_W(5,11);
+		GPIO_SET(gpio_spiflash_select, (params.gpio_select>>8)&0xFF, params.gpio_select&0xFF);
 		
 		spi_target.gpio_select = &gpio_spiflash_select;
-		led_on(LED2);
 		spi_bus_start(spi_flash_drv.target, &ssp_config_spi);
 		spiflash_setup(&spi_flash_drv);
 		usb_transfer_schedule_ack(endpoint->in);

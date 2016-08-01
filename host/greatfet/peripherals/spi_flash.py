@@ -44,7 +44,7 @@ class SPIFlash(object):
     """
 
     def __init__(self, board, page_size=256, pages=8192,
-                 maximum_address=0x0FFFFF, device_id=0x14, chip_select=0x5B):
+                 maximum_address=0x0FFFFF, device_id=0x14, chip_select=0x050B):
         """Set up a new SPI flash connection.
 
         Args:
