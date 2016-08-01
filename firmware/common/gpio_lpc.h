@@ -71,4 +71,9 @@ struct gpio_t {
 	.gpio_w = GPIO_LPC_W(_port_num, _pin_num), \
 }
 
+#define GPIO_SET(_gpio, _port_num, _pin_num) \
+	_gpio.mask = (1UL << (_pin_num)); \
+	_gpio.port = GPIO_LPC_PORT(_port_num); \
+	_gpio.gpio_w = GPIO_LPC_W(_port_num, _pin_num);
+
 #endif/*__GPIO_LPC_H__*/

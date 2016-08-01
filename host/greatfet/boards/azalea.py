@@ -29,6 +29,7 @@
 
 from ..board import GreatFETBoard
 from ..peripherals.spi_flash import SPIFlash
+from ..peripherals import gpio
 
 class GreatFETAzalea(GreatFETBoard):
     """ Class representing GreatFET Azalea base-boards. """

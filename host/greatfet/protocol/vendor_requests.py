@@ -51,3 +51,6 @@ READ_PARTID_SERIALNO = 6
 # Temporary, custom stuffs?
 ENABLE_USB1 = 7
 LED_TOGGLE = 8
+
+REGISTER_GPIO = 9
+WRITE_GPIO = 10

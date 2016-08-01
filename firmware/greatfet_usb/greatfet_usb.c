@@ -76,6 +76,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_partid_serialno,
 	usb_vendor_request_enable_usb1,
 	usb_vendor_request_led_toggle,
+	usb_vendor_request_register_gpio,
+	usb_vendor_request_write_gpio,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -218,6 +220,8 @@ int main(void) {
 	init_usb0();
 	
 	while(true) {
+		if(start_gpio_monitor)
+			gpio_monitor_mode();
 		/* Blink LED4 to let us know we're alive */
 		led_off(LED4);
 		delay(10000000);
