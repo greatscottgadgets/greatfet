@@ -867,6 +867,7 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, &sigint_callback_handler);
 	signal(SIGABRT, &sigint_callback_handler);
 #endif
+/*
 	printf("call greatfet_sample_rate_set(%u Hz/%.03f MHz)\n", sample_rate_hz,((float)sample_rate_hz/(float)FREQ_ONE_MHZ));
 	result = greatfet_set_sample_rate_manual(device, sample_rate_hz, 1);
 	if( result != GREATFET_SUCCESS ) {
@@ -883,13 +884,17 @@ int main(int argc, char** argv) {
 		usage();
 		return EXIT_FAILURE;
 	}
+*/
 
+	printf("Starting transfer\n");
 	if( transceiver_mode == TRANSCEIVER_MODE_RX ) {
-		result = greatfet_set_vga_gain(device, vga_gain);
-		result |= greatfet_set_lna_gain(device, lna_gain);
+		printf("\tRX\n");
+//		result = greatfet_set_vga_gain(device, vga_gain);
+//		result |= greatfet_set_lna_gain(device, lna_gain);
 		result |= greatfet_start_rx(device, rx_callback, NULL);
 	} else {
-		result = greatfet_set_txvga_gain(device, txvga_gain);
+		printf("\tTX\n");
+//		result = greatfet_set_txvga_gain(device, txvga_gain);
 		result |= greatfet_start_tx(device, tx_callback, NULL);
 	}
 	if( result != GREATFET_SUCCESS ) {
@@ -897,7 +902,9 @@ int main(int argc, char** argv) {
 		usage();
 		return EXIT_FAILURE;
 	}
+	printf("Started\n");
 
+/*
 	if (automatic_tuning) {
 		printf("call greatfet_set_freq(%s Hz/%.03f MHz)\n",
 			u64toa(freq_hz, &ascii_u64_data1),((double)freq_hz/(double)FREQ_ONE_MHZ) );
@@ -941,6 +948,7 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 	}
+*/
 
 	if( limit_num_samples ) {
 		printf("samples_to_xfer %s/%sMio\n",

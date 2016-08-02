@@ -42,31 +42,29 @@ typedef int bool;
 #define TO_LE64(x) x
 #endif
 
+/*
+        usb_vendor_request_erase_spiflash,
+        usb_vendor_request_write_spiflash,
+        usb_vendor_request_read_spiflash,
+        usb_vendor_request_read_board_id,
+        usb_vendor_request_read_version_string,
+        usb_vendor_request_read_partid_serialno,
+        usb_vendor_request_enable_usb1,
+        usb_vendor_request_led_toggle,
+*/
+
 // TODO: Factor this into a shared #include so that firmware can use
 // the same values.
 typedef enum {
 	GREATFET_VENDOR_REQUEST_SET_TRANSCEIVER_MODE = 1,
-	GREATFET_VENDOR_REQUEST_MAX2837_WRITE = 2,
-	GREATFET_VENDOR_REQUEST_MAX2837_READ = 3,
-	GREATFET_VENDOR_REQUEST_SI5351C_WRITE = 4,
-	GREATFET_VENDOR_REQUEST_SI5351C_READ = 5,
-	GREATFET_VENDOR_REQUEST_SAMPLE_RATE_SET = 6,
-	GREATFET_VENDOR_REQUEST_BASEBAND_FILTER_BANDWIDTH_SET = 7,
-	GREATFET_VENDOR_REQUEST_RFFC5071_WRITE = 8,
-	GREATFET_VENDOR_REQUEST_RFFC5071_READ = 9,
-	GREATFET_VENDOR_REQUEST_SPIFLASH_ERASE = 10,
-	GREATFET_VENDOR_REQUEST_SPIFLASH_WRITE = 11,
-	GREATFET_VENDOR_REQUEST_SPIFLASH_READ = 12,
-	GREATFET_VENDOR_REQUEST_BOARD_ID_READ = 14,
-	GREATFET_VENDOR_REQUEST_VERSION_STRING_READ = 15,
-	GREATFET_VENDOR_REQUEST_SET_FREQ = 16,
-	GREATFET_VENDOR_REQUEST_AMP_ENABLE = 17,
-	GREATFET_VENDOR_REQUEST_BOARD_PARTID_SERIALNO_READ = 18,
-	GREATFET_VENDOR_REQUEST_SET_LNA_GAIN = 19,
-	GREATFET_VENDOR_REQUEST_SET_VGA_GAIN = 20,
-	GREATFET_VENDOR_REQUEST_SET_TXVGA_GAIN = 21,
-	GREATFET_VENDOR_REQUEST_ANTENNA_ENABLE = 23,
-	GREATFET_VENDOR_REQUEST_SET_FREQ_EXPLICIT = 24,
+	GREATFET_VENDOR_REQUEST_SPIFLASH_ERASE = 2,
+	GREATFET_VENDOR_REQUEST_SPIFLASH_WRITE = 3,
+	GREATFET_VENDOR_REQUEST_SPIFLASH_READ = 4,
+	GREATFET_VENDOR_REQUEST_BOARD_ID_READ = 5,
+	GREATFET_VENDOR_REQUEST_VERSION_STRING_READ = 6,
+	GREATFET_VENDOR_REQUEST_BOARD_PARTID_SERIALNO_READ = 7,
+	GREATFET_VENDOR_REQUEST_ENABLE_USB1 = 8,
+	GREATFET_VENDOR_REQUEST_LED_TOGGLE = 9,
 } greatfet_vendor_request;
 
 typedef enum {
@@ -1100,11 +1098,17 @@ int ADDCALL greatfet_start_rx(greatfet_device* device, greatfet_sample_block_cb_
 {
 	int result;
 	const uint8_t endpoint_address = LIBUSB_ENDPOINT_IN | 1;
+	printf("setting transceiver mode RX\n");
 	result = greatfet_set_transceiver_mode(device, GREATFET_TRANSCEIVER_MODE_RECEIVE);
+	printf("\tSET\n");
 	if( result == GREATFET_SUCCESS )
 	{
 		device->rx_ctx = rx_ctx;
+		printf("starting transfer thread\n");
 		result = create_transfer_thread(device, endpoint_address, callback);
+		printf("\tSTARTED\n");
+	} else {
+		printf("\tFAILED\n");
 	}
 	return result;
 }

@@ -41,6 +41,75 @@
 //#include "usb_api_spiflash_spansion.h"
 #include "usb_bulk_buffer.h"
 
+#include <stdlib.h>
+
+typedef enum {
+        TRANSCEIVER_MODE_OFF = 0,
+        TRANSCEIVER_MODE_RX = 1,
+        TRANSCEIVER_MODE_TX = 2,
+        TRANSCEIVER_MODE_SS = 3,
+        TRANSCEIVER_MODE_CPLD_UPDATE = 4
+} transceiver_mode_t;
+
+static volatile transceiver_mode_t _transceiver_mode = TRANSCEIVER_MODE_OFF;
+
+void set_transceiver_mode(const transceiver_mode_t new_transceiver_mode) {
+        //baseband_streaming_disable(&sgpio_config);
+
+        usb_endpoint_disable(&usb0_endpoint_bulk_in);
+        usb_endpoint_disable(&usb0_endpoint_bulk_out);
+
+        _transceiver_mode = new_transceiver_mode;
+
+        if( _transceiver_mode == TRANSCEIVER_MODE_RX ) {
+                led_off(LED3);
+                led_on(LED2);
+                usb_endpoint_init(&usb0_endpoint_bulk_in);
+                //vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_rx;
+        } else if (_transceiver_mode == TRANSCEIVER_MODE_TX) {
+                led_off(LED2);
+                led_on(LED3);
+                usb_endpoint_init(&usb0_endpoint_bulk_out);
+                //vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_tx;
+        } else {
+                led_off(LED2);
+                led_off(LED3);
+                //vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_rx;
+        }
+
+        if( _transceiver_mode != TRANSCEIVER_MODE_OFF ) {
+                //baseband_streaming_enable(&sgpio_config);
+        }
+}
+
+transceiver_mode_t transceiver_mode(void) {
+        return _transceiver_mode;
+}
+
+usb_request_status_t usb_vendor_request_set_transceiver_mode(
+        usb_endpoint_t* const endpoint,
+        const usb_transfer_stage_t stage
+) {
+        if( stage == USB_TRANSFER_STAGE_SETUP ) {
+                switch( endpoint->setup.value ) {
+                case TRANSCEIVER_MODE_OFF:
+                case TRANSCEIVER_MODE_RX:
+                case TRANSCEIVER_MODE_TX:
+                        set_transceiver_mode(endpoint->setup.value);
+                        usb_transfer_schedule_ack(endpoint->in);
+                        return USB_REQUEST_STATUS_OK;
+                case TRANSCEIVER_MODE_CPLD_UPDATE:
+                        usb_endpoint_init(&usb0_endpoint_bulk_out);
+                        usb_transfer_schedule_ack(endpoint->in);
+                        return USB_REQUEST_STATUS_OK;
+                default:
+                        return USB_REQUEST_STATUS_STALL;
+                }
+        } else {
+                return USB_REQUEST_STATUS_OK;
+        }
+}
+
 usb_request_status_t usb_vendor_request_enable_usb1(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
@@ -68,6 +137,8 @@ usb_request_status_t usb_vendor_request_led_toggle(
 }
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
+	NULL,
+	usb_vendor_request_set_transceiver_mode,
 	usb_vendor_request_erase_spiflash,
 	usb_vendor_request_write_spiflash,
 	usb_vendor_request_read_spiflash,
@@ -218,12 +289,115 @@ int main(void) {
 
 	init_usb0();
 	
+	int delay_time = 5000;
+	unsigned long flash_counter = 0;
+	bool tx_led_on = false;
+
+        int phase = 0;
+	unsigned char cur_char = 0x01;
+
+	while(usb_bulk_buffer_offset++ < 0x4000) {
+		usb_bulk_buffer[usb_bulk_buffer_offset] = 0xa0;
+	}
+
 	while(true) {
 		/* Blink LED4 to let us know we're alive */
+/*
 		led_off(LED4);
-		delay(20000000);
+		led_on(LED3);
+
+		delay(delay_time);
+
 		led_on(LED4);
-		delay(20000000);
+		led_off(LED3);
+
+		delay(delay_time);
+*/
+
+/*
+		if(phase == 1) {
+			while(usb_bulk_buffer_offset++ < 0x1000 - 2) {
+				usb_bulk_buffer[usb_bulk_buffer_offset] = 0xa0;
+			}
+		} else {
+			while(usb_bulk_buffer_offset++ < 0x2000 - 2) {
+				usb_bulk_buffer[usb_bulk_buffer_offset] = 0xff;
+			}
+		}
+		if(usb_bulk_buffer_offset >= 0x2000) {
+			usb_bulk_buffer_offset = 0;
+		}
+*/
+
+/*
+                // Set up IN transfer of buffer 0.
+               if ( usb_bulk_buffer_offset >= 16384 ) {
+                        usb_transfer_schedule_block(
+                                //(transceiver_mode() == TRANSCEIVER_MODE_RX)
+//                               //? &usb_endpoint_bulk_in : &usb_endpoint_bulk_out,
+                                &usb0_endpoint_bulk_out,
+//                                &usb0_endpoint_bulk_in,
+                                &usb_bulk_buffer[0x0000],
+                                0x4000,
+                                NULL, NULL
+                                );
+
+			usb_bulk_buffer_offset = 0;
+
+               }
+*/
+
+                // Set up IN transfer of buffer 0.
+                //if ( usb_bulk_buffer_offset >= 16384
+                if (true
+                     && phase == 1
+                     && transceiver_mode() != TRANSCEIVER_MODE_OFF) {
+			usb_bulk_buffer_offset = 0;
+			cur_char++;
+			while(usb_bulk_buffer_offset++ < 0x2000) {
+				usb_bulk_buffer[usb_bulk_buffer_offset] = cur_char;
+			}
+
+                        usb_transfer_schedule_block(
+                                (transceiver_mode() == TRANSCEIVER_MODE_RX)
+                                ? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
+                                &usb_bulk_buffer[0x0000],
+                                0x4000,
+                                NULL, NULL
+                                );
+                        phase = 0;
+
+			if(tx_led_on) {
+				tx_led_on = false;
+				led_off(LED1);
+				led_on(LED2);
+			} else {
+				tx_led_on = true;
+				led_on(LED1);
+				led_off(LED2);
+			}
+                }
+
+                // Set up IN transfer of buffer 1.
+                //if ( usb_bulk_buffer_offset < 16384
+                if (true
+                     && phase == 0
+                     && transceiver_mode() != TRANSCEIVER_MODE_OFF) {
+			usb_bulk_buffer_offset = 0x2000;
+			while(usb_bulk_buffer_offset++ < 0x4000) {
+				usb_bulk_buffer[usb_bulk_buffer_offset] = 0xc0;
+			}
+
+                        usb_transfer_schedule_block(
+                                (transceiver_mode() == TRANSCEIVER_MODE_RX)
+                                ? &usb0_endpoint_bulk_in : &usb0_endpoint_bulk_out,
+                                &usb_bulk_buffer[0x4000],
+                                0x4000,
+                                NULL, NULL
+                        );
+                        phase = 1;
+                }
+
 	}
 	
 	return 0;
