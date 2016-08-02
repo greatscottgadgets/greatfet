@@ -2,3 +2,5 @@
 
 This folder contains an experimental host-side python utility. It should work with
 both python2 and python3.
+
+This folder also contains a basic C library and transfer tool.
