@@ -31,5 +31,6 @@ usb_request_status_t usb_vendor_request_spi_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 usb_request_status_t usb_vendor_request_spi_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
-
+usb_request_status_t usb_vendor_request_spi_dump_flash(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 #endif /* end of include guard: __USB_API_SPI_H__ */

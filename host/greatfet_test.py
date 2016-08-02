@@ -37,10 +37,74 @@ from greatfet.protocol import vendor_requests
 from greatfet.peripherals import gpio
 from greatfet.peripherals import spi_flash
 
+JEDECmanufacturers = {
+    0xFF: "MISSING",
+    0xEF: "Winbond",
+    0xC2: "MXIC",
+    0x20: "Numonyx/ST",
+    0x1F: "Atmel",
+    0x1C: "eON",
+    0x01: "AMD/Spansion",
+}
+
+JEDECdevices = {
+    0xFFFFFF: "MISSING",
+    0xEF3015: "W25X16L",
+    0xEF3014: "W25X80L",
+    0xEF3013: "W25X40L",
+    0xEF3012: "W25X20L",
+    0xEF3011: "W25X10L",
+    0xEF4015: "W25Q16DV",
+    0xC22017: "MX25L6405D",
+    0xC22016: "MX25L3205D",
+    0xC22015: "MX25L1605D",
+    0xC22014: "MX25L8005",
+    0xC22013: "MX25L4005",
+    0x204011: "M45PE10",
+    0x202014: "M25P80",
+    0x1f4501: "AT24DF081",
+    0x1C3114: "EN25F80",
+}
+
+JEDECsizes = {
+    0x17: 0x800000,
+    0x16: 0x400000,
+    0x15: 0x200000,
+    0x14: 0x100000,
+    0x13: 0x080000,
+    0x12: 0x040000,
+    0x11: 0x020000
+}
+
+
 def spi_read(device, command, length):
     data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
-    print(' '.join(["0x%02x" % d for d in data]))
+    #print(' '.join(["0x%02x" % d for d in data]))
+    return data
 
+def spi_info(device):
+    print("Reading device information")
+    data = spi_read(device, 0x9F, 4)
+    manufacturer = data[1]
+    model = data[2]
+    capacity = data[3]
+    device = (manufacturer << 16) | (model << 8) | capacity
+    print("Manufacturer: {}".format(JEDECmanufacturers.get(manufacturer, "Unknown")))
+    print("Device: {}".format(JEDECdevices.get(device, "Unknown")))
+    print("Capacity: {} bytes".format(JEDECsizes.get(capacity, "Unknown")))
+    return JEDECsizes.get(capacity)
+
+def dump_flash(device, size):
+    print("Dumping flash")
+    address = [0x0b, 0,0,0]
+    data = device.vendor_request_in(vendor_requests.SPI_DUMP_FLASH, length=255)
+    # print(data)
+    print(' '.join(["0x%02x" % d for d in data]))
+    print("Command written")
+    # data = spi_read(device, 0x00, 255)
+    # print(len(data))
+    # print(data[:20])
+    
 if __name__ == '__main__':
 
     device = GreatFET()
@@ -54,12 +118,14 @@ if __name__ == '__main__':
     print("  Firmware version: {}".format(device.firmware_version()))
     print("  Part ID: {}".format(device.part_id()))
     print("  Serial number: {}".format(device.serial_number()))
+    print()
 
-    data = device.vendor_request_out(vendor_requests.INIT_SPI)
-    print("Attempting Read")
-    spi_read(device, 0xAB, 5)
-    spi_read(device, 0x90, 6)
-    spi_read(device, 0x9F, 4)
+    device.vendor_request_out(vendor_requests.INIT_SPI)
+    size = spi_info(device)
+    print()
+    dump_flash(device, size)
+    
+    
 
     # target = spi_flash.SPIFlash(device, chip_select=gpio.J2.P35)
     # with open('flash.bin', 'wb') as file:

@@ -60,7 +60,8 @@ static spiflash_driver_t spi1_target_drv = {
 usb_request_status_t usb_vendor_request_init_spi(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	if ((stage == USB_TRANSFER_STAGE_SETUP)) {
-		spi_bus_start(spi1_target_drv.target, &ssp_config_spi);
+		
+		spi_bus_start(spi1_target_drv.target, &ssp1_config_spi);
 		spi1_init(spi1_target_drv.target);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
@@ -70,6 +71,21 @@ usb_request_status_t usb_vendor_request_init_spi(
 usb_request_status_t usb_vendor_request_spi_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
+	int i;
+	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	{
+		usb_transfer_schedule_block(endpoint->out, &spi_buffer[0],
+									endpoint->setup.length, NULL, NULL);
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		//spi_buffer[0] = endpoint->setup.value & 0xFF;
+		spi_buffer[endpoint->setup.length] = 0x00;
+		//spi_bus_transfer(&spi1_target, spi_buffer, endpoint->setup.length);
+		spi_bus_transfer(&spi1_target, spi_buffer, 255);
+		for(i=4; i<255; i++)
+			if(spi_buffer[i] != 255)
+				led_on(LED2);
+		usb_transfer_schedule_ack(endpoint->in);
+	}
 	return USB_REQUEST_STATUS_OK;
 }
 
@@ -78,12 +94,11 @@ usb_request_status_t usb_vendor_request_spi_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	int i;
-	spi_buffer[0] = endpoint->setup.value & 0xFF;
-	for(i=1; i<endpoint->setup.length; i++)
-		spi_buffer[i] = 0x00;
-
 	if (stage == USB_TRANSFER_STAGE_SETUP) 
 	{
+		spi_buffer[0] = endpoint->setup.value & 0xFF;
+		for(i=1; i<endpoint->setup.length; i++)
+			spi_buffer[i] = 0x00;
 		spi_bus_transfer(&spi1_target, spi_buffer, endpoint->setup.length);
 		usb_transfer_schedule_block(endpoint->in, &spi_buffer[0],
 									endpoint->setup.length, NULL, NULL);
@@ -93,3 +108,22 @@ usb_request_status_t usb_vendor_request_spi_read(
 	return USB_REQUEST_STATUS_OK;
 }
 
+
+usb_request_status_t usb_vendor_request_spi_dump_flash(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	int i;
+	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	{
+		spi1_target_drv.page_len = 256;
+		spi1_target_drv.num_pages = 8192;
+		spi1_target_drv.num_bytes = 256*8192;
+		spi1_target_drv.device_id = 0x14;
+		spiflash_read(&spi1_target_drv, 0x00, endpoint->setup.length, spi_buffer);
+		usb_transfer_schedule_block(endpoint->in, &spi_buffer[0],
+									endpoint->setup.length, NULL, NULL);
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		usb_transfer_schedule_ack(endpoint->out);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
