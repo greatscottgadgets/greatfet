@@ -88,13 +88,13 @@ spi_bus_t spi_bus_ssp0 = {
 const ssp_config_t ssp1_config_spi = {
 	.data_bits = SSP_DATA_8BITS,
 	.serial_clock_rate = 2,
-	.clock_prescale_rate = 250,
+	.clock_prescale_rate = 100,
 };
 
 spi_bus_t spi_bus_ssp1 = {
 	.obj = (void*)SSP1_BASE,
 	.config = &ssp1_config_spi,
-	.start = spi_ssp1_start,
+	.start = spi_ssp_start,
 	.stop = spi_ssp_stop,
 	.transfer = spi_ssp_transfer,
 	.transfer_gather = spi_ssp_transfer_gather,

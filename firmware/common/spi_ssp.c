@@ -54,36 +54,6 @@ void spi_ssp_start(spi_target_t* target, const void* const _config) {
 	bus->config = config;
 }
 
-void spi_ssp1_start(spi_target_t* target, const void* const _config) {
-	spi_bus_t* const bus = target->bus;
-	const ssp_config_t* const config = _config;
-
-	if( bus->obj == (void*)SSP0_BASE ) {
-		/* Reset SPIFI peripheral before to Erase/Write SPIFI memory through SPI */
-		RESET_CTRL1 = RESET_CTRL1_SPIFI_RST;
-	}
-
-	gpio_set(target->gpio_select);
-	gpio_output(target->gpio_select);
-
-	SSP_CR1(bus->obj) = 0;
-	SSP_CPSR(bus->obj) = config->clock_prescale_rate;
-	SSP_CR0(bus->obj) =
-		  (config->serial_clock_rate << 8)
-		| SSP_CPOL_0_CPHA_0
-		| SSP_FRAME_SPI
-		| config->data_bits
-		;
-	SSP_CR1(bus->obj) =
-		  SSP_SLAVE_OUT_ENABLE
-		| SSP_MASTER
-		| SSP_ENABLE
-		| SSP_MODE_NORMAL
-		;
-
-	bus->config = config;
-}
-
 void spi_ssp_stop(spi_bus_t* const bus) {
 	SSP_CR1(bus->obj) = 0;
 }
