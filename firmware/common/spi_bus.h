@@ -47,13 +47,13 @@ struct spi_bus_t {
 	void* const obj;
 	const void* config;
 	void (*start)(spi_target_t* target, const void* const config);
-	void (*stop)(spi_target_t* target);
+	void (*stop)(spi_bus_t* const bus);
 	void (*transfer)(spi_target_t* target, void* const data, const size_t count);
 	void (*transfer_gather)(spi_target_t* target, const spi_transfer_t* const transfers, const size_t count);
 };
 
 void spi_bus_start(spi_target_t* target, const void* const config);
-void spi_bus_stop(spi_target_t* target);
+void spi_bus_stop(spi_bus_t* const bus);
 void spi_bus_transfer(spi_target_t* target, void* const data, const size_t count);
 void spi_bus_transfer_gather(spi_target_t* target, const spi_transfer_t* const transfers, const size_t count);
 

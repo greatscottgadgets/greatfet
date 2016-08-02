@@ -49,10 +49,6 @@ static struct gpio_t gpio_led[4] = {
 };
 
 static struct gpio_t gpio_usb1_en		= GPIO(2, 8);
-//
-//static struct gpio_t gpio_spiflash_hold		= GPIO(1, 14);
-//static struct gpio_t gpio_spiflash_wp		= GPIO(1, 15);
-//static struct gpio_t gpio_spiflash_select	= GPIO(5, 11);
 
 /* CPLD JTAG interface GPIO pins */
 static struct gpio_t gpio_tdo			= GPIO(5, 18);
@@ -89,6 +85,14 @@ spi_bus_t spi_bus_ssp0 = {
 	.transfer_gather = spi_ssp_transfer_gather,
 };
 
+spi_bus_t spi_bus_ssp1 = {
+	.obj = (void*)SSP1_BASE,
+	.config = &ssp_config_spi,
+	.start = spi_ssp_start,
+	.stop = spi_ssp_stop,
+	.transfer = spi_ssp_transfer,
+	.transfer_gather = spi_ssp_transfer_gather,
+};
 //spi_target_t spi_target = {
 //	.bus = &spi_bus_ssp0,
 //	.gpio_hold = &gpio_spiflash_hold,

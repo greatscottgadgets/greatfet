@@ -30,7 +30,7 @@
 GPIO pins
 """
 
-class J1(Object):
+class J1(object):
     # GND
     # VCC
     P3 = 0x050d
@@ -72,7 +72,7 @@ class J1(Object):
     P39 = 0x000b
     P40 = 0x000a
 
-class J2(Object):
+class J2(object):
     # GND
     # VBUS
     P3 = 0x050c
@@ -114,7 +114,7 @@ class J2(Object):
     # I2C0_SDA
     # I2C0_SDL
 
-class J7(Object):
+class J7(object):
     # GND
     P2 = 0x0303
     P3 = 0x0304

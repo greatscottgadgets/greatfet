@@ -37,6 +37,7 @@
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
 #include "usb_api_spiflash.h"
+#include "usb_api_spi.h"
 #include "usb_api_gpio.h"
 #include "usb_bulk_buffer.h"
 
@@ -78,6 +79,9 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_led_toggle,
 	usb_vendor_request_register_gpio,
 	usb_vendor_request_write_gpio,
+	usb_vendor_request_init_spi,
+	usb_vendor_request_spi_write,
+	usb_vendor_request_spi_read,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -212,10 +216,10 @@ usb_request_status_t usb_vendor_request_enable_usb1(
 
 int main(void) {
 	pin_setup();
-	led_on(LED1);
 	cpu_clock_init();
 	led_off(LED2);
 	led_off(LED3);
+	led_off(LED4);
 
 	init_usb0();
 	
@@ -223,9 +227,9 @@ int main(void) {
 		if(start_gpio_monitor)
 			gpio_monitor_mode();
 		/* Blink LED4 to let us know we're alive */
-		led_off(LED4);
+		led_off(LED1);
 		delay(10000000);
-		led_on(LED4);
+		led_on(LED1);
 		delay(10000000);
 	}
 	

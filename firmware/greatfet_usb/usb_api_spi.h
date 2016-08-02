@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Jared Boone, ShareBrained Technology, Inc.
+ * Copyright 2016 Dominic Spill
  *
  * This file is part of GreatFET.
  *
@@ -19,29 +19,17 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __SPI_SSP_H__
-#define __SPI_SSP_H__
+#ifndef __USB_API_SPI_H__
+#define __USB_API_SPI_H__
 
-#include <stdint.h>
-#include <stddef.h>
+#include <usb_type.h>
+#include <usb_request.h>
 
-#include "spi_bus.h"
+usb_request_status_t usb_vendor_request_init_spi(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+usb_request_status_t usb_vendor_request_spi_write(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+usb_request_status_t usb_vendor_request_spi_read(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
-#include "gpio.h"
-
-#include <libopencm3/lpc43xx/ssp.h>
-
-typedef struct ssp_config_t {
-	ssp_datasize_t data_bits;
-	uint8_t serial_clock_rate;
-	uint8_t clock_prescale_rate;
-} ssp_config_t;
-
-void spi_ssp_start(spi_target_t* target, const void* const config);
-void spi_ssp_stop(spi_bus_t* const bus);
-void spi_ssp_transfer(spi_target_t* target, void* const data, const size_t count);
-void spi_ssp_transfer_gather(spi_target_t* target,
-							 const spi_transfer_t* const transfers,
-							 const size_t count);
-
-#endif/*__SPI_SSP_H__*/
+#endif /* end of include guard: __USB_API_SPI_H__ */

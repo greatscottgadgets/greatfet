@@ -54,8 +54,7 @@ void spi_ssp_start(spi_target_t* target, const void* const _config) {
 	bus->config = config;
 }
 
-void spi_ssp_stop(spi_target_t* target) {
-	spi_bus_t* bus = target->bus;
+void spi_ssp_stop(spi_bus_t* const bus) {
 	SSP_CR1(bus->obj) = 0;
 }
 
