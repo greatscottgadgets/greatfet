@@ -30,9 +30,7 @@
 GPIO pins
 """
 
-from enum import Enum
-
-class J1(Enum):
+class J1(Object):
     # GND
     # VCC
     P3 = 0x050d
@@ -74,7 +72,7 @@ class J1(Enum):
     P39 = 0x000b
     P40 = 0x000a
 
-class J2(Enum):
+class J2(Object):
     # GND
     # VBUS
     P3 = 0x050c
@@ -116,7 +114,7 @@ class J2(Enum):
     # I2C0_SDA
     # I2C0_SDL
 
-class J7(Enum):
+class J7(Object):
     # GND
     P2 = 0x0303
     P3 = 0x0304

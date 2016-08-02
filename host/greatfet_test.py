@@ -35,6 +35,7 @@ import greatfet
 from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 from greatfet.peripherals import gpio
+from greatfet.peripherals import spi_flash
 
 if __name__ == '__main__':
 
@@ -50,8 +51,13 @@ if __name__ == '__main__':
     print("  Part ID: {}".format(device.part_id()))
     print("  Serial number: {}".format(device.serial_number()))
 
+    target = spi_flash.SPIFlash(device, chip_select=gpio.J2.P35)
+    with open('flash.bin', 'wb') as file:
+        flash_data = device.onboard_flash.read(0x0000, 0x100000)
+        flash_data.tofile(file)
+    
     # ... and toggle it's third LED, for fun.
-    device.vendor_request_out(vendor_requests.REGISTER_GPIO, index=1, data=[0x05, 0x0b, 0x02, 0x03])
+    # device.vendor_request_out(vendor_requests.REGISTER_GPIO, index=1, data=[0x05, 0x0b, 0x02, 0x03])
 
     # Dev note: you can still easily use this to test low-level interfaces.
     # For example, to send the ENABLE_USB1 request, use:
