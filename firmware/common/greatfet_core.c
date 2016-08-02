@@ -85,21 +85,20 @@ spi_bus_t spi_bus_ssp0 = {
 	.transfer_gather = spi_ssp_transfer_gather,
 };
 
+const ssp_config_t ssp1_config_spi = {
+	.data_bits = SSP_DATA_8BITS,
+	.serial_clock_rate = 2,
+	.clock_prescale_rate = 250,
+};
+
 spi_bus_t spi_bus_ssp1 = {
 	.obj = (void*)SSP1_BASE,
-	.config = &ssp_config_spi,
-	.start = spi_ssp_start,
+	.config = &ssp1_config_spi,
+	.start = spi_ssp1_start,
 	.stop = spi_ssp_stop,
 	.transfer = spi_ssp_transfer,
 	.transfer_gather = spi_ssp_transfer_gather,
 };
-//spi_target_t spi_target = {
-//	.bus = &spi_bus_ssp0,
-//	.gpio_hold = &gpio_spiflash_hold,
-//	.gpio_wp = &gpio_spiflash_wp,
-//	.gpio_select = &gpio_spiflash_select,
-//	//.target_init = spiflash_target_init,
-//};
 
 void delay(uint32_t duration)
 {

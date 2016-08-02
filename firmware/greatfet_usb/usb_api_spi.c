@@ -30,9 +30,11 @@
 #include <greatfet_pins.h>
 
 uint8_t spi_buffer[256U];
+static struct gpio_t gpio_spi_select = GPIO(0, 15);
 
 static spi_target_t spi1_target = {
 	.bus = &spi_bus_ssp1,
+	.gpio_select = &gpio_spi_select,
 };
 
 
@@ -47,7 +49,7 @@ void spi1_init(spi_target_t* const target) {
 	scu_pinmux(SCU_SSP1_MISO, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
 	scu_pinmux(SCU_SSP1_MOSI, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
 	scu_pinmux(SCU_SSP1_SCK,  (SCU_SSP_IO | SCU_CONF_FUNCTION1));
-	scu_pinmux(SCU_SSP1_SSEL, (SCU_SSP_IO | SCU_CONF_FUNCTION1));
+	scu_pinmux(SCU_SSP1_SSEL, (SCU_GPIO_FAST | SCU_CONF_FUNCTION0));
 }
 
 static spiflash_driver_t spi1_target_drv = {
@@ -76,22 +78,15 @@ usb_request_status_t usb_vendor_request_spi_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	int i;
-	spi_buffer[0] = endpoint->setup.value;
-	spi_buffer[1] = 0xFF;
-	spi_buffer[2] = 0xFF;
-	spi_buffer[3] = 0xFF;
-	spi_buffer[4] = 0xFF;
-		//0xFF, 0xFF, 0xFF, 0xFF
+	spi_buffer[0] = endpoint->setup.value & 0xFF;
+	for(i=1; i<endpoint->setup.length; i++)
+		spi_buffer[i] = 0x00;
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) 
 	{
-		spi_bus_transfer(&spi1_target, spi_buffer, 5);
-		for(i=0; i<5; i++) {
-			if(spi_buffer[i]) {
-				led_on(LED3);
-			}
-		}
-		usb_transfer_schedule_block(endpoint->in, &spi_buffer[0], 5, NULL, NULL);
+		spi_bus_transfer(&spi1_target, spi_buffer, endpoint->setup.length);
+		usb_transfer_schedule_block(endpoint->in, &spi_buffer[0],
+									endpoint->setup.length, NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}

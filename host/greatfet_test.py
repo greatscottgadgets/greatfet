@@ -37,6 +37,10 @@ from greatfet.protocol import vendor_requests
 from greatfet.peripherals import gpio
 from greatfet.peripherals import spi_flash
 
+def spi_read(device, command, length):
+    data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
+    print(' '.join(["0x%02x" % d for d in data]))
+
 if __name__ == '__main__':
 
     device = GreatFET()
@@ -53,8 +57,10 @@ if __name__ == '__main__':
 
     data = device.vendor_request_out(vendor_requests.INIT_SPI)
     print("Attempting Read")
-    data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=5, value=0x05)
-    print(data)
+    spi_read(device, 0xAB, 5)
+    spi_read(device, 0x90, 6)
+    spi_read(device, 0x9F, 4)
+
     # target = spi_flash.SPIFlash(device, chip_select=gpio.J2.P35)
     # with open('flash.bin', 'wb') as file:
     #     flash_data = device.onboard_flash.read(0x0000, 0x100000)

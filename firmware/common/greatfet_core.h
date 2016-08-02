@@ -48,6 +48,7 @@ void delay(uint32_t duration);
 /* TODO: Hide these configurations */
 extern const ssp_config_t ssp_config_spi;
 extern spi_bus_t spi_bus_ssp0;
+extern const ssp_config_t ssp1_config_spi;
 extern spi_bus_t spi_bus_ssp1;
 
 //extern spiflash_driver_t spi_flash;
