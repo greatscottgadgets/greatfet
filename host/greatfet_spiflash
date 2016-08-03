@@ -165,4 +165,5 @@ if __name__ == '__main__':
     if args.info:
         size = spi_info(device, log_function=log_verbose)
     if args.dump:
-        dump_flash(device, address=args.address, length=args.length, log_function=log_verbose)
+        dump_flash(device, filename=args.dump, address=args.address,
+                   length=args.length, log_function=log_verbose)
