@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
+# Copyright 2016 Jared Boone <jared@sharebrained.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without 
@@ -64,3 +65,6 @@ I2C_START = 15
 I2C_STOP = 16
 I2C_XFER = 17
 I2C_RESPONSE = 18
+
+LOGIC_ANALYZER_START = 19
+LOGIC_ANALYZER_STOP = 20
