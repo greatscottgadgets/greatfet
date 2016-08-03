@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
+# Copyright (c) 2016 Dominic Spill <dominicgs@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without 
@@ -26,41 +26,13 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-"""
-Vendor request numbers-- used for sending USB control requests to
-GreatFET boards for non-bulk communication. These are still tenative.
 
-When a final set is created, these should separate global requests (e.g.
-requests that every GreatFET base should implement) from per-base requests.
+from __future__ import print_function
 
-Ideally we'll add an offset (100?) to per-board vendor requests to separate
-requests that may differ from base-board to base-board.
-"""
+def log_silent(string, end=None):
+    """Silently discards all log data, but provides our logging interface."""
+    pass
 
-# Internal programming requests.
-INIT_SPIFLASH = 0
-WRITE_SPIFLASH = 1
-READ_SPIFLASH = 2
-ERASE_SPIFLASH = 3
-
-# Board information API.
-READ_BOARD_ID = 4
-READ_VERSION_STRING = 5
-READ_PARTID_SERIALNO = 6
-
-# Temporary, custom stuffs?
-ENABLE_USB1 = 7
-LED_TOGGLE = 8
-
-REGISTER_GPIO = 9
-WRITE_GPIO = 10
-
-SPI_INIT = 11
-SPI_WRITE = 12
-SPI_READ = 13
-SPI_DUMP_FLASH = 14
-
-I2C_START = 15
-I2C_STOP = 16
-I2C_XFER = 17
-I2C_RESPONSE = 18
+def log_verbose(string, end="\n"):
+    """Prints all logging data to the screen."""
+    print(string, end=end)
