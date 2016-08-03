@@ -70,6 +70,14 @@ i2c_bus_t i2c1 = {
 	.transfer = i2c_lpc_transfer,
 };
 
+const i2c_lpc_config_t i2c_config_slow_clock = {
+        .duty_cycle_count = 15,
+};
+
+const i2c_lpc_config_t i2c_config_fast_clock = {
+        .duty_cycle_count = 255,
+};
+
 const ssp_config_t ssp_config_spi = {
 	.data_bits = SSP_DATA_8BITS,
 	.serial_clock_rate = 2,

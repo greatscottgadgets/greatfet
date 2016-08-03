@@ -87,15 +87,15 @@ def spi_read(device, command, length):
     return data
 
 def spi_info(device):
-    print("Reading device information")
+    print("Reading target device information")
     data = spi_read(device, 0x9F, 4)
     manufacturer = data[1]
     model = data[2]
     capacity = data[3]
     device = (manufacturer << 16) | (model << 8) | capacity
-    print("Manufacturer: {}".format(JEDECmanufacturers.get(manufacturer, "Unknown")))
-    print("Device: {}".format(JEDECdevices.get(device, "Unknown")))
-    print("Capacity: {} bytes".format(JEDECsizes.get(capacity, "Unknown")))
+    print("Manufacturer: {:02x} {}".format(manufacturer, JEDECmanufacturers.get(manufacturer, "Unknown")))
+    print("Device: {:02x} {}".format(model, JEDECdevices.get(device, "Unknown")))
+    print("Capacity: {:02x} {} bytes".format(capacity, JEDECsizes.get(capacity, "Unknown")))
     return JEDECsizes.get(capacity)
 
 def dump_flash(device, size):
@@ -103,11 +103,14 @@ def dump_flash(device, size):
     address = [0x0b, 0,0,0]
     data = device.vendor_request_in(vendor_requests.SPI_DUMP_FLASH, length=255)
     # print(data)
-    print(' '.join(["0x%02x" % d for d in data]))
+    print(' '.join(["%02x" % d for d in data]))
     print("Command written")
     # data = spi_read(device, 0x00, 255)
     # print(len(data))
     # print(data[:20])
+
+def i2c_xfer(device):
+    pass
     
 if __name__ == '__main__':
 
@@ -128,7 +131,8 @@ if __name__ == '__main__':
     size = spi_info(device)
     print()
     dump_flash(device, size)
-    
+    print()
+    i2c_xfer(device)
     
 
     # target = spi_flash.SPIFlash(device, chip_select=gpio.J2.P35)

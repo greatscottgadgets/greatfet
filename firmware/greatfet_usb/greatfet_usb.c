@@ -38,6 +38,7 @@
 #include "usb_api_board_info.h"
 #include "usb_api_spiflash.h"
 #include "usb_api_spi.h"
+#include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
 #include "usb_bulk_buffer.h"
 
@@ -83,6 +84,10 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spi_write,
 	usb_vendor_request_spi_read,
 	usb_vendor_request_spi_dump_flash,
+	usb_vendor_request_i2c_start,
+	usb_vendor_request_i2c_stop,
+	usb_vendor_request_i2c_xfer,
+	usb_vendor_request_i2c_response,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =

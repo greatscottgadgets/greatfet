@@ -36,6 +36,9 @@ extern "C"
 #include "spi_ssp.h"
 #include "spiflash.h"
 
+#include "i2c_bus.h"
+#include "i2c_lpc.h"
+
 /* hardware identification number */
 #define BOARD_ID_AZALEA  0
 
@@ -51,7 +54,10 @@ extern spi_bus_t spi_bus_ssp0;
 extern const ssp_config_t ssp1_config_spi;
 extern spi_bus_t spi_bus_ssp1;
 
-//extern spiflash_driver_t spi_flash;
+extern i2c_bus_t i2c0;
+extern i2c_bus_t i2c1;
+extern const i2c_lpc_config_t i2c_config_slow_clock;
+extern const i2c_lpc_config_t i2c_config_fast_clock;
 
 void cpu_clock_init(void);
 void cpu_clock_pll1_low_speed(void);
