@@ -30,6 +30,9 @@
 #include <greatfet_pins.h>
 
 uint8_t spi_buffer[256U];
+/* SSP1 SSEL (CS) pin, used as GPIO so that we control
+ * it rather than the SSP.
+ */
 static struct gpio_t gpio_spi_select = GPIO(0, 15);
 
 static spi_target_t spi1_target = {
@@ -39,12 +42,6 @@ static spi_target_t spi1_target = {
 
 
 void spi1_init(spi_target_t* const target) {
-	/* Init SPIFI GPIO to Normal GPIO */
-	//scu_pinmux(P3_3, (SCU_SSP_IO | SCU_CONF_FUNCTION2));
-	//scu_pinmux(P3_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION0));
-	//scu_pinmux(P3_5, (SCU_GPIO_FAST | SCU_CONF_FUNCTION0));
-	//scu_pinmux(P3_6, (SCU_GPIO_FAST | SCU_CONF_FUNCTION0));
-	
 	/* configure SSP pins */
 	scu_pinmux(SCU_SSP1_MISO, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
 	scu_pinmux(SCU_SSP1_MOSI, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
@@ -89,7 +86,6 @@ usb_request_status_t usb_vendor_request_spi_write(
 	return USB_REQUEST_STATUS_OK;
 }
 
-
 usb_request_status_t usb_vendor_request_spi_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
@@ -108,18 +104,18 @@ usb_request_status_t usb_vendor_request_spi_read(
 	return USB_REQUEST_STATUS_OK;
 }
 
-
 usb_request_status_t usb_vendor_request_spi_dump_flash(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	int i;
+	uint32_t addr;
 	if (stage == USB_TRANSFER_STAGE_SETUP) 
 	{
 		spi1_target_drv.page_len = 256;
 		spi1_target_drv.num_pages = 8192;
 		spi1_target_drv.num_bytes = 256*8192;
 		spi1_target_drv.device_id = 0x14;
-		spiflash_read(&spi1_target_drv, 0x00, endpoint->setup.length, spi_buffer);
+		addr = (endpoint->setup.value << 16) | endpoint->setup.index;
+		spiflash_read(&spi1_target_drv, addr, endpoint->setup.length, spi_buffer);
 		usb_transfer_schedule_block(endpoint->in, &spi_buffer[0],
 									endpoint->setup.length, NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {

@@ -110,7 +110,10 @@ def dump_flash(device, address=None, length=None, filename="flash.bin", log_func
                 block_length = length - address
             if(address & 0xFF == 0):
                 log_function("Reading 0x{:06x}".format(address))
-            data = device.vendor_request_in(vendor_requests.SPI_DUMP_FLASH, length=block_length)
+            value = (address>>16) & 0xFFFF
+            index = address & 0xFFFF
+            data = device.vendor_request_in(vendor_requests.SPI_DUMP_FLASH,
+                                            length=block_length, index=index, value=value)
             file.write(data)
             address += 255
 
