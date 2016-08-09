@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+
+from greatfet import GreatFET, protocol, peripherals
+from time import sleep
+import re
+
+
+def natural_sort(l):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(l, key = alphanum_key)
+
+def regandtoggle(pin):
+    board.vendor_request_out(protocol.vendor_requests.REGISTER_GPIO, pin)
+    sleep(0.1)
+    board.vendor_request_out(protocol.vendor_requests.WRITE_GPIO, pin)
+    sleep(0.1)
+    board.vendor_request_out(protocol.vendor_requests.WRITE_GPIO, pin)
+
+def testpinbank(pinbank):
+    pins = natural_sort([i for i in dir(pinbank) if type(getattr(pinbank, i)) == int])
+    bad_pins = []
+
+    for i in pins:
+        raw_input("Press enter to test pin " + i)
+        regandtoggle(getattr(peripherals.gpio.J1, i))
+        bad = raw_input('Did the pin work? [Y/n]')
+        if bad.lower() == 'n':
+            bad_pins.append(i)
+
+    testpinbank(peripherals.gpio.J1)
