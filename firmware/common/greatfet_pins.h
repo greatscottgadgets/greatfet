@@ -39,7 +39,7 @@
 #define PIN_LED4            (12) /* GPIO3[12] on P7_4 */
 
 #define PORT_LED1_3_4       (3) /* PORT for LED1, 3, 4 */
-#define PORT_LED2           (2) /* PORT for LED1, 3, 4 */
+#define PORT_LED2           (2) /* PORT for LED2 */
 
 /* GPIO Input PinMux */
 #define SCU_PINMUX_BOOT0    (P1_1)  /* GPIO0[8] on P1_1 */
