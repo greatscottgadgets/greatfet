@@ -29,4 +29,5 @@ def testpinbank(pinbank):
         if bad.lower() == 'n':
             bad_pins.append(i)
 
-    testpinbank(peripherals.gpio.J1)
+
+testpinbank(peripherals.gpio.J1)
