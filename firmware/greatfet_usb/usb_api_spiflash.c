@@ -137,7 +137,7 @@ usb_request_status_t usb_vendor_request_read_spiflash(
 	uint32_t addr;
 	uint16_t len;
 
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		addr = (endpoint->setup.value << 16) | endpoint->setup.index;
 		len = endpoint->setup.length;
@@ -150,13 +150,13 @@ usb_request_status_t usb_vendor_request_read_spiflash(
 						    NULL, NULL);
 			return USB_REQUEST_STATUS_OK;
 		}
-	} else if (stage == USB_TRANSFER_STAGE_DATA) 
+	} else if (stage == USB_TRANSFER_STAGE_DATA)
 	{
 			addr = (endpoint->setup.value << 16) | endpoint->setup.index;
 			len = endpoint->setup.length;
 			/* This check is redundant but makes me feel better. */
 			if ((len > spi_flash_drv.page_len) || (addr > spi_flash_drv.num_bytes)
-					|| ((addr + len) > spi_flash_drv.num_bytes)) 
+					|| ((addr + len) > spi_flash_drv.num_bytes))
 			{
 				return USB_REQUEST_STATUS_STALL;
 			} else
@@ -164,7 +164,7 @@ usb_request_status_t usb_vendor_request_read_spiflash(
 				usb_transfer_schedule_ack(endpoint->out);
 				return USB_REQUEST_STATUS_OK;
 			}
-	} else 
+	} else
 	{
 		return USB_REQUEST_STATUS_OK;
 	}

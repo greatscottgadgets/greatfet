@@ -69,7 +69,7 @@ usb_request_status_t usb_vendor_request_spi_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	int i;
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		usb_transfer_schedule_block(endpoint->out, &spi_buffer[0],
 									endpoint->setup.length, NULL, NULL);
@@ -90,7 +90,7 @@ usb_request_status_t usb_vendor_request_spi_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	int i;
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		spi_buffer[0] = endpoint->setup.value & 0xFF;
 		for(i=1; i<endpoint->setup.length; i++)
@@ -108,7 +108,7 @@ usb_request_status_t usb_vendor_request_spi_dump_flash(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	uint32_t addr;
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		spi1_target_drv.page_len = 256;
 		spi1_target_drv.num_pages = 8192;

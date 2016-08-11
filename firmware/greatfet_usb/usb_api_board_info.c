@@ -62,7 +62,7 @@ usb_request_status_t usb_vendor_request_read_partid_serialno(
 	read_partid_serialno_t read_partid_serialno;
 	iap_cmd_res_t iap_cmd_res;
 
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		/* Read IAP Part Number Identification */
 		iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_PART_ID_NO;
