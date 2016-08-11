@@ -105,7 +105,7 @@ static usb_transfer_t* endpoint_queue_transfer(
             return NULL;
         }
 }
-                
+
 static void usb_queue_flush_queue(usb_queue_t* const queue)
 {
         cm_disable_interrupts();
@@ -165,7 +165,7 @@ int usb_transfer_schedule(
         cm_enable_interrupts();
         return 0;
 }
-	
+
 int usb_transfer_schedule_block(
 	const usb_endpoint_t* const endpoint,
 	void* const data,
@@ -206,7 +206,7 @@ void usb_queue_transfer_complete(usb_endpoint_t* const endpoint)
                 }
 
                 // Still not finished
-                if (status & USB_TD_DTD_TOKEN_STATUS_ACTIVE) 
+                if (status & USB_TD_DTD_TOKEN_STATUS_ACTIVE)
                         break;
 
                 // Advance the head. We need to do this before invoking the completion
