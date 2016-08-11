@@ -169,4 +169,3 @@ usb_request_status_t usb_vendor_request_read_spiflash(
 		return USB_REQUEST_STATUS_OK;
 	}
 }
-
