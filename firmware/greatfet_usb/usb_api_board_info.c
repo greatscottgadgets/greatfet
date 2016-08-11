@@ -62,7 +62,7 @@ usb_request_status_t usb_vendor_request_read_partid_serialno(
 	read_partid_serialno_t read_partid_serialno;
 	iap_cmd_res_t iap_cmd_res;
 
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		/* Read IAP Part Number Identification */
 		iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_PART_ID_NO;
@@ -72,7 +72,7 @@ usb_request_status_t usb_vendor_request_read_partid_serialno(
 
 		read_partid_serialno.part_id[0] = iap_cmd_res.status_res.iap_result[0];
 		read_partid_serialno.part_id[1] = iap_cmd_res.status_res.iap_result[1];
-		
+
 		/* Read IAP Serial Number Identification */
 		iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_SERIAL_NO;
 		iap_cmd_call(&iap_cmd_res);
@@ -83,7 +83,7 @@ usb_request_status_t usb_vendor_request_read_partid_serialno(
 		read_partid_serialno.serial_no[1] = iap_cmd_res.status_res.iap_result[1];
 		read_partid_serialno.serial_no[2] = iap_cmd_res.status_res.iap_result[2];
 		read_partid_serialno.serial_no[3] = iap_cmd_res.status_res.iap_result[3];
-		
+
 		length = (uint8_t)sizeof(read_partid_serialno_t);
 		usb_transfer_schedule_block(endpoint->in, &read_partid_serialno, length,
 					    NULL, NULL);

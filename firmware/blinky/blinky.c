@@ -27,7 +27,7 @@ int main(void)
 	pin_setup();
 
 	/* Blink LED1/2/3 on the board. */
-	while (1) 
+	while (1)
 	{
 		led_on(LED1);
 		led_off(LED2);
@@ -36,12 +36,12 @@ int main(void)
 
 		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
 			__asm__("nop");
-		
+
 		led_off(LED1);
 		led_on(LED2);
 		led_off(LED3);
 		led_on(LED4);
-		
+
 		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
 			__asm__("nop");
 	}

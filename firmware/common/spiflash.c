@@ -68,7 +68,7 @@ uint8_t spiflash_get_status(spiflash_driver_t* const drv)
 	return data[1];
 }
 
-/* Release power down / Device ID */  
+/* Release power down / Device ID */
 uint8_t spiflash_get_device_id(spiflash_driver_t* const drv)
 {
 	uint8_t data[] = {
@@ -160,8 +160,8 @@ void spiflash_program(spiflash_driver_t* const drv, uint32_t addr, uint32_t len,
 	device_id = 0;
 	while(device_id != drv->device_id) {
 		device_id = spiflash_get_device_id(drv);
-	}	
-	
+	}
+
 	/* do nothing if we would overflow the flash */
 	if ((len > drv->num_bytes) || (addr > drv->num_bytes)
 			|| ((addr + len) > drv->num_bytes))

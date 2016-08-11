@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Dominic Spill <dominicgs@gmail.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -66,7 +66,7 @@ class J1(object):
     P33 = 0x0512
     P34 = 0x040b
     P35 = 0x0500
-    # P6_0 
+    # P6_0
     P37 = 0x000f
     # P1_19
     P39 = 0x000b

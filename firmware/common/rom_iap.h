@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-typedef enum 
+typedef enum
 {
 	/* TODO define other commands */
 
@@ -44,11 +44,11 @@ typedef enum
 	Return 	Code CMD_SUCCESS |
 	Result 	Result0:Part Identification Number.
 			Result1:Part Identification Number.
-	Description This command is used to read the part identification number. See Table 1082 
-	“LPC43xx part identification numbers”.
-	The command returns two words: word0 followed by word1. Word 0 corresponds 
-	to the part id and word1 indicates the flash configuration or contains 0x0 for 
-	flashless parts. 
+	Description This command is used to read the part identification number. See Table 1082
+	ï¿½LPC43xx part identification numbersï¿½.
+	The command returns two words: word0 followed by word1. Word 0 corresponds
+	to the part id and word1 indicates the flash configuration or contains 0x0 for
+	flashless parts.
 	Stack usage 8 B	*/
 
 	IAP_CMD_READ_SERIAL_NO = 58
@@ -60,13 +60,13 @@ typedef enum
 			Result1:Second 32-bit word of Device Identification Number
 			Result2:Third 32-bit word of Device Identification Number
 			Result3:Fourth 32-bit word of Device Identification Number
-	Description This command is used to read the device identification number. The serial number 
+	Description This command is used to read the device identification number. The serial number
 	may be used to uniquely identify a single unit among all LPC43xx devices.
 	Stack usage 8 B	*/
 } iap_cmd_code_t;
 
 /* ISP/IAP Return Code */
-typedef enum 
+typedef enum
 {
 	CMD_SUCCESS					   = 0x00000000, /* CMD_SUCCESS Command is executed successfully. Sent by ISP handler only when command given by the host has been completely and successfully executed. */
 	INVALID_COMMAND				   = 0x00000001, /* Invalid command. */
@@ -89,9 +89,9 @@ typedef enum
 	INVALID_STOP_BIT			   = 0x00000012, /* Invalid stop bit setting. */
 	CODE_READ_PROTECTION_ENABLED   = 0x00000013, /* Code read protection enabled. */
 	INVALID_FLASH_UNIT 			   = 0x00000014, /* Invalid flash unit. */
-	USER_CODE_CHECKSUM 			   = 0x00000015, 
+	USER_CODE_CHECKSUM 			   = 0x00000015,
 	ERROR_SETTING_ACTIVE_PARTITION = 0x00000016,
-	
+
 	/* Special Error */
 	ERROR_IAP_NOT_IMPLEMENTED      = 0x00000100 /* IAP is not implemented in this part */
 } isp_iap_ret_code_t;
@@ -104,11 +104,11 @@ typedef struct
 		iap_cmd_code_t command_code;
 		uint32_t iap_param[5];
 	} cmd_param;
-	
+
 	/* Output Status/Result */
 	struct
 	{
-		isp_iap_ret_code_t status_ret; 
+		isp_iap_ret_code_t status_ret;
 		uint32_t iap_result[4];
 	} status_res;
 } iap_cmd_res_t;

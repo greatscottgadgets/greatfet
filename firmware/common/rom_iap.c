@@ -35,20 +35,20 @@ typedef void (* IAP_t)(uint32_t [],uint32_t[]);
 typedef	struct {
    const IAP_t IAP;	/* If equal to 0x12345678 IAP not implemented */
    /* Other TBD */
-} *pENTRY_ROM_API_t; 
+} *pENTRY_ROM_API_t;
 #define pROM_API ((pENTRY_ROM_API_t)ROM_IAP_ADDR)
 
-/* 
+/*
  See Errata sheet ES_LPC43X0_A.pdf (LPC4350/30/20/10 Rev A)
  3.5 IAP.1: In-Application Programming API not present on flashless parts
  Introduction:
- The LPC43x0 microcontrollers contain an APIfor In-Application Programming of flash 
+ The LPC43x0 microcontrollers contain an APIfor In-Application Programming of flash
  memory. This API also allows identification of the part.
  Problem:
- On the LPC43x0 microcontrollers, the IAP API is not present. The ISP interface is present 
- which allows the part to be identified externally (via the UART) but part identification is not 
+ On the LPC43x0 microcontrollers, the IAP API is not present. The ISP interface is present
+ which allows the part to be identified externally (via the UART) but part identification is not
  possible internally using the IAP call because it is not implemented.
- The first word of the Part ID can be read directly from OTP at 0x40045000. The second word of the Part ID is always 
+ The first word of the Part ID can be read directly from OTP at 0x40045000. The second word of the Part ID is always
 '0' on flashless parts. */
 
 bool iap_is_implemented(void)
@@ -64,17 +64,17 @@ bool iap_is_implemented(void)
 	return res;
 }
 
-isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res) 
+isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res)
 {
 	uint32_t* p_u32_data;
-	
+
 	if( iap_is_implemented() )
 	{
 		pROM_API->IAP( (uint32_t*)&iap_cmd_res->cmd_param, (uint32_t*)&iap_cmd_res->status_res);
 	}else
 	{
-		/* 
-		  Alternative way to retrieve Part Id on MCU with no IAP 
+		/*
+		  Alternative way to retrieve Part Id on MCU with no IAP
 		  Read Serial No => Read Unique ID in SPIFI (only compatible with W25Q80BV
 		*/
 		spi_bus_start(spi_flash_drv.target, &ssp_config_spi);
@@ -88,7 +88,7 @@ isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res)
 				iap_cmd_res->status_res.iap_result[1] = p_u32_data[1];
 				iap_cmd_res->status_res.status_ret = CMD_SUCCESS;
 			break;
-			
+
 			case IAP_CMD_READ_SERIAL_NO:
 			/* Only 64bits used */
 			iap_cmd_res->status_res.iap_result[0] = 0;
@@ -96,7 +96,7 @@ isp_iap_ret_code_t iap_cmd_call(iap_cmd_res_t* iap_cmd_res)
 			spiflash_get_unique_id(&spi_flash_drv, (spiflash_unique_id_t*)&iap_cmd_res->status_res.iap_result[2] );
 				iap_cmd_res->status_res.status_ret = CMD_SUCCESS;
 			break;
-			
+
 			default:
 				iap_cmd_res->status_res.status_ret = ERROR_IAP_NOT_IMPLEMENTED;
 			break;

@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -44,7 +44,7 @@ GREATFET_PRODUCT_ID = 0x60e6
 # up as generic USBErrors with errno 32 on affected platforms.
 LIBUSB_PIPE_ERROR = 32
 
-    
+
 class GreatFETBoard(object):
     """
     Class representing a USB-connected GreatFET device.

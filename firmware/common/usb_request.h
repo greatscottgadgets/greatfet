@@ -41,7 +41,7 @@ typedef enum {
 	USB_REQUEST_STATUS_OK = 0,
 	USB_REQUEST_STATUS_STALL = 1,
 } usb_request_status_t;
-	
+
 typedef usb_request_status_t (*usb_request_handler_fn)(
 	usb_endpoint_t* const endpoint,
 	const usb_transfer_stage_t stage

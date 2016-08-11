@@ -120,7 +120,7 @@ static void usb_wait_for_endpoint_priming_to_finish(const uint32_t mask,
 	// Wait until controller has parsed new transfer descriptors and prepared
 	// receive buffers.
 	if(device->controller == 0) {
-		while( USB0_ENDPTPRIME & mask );		
+		while( USB0_ENDPTPRIME & mask );
 	}
 	if(device->controller == 1) {
 		while( USB1_ENDPTPRIME & mask );
@@ -132,7 +132,7 @@ static void usb_flush_endpoints(const uint32_t mask,
 	// Clear any primed buffers. If a packet is in progress, that transfer
 	// will continue until completion.
 	if(device->controller == 0) {
-		USB0_ENDPTFLUSH = mask;		
+		USB0_ENDPTFLUSH = mask;
 	}
 	if(device->controller == 1) {
 		USB1_ENDPTFLUSH = mask;
@@ -144,7 +144,7 @@ static void usb_wait_for_endpoint_flushing_to_finish(const uint32_t mask,
 	// Wait until controller has flushed all endpoints / cleared any primed
 	// buffers.
 	if(device->controller == 0) {
-		while( USB0_ENDPTFLUSH & mask );		
+		while( USB0_ENDPTFLUSH & mask );
 	}
 	if(device->controller == 1) {
 		while( USB1_ENDPTFLUSH & mask );
@@ -232,7 +232,7 @@ static void usb_endpoint_clear_pending_interrupts(
 										 endpoint->device);
 		}
 	}
-		
+
 }
 
 void usb_endpoint_disable(
@@ -260,18 +260,18 @@ void usb_endpoint_disable(
 
 void usb_endpoint_prime(
 	const usb_endpoint_t* const endpoint,
-	usb_transfer_descriptor_t* const first_td	
+	usb_transfer_descriptor_t* const first_td
 ) {
 	usb_queue_head_t* const qh = usb_queue_head(endpoint->address,
 												endpoint->device);
-	
+
 	qh->next_dtd_pointer = first_td;
 	qh->total_bytes
 		&= ~( USB_TD_DTD_TOKEN_STATUS_ACTIVE
 		    | USB_TD_DTD_TOKEN_STATUS_HALTED
 			)
 		;
-	
+
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
 	if(endpoint->device->controller == 0) {
 		if( usb_endpoint_is_in(endpoint->address) ) {
@@ -348,7 +348,7 @@ void usb_endpoint_schedule_append(
 			USB0_USBCMD_D |= USB0_USBCMD_D_ATDTW;
 			done = usb_endpoint_is_ready(endpoint);
 		} while (!(USB0_USBCMD_D & USB0_USBCMD_D_ATDTW));
-	
+
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_ATDTW;
 	}
 	if(endpoint->device->controller == 1) {
@@ -356,7 +356,7 @@ void usb_endpoint_schedule_append(
 			USB1_USBCMD_D |= USB1_USBCMD_D_ATDTW;
 			done = usb_endpoint_is_ready(endpoint);
 		} while (!(USB1_USBCMD_D & USB1_USBCMD_D_ATDTW));
-	
+
 		USB1_USBCMD_D &= ~USB1_USBCMD_D_ATDTW;
 	}
 	if(!done) {
@@ -452,7 +452,7 @@ void usb_endpoint_stall(
 	if(endpoint->device->controller == 1) {
 		USB1_ENDPTCTRL(endpoint_number) |= (USB1_ENDPTCTRL_RXS | USB1_ENDPTCTRL_TXS);
 	}
-	
+
 	// TODO: Also need to reset data toggle in both directions?
 }
 
@@ -487,7 +487,7 @@ static void usb_controller_set_device_mode(const usb_device_t* const device) {
 	if( device->controller == 0) {
 		// Set USB0 peripheral mode
 		USB0_USBMODE_D = USB0_USBMODE_D_CM1_0(2);
-		
+
 		// Set device-related OTG flags
 		// OTG termination: controls pull-down on USB_DM
 		// VBUS_Discharge: VBUS discharges through resistor
@@ -506,10 +506,10 @@ usb_speed_t usb_speed(
 		switch( USB0_PORTSC1_D & USB0_PORTSC1_D_PSPD_MASK ) {
 		case USB0_PORTSC1_D_PSPD(0):
 			return USB_SPEED_FULL;
-		
+
 		case USB0_PORTSC1_D_PSPD(2):
 			return USB_SPEED_HIGH;
-		
+
 		default:
 			// TODO: What to do/return here? Is this even possible?
 			return USB_SPEED_FULL;
@@ -672,7 +672,7 @@ static void usb_bus_reset(
 	usb_reset_all_endpoints(device);
 	usb_set_address_immediate(device, 0);
 	usb_set_configuration(device, 0);
-	
+
 	// TODO: Enable endpoint 0, which might not actually be necessary,
 	// as the datasheet claims it can't be disabled.
 
@@ -701,17 +701,17 @@ void usb_device_init(
 ) {
 	if( device->controller == 0 ) {
 		usb_devices[0] = device;
-	
+
 		usb_phy_enable(device);
 		usb_controller_reset(device);
 		usb_controller_set_device_mode(device);
-	
+
 		// Set interrupt threshold interval to 0
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
 
-		// Configure endpoint list address 
+		// Configure endpoint list address
 		USB0_ENDPOINTLISTADDR = (uint32_t)usb_qh[0];
-	
+
 		// Enable interrupts
 		USB0_USBINTR_D =
 			  USB0_USBINTR_D_UE
@@ -725,17 +725,17 @@ void usb_device_init(
 	}
 	if( device->controller == 1 ) {
 		usb_devices[1] = device;
-	
+
 		usb_phy_enable(device);
 		usb_controller_reset(device);
 		usb_controller_set_device_mode(device);
-	
+
 		// Set interrupt threshold interval to 0
 		USB1_USBCMD_D &= ~USB1_USBCMD_D_ITC_MASK;
 
-		// Configure endpoint list address 
+		// Configure endpoint list address
 		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh[1];
-	
+
 		// Enable interrupts
 		USB1_USBINTR_D =
 			  USB1_USBINTR_D_UE
@@ -771,7 +771,7 @@ void usb_endpoint_init(
 	const usb_endpoint_t* const endpoint
 ) {
 	usb_endpoint_flush(endpoint);
-	
+
 	uint_fast16_t max_packet_size = endpoint->device->descriptor[7];
 	usb_transfer_type_t transfer_type = USB_TRANSFER_TYPE_CONTROL;
 	const uint8_t* const endpoint_descriptor = usb_endpoint_descriptor(endpoint);
@@ -779,7 +779,7 @@ void usb_endpoint_init(
 		max_packet_size = usb_endpoint_descriptor_max_packet_size(endpoint_descriptor);
 		transfer_type = usb_endpoint_descriptor_transfer_type(endpoint_descriptor);
 	}
-	
+
 	// TODO: There are more capabilities to adjust based on the endpoint
 	// descriptor.
 	usb_queue_head_t* const qh = usb_queue_head(endpoint->address, endpoint->device);
@@ -800,7 +800,7 @@ void usb_endpoint_init(
 	qh->buffer_pointer_page[2] = 0;
 	qh->buffer_pointer_page[3] = 0;
 	qh->buffer_pointer_page[4] = 0;
-	
+
 	// This is how we look up an endpoint structure from an endpoint address:
 	qh->_reserved_0 = (uint32_t)endpoint;
 
@@ -809,7 +809,7 @@ void usb_endpoint_init(
 	//	USB0_ENDPTNAKEN_EPRNE(1 << endpoint_out->number);
 
 	usb_endpoint_set_type(endpoint, transfer_type);
-	
+
 	usb_endpoint_enable(endpoint);
 }
 
@@ -825,7 +825,7 @@ static void usb_check_for_setup_events(const usb_device_t* const device) {
 				endptsetupstat_bit = USB1_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << i);
 			}
 			if( endptsetupstat & endptsetupstat_bit ) {
-				usb_endpoint_t* const endpoint = 
+				usb_endpoint_t* const endpoint =
 					usb_endpoint_from_address(
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, i),
 						device);
@@ -860,7 +860,7 @@ static void usb_check_for_transfer_events(const usb_device_t* const device) {
 			}
 			if( endptcomplete & endptcomplete_out_bit ) {
 				usb_clear_endpoint_complete(endptcomplete_out_bit, device);
-			 	usb_endpoint_t* const endpoint = 
+			 	usb_endpoint_t* const endpoint =
 					usb_endpoint_from_address(
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, i),
 						device);
@@ -877,7 +877,7 @@ static void usb_check_for_transfer_events(const usb_device_t* const device) {
 			}
 			if( endptcomplete & endptcomplete_in_bit ) {
 				usb_clear_endpoint_complete(endptcomplete_in_bit, device);
-				usb_endpoint_t* const endpoint = 
+				usb_endpoint_t* const endpoint =
 					usb_endpoint_from_address(
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_IN, i),
 						device);
@@ -891,12 +891,12 @@ static void usb_check_for_transfer_events(const usb_device_t* const device) {
 
 void usb0_isr() {
 	const uint32_t status = usb_get_status(usb_devices[0]);
-	
+
 	if( status == 0 ) {
 		// Nothing to do.
 		return;
 	}
-	
+
 	if( status & USB0_USBSTS_D_UI ) {
 		// USB:
 		// - Completed transaction transfer descriptor has IOC set.
@@ -905,7 +905,7 @@ void usb0_isr() {
 
 		usb_check_for_setup_events(usb_devices[0]);
 		usb_check_for_transfer_events(usb_devices[0]);
-		
+
 		// TODO: Reset ignored ENDPTSETUPSTAT and ENDPTCOMPLETE flags?
 	}
 
@@ -944,12 +944,12 @@ void usb0_isr() {
 void usb1_isr() {
 	led_on(LED3);
 	const uint32_t status = usb_get_status(usb_devices[1]);
-	
+
 	if( status == 0 ) {
 		// Nothing to do.
 		return;
 	}
-	
+
 	if( status & USB1_USBSTS_D_UI ) {
 		// USB:
 		// - Completed transaction transfer descriptor has IOC set.
@@ -958,7 +958,7 @@ void usb1_isr() {
 
 		usb_check_for_setup_events(usb_devices[1]);
 		usb_check_for_transfer_events(usb_devices[1]);
-		
+
 		// TODO: Reset ignored ENDPTSETUPSTAT and ENDPTCOMPLETE flags?
 	}
 
