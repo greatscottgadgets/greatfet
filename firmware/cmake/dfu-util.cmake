@@ -50,7 +50,3 @@ if(NOT DFU_NOT_FOUND)
 else(NOT DFU_NOT_FOUND)
 	MESSAGE(STATUS "dfu-suffix not found: not building DFU file")
 endif(NOT DFU_NOT_FOUND)
-
-
-
-    
