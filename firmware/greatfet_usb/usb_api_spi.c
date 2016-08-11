@@ -57,7 +57,7 @@ static spiflash_driver_t spi1_target_drv = {
 usb_request_status_t usb_vendor_request_init_spi(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	if ((stage == USB_TRANSFER_STAGE_SETUP)) {
-		
+
 		spi_bus_start(spi1_target_drv.target, &ssp1_config_spi);
 		spi1_init(spi1_target_drv.target);
 		usb_transfer_schedule_ack(endpoint->in);

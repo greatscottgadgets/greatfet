@@ -97,7 +97,7 @@ usb_request_status_t usb0_vendor_request(
 	usb_endpoint_t* const endpoint,
 	const usb_transfer_stage_t stage) {
 	usb_request_status_t status = USB_REQUEST_STATUS_STALL;
-	
+
 	if( endpoint->setup.request < usb0_vendor_request_handler_count ) {
 		usb_request_handler_fn handler = usb0_vendor_request_handler[endpoint->setup.request];
 		if( handler ) {
@@ -134,15 +134,15 @@ void usb0_configuration_changed(usb_device_t* const device)
 void usb_set_descriptor_by_serial_number(void)
 {
 	iap_cmd_res_t iap_cmd_res;
-	
+
 	/* Read IAP Serial Number Identification */
 	iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_SERIAL_NO;
 	iap_cmd_call(&iap_cmd_res);
-		
+
 	if (iap_cmd_res.status_res.status_ret == CMD_SUCCESS) {
 		usb0_descriptor_string_serial_number[0] = USB_DESCRIPTOR_STRING_SERIAL_BUF_LEN;
 		usb0_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
-		
+
 		/* 32 characters of serial number, convert to UTF-16LE */
 		for (size_t i=0; i<USB_DESCRIPTOR_STRING_SERIAL_LEN; i++) {
 			const uint_fast8_t nibble = (iap_cmd_res.status_res.iap_result[i >> 3] >> (28 - (i & 7) * 4)) & 0xf;
@@ -228,7 +228,7 @@ int main(void) {
 	led_off(LED4);
 
 	init_usb0();
-	
+
 	while(true) {
 		if(start_gpio_monitor)
 			gpio_monitor_mode();
@@ -238,6 +238,6 @@ int main(void) {
 		led_on(LED1);
 		delay(10000000);
 	}
-	
+
 	return 0;
 }
