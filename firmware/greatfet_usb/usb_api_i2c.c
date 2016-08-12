@@ -31,8 +31,7 @@ uint8_t i2c_rx_buffer[255];
 
 usb_request_status_t usb_vendor_request_i2c_start(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
-	if ((stage == USB_TRANSFER_STAGE_SETUP)) {
-		
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		i2c_bus_start(&i2c0, &i2c_config_slow_clock);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
@@ -41,8 +40,7 @@ usb_request_status_t usb_vendor_request_i2c_start(
 
 usb_request_status_t usb_vendor_request_i2c_stop(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
-	if ((stage == USB_TRANSFER_STAGE_SETUP)) {
-		
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		i2c_bus_stop(&i2c0);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
@@ -51,30 +49,27 @@ usb_request_status_t usb_vendor_request_i2c_stop(
 
 /* wValue = slave address, wIndex = response length */
 usb_request_status_t usb_vendor_request_i2c_xfer(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
-	{
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+	if (stage == USB_TRANSFER_STAGE_SETUP)  {
 		usb_transfer_schedule_block(endpoint->out, i2c_tx_buffer,
 									endpoint->setup.length, NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, i2c_tx_buffer,
 						 endpoint->setup.length, i2c_rx_buffer,
-						 endpoint->setup.index & 0xff);
+						 endpoint->setup.index);
+		led_toggle(LED4);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
 
 usb_request_status_t usb_vendor_request_i2c_response(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
-	{
-		usb_transfer_schedule_block(endpoint->out, i2c_rx_buffer,
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		usb_transfer_schedule_block(endpoint->in, i2c_rx_buffer,
 									endpoint->setup.length, NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		usb_transfer_schedule_ack(endpoint->in);
+		usb_transfer_schedule_ack(endpoint->out);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
