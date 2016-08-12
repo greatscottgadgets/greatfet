@@ -38,27 +38,15 @@ static uint16_t gpio_params[80];
 usb_request_status_t usb_vendor_request_register_gpio(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	uint8_t in_count, i;
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_block(endpoint->out, &gpio_params,
-									endpoint->setup.length/2, NULL, NULL);
-	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		in_count = endpoint->setup.value;
-		for(i=0; i<in_count; i++) {
-			GPIO_SET(gpio_in[gpio_in_count], (gpio_params[i]>>8)&0xFF, gpio_params[i]&0xFF);
-			gpio_set(&gpio_in[gpio_in_count]);
-			gpio_in_count++;
-		}
-		for(; i<endpoint->setup.length; i++) {
-			GPIO_SET(gpio_out[gpio_out_count], (gpio_params[i]>>8)&0xFF, gpio_params[i]&0xFF);
-			gpio_set(&gpio_out[gpio_out_count]);
-			gpio_out_count++;
-		}
-		led_on(LED2);
+		struct gpio_t this_gpio;
+		GPIO_SET(this_gpio, (endpoint->setup.value >> 8) & 0xFF,
+			endpoint->setup.value & 0xFF);
+
+		gpio_output(&this_gpio);
+		gpio_clear(&this_gpio);
+
 		usb_transfer_schedule_ack(endpoint->in);
-		if(gpio_out_count)
-			start_gpio_monitor = true;
-		led_on(LED3);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
@@ -68,9 +56,12 @@ usb_request_status_t usb_vendor_request_write_gpio(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		;
-		return USB_REQUEST_STATUS_OK;
-	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		struct gpio_t this_gpio;
+		GPIO_SET(this_gpio, (endpoint->setup.value >> 8) & 0xFF,
+			endpoint->setup.value & 0xFF);
+
+		gpio_toggle(&this_gpio);
+
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
