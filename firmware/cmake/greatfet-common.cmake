@@ -3,6 +3,7 @@
 # Copyright 2012 Michael Ossmann <mike@ossmann.com>
 # Copyright 2012 Benjamin Vernoux <titanmkd@gmail.com>
 # Copyright 2012 Jared Boone <jared@sharebrained.com>
+# Copyright 2016 Dominic Spill <dominicgs@gmail.com>
 #
 # This file is part of GreatFET.
 #
@@ -51,10 +52,6 @@ if(NOT DEFINED BOARD)
 	set(BOARD GREATFET_AZALEA)
 endif()
 
-if(NOT DEFINED RUN_FROM)
-	set(RUN_FROM SPIFI)
-endif()
-
 if(BOARD STREQUAL "GREATFET_AZALEA")
 	set(MCU_PARTNO LPC4330)
 endif()
@@ -65,13 +62,9 @@ endif(NOT DEFINED SRC_M0)
 
 SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -DTX_ENABLE -D'VERSION_STRING=\"git-${VERSION}\"' -DRUN_FROM=${RUN_FROM}")
 
-SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld")
-if( RUN_FROM STREQUAL "RAM")
-	SET(LDSCRIPT_M4 "${LDSCRIPT_M4} -Tlibopencm3_lpc43xx.ld")
-else()
-	SET(LDSCRIPT_M4 "${LDSCRIPT_M4} -Tlibopencm3_lpc43xx_rom_to_ram.ld")
-endif()
-SET(LDSCRIPT_M4 "${LDSCRIPT_M4} -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx_rom_to_ram.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+
+SET(LDSCRIPT_M4_DFU "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
 
 SET(LDSCRIPT_M0 "-T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
 
@@ -91,6 +84,7 @@ SET(CPUFLAGS_M4 "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16")
 SET(CFLAGS_M4 "-std=gnu99 ${CFLAGS_COMMON} ${CPUFLAGS_M4} -DLPC43XX_M4")
 SET(CXXFLAGS_M4 "-std=gnu++0x ${CFLAGS_COMMON} ${CPUFLAGS_M4} -DLPC43XX_M4")
 SET(LDFLAGS_M4 "${LDFLAGS_COMMON} ${CPUFLAGS_M4} ${LDSCRIPT_M4} -Xlinker -Map=m4.map")
+SET(LDFLAGS_M4_DFU "${LDFLAGS_COMMON} ${CPUFLAGS_M4} ${LDSCRIPT_M4_DFU} -Xlinker -Map=m4.map")
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -98,6 +92,17 @@ include_directories("${LIBOPENCM3}/include/")
 include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
 macro(DeclareTargets)
+	SET(SRC_M4
+		${SRC_M4}
+		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/spi_ssp.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_bus.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_lpc.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
+	)
+
 	configure_file(
 		../cmake/m0_bin.s.cmake
 		m0_bin.s
@@ -128,18 +133,7 @@ macro(DeclareTargets)
 		COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}_m0.elf ${PROJECT_NAME}_m0.bin
 	)
 
-	add_executable(${PROJECT_NAME}.elf
-		${SRC_M4}
-		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/spi_ssp.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_bus.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_lpc.c
-		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
-		m0_bin.s
-	)
-
+	add_executable(${PROJECT_NAME}.elf ${SRC_M4} m0_bin.s)
 	add_dependencies(${PROJECT_NAME}.elf ${PROJECT_NAME}_m0.bin)
 
 	target_link_libraries(
@@ -159,15 +153,44 @@ macro(DeclareTargets)
 		COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
 	)
 
-    add_custom_target(
+	# DFU - using a differnet LD script to run directly from RAM
+	add_executable(${PROJECT_NAME}_dfu.elf ${SRC_M4} m0_bin.s)
+	add_dependencies(${PROJECT_NAME}_dfu.elf ${PROJECT_NAME}_m0.bin)
+
+	target_link_libraries(
+		${PROJECT_NAME}_dfu.elf
+		c
+		nosys
+		opencm3_lpc43xx
+		m
+	)
+
+	set_target_properties(${PROJECT_NAME}_dfu.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
+	set_target_properties(${PROJECT_NAME}_dfu.elf PROPERTIES LINK_FLAGS "${LDFLAGS_M4_DFU}")
+
+	add_custom_target(
+		${PROJECT_NAME}_dfu.bin
+		DEPENDS ${PROJECT_NAME}_dfu.elf
+		COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}_dfu.elf ${PROJECT_NAME}_dfu.bin
+	)
+
+	add_custom_target(
 		${PROJECT_NAME}.dfu ${DFU_ALL}
-		DEPENDS ${PROJECT_NAME}.bin
+		DEPENDS ${PROJECT_NAME}_dfu.bin ${PROJECT_NAME}.bin
 		COMMAND rm -f _tmp.dfu _header.bin
-		COMMAND cp ${PROJECT_NAME}.bin _tmp.dfu
+		COMMAND cp ${PROJECT_NAME}_dfu.bin _tmp.dfu
 		COMMAND ${DFU_COMMAND}
-		COMMAND python -c \"import os.path\; import struct\; print\('0000000: da ff ' + ' '.join\(map\(lambda s: '%02x' % ord\(s\), struct.pack\('<H', os.path.getsize\('${PROJECT_NAME}.bin'\) / 512 + 1\)\)\) + ' ff ff ff ff'\)\" | xxd -g1 -r > _header.bin
+		COMMAND python -c \"import os.path\; import struct\; print\('0000000: da ff ' + ' '.join\(map\(lambda s: '%02x' % ord\(s\), struct.pack\('<H', os.path.getsize\('${PROJECT_NAME}_dfu.bin'\) / 512 + 1\)\)\) + ' ff ff ff ff'\)\" | xxd -g1 -r > _header.bin
 		COMMAND cat _header.bin _tmp.dfu >${PROJECT_NAME}.dfu
 		COMMAND rm -f _tmp.dfu _header.bin
+	)
+
+	# Program / flash targets
+	# Make programming easier but also force build of both .dfu and .bin files
+	add_custom_target(
+		${PROJECT_NAME}-flash
+		DEPENDS ${PROJECT_NAME}.bin
+		COMMAND greatfet_firmware -w ${PROJECT_NAME}.bin
 	)
 
 	add_custom_target(
