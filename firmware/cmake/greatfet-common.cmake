@@ -133,7 +133,12 @@ macro(DeclareTargets)
 		COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}_m0.elf ${PROJECT_NAME}_m0.bin
 	)
 
-	add_executable(${PROJECT_NAME}.elf ${SRC_M4} m0_bin.s)
+	# Object files to be linked for both DFU and SPI flash versions
+	add_library(OBJ_FILES OBJECT ${SRC_M4} m0_bin.s)
+	set_target_properties(OBJ_FILES PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
+
+	# SPI flash version
+	add_executable(${PROJECT_NAME}.elf $<TARGET_OBJECTS:OBJ_FILES>)
 	add_dependencies(${PROJECT_NAME}.elf ${PROJECT_NAME}_m0.bin)
 
 	target_link_libraries(
@@ -144,7 +149,7 @@ macro(DeclareTargets)
 		m
 	)
 
-	set_target_properties(${PROJECT_NAME}.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
+	#set_target_properties(${PROJECT_NAME}.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
 	set_target_properties(${PROJECT_NAME}.elf PROPERTIES LINK_FLAGS "${LDFLAGS_M4}")
 
 	add_custom_target(
@@ -154,7 +159,7 @@ macro(DeclareTargets)
 	)
 
 	# DFU - using a differnet LD script to run directly from RAM
-	add_executable(${PROJECT_NAME}_dfu.elf ${SRC_M4} m0_bin.s)
+	add_executable(${PROJECT_NAME}_dfu.elf $<TARGET_OBJECTS:OBJ_FILES>)
 	add_dependencies(${PROJECT_NAME}_dfu.elf ${PROJECT_NAME}_m0.bin)
 
 	target_link_libraries(
@@ -165,7 +170,7 @@ macro(DeclareTargets)
 		m
 	)
 
-	set_target_properties(${PROJECT_NAME}_dfu.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
+	#set_target_properties(${PROJECT_NAME}_dfu.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
 	set_target_properties(${PROJECT_NAME}_dfu.elf PROPERTIES LINK_FLAGS "${LDFLAGS_M4_DFU}")
 
 	add_custom_target(
