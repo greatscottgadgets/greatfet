@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 def read(fname):
     filename = os.path.join(os.path.dirname(__file__), fname)
@@ -11,13 +11,14 @@ setup(
     version='0.0', #TODO: Derive this from the main module.
     url='https://greatscottgadgets.com/greatfet/',
     license='BSD',
+    scripts=['greatfet_firmware','greatfet_info'],
     #author='', #TODO: Figure out whose name should go here!
     #author_email='',
     tests_require=[''],
     install_requires=['pyusb'],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('../README.md'),
-    packages=['greatfet'],
+    packages=find_packages(),#['greatfet'],
     include_package_data=True,
     platforms='any',
     classifiers = [
