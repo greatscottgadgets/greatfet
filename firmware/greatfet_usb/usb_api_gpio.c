@@ -67,6 +67,40 @@ usb_request_status_t usb_vendor_request_write_gpio(
 	return USB_REQUEST_STATUS_OK;
 }
 
+/* Read in pins */
+// TODO: Setup the pinmuxing to enable the input buffers; until this is done
+// the value read will not represent the state of the pin
+usb_request_status_t usb_vendor_request_read_gpio(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+		struct gpio_t this_gpio;
+		uint8_t gpio_value;
+		uint16_t len;
+
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		len = endpoint->setup.length;
+
+		if (len > sizeof(gpio_value)) {
+			len = sizeof(gpio_value);
+		}
+
+		GPIO_SET(this_gpio, (endpoint->setup.value >> 8) & 0xFF,
+			endpoint->setup.value & 0xFF);
+		// sc
+		gpio_input(&this_gpio);
+		gpio_value = gpio_read(&this_gpio);
+
+		usb_transfer_schedule_block(endpoint->in, &gpio_value, len,
+			NULL, NULL);
+		return USB_REQUEST_STATUS_OK;
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		usb_transfer_schedule_ack(endpoint->out);
+		return USB_REQUEST_STATUS_OK;
+	} else {
+		return USB_REQUEST_STATUS_OK;
+	}
+}
+
 void gpio_monitor_mode(void) {
 	led_off(LED4);
 	while(true) {

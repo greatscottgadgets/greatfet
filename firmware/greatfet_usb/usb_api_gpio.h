@@ -31,6 +31,8 @@ usb_request_status_t usb_vendor_request_register_gpio(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 usb_request_status_t usb_vendor_request_write_gpio(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+usb_request_status_t usb_vendor_request_read_gpio(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 void gpio_monitor_mode(void);
 
 #endif /* end of include guard: __USB_API_GPIO_H__ */
