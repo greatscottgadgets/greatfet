@@ -153,7 +153,7 @@ macro(DeclareTargets)
 	set_target_properties(${PROJECT_NAME}.elf PROPERTIES LINK_FLAGS "${LDFLAGS_M4}")
 
 	add_custom_target(
-		${PROJECT_NAME}.bin
+		${PROJECT_NAME}.bin ALL
 		DEPENDS ${PROJECT_NAME}.elf
 		COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
 	)
@@ -181,7 +181,7 @@ macro(DeclareTargets)
 
 	add_custom_target(
 		${PROJECT_NAME}.dfu ${DFU_ALL}
-		DEPENDS ${PROJECT_NAME}_dfu.bin ${PROJECT_NAME}.bin
+		DEPENDS ${PROJECT_NAME}_dfu.bin
 		COMMAND rm -f _tmp.dfu _header.bin
 		COMMAND cp ${PROJECT_NAME}_dfu.bin _tmp.dfu
 		COMMAND ${DFU_COMMAND}
