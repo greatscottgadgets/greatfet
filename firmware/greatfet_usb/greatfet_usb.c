@@ -25,6 +25,7 @@
 
 #include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
+#include <libopencm3/lpc43xx/timer.h>
 
 #include <greatfet_core.h>
 
@@ -43,15 +44,82 @@
 
 #include <stdlib.h>
 
+#include "gpio_lpc.h"
+
+
 typedef enum {
         TRANSCEIVER_MODE_OFF = 0,
         TRANSCEIVER_MODE_RX = 1,
         TRANSCEIVER_MODE_TX = 2,
         TRANSCEIVER_MODE_SS = 3,
-        TRANSCEIVER_MODE_CPLD_UPDATE = 4
 } transceiver_mode_t;
 
 static volatile transceiver_mode_t _transceiver_mode = TRANSCEIVER_MODE_OFF;
+static volatile bool led3_on = false;
+static volatile int led_count = 0;
+
+void timer2_isr_idle() {
+	TIMER2_IR |= TIMER_IR_MR0INT;
+
+	led_count++;
+	if(led_count % 100 == 0) {
+		led_on(LED1);
+	}
+	if(led_count % 30 == 0) {
+		led_off(LED1);
+	}
+
+	if(led3_on) {
+		led3_on = false;
+		led_off(LED3);
+	} else {
+		led3_on = true;
+		led_on(LED3);
+	}
+
+	//delay(5000000);
+	led_off(LED4);
+	led_off(LED2);
+
+}
+
+void timer2_isr_tx() {
+	TIMER2_IR |= TIMER_IR_MR0INT;
+	led_on(LED3);
+
+}
+
+void timer2_isr_rx() {
+	TIMER2_IR |= TIMER_IR_MR0INT;
+	led_on(LED4);
+	led_off(LED3);
+
+	led_count++;
+
+	uint32_t gpio_bits = GPIO_LPC_W(1, 0);
+	uint8_t byte0 = gpio_bits & 0xff;
+	uint8_t byte1 = (gpio_bits >> 8) & 0xff;
+	uint8_t byte2 = (gpio_bits >> 16) & 0xff;
+	uint8_t byte3 = (gpio_bits >> 24) & 0xff;
+	
+	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte0;
+	if(usb_bulk_buffer_offset >= 0x8000) {
+		usb_bulk_buffer_offset = 0;
+	}
+	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte1;
+	if(usb_bulk_buffer_offset >= 0x8000) {
+		usb_bulk_buffer_offset = 0;
+	}
+	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte2;
+	if(usb_bulk_buffer_offset >= 0x8000) {
+		usb_bulk_buffer_offset = 0;
+	}
+	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte3;
+	if(usb_bulk_buffer_offset >= 0x8000) {
+		usb_bulk_buffer_offset = 0;
+	}
+}
+
 
 void set_transceiver_mode(const transceiver_mode_t new_transceiver_mode) {
         //baseband_streaming_disable(&sgpio_config);
@@ -65,16 +133,22 @@ void set_transceiver_mode(const transceiver_mode_t new_transceiver_mode) {
                 led_off(LED3);
                 led_on(LED2);
                 usb_endpoint_init(&usb0_endpoint_bulk_in);
-                //vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_rx;
+
+                vector_table.irq[NVIC_TIMER2_IRQ] = timer2_isr_rx;
+		timer_enable_counter(TIMER2);
         } else if (_transceiver_mode == TRANSCEIVER_MODE_TX) {
                 led_off(LED2);
                 led_on(LED3);
                 usb_endpoint_init(&usb0_endpoint_bulk_out);
-                //vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_tx;
+
+		vector_table.irq[NVIC_TIMER2_IRQ] = timer2_isr_tx;
+		timer_enable_counter(TIMER2);
         } else {
                 led_off(LED2);
                 led_off(LED3);
-                //vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_rx;
+
+		vector_table.irq[NVIC_TIMER2_IRQ] = timer2_isr_idle;
+		timer_disable_counter(TIMER2);
         }
 
         if( _transceiver_mode != TRANSCEIVER_MODE_OFF ) {
@@ -96,10 +170,6 @@ usb_request_status_t usb_vendor_request_set_transceiver_mode(
                 case TRANSCEIVER_MODE_RX:
                 case TRANSCEIVER_MODE_TX:
                         set_transceiver_mode(endpoint->setup.value);
-                        usb_transfer_schedule_ack(endpoint->in);
-                        return USB_REQUEST_STATUS_OK;
-                case TRANSCEIVER_MODE_CPLD_UPDATE:
-                        usb_endpoint_init(&usb0_endpoint_bulk_out);
                         usb_transfer_schedule_ack(endpoint->in);
                         return USB_REQUEST_STATUS_OK;
                 default:
@@ -280,6 +350,31 @@ usb_request_status_t usb_vendor_request_enable_usb1(
 	return USB_REQUEST_STATUS_OK;
 }
 
+void tim_setup(void)
+{
+	vector_table.irq[NVIC_TIMER2_IRQ] = timer2_isr_idle;
+
+	/* Enable TIM2 interrupt. */
+        nvic_set_priority(NVIC_TIMER2_IRQ, 10);
+	nvic_enable_irq(NVIC_TIMER2_IRQ);
+
+	timer_disable_counter(TIMER2);
+	timer_reset(TIMER2);
+
+	TIMER_MR3(TIMER2) = 250;	// match count
+
+	TIMER_MCR(TIMER2) &= ~(TIMER_MCR_MR3I | TIMER_MCR_MR3R | TIMER_MCR_MR3S); // clear out mcr bits
+	TIMER_MCR(TIMER2) |= TIMER_MCR_MR3R;	// enable counter reset on match
+	TIMER_MCR(TIMER2) |= TIMER_MCR_MR3I;	// enable interrupt on match
+
+
+//	timer_set_counter(TIMER2, 0xffffffff);
+
+//	timer_set_mode(TIMER2, 0);
+
+	timer_enable_counter(TIMER2);
+}
+
 int main(void) {
 	pin_setup();
 	led_on(LED1);
@@ -288,13 +383,15 @@ int main(void) {
 	led_off(LED3);
 
 	init_usb0();
+
+	tim_setup();
 	
-	int delay_time = 5000;
-	unsigned long flash_counter = 0;
+	//int delay_time = 5000000;
+	//unsigned long flash_counter = 0;
 	bool tx_led_on = false;
 
         int phase = 0;
-	unsigned char cur_char = 0x01;
+	//unsigned char cur_char = 0x01;
 
 	while(usb_bulk_buffer_offset++ < 0x4000) {
 		usb_bulk_buffer[usb_bulk_buffer_offset] = 0xa0;
@@ -303,60 +400,29 @@ int main(void) {
 	while(true) {
 		/* Blink LED4 to let us know we're alive */
 /*
-		led_off(LED4);
-		led_on(LED3);
+		led_off(LED1);
+		led_on(LED2);
 
 		delay(delay_time);
 
-		led_on(LED4);
-		led_off(LED3);
+		led_on(LED1);
+		led_off(LED2);
 
 		delay(delay_time);
-*/
-
-/*
-		if(phase == 1) {
-			while(usb_bulk_buffer_offset++ < 0x1000 - 2) {
-				usb_bulk_buffer[usb_bulk_buffer_offset] = 0xa0;
-			}
-		} else {
-			while(usb_bulk_buffer_offset++ < 0x2000 - 2) {
-				usb_bulk_buffer[usb_bulk_buffer_offset] = 0xff;
-			}
-		}
-		if(usb_bulk_buffer_offset >= 0x2000) {
-			usb_bulk_buffer_offset = 0;
-		}
-*/
-
-/*
-                // Set up IN transfer of buffer 0.
-               if ( usb_bulk_buffer_offset >= 16384 ) {
-                        usb_transfer_schedule_block(
-                                //(transceiver_mode() == TRANSCEIVER_MODE_RX)
-//                               //? &usb_endpoint_bulk_in : &usb_endpoint_bulk_out,
-                                &usb0_endpoint_bulk_out,
-//                                &usb0_endpoint_bulk_in,
-                                &usb_bulk_buffer[0x0000],
-                                0x4000,
-                                NULL, NULL
-                                );
-
-			usb_bulk_buffer_offset = 0;
-
-               }
 */
 
                 // Set up IN transfer of buffer 0.
                 //if ( usb_bulk_buffer_offset >= 16384
-                if (true
+                if (usb_bulk_buffer_offset >= 16384
                      && phase == 1
                      && transceiver_mode() != TRANSCEIVER_MODE_OFF) {
+			/*
 			usb_bulk_buffer_offset = 0;
 			cur_char++;
 			while(usb_bulk_buffer_offset++ < 0x2000) {
 				usb_bulk_buffer[usb_bulk_buffer_offset] = cur_char;
 			}
+			*/
 
                         usb_transfer_schedule_block(
                                 (transceiver_mode() == TRANSCEIVER_MODE_RX)
@@ -380,13 +446,15 @@ int main(void) {
 
                 // Set up IN transfer of buffer 1.
                 //if ( usb_bulk_buffer_offset < 16384
-                if (true
+                if (usb_bulk_buffer_offset < 16384
                      && phase == 0
                      && transceiver_mode() != TRANSCEIVER_MODE_OFF) {
+			/*
 			usb_bulk_buffer_offset = 0x2000;
 			while(usb_bulk_buffer_offset++ < 0x4000) {
 				usb_bulk_buffer[usb_bulk_buffer_offset] = 0xc0;
 			}
+			*/
 
                         usb_transfer_schedule_block(
                                 (transceiver_mode() == TRANSCEIVER_MODE_RX)
@@ -397,6 +465,8 @@ int main(void) {
                         );
                         phase = 1;
                 }
+/*
+*/
 
 	}
 	
