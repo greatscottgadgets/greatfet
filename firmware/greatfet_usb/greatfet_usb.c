@@ -96,27 +96,25 @@ void timer2_isr_rx() {
 
 	led_count++;
 
-	uint32_t gpio_bits = GPIO_LPC_W(1, 0);
-	uint8_t byte0 = gpio_bits & 0xff;
-	uint8_t byte1 = (gpio_bits >> 8) & 0xff;
-	uint8_t byte2 = (gpio_bits >> 16) & 0xff;
-	uint8_t byte3 = (gpio_bits >> 24) & 0xff;
+//	volatile uint32_t* gpio_bits_p = GPIO_LPC_W(0, 0);
+//	uint32_t gpio_bits = *gpio_bits_p;
+
+	for(int i = 0; i < 2; i++) {
+		struct gpio_port_t* port = GPIO_LPC_PORT(i);
+		uint32_t gpio_bits = port->pin;
+
+		uint8_t byte0 = gpio_bits & 0xff;
+		uint8_t byte1 = (gpio_bits << 8) & 0xff;
+		uint8_t byte2 = (gpio_bits << 16) & 0xff;
+		uint8_t byte3 = (gpio_bits << 24) & 0xff;
 	
-	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte0;
-	if(usb_bulk_buffer_offset >= 0x8000) {
-		usb_bulk_buffer_offset = 0;
-	}
-	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte1;
-	if(usb_bulk_buffer_offset >= 0x8000) {
-		usb_bulk_buffer_offset = 0;
-	}
-	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte2;
-	if(usb_bulk_buffer_offset >= 0x8000) {
-		usb_bulk_buffer_offset = 0;
-	}
-	usb_bulk_buffer[usb_bulk_buffer_offset++] = byte3;
-	if(usb_bulk_buffer_offset >= 0x8000) {
-		usb_bulk_buffer_offset = 0;
+		usb_bulk_buffer[usb_bulk_buffer_offset++] = byte0;
+		usb_bulk_buffer[usb_bulk_buffer_offset++] = byte1;
+		usb_bulk_buffer[usb_bulk_buffer_offset++] = byte2;
+		usb_bulk_buffer[usb_bulk_buffer_offset++] = byte3;
+		if(usb_bulk_buffer_offset >= 0x8000) {
+			usb_bulk_buffer_offset = 0;
+		}
 	}
 }
 
@@ -385,6 +383,22 @@ int main(void) {
 	init_usb0();
 
 	tim_setup();
+
+	for(int i = 0; i < 32; i++) {
+		struct gpio_t pin_0_0 = GPIO(0, i);
+		gpio_input(&pin_0_0);
+		//gpio_set(&pin_0_0);
+		//gpio_clear(&pin_0_0);
+	}
+
+/*
+	for(int i = 0; i < 10; i++) {
+		struct gpio_t pin_0_0 = GPIO(0, i);
+		gpio_output(&pin_0_0);
+		gpio_set(&pin_0_0);
+		//gpio_clear(&pin_0_0);
+	}
+*/
 	
 	//int delay_time = 5000000;
 	//unsigned long flash_counter = 0;
@@ -393,9 +407,11 @@ int main(void) {
         int phase = 0;
 	//unsigned char cur_char = 0x01;
 
+/*
 	while(usb_bulk_buffer_offset++ < 0x4000) {
 		usb_bulk_buffer[usb_bulk_buffer_offset] = 0xa0;
 	}
+*/
 
 	while(true) {
 		/* Blink LED4 to let us know we're alive */
@@ -434,10 +450,26 @@ int main(void) {
                         phase = 0;
 
 			if(tx_led_on) {
+/*
+	for(int i = 0; i < 10; i++) {
+		struct gpio_t pin_0_0 = GPIO(0, i);
+		gpio_output(&pin_0_0);
+		gpio_set(&pin_0_0);
+		//gpio_clear(&pin_0_0);
+	}
+*/
 				tx_led_on = false;
 				led_off(LED1);
 				led_on(LED2);
 			} else {
+/*
+	for(int i = 0; i < 10; i++) {
+		struct gpio_t pin_0_0 = GPIO(0, i);
+		gpio_output(&pin_0_0);
+		//gpio_set(&pin_0_0);
+		gpio_clear(&pin_0_0);
+	}
+*/
 				tx_led_on = true;
 				led_on(LED1);
 				led_off(LED2);
