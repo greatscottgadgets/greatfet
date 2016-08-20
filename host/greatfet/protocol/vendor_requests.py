@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
+# Copyright 2016 Jared Boone <jared@sharebrained.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -64,12 +65,15 @@ requests = [
     'I2C_START',
     'I2C_STOP',
     'I2C_XFER',
-    'I2C_RESPONSE'
-]
+    'I2C_RESPONSE',
 
+    'LOGIC_ANALYZER_START',
+    'LOGIC_ANALYZER_STOP'
+]
 
 # Get a reference (as an object) to this module (self)
 this_module = globals()
 
 for i in range(len(requests)):
     this_module[requests[i]] = i
+
