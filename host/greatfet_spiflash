@@ -26,6 +26,9 @@
 #  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import print_function
 
 import sys
 import argparse
@@ -143,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
     args = parser.parse_args()
 
-    # If we don't have an option, log_function our usage.
+    # If we don't have an option, print our usage.
     if not args.info and not args.dump:
         parser.print_help()
         sys.exit()
@@ -158,9 +161,9 @@ if __name__ == '__main__':
         log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
     except DeviceNotFoundError:
         if args.serial:
-            log_function("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
+            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
         else:
-            log_function("No GreatFET board found!", file=sys.stderr)
+            print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
     device.vendor_request_out(vendor_requests.SPI_INIT)
