@@ -21,19 +21,14 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __W25Q80BV_H__
-#define __W25Q80BV_H__
+#ifndef __ONBOARD_FLASH_H__
+#define __ONBOARD_FLASH_H__
 
 #include "spiflash.h"
 #include "spiflash_target.h"
 #include "gpio_lpc.h"
 #include "greatfet_core.h"
-
-#define W25Q80BV_DEVICE_ID_RES  0x14 /* Expected device_id for W25Q16DV */
-
-#define W25Q80BV_PAGE_LEN 256U
-#define W25Q80BV_NUM_PAGES 8192U
-#define W25Q80BV_NUM_BYTES (W25Q80BV_PAGE_LEN * W25Q80BV_NUM_PAGES)
+#include "pins.h"
 
 struct gpio_t gpio_spiflash_hold   = GPIO(1, 14);
 struct gpio_t gpio_spiflash_wp     = GPIO(1, 15);
@@ -47,12 +42,12 @@ spi_target_t spi_target = {
 
 spiflash_driver_t spi_flash_drv = {
 	.target = &spi_target,
-    .target_init = spiflash_target_init,
-	.page_len = W25Q80BV_PAGE_LEN,
-	.num_pages = W25Q80BV_NUM_PAGES,
-	.num_bytes = W25Q80BV_NUM_BYTES,
-    .device_id = W25Q80BV_DEVICE_ID_RES,
+	.target_init = spiflash_target_init,
+	.page_len = ONBOARD_FLASH_PAGE_LEN,
+	.num_pages = ONBOARD_FLASH_NUM_PAGES,
+	.num_bytes = ONBOARD_FLASH_NUM_BYTES,
+	.device_id = ONBOARD_FLASH_DEVICE_ID,
 };
 
 
-#endif//__W25Q80BV_H__
+#endif//__ONBOARD_FLASH_H__

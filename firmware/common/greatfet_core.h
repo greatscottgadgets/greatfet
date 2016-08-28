@@ -41,10 +41,16 @@ extern "C"
 
 /* hardware identification number */
 #define BOARD_ID_AZALEA  0
+#define BOARD_ID_XPLORER  1
 
 #ifdef GREATFET_AZALEA
 #define BOARD_ID BOARD_ID_AZALEA
 #endif
+
+#ifdef NXP_XPLORER
+#define BOARD_ID BOARD_ID_XPLORER
+#endif
+
 
 void delay(uint32_t duration);
 

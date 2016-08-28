@@ -151,6 +151,10 @@ class GreatFETBoard(object):
         # Ensure that we have an active USB connection to the device.
         self._initialize_usb()
 
+        # Final sanity check: if we don't handle this board ID, bail out!
+        if self.HANDLED_BOARD_IDS and (self.board_id() not in self.HANDLED_BOARD_IDS):
+            raise DeviceNotFoundError()
+
 
     def _initialize_usb(self):
         """Sets up our USB connection to the GreatFET device."""
