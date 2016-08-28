@@ -29,6 +29,7 @@
 
 from ..board import GreatFETBoard
 from ..peripherals.spi_flash import SPIFlash
+from ..peripherals.i2c_bus import I2CBus
 from ..peripherals import gpio
 
 class GreatFETAzalea(GreatFETBoard):
@@ -49,3 +50,8 @@ class GreatFETAzalea(GreatFETBoard):
         # TODO: Use a self.add_peripheral mechanism, so peripherals can
         # be dynamically listed?
         self.onboard_flash = SPIFlash(self)
+        self.i2c_busses = [ I2CBus(self, 'I2C0') ]
+
+        # Create an easy-to-use alias for the primary I2C bus, for rapid
+        # hacking/experimentation.
+        self.i2c = self.i2c_busses[0]
