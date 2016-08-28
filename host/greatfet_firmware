@@ -31,6 +31,8 @@
     Utility for flashing the onboard SPI flash on GreatFET boards.
 """
 
+from __future__ import print_function
+
 import sys
 import errno
 import argparse
@@ -88,6 +90,7 @@ def main():
     # If we don't have an option, print our usage.
     if not args.read and not args.write:
         parser.print_help()
+        sys.exit(0)
 
     # Determine whether we're going to log to the stdout, or not at all.
     log_function = log_verbose if args.verbose else log_silent
@@ -99,16 +102,16 @@ def main():
         log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
     except DeviceNotFoundError:
         if args.serial:
-            log_function("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
+            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
         else:
-            log_function("No GreatFET board found!", file=sys.stderr)
+            print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
     # Ensure that the device supports an onboard SPI flash.
     try:
         device.onboard_flash
     except AttributeError:
-        log_function("The attached GreatFET ({}) doesn't appear to have an SPI flash to program!".format(device.board_name()), file=sys.stderr)
+        print("The attached GreatFET ({}) doesn't appear to have an SPI flash to program!".format(device.board_name()), file=sys.stderr)
         sys.exit(errno.ENOSYS)
 
     # If we have a write command, write first, to match the behavior of hackrf_spiflash.

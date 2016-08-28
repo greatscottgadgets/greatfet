@@ -135,12 +135,12 @@ macro(DeclareTargets)
 	)
 
 	# Object files to be linked for both DFU and SPI flash versions
-	add_library(OBJ_FILES OBJECT ${SRC_M4} m0_bin.s)
-	set_target_properties(OBJ_FILES PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
+	add_library(OBJ_FILES_${PROJECT_NAME} OBJECT ${SRC_M4} m0_bin.s)
+	set_target_properties(OBJ_FILES_${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
+	add_dependencies(OBJ_FILES_${PROJECT_NAME} ${PROJECT_NAME}_m0.bin)
 
 	# SPI flash version
-	add_executable(${PROJECT_NAME}.elf $<TARGET_OBJECTS:OBJ_FILES>)
-	add_dependencies(${PROJECT_NAME}.elf ${PROJECT_NAME}_m0.bin)
+	add_executable(${PROJECT_NAME}.elf $<TARGET_OBJECTS:OBJ_FILES_${PROJECT_NAME}>)
 
 	target_link_libraries(
 		${PROJECT_NAME}.elf
@@ -160,8 +160,7 @@ macro(DeclareTargets)
 	)
 
 	# DFU - using a differnet LD script to run directly from RAM
-	add_executable(${PROJECT_NAME}_dfu.elf $<TARGET_OBJECTS:OBJ_FILES>)
-	add_dependencies(${PROJECT_NAME}_dfu.elf ${PROJECT_NAME}_m0.bin)
+	add_executable(${PROJECT_NAME}_dfu.elf $<TARGET_OBJECTS:OBJ_FILES_${PROJECT_NAME}>)
 
 	target_link_libraries(
 		${PROJECT_NAME}_dfu.elf
