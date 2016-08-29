@@ -51,6 +51,14 @@ class GreatFETError(RuntimeError):
     pass
 
 
+class ExternalDeviceError(IOError):
+    """
+    Error used when a external device (e.g. not on the GreatFET)
+    experiences an issue. This typically means that the error is not wit
+    the GreatFET hardware or software, but may be with e.g. connections.
+    """
+
+
 GREATFET_ERRORS = {
     -2: ValueError,
     -5: NotFoundError,

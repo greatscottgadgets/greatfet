@@ -1,0 +1,10 @@
+# GreatFET Sensors
+
+This folder contains drivers for various external sensors that can be connected 
+to the GreatFET. Sensors should inherit from the ```GreatFETSensor`` and should
+implement the get_reading() function, to be compatible with current and future
+tools.
+
+## Supported Sensors
+
+- TSL2561 - Ambient Light Sensor

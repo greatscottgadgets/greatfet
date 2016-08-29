@@ -27,31 +27,35 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-from ..board import GreatFETBoard
-from ..peripherals.spi_flash import SPIFlash
-from ..peripherals.i2c_bus import I2CBus
-from ..peripherals import gpio
+class GreatFETSensor(object):
+    """
+        Class representing an sensor that can be attached to a GreatFET board;
+        or which is provided by a neighbor.
 
-class GreatFETAzalea(GreatFETBoard):
-    """ Class representing GreatFET Azalea base-boards. """
+        Subclasses should support "get_reading" and "create_sensor".
+    """
 
-    # Currently, all GreatFET Azalea boards have an ID of zero.
-    HANDLED_BOARD_IDS = [0]
-    BOARD_NAME = "GreatFET Azalea"
+    # The 'shorthand' name for the sensor, which is used by command-line tools 
+    # to identify the given type of sensor.
+    SHORTHAND = ""
+
+    def create_sensor(self, board, options):
+        """
+        Factory method that creates a sensor.
+
+        Args:
+            board -- The GreatFET being configured using the sensor API.
+            options -- A dictionary of any options to be provided to the device.
+                To be used e.g. on application command lines.
+        """
+        raise NotImplementedError("Attempted to create an abstract sensor!")
 
 
-    def __init__(self, **device_identifiers):
-        """ Initialize a new GreatFET Azalea connection. """
+    def get_reading(self, name_prefix=True):
+        """
+            Returns a sensor reading for a configured sensor.
+            Should be overridden by each sensor object.
+        """
+        return {}
 
-        # Set up the core connection.
-        super(GreatFETAzalea, self).__init__(**device_identifiers)
 
-        # Initialize the fixed peripherals that come on the board.
-        # TODO: Use a self.add_peripheral mechanism, so peripherals can
-        # be dynamically listed?
-        self.onboard_flash = SPIFlash(self)
-        self.i2c_busses = [ I2CBus(self, 'I2C0') ]
-
-        # Create an easy-to-use alias for the primary I2C bus, for rapid
-        # hacking/experimentation.
-        self.i2c = self.i2c_busses[0]
