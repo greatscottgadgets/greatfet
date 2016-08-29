@@ -1,4 +1,5 @@
 /*
+ * Copyright 2016 Kyle J. Temkin <kyle@ktemkin.com>
  * Copyright 2015 Dominic Spill <dominicgs@gmail.com>
  *
  * This file is part of GreatFET.
@@ -19,8 +20,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GREATFET_PINS_H
-#define __GREATFET_PINS_H
+#ifndef __XPLORER_PINS_H
+#define __XPLORER_PINS_H
 
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
@@ -31,36 +32,26 @@
 
 /* GPIO Output PinMux */
 
-#define NUM_LEDS 4
+#define NUM_LEDS 2
 
-#define SCU_PINMUX_LED1     (P7_6)  /* GPIO3[14] on P7_6 */
-#define SCU_PINMUX_LED2     (P4_1)  /* GPIO2[1] on P4_1 */
-#define SCU_PINMUX_LED3     (P7_5)  /* GPIO3[13] on P7_5 */
-#define SCU_PINMUX_LED4     (P7_4)  /* GPIO3[12] on P7_4 */
+#define SCU_PINMUX_LED1     (P2_11)  /* GPIO1[11] on P2_11 */
+#define SCU_PINMUX_LED2     (P2_12)  /* GPIO2[12] on P2_12 */
 
-#define PIN_LED1            (14) /* GPIO3[14] on P7_6 */
-#define PIN_LED2            (1)  /* GPIO2[1] on P4_1 */
-#define PIN_LED3            (13) /* GPIO3[13] on P7_5 */
-#define PIN_LED4            (12) /* GPIO3[12] on P7_4 */
+#define PIN_LED1            (11) /* GPIO3[14] on P7_6 */
+#define PIN_LED2            (12)  /* GPIO2[1] on P4_1 */
 
-#define PORT_LED1           (3) /* PORT for LED1, 3, 4 */
-#define PORT_LED2           (2) /* PORT for LED2 */
-#define PORT_LED3           (3) /* PORT for LED1, 3, 4 */
-#define PORT_LED4           (3) /* PORT for LED1, 3, 4 */
+#define PORT_LED1           (1) /* PORT for LED1, 3, 4 */
+#define PORT_LED2           (1) /* PORT for LED2 */
 
 /* GPIO Output PinMux */
 static const struct gpio_t gpio_led[NUM_LEDS] = {
 	GPIO(PORT_LED1,  PIN_LED1),
-	GPIO(PORT_LED2,  PIN_LED2),
-	GPIO(PORT_LED3,  PIN_LED3),
-	GPIO(PORT_LED4,  PIN_LED4)
+	GPIO(PORT_LED2,  PIN_LED2)
 };
 
 static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
   SCU_PINMUX_LED1,
   SCU_PINMUX_LED2,
-  SCU_PINMUX_LED3,
-  SCU_PINMUX_LED4
 };
 
 /* GPIO Input PinMux */
@@ -108,11 +99,10 @@ static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
 #define SCU_FLASH_HOLD      (P3_4) /* GPIO1[14] on P3_4 */
 #define SCU_FLASH_WP        (P3_5) /* GPIO1[15] on P3_5 */
 
-#define ONBOARD_FLASH_DEVICE_ID  0x14 /* Expected device_id for W25Q16DV */
+#define ONBOARD_FLASH_DEVICE_ID  0x15 /* Expected device_id for S25FL032P */
 #define ONBOARD_FLASH_PAGE_LEN   256U
-#define ONBOARD_FLASH_NUM_PAGES  8192U
+#define ONBOARD_FLASH_NUM_PAGES  16384U
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
-
 
 /* TODO add other Pins */
 #define SCU_PINMUX_GPIO3_8  (P7_0)  /* GPIO3[8] */
@@ -143,4 +133,4 @@ static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
 #define SCU_PINMUX_USB1_SENSE    (P6_11) /* GPIO3[7] */
 #define SCU_PINMUX_USB1_EN       (P6_12) /* GPIO2[8] */
 #define SCU_PINMUX_USB1_FAULT    (P7_3)  /* GPIO3[11] */
-#endif /* __GREATFET_PINS_H */
+#endif /* __XPLORER_PINS_H */

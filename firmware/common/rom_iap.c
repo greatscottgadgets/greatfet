@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 #include "rom_iap.h"
-#include "w25q80bv.h"
+#include "onboard_flash.h"
 
 #define ROM_IAP_ADDR (0x10400100)
 #define ROM_IAP_UNDEF_ADDR (0x12345678)

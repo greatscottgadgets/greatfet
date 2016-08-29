@@ -23,7 +23,7 @@
  */
 
 #include "greatfet_core.h"
-#include "greatfet_pins.h"
+#include "pins.h"
 #include "spi_ssp.h"
 #include "spiflash.h"
 #include "spiflash_target.h"
@@ -39,14 +39,6 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define WAIT_CPU_CLOCK_INIT_DELAY   (10000)
-
-/* GPIO Output PinMux */
-static struct gpio_t gpio_led[4] = {
-	GPIO(PORT_LED1_3_4,  PIN_LED1),
-	GPIO(PORT_LED2,      PIN_LED2),
-	GPIO(PORT_LED1_3_4,  PIN_LED3),
-	GPIO(PORT_LED1_3_4,  PIN_LED4)
-};
 
 static struct gpio_t gpio_usb1_en		= GPIO(2, 8);
 
@@ -308,6 +300,8 @@ void cpu_clock_pll1_max_speed(void)
 }
 
 void pin_setup(void) {
+	int i;
+
 	/* Release CPLD JTAG pins */
 	scu_pinmux(SCU_PINMUX_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);
 	scu_pinmux(SCU_PINMUX_TCK, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
@@ -319,19 +313,14 @@ void pin_setup(void) {
 	gpio_input(&gpio_tms);
 	gpio_input(&gpio_tdi);
 	
-	/* Configure SCU Pin Mux as GPIO */
-	scu_pinmux(SCU_PINMUX_LED1, SCU_GPIO_NOPULL);
-	scu_pinmux(SCU_PINMUX_LED2, SCU_GPIO_NOPULL);
-	scu_pinmux(SCU_PINMUX_LED3, SCU_GPIO_NOPULL);
-	scu_pinmux(SCU_PINMUX_LED4, SCU_GPIO_NOPULL);
-	
 	/* Configure all GPIO as Input (safe state) */
 	gpio_init();
 
-	gpio_output(&gpio_led[0]);
-	gpio_output(&gpio_led[1]);
-	gpio_output(&gpio_led[2]);
-	gpio_output(&gpio_led[3]);
+	/* Configure each of the LEDs. */
+	for (i = 0; i < NUM_LEDS; ++i) {
+		scu_pinmux(pinmux_led[i], SCU_GPIO_NOPULL);
+		gpio_output(&gpio_led[i]);
+	}
 
 	/* enable input on SCL and SDA pins */
 	SCU_SFSI2C0 = SCU_I2C0_NOMINAL;
@@ -347,14 +336,23 @@ void pin_setup(void) {
 }
 
 void led_on(const led_t led) {
+	if(led >= NUM_LEDS)
+		return;
+
 	gpio_clear(&gpio_led[led]);
 }
 
 void led_off(const led_t led) {
+	if(led >= NUM_LEDS)
+		return;
+
 	gpio_set(&gpio_led[led]);
 }
 
 void led_toggle(const led_t led) {
+	if(led >= NUM_LEDS)
+		return;
+
 	gpio_toggle(&gpio_led[led]);
 }
 
