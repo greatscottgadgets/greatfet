@@ -29,8 +29,9 @@
 
 from .. import errors
 from ..protocol import vendor_requests
+from ..peripheral import GreatFETPeripheral
 
-class I2CDevice(object):
+class I2CDevice(GreatFETPeripheral):
     """
         Class representing an generic I2C device connected to a GreatFET I2C Bus.
 
@@ -62,7 +63,7 @@ class I2CDevice(object):
         self.bus.attach_device(self)
 
 
-    def transmit(self, data, receive_length=1):
+    def transmit(self, data, receive_length=0):
         """
             Sends data over the I2C bus, and optionally recieves
             data in response.
@@ -72,6 +73,6 @@ class I2CDevice(object):
                 receive_length -- If provided, the I2C controller will attempt
                         to read the provided amount of data, in bytes.
         """
-        self.bus.transmit(self.address, data, receive_length)
+        return self.bus.transmit(self.address, data, receive_length)
 
 

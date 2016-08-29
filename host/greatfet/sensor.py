@@ -27,58 +27,35 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-class DeviceNotFoundError(IOError):
-    """ Error indicating no GreatFET device was found. """
-    pass
-
-
-class DeviceBusyError(IOError):
-    """ Error indicating the GreatFET is too busy to service the given request. """
-    pass
-
-
-class DeviceMemoryError(MemoryError):
-    """ Error indicating that the GreatFET has run out of memory. """
-    pass
-
-
-class NotFoundError(IOError):
-    """ Error indicating that a resource was not found. """
-    pass
-
-class GreatFETError(RuntimeError):
-    """ Runtime error used when no better description is available. """
-    pass
-
-
-class ExternalDeviceError(IOError):
+class GreatFETSensor(object):
     """
-    Error used when a external device (e.g. not on the GreatFET)
-    experiences an issue. This typically means that the error is not wit
-    the GreatFET hardware or software, but may be with e.g. connections.
+        Class representing an sensor that can be attached to a GreatFET board;
+        or which is provided by a neighbor.
+
+        Subclasses should support "get_reading" and "create_sensor".
     """
 
+    # The 'shorthand' name for the sensor, which is used by command-line tools 
+    # to identify the given type of sensor.
+    SHORTHAND = ""
 
-GREATFET_ERRORS = {
-    -2: ValueError,
-    -5: NotFoundError,
-    -6: DeviceBusyError,
-    -7: MemoryError,
-}
+    def create_sensor(self, board, options):
+        """
+        Factory method that creates a sensor.
+
+        Args:
+            board -- The GreatFET being configured using the sensor API.
+            options -- A dictionary of any options to be provided to the device.
+                To be used e.g. on application command lines.
+        """
+        raise NotImplementedError("Attempted to create an abstract sensor!")
 
 
-def from_greatfet_error(error_number):
-    """
-    Returns the error class appropriate for the given GreatFET error.
-    """
-
-    if error_number in GREATFET_ERRORS:
-        error_class = GREATFET_ERRORS[error_number]
-    else:
-        error_class = GreatFETError
-
-    message = "Error {}".format(error_number)
-
-    return error_class(message)
+    def get_reading(self, name_prefix=True):
+        """
+            Returns a sensor reading for a configured sensor.
+            Should be overridden by each sensor object.
+        """
+        return {}
 
 

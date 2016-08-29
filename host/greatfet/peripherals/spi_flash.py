@@ -32,8 +32,9 @@ import struct
 
 from .. import errors
 from ..protocol import vendor_requests
+from ..peripheral import GreatFETPeripheral
 
-class SPIFlash(object):
+class SPIFlash(GreatFETPeripheral):
     """
     Class representing the onboard SPI flash used to store e.g. a GreatFET Azalea
     program. Typically used to program a w25q80bv, but the hardware provides us

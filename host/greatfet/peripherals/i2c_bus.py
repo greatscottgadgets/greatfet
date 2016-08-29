@@ -29,8 +29,9 @@
 
 from .. import errors
 from ..protocol import vendor_requests
+from ..peripheral import GreatFETPeripheral
 
-class I2CBus(object):
+class I2CBus(GreatFETPeripheral):
     """
         Class representing a GreatFET I2C bus.
 
