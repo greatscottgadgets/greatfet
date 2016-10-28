@@ -69,8 +69,8 @@ class GreatFETBoard(object):
         """
         Attempts to create a new instance of the GreatFETBoard subclass
         most applicable to the given device. For example, if the attached
-        board is a GreatFET Azalea, this will automatically create a
-        GreatFET Azalea object.
+        board is a GreatFET One, this will automatically create a
+        GreatFET One object.
 
         Accepts the same arguments as pyusb's usb.find() method, allowing narrowing
         to a more specific GreatFET by e.g. serial number.

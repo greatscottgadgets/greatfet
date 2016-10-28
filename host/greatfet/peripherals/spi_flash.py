@@ -36,7 +36,7 @@ from ..peripheral import GreatFETPeripheral
 
 class SPIFlash(GreatFETPeripheral):
     """
-    Class representing the onboard SPI flash used to store e.g. a GreatFET Azalea
+    Class representing the onboard SPI flash used to store e.g. a GreatFET One
     program. Typically used to program a w25q80bv, but the hardware provides us
     with a generic interface that abstracts details away.
 

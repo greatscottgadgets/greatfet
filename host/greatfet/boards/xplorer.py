@@ -34,7 +34,7 @@ from ..peripherals import gpio
 class NXPXplorer(GreatFETBoard):
     """ Class representing the GreatFET varian of the NXP Xplorer base-boards. """
 
-    # Currently, all GreatFET Azalea boards have an ID of zero.
+    # Currently, all GreatFET One boards have an ID of zero.
     HANDLED_BOARD_IDS = [1]
     BOARD_NAME = "NXP Xplorer"
 
