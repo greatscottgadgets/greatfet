@@ -68,7 +68,10 @@ requests = [
     'I2C_RESPONSE',
 
     'LOGIC_ANALYZER_START',
-    'LOGIC_ANALYZER_STOP'
+    'LOGIC_ANALYZER_STOP',
+
+    'ADC_INIT',
+    'ADC_READ'
 ]
 
 # Get a reference (as an object) to this module (self)

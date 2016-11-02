@@ -116,7 +116,7 @@ void cpu_clock_init(void)
 	/* use IRC as clock source for APB1 (including I2C0) */
 	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_CLK_SEL(CGU_SRC_IRC);
 
-	/* use IRC as clock source for APB3 */
+	/* use IRC as clock source for APB3 (including ADC0) */
 	CGU_BASE_APB3_CLK = CGU_BASE_APB3_CLK_CLK_SEL(CGU_SRC_IRC);
 
 	//FIXME a lot of the details here should be in a CGU driver

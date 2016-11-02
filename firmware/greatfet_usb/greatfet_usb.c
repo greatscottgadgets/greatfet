@@ -37,6 +37,7 @@
 #include "usb_endpoint.h"
 #include "usb_api_board_info.h"
 #include "usb_api_spiflash.h"
+#include "usb_api_adc.h"
 #include "usb_api_spi.h"
 #include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
@@ -91,6 +92,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_i2c_response,
 	usb_vendor_request_logic_analyzer_start,
 	usb_vendor_request_logic_analyzer_stop,
+	usb_vendor_request_init_adc,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -181,6 +183,8 @@ void init_usb0(void) {
 	usb_endpoint_init(&usb0_endpoint_control_out);
 	usb_endpoint_init(&usb0_endpoint_control_in);
 
+	usb_endpoint_init(&usb0_endpoint_bulk_in);
+
 	nvic_set_priority(NVIC_USB0_IRQ, 254);
 
 	usb_run(&usb0_device);
@@ -236,11 +240,12 @@ int main(void) {
 		if(logic_analyzer_enabled) {
 			logic_analyzer_mode();
 		}
+		if(adc_mode_enabled) {
+			adc_mode();
+		}
 
-		/* Blink LED4 to let us know we're alive */
-		led_off(LED1);
-		delay(10000000);
-		led_on(LED1);
+		/* Blink LED1 to let us know we're alive */
+		led_toggle(LED1);
 		delay(10000000);
 	}
 	
