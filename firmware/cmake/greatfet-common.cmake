@@ -64,7 +64,7 @@ if(NOT DEFINED SRC_M0)
 	set(SRC_M0 "${PATH_GREATFET_FIRMWARE_COMMON}/m0_sleep.c")
 endif(NOT DEFINED SRC_M0)
 
-SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -DTX_ENABLE -D'VERSION_STRING=\"git-${VERSION}\"' -DRUN_FROM=${RUN_FROM}")
+SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -D'VERSION_STRING=\"git-${VERSION}\"'")
 
 SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx_rom_to_ram.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
 
@@ -195,7 +195,6 @@ macro(DeclareTargets)
 	)
 
 	# Program / flash targets
-	# Make programming easier but also force build of both .dfu and .bin files
 	add_custom_target(
 		${PROJECT_NAME}-flash
 		DEPENDS ${PROJECT_NAME}.bin
