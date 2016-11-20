@@ -102,7 +102,7 @@ class TSL256X(I2CDevice, GreatFETSensor):
         address = options['address'] if ('address' in options) else cls.DEFAULT_ADDRESS
 
         default_suffix = "@{}".format(address)
-        suffix  = options['suffixx'] if ('suffix' in options) else default_suffix
+        suffix  = options['suffix'] if ('suffix' in options) else default_suffix
 
         # Create and return our raw sensor.
         return cls(board.i2c, address, suffix)
