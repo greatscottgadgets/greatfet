@@ -37,7 +37,7 @@ class DIOExpander(object):
     __metaclass__ = ABCMeta
 
     @abstractproperty
-    def get_number_pins(self):
+    def number_pins(self):
         """Return the number of expanded pins as an integer."""
         return 0
 
@@ -61,6 +61,6 @@ class DIOExpander(object):
 
     def _validate_pin_values(self, value):
         """Ensure the value is in a range that can represent the states of the pins."""
-        if value < 0 or value > self.get_number_pins ** 2 - 1:
+        if value < 0 or value > self.number_pins ** 2 - 1:
             raise ValueError("Tried to set an invalid value.")
         return value

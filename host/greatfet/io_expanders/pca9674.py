@@ -46,12 +46,12 @@ class PCA9674(I2CDevice, DIOExpander):
         super(PCA9674, self).__init__(bus, address, 'PCA9674')
 
     @property
-    def get_number_pins(self):
+    def number_pins(self):
         return 8
 
     def set_direction(self, value):
         # Invert value
-        pin_states = ~value & 2**self.get_number_pins - 1
+        pin_states = ~value & 2**self.number_pins - 1
         self.transmit(pin_states, 0)
 
     def read(self):
