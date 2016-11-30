@@ -29,7 +29,7 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-class GreatFEFDIOExpander(object):
+class DIOExpander(object):
     """Class representing a generic digital IO expander.
     Values for the pin states are integers with the least significant bit
     corresponding to pin 0 on the expander.

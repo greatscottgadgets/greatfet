@@ -28,10 +28,10 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-from ..io_expander import GreatFETDIOExpander
+from ..io_expander import DIOExpander
 from ..peripherals.i2c_device import I2CDevice
 
-class PCA9674(I2CDevice, GreatFETDIOExpander):
+class PCA9674(I2CDevice, DIOExpander):
     """PCA9674 I²C I/O expander"""
 
     def __init__(self, bus, address=0x20):
