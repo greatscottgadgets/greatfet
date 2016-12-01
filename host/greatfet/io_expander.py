@@ -60,8 +60,6 @@ class DIOExpander(object):
             self.set_pin_direction(i, directions & 1)
             directions = (directions >> 1)
 
-        self._directions = write_directions
-
     @abstractmethod
     def set_pin_direction(self, pin_num, direction):
         pin_num, direction = self._validate_pin_args(pin_num, direction)
@@ -69,7 +67,6 @@ class DIOExpander(object):
         directions = self._set_bit(self._directions, pin_num, direction)
 
         self.set_direction(directions)
-        self._directions = directions
 
 
     @abstractmethod
@@ -98,15 +95,12 @@ class DIOExpander(object):
             self.write_pin(i, value & 1)
             value = (value >> 1)
 
-        self._pins = write_value
-
     @abstractmethod
     def write_pin(self, pin_num, value):
         pin_num, value = self._validate_pin_args(pin_num, value)
         write_value = self._set_bit(self._pins, pin_num, value)
 
         self.write(write_value)
-        self._pins = write_value
 
 
     def _validate_pin_number(self, pin_num):
