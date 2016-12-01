@@ -123,7 +123,7 @@ class DIOExpander(object):
 
     def _validate_port_value(self, value):
         """Ensure the value is in a range that can represent the state of the pins."""
-        if value < 0 or value > self.number_pins ** 2 - 1:
+        if value < 0 or value > 2 ** self.number_pins - 1:
             raise ValueError("Tried to set an invalid value.")
         return value
 
