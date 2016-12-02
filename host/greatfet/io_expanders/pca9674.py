@@ -41,6 +41,7 @@ class PCA9674(DIOExpander, I2CDevice):
             bus: I²C bus the IO PCA9674 is connected to. For a
                 GreatFET One, this would typically be (board.i2c).
             address: Optional; used to specify a non-default address.
+                This is the 7 bit address of the PCA9674.
         """
         super(PCA9674, self).__init__()
         I2CDevice.__init__(self, bus, address, 'PCA9674')
