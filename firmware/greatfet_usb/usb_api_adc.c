@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Dominic Spill
+ * Copyright 2016 Schuyler St. Leger
  *
  * This file is part of GreatFET.
  *
@@ -38,6 +39,14 @@ usb_request_status_t usb_vendor_request_init_adc(
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		adc_mode_enabled = true;
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+usb_request_status_t usb_vendor_request_read_adc(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;

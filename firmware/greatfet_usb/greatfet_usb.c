@@ -93,6 +93,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_logic_analyzer_start,
 	usb_vendor_request_logic_analyzer_stop,
 	usb_vendor_request_init_adc,
+	usb_vendor_request_read_adc,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
