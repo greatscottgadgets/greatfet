@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Dominic Spill
+ * Copyright 2016 Schuyler St. Leger
  *
  * This file is part of GreatFET.
  *
@@ -28,6 +29,8 @@
 extern volatile bool adc_mode_enabled;
 
 usb_request_status_t usb_vendor_request_init_adc(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+usb_request_status_t usb_vendor_request_read_adc(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
 void adc_mode(void);
