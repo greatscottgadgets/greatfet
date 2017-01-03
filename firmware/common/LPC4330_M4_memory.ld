@@ -20,7 +20,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-/* Linker script for GreatFET Azalea (LPC4330, 2M SPI flash, 264K SRAM). */
+/* Linker script for GreatFET One (LPC4330, 2M SPI flash, 264K SRAM). */
 
 MEMORY
 {

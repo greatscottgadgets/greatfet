@@ -19,7 +19,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifdef GREATFET_AZALEA
+#ifdef GREATFET_ONE
 #include <greatfet_pins.h>
 #endif
 

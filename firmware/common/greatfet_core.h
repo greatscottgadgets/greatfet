@@ -40,11 +40,11 @@ extern "C"
 #include "i2c_lpc.h"
 
 /* hardware identification number */
-#define BOARD_ID_AZALEA  0
+#define BOARD_ID_ONE 0
 #define BOARD_ID_XPLORER  1
 
-#ifdef GREATFET_AZALEA
-#define BOARD_ID BOARD_ID_AZALEA
+#ifdef GREATFET_ONE
+#define BOARD_ID BOARD_ID_ONE
 #endif
 
 #ifdef NXP_XPLORER
