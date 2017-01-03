@@ -210,6 +210,11 @@ class GreatFETBoard(object):
         return result
 
 
+    def reset(self):
+        """Reset the GreatFET device."""
+        self.vendor_request_out(vendor_requests.RESET)
+
+
     def _vendor_request(self, direction, request, length_or_data=0, value=0, index=0, timeout=1000):
         """Performs a USB vendor-specific control request.
 

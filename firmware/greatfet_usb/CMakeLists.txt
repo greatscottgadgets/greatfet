@@ -34,7 +34,7 @@ set(SRC_M4
 	usb_descriptor.c
 	usb_device.c
 	usb_endpoint.c
-	usb_api_board_info.c
+	usb_api_board.c
 	usb_api_spiflash.c
 	usb_api_spi.c
 	usb_api_adc.c

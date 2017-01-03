@@ -35,7 +35,7 @@
 #include "usb_descriptor.h"
 #include "usb_device.h"
 #include "usb_endpoint.h"
-#include "usb_api_board_info.h"
+#include "usb_api_board.h"
 #include "usb_api_spiflash.h"
 #include "usb_api_adc.h"
 #include "usb_api_spi.h"
@@ -92,8 +92,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_i2c_response,
 	usb_vendor_request_logic_analyzer_start,
 	usb_vendor_request_logic_analyzer_stop,
-	usb_vendor_request_init_adc,
-	usb_vendor_request_read_adc,
+	usb_vendor_request_reset,
+	usb_vendor_request_adc_init,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =

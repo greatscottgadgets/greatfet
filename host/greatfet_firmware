@@ -42,7 +42,7 @@ from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
 
-""" Maximum length to allow, for now. """
+# Maximum length to allow, for now.
 MAX_FLASH_LENGTH = 0x100000
 
 def spi_flash_read(device, filename, address, length, log_function=log_silent):
@@ -52,10 +52,10 @@ def spi_flash_read(device, filename, address, length, log_function=log_silent):
         log_function("Read {} bytes of {}.".format(bytes_read, bytes_total), end='\r')
 
     # Read the data from the board's SPI flash to a file.
-    with open(filename, 'wb') as file:
+    with open(filename, 'wb') as f:
         flash_data = device.onboard_flash.read(address, length,
-            progress_callback=print_progress)
-        flash_data.tofile(file)
+                                               progress_callback=print_progress)
+        flash_data.tofile(f)
     log_function('')
 
 
@@ -66,29 +66,38 @@ def spi_flash_write(device, filename, address, log_function=log_silent):
         log_function("Written {} bytes of {}.".format(bytes_written, bytes_total), end='\r')
 
     # Read the data from the board's SPI flash to a file.
-    with open(filename, 'rb') as file:
-        flash_data = file.read()
+    with open(filename, 'rb') as f:
+        flash_data = f.read()
         device.onboard_flash.write(flash_data, address,
-            erase_first=True, progress_callback=print_progress)
+                                   erase_first=True,
+                                   progress_callback=print_progress)
     log_function('')
 
 
 def main():
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
-    parser.add_argument('-a', '--address', metavar='<n>', type=int, help="starting address (default: 0)", default=0)
-    parser.add_argument('-l', '--length', metavar='<n>', type=int, 
-        help="number of bytes to read (default: {})".format(MAX_FLASH_LENGTH), default=MAX_FLASH_LENGTH)
-    parser.add_argument('-r', dest='read', metavar='<filename>', type=str, help="Read data into file", default='')
-    parser.add_argument('-w', dest='write', metavar='<filename>', type=str, help="Write data from file", default='')
-    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str, help="Serial number of device, if multiple devices", default=None)
+    parser = argparse.ArgumentParser(
+        description="Utility for flashing the GreatFET's onboard SPI flash")
+    parser.add_argument('-a', '--address', metavar='<n>', type=int,
+                        help="starting address (default: 0)", default=0)
+    parser.add_argument('-l', '--length', metavar='<n>', type=int,
+                        help="number of bytes to read (default: {})".format(MAX_FLASH_LENGTH),
+                        default=MAX_FLASH_LENGTH)
+    parser.add_argument('-r', dest='read', metavar='<filename>', type=str,
+                        help="Read data into file", default='')
+    parser.add_argument('-w', dest='write', metavar='<filename>', type=str,
+                        help="Write data from file", default='')
+    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
+                        help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser.add_argument('-R', dest='reset', action='store_true',
+                        help="Reset GreatFET after performing other operations.")
     args = parser.parse_args()
 
     # Validate our options.
 
     # If we don't have an option, print our usage.
-    if not args.read and not args.write:
+    if not (args.read, args.write, args.reset):
         parser.print_help()
         sys.exit(0)
 
@@ -120,12 +129,17 @@ def main():
         spi_flash_write(device, args.write, args.address, log_function)
         log_function("Write complete!")
 
-    # Finally, handle any read commands.
+    # Handle any read commands.
     if args.read:
         log_function("Reading data from SPI flash...")
         spi_flash_read(device, args.read, args.address, args.length, log_function)
         log_function("Read complete!")
 
+    # Finally, reset the target
+    if args.reset:
+        log_function("Resetting GreatFET...")
+        device.reset()
+        log_function("Reset complete!")
 
 if __name__ == '__main__':
     main()

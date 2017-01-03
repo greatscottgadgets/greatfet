@@ -34,7 +34,7 @@
 
 volatile bool adc_mode_enabled = false;
 
-usb_request_status_t usb_vendor_request_init_adc(
+usb_request_status_t usb_vendor_request_adc_init(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 	if (stage == USB_TRANSFER_STAGE_SETUP) {

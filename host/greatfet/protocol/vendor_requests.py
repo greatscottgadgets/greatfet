@@ -70,8 +70,11 @@ requests = [
     'LOGIC_ANALYZER_START',
     'LOGIC_ANALYZER_STOP',
 
+    'RESET',
+
     'ADC_INIT',
-    'ADC_READ'
+    'ADC_READ',
+    'ADC_STREAM'
 ]
 
 # Get a reference (as an object) to this module (self)
