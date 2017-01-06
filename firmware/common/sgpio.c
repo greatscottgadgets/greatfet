@@ -148,7 +148,6 @@ void config_gladiolus(void) {
 	scu_pinmux(SCU_PINMUX_SGPIO8, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
 	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
 	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
-	gpio_init();
 	struct gpio_t gladiolus_powerdown = GPIO(5, 3);
 	struct gpio_t gladiolus_enable = GPIO(5, 5);
 	gpio_output(&gladiolus_enable);
@@ -181,7 +180,7 @@ void config_gladiolus(void) {
 	    | SGPIO_SLICE_MUX_CFG_CLK_CAPTURE_MODE(0) /* Don't care */
 	    | SGPIO_SLICE_MUX_CFG_MATCH_MODE(0) /* Do not match data */
 		;
-	SGPIO_PRESET(slice_index) = 0x004;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
+	SGPIO_PRESET(slice_index) = 0x009;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
 	SGPIO_COUNT(slice_index) = 0;		// Init to 0
 	SGPIO_POS(slice_index) =
 		  SGPIO_POS_POS_RESET(0x03)
