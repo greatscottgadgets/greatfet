@@ -49,5 +49,6 @@ void sgpio_configure(
 	const sgpio_config_t* const config,
 	const sgpio_direction_t direction
 );
+void config_gladiolus(void);
 
 #endif//__SGPIO_H__

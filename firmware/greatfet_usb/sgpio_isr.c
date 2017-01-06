@@ -23,12 +23,12 @@
 #include "sgpio_isr.h"
 
 #include <libopencm3/lpc43xx/sgpio.h>
-
+#include <greatfet_core.h>
 #include "usb_bulk_buffer.h"
 
 void sgpio_isr_input() {
 	SGPIO_CLR_STATUS_1 = (1 << SGPIO_SLICE_A);
-
+	led_toggle(LED3);
 	uint32_t* const p = (uint32_t*)&usb_bulk_buffer[usb_bulk_buffer_offset];
 	__asm__(
 		"ldr r0, [%[SGPIO_REG_SS], #44]\n\t"

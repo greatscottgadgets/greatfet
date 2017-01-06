@@ -123,6 +123,8 @@ static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
 #define SCU_PINMUX_GPIO3_13 (P7_5)  /* GPIO3[13] */
 #define SCU_PINMUX_GPIO3_14 (P7_6)  /* GPIO3[14] */
 #define SCU_PINMUX_GPIO3_15 (P7_7)  /* GPIO3[15] */
+#define SCU_PINMUX_GPIO5_3  (P2_3)  /* GPIO5[3] */
+#define SCU_PINMUX_GPIO5_5  (P2_5)  /* GPIO5[5] */
 
 #define SCU_PINMUX_SD_POW   (P1_5)  /* GPIO1[8] */
 #define SCU_PINMUX_SD_CMD   (P1_6)  /* GPIO1[9] */

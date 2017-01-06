@@ -1,8 +1,9 @@
 /*
  * Copyright 2012 Jared Boone <jared@sharebrained.com>
  * Copyright 2013 Benjamin Vernoux <titanmkd@gmail.com>
+ * Copyright 2017 Dominic Spill <dominicgs@gmail.com>
  *
- * This file is part of HackRF.
+ * This file is part of GreatFET.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +22,13 @@
  */
 
 #include <pins.h>
+#include <gpio.h>
 
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/sgpio.h>
 
 #include <sgpio.h>
+#include <gpio_lpc.h>
 
 void sgpio_configure_pin_functions(const sgpio_config_t* const config) {
 	(void)config;
@@ -38,7 +41,6 @@ void sgpio_configure_pin_functions(const sgpio_config_t* const config) {
 	scu_pinmux(SCU_PINMUX_SGPIO5, SCU_GPIO_FAST | SCU_CONF_FUNCTION2);
 	scu_pinmux(SCU_PINMUX_SGPIO6, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_SGPIO7, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
-	// scu_pinmux(SCU_PINMUX_SGPIO8, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
 	// scu_pinmux(SCU_PINMUX_SGPIO9, SCU_GPIO_FAST | SCU_CONF_FUNCTION7);
 	// scu_pinmux(SCU_PINMUX_SGPIO10, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
 	// scu_pinmux(SCU_PINMUX_SGPIO11, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
@@ -124,7 +126,7 @@ void sgpio_configure(
 		    | SGPIO_SLICE_MUX_CFG_MATCH_MODE(0) /* Do not match data */
 			;
 
-		SGPIO_PRESET(slice_index) = 0x003;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
+		SGPIO_PRESET(slice_index) = 0x009;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
 		SGPIO_COUNT(slice_index) = 0;		// Init to 0
 		SGPIO_POS(slice_index) =
 			  SGPIO_POS_POS_RESET(pos)
@@ -135,7 +137,59 @@ void sgpio_configure(
 		
 		slice_enable_mask |= (1 << slice_index);
 	}
+	SGPIO_CTRL_ENABLE = slice_enable_mask;	
+}
 
+
+void config_gladiolus(void) {
+	/* Use slice B as clock output
+	 * This should only be used for gladiolus
+	 */
+	scu_pinmux(SCU_PINMUX_SGPIO8, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
+	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
+	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
+	gpio_init();
+	struct gpio_t gladiolus_powerdown = GPIO(5, 3);
+	struct gpio_t gladiolus_enable = GPIO(5, 5);
+	gpio_output(&gladiolus_enable);
+	gpio_output(&gladiolus_powerdown);
+	gpio_write(&gladiolus_enable, 1);
+	gpio_write(&gladiolus_powerdown, 0);
+
+	const uint_fast8_t slice_index = SGPIO_SLICE_B;
+	SGPIO_OUT_MUX_CFG(8) =		// SGPIO8: Input: clock
+	  SGPIO_OUT_MUX_CFG_P_OE_CFG(0) /* 0x0 gpio_oe (state set by GPIO_OEREG) */
+	| SGPIO_OUT_MUX_CFG_P_OUT_CFG(0) /* 0x0 dout_doutm1 (1-bit mode) */ 
+	;
+	SGPIO_GPIO_OENREG |= (1L<<8);
+	SGPIO_MUX_CFG(slice_index) =
+	      SGPIO_MUX_CFG_CONCAT_ORDER(0)
+	    | SGPIO_MUX_CFG_CONCAT_ENABLE(1)
+	    | SGPIO_MUX_CFG_QUALIFIER_SLICE_MODE(0) /* Don't care */
+	    | SGPIO_MUX_CFG_QUALIFIER_PIN_MODE(0) /* Don't care */
+	    | SGPIO_MUX_CFG_QUALIFIER_MODE(0) /* Always enabled */
+	    | SGPIO_MUX_CFG_CLK_SOURCE_SLICE_MODE(0) /* Select clock source slice D(0x0) */
+	    | SGPIO_MUX_CFG_CLK_SOURCE_PIN_MODE(0) /* Don't care */
+		| SGPIO_MUX_CFG_EXT_CLK_ENABLE(0) /* Internal clock signal (slice) */
+		;
+	SGPIO_SLICE_MUX_CFG(slice_index) =
+	      SGPIO_SLICE_MUX_CFG_INV_QUALIFIER(0) /* Don't care */
+	    | SGPIO_SLICE_MUX_CFG_PARALLEL_MODE(0) /* Shift 1 bit per clock. */
+	    | SGPIO_SLICE_MUX_CFG_DATA_CAPTURE_MODE(0) /* Don't care */
+	    | SGPIO_SLICE_MUX_CFG_INV_OUT_CLK(0) /* Normal clock. */
+	    | SGPIO_SLICE_MUX_CFG_CLKGEN_MODE(0) /* Use internal clock from COUNTER */
+	    | SGPIO_SLICE_MUX_CFG_CLK_CAPTURE_MODE(0) /* Don't care */
+	    | SGPIO_SLICE_MUX_CFG_MATCH_MODE(0) /* Do not match data */
+		;
+	SGPIO_PRESET(slice_index) = 0x004;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
+	SGPIO_COUNT(slice_index) = 0;		// Init to 0
+	SGPIO_POS(slice_index) =
+		  SGPIO_POS_POS_RESET(0x03)
+		| SGPIO_POS_POS(0x03)
+		;
+	SGPIO_REG(slice_index) = 0xAAAAAAAA;     // Primary output data register
+	SGPIO_REG_SS(slice_index) = 0xAAAAAAAA;  // Shadow output data register
+	
 	// Start SGPIO operation by enabling slice clocks.
-	SGPIO_CTRL_ENABLE = slice_enable_mask;
+	SGPIO_CTRL_ENABLE |= (1 << slice_index);
 }
