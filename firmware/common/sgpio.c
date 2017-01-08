@@ -41,20 +41,6 @@ void sgpio_configure_pin_functions(const sgpio_config_t* const config) {
 	scu_pinmux(SCU_PINMUX_SGPIO5, SCU_GPIO_FAST | SCU_CONF_FUNCTION2);
 	scu_pinmux(SCU_PINMUX_SGPIO6, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_SGPIO7, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
-	// scu_pinmux(SCU_PINMUX_SGPIO9, SCU_GPIO_FAST | SCU_CONF_FUNCTION7);
-	// scu_pinmux(SCU_PINMUX_SGPIO10, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
-	// scu_pinmux(SCU_PINMUX_SGPIO11, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
-	// scu_pinmux(SCU_PINMUX_SGPIO12, SCU_GPIO_FAST | SCU_CONF_FUNCTION0); /* GPIO0[13] */
-	// scu_pinmux(SCU_PINMUX_SGPIO13, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);	/* GPIO5[12] */
-	// scu_pinmux(SCU_PINMUX_SGPIO14, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);	/* GPIO5[13] */
-	// scu_pinmux(SCU_PINMUX_SGPIO15, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);	/* GPIO5[14] */
-}
-
-void sgpio_set_slice_mode(
-	sgpio_config_t* const config,
-	const bool multi_slice
-) {
-	config->slice_mode_multislice = multi_slice;
 }
 
 void sgpio_configure(
@@ -126,7 +112,7 @@ void sgpio_configure(
 		    | SGPIO_SLICE_MUX_CFG_MATCH_MODE(0) /* Do not match data */
 			;
 
-		SGPIO_PRESET(slice_index) = 0x009;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
+		SGPIO_PRESET(slice_index) = config->clock_divider-1;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
 		SGPIO_COUNT(slice_index) = 0;		// Init to 0
 		SGPIO_POS(slice_index) =
 			  SGPIO_POS_POS_RESET(pos)
@@ -140,8 +126,7 @@ void sgpio_configure(
 	SGPIO_CTRL_ENABLE = slice_enable_mask;	
 }
 
-
-void config_gladiolus(void) {
+void sgpio_clock_out_configure(uint16_t clock_divider) {
 	/* Use slice B as clock output
 	 * This should only be used for gladiolus
 	 */
@@ -180,7 +165,8 @@ void config_gladiolus(void) {
 	    | SGPIO_SLICE_MUX_CFG_CLK_CAPTURE_MODE(0) /* Don't care */
 	    | SGPIO_SLICE_MUX_CFG_MATCH_MODE(0) /* Do not match data */
 		;
-	SGPIO_PRESET(slice_index) = 0x009;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
+	/* clock period is halved as we shift 1/0 bits out */
+	SGPIO_PRESET(slice_index) = (clock_divider>>1)-1;	// Internal clock, determines sampling rate, derived from SGPIO_CLK
 	SGPIO_COUNT(slice_index) = 0;		// Init to 0
 	SGPIO_POS(slice_index) =
 		  SGPIO_POS_POS_RESET(0x03)

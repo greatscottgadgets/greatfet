@@ -35,9 +35,8 @@ typedef enum {
 } sgpio_direction_t;
 
 typedef struct sgpio_config_t {
-	gpio_t gpio_rx_q_invert;
-	gpio_t gpio_rx_decimation[3];
 	bool slice_mode_multislice;
+	uint16_t clock_divider;
 } sgpio_config_t;
 
 void sgpio_configure_pin_functions(const sgpio_config_t* const config);
@@ -49,6 +48,6 @@ void sgpio_configure(
 	const sgpio_config_t* const config,
 	const sgpio_direction_t direction
 );
-void config_gladiolus(void);
+void sgpio_clock_out_configure(uint16_t clock_divider);
 
 #endif//__SGPIO_H__

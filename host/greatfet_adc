@@ -48,6 +48,7 @@ if __name__ == '__main__':
                         help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="Write data to file", default=logfile)
     parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser.add_argument('-a', dest='adc', action='store_true', help="Use internal ADC")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -63,20 +64,21 @@ if __name__ == '__main__':
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    device.vendor_request_out(vendor_requests.ADC_INIT)
+    if args.adc:
+        device.vendor_request_out(vendor_requests.ADC_INIT)
+    else:
+        device.vendor_request_out(vendor_requests.SDIR_START)
 
     time.sleep(1)
     print(device.device)
-
 
     with open(args.filename, 'wb') as f:
         try:
             while True:
                 d = device.device.read(0x81, 0x4000, 1000)
-                log_function(d)
-                log_function(len(d))
                 f.write(d)
         except KeyboardInterrupt:
             pass
-    
-    # device.vendor_request_out(vendor_requests.LOGIC_ANALYZER_STOP)
+
+    if not args.adc:
+        device.vendor_request_out(vendor_requests.SDIR_STOP)

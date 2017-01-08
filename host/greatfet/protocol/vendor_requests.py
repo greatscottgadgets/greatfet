@@ -74,7 +74,10 @@ requests = [
 
     'ADC_INIT',
     'ADC_READ',
-    'ADC_STREAM'
+    'ADC_STREAM',
+
+    'SDIR_START',
+    'SDIR_STOP'
 ]
 
 # Get a reference (as an object) to this module (self)

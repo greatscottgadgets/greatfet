@@ -42,6 +42,7 @@
 #include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
 #include "usb_api_logic_analyzer.h"
+#include "usb_api_sdir.h"
 #include "usb_bulk_buffer.h"
 
 usb_request_status_t usb_vendor_request_enable_usb1(
@@ -94,6 +95,10 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_logic_analyzer_stop,
 	usb_vendor_request_reset,
 	usb_vendor_request_adc_init,
+	NULL, // ADC read
+	NULL, // ADC stream
+	usb_vendor_request_sdir_start,
+	usb_vendor_request_sdir_stop,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -240,6 +245,9 @@ int main(void) {
 			gpio_monitor_mode();
 		if(logic_analyzer_enabled) {
 			logic_analyzer_mode();
+		}
+		if(sdir_enabled) {
+			sdir_mode();
 		}
 		if(adc_mode_enabled) {
 			adc_mode();

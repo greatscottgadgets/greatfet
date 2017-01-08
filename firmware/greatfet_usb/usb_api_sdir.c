@@ -40,12 +40,13 @@ volatile bool sdir_enabled = false;
 
 static const sgpio_config_t sgpio_config = {
 	.slice_mode_multislice = true,
+	.clock_divider = 20,
 };
 
 static void sdir_sgpio_start() {
 	sgpio_configure_pin_functions(&sgpio_config);
 	sgpio_configure(&sgpio_config, SGPIO_DIRECTION_INPUT);
-	config_gladiolus();
+	sgpio_clock_out_configure(20);
 
 	vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input;
 
@@ -61,23 +62,12 @@ static void sdir_sgpio_stop() {
 }
 
 void sdir_mode(void) {
-led_on(LED1);
-led_off(LED2);
-led_off(LED3);
-led_off(LED4);
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
-led_on(LED2);
+
 	sdir_sgpio_start();
 
-led_on(LED3);
-led_on(LED4);
-	unsigned int phase = 0;
+	unsigned int phase = 1;
 	while(sdir_enabled) {
-		if(phase==1)
-			led_on(LED2);
-		else
- 			led_off(LED2);
-
  		if ( usb_bulk_buffer_offset >= 0x4000
  		     && phase == 1) {
  			usb_transfer_schedule_block(
@@ -97,13 +87,7 @@ led_on(LED4);
  			);
  			phase = 1;
  		}
-		led_toggle(LED4);
-		delay(10000000);
 	}
-led_off(LED1);
-led_off(LED2);
-led_off(LED3);
-led_off(LED4);
 
 	sdir_sgpio_stop();
 
