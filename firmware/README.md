@@ -6,31 +6,37 @@ projects.
 
 The firmware is set up for compilation with the GCC toolchain available here:
 
-https://code.launchpad.net/gcc-arm-embedded
+https://developer.arm.com/open-source/gnu-toolchain/gnu-rm
+
+Most Linux distributions maintain a package for the toolchain, these are the
+pefered method of installation.  For example, on Debian based systems:
+```
+sudo apt-get install gcc-arm-none-eabi
+```
 
 Required dependency:
 
-https://github.com/mossmann/libopencm3
+https://github.com/dominicgs/libopencm3
 
 If you are using git, the preferred way to install libopencm3 is to use the
 submodule:
+```
+cd ..
+git submodule init
+git submodule update
+cd firmware/libopencm3
+make
+```
 
-$ cd ..
-$ git submodule init
-$ git submodule update
-$ cd firmware/libopencm3
-$ make
-
-
-To build and install a standard firmware image for GreatFET:
-
-$ cd greatfet_usb
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ greatfet_spiflash -w greatfet_usb.bin
-
+To build and install a firmware image for GreatFET:
+```
+cd greatfet_usb
+mkdir build
+cd build
+cmake ..
+make
+greatfet_firmware -w greatfet_usb.bin
+```
 
 For loading firmware into RAM with DFU you will also need:
 
@@ -42,5 +48,6 @@ after the 3V3 LED illuminates.
 
 A .dfu file is built by default when building firmware.  Alternatively you can
 load a known good .dfu file from a release package with:
-
-$ dfu-util --device 1fc9:000c --alt 0 --download greatfet_usb_ram.dfu
+```
+dfu-util --device 1fc9:000c --alt 0 --download greatfet_usb_ram.dfu
+```
