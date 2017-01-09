@@ -31,7 +31,11 @@
 #include "usb_bulk_buffer.h"
 
 #include <greatfet_core.h>
+#include <gpio_lpc.h>
+#include <gpio.h>
+#include <pins.h>
 
+#include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
 #include <libopencm3/lpc43xx/sgpio.h>
 #include <libopencm3/cm3/vector.h>
@@ -47,6 +51,16 @@ static void sdir_sgpio_start() {
 	sgpio_configure_pin_functions(&sgpio_config);
 	sgpio_configure(&sgpio_config, SGPIO_DIRECTION_INPUT);
 	sgpio_clock_out_configure(20);
+
+	/* Enable Gladiolus parts */
+	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
+	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
+	struct gpio_t gladiolus_powerdown = GPIO(5, 3);
+	struct gpio_t gladiolus_enable = GPIO(5, 5);
+	gpio_output(&gladiolus_enable);
+	gpio_output(&gladiolus_powerdown);
+	gpio_write(&gladiolus_enable, 1);
+	gpio_write(&gladiolus_powerdown, 0);
 
 	vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input;
 

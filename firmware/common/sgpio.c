@@ -22,13 +22,11 @@
  */
 
 #include <pins.h>
-#include <gpio.h>
 
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/sgpio.h>
 
 #include <sgpio.h>
-#include <gpio_lpc.h>
 
 void sgpio_configure_pin_functions(const sgpio_config_t* const config) {
 	(void)config;
@@ -128,17 +126,9 @@ void sgpio_configure(
 
 void sgpio_clock_out_configure(uint16_t clock_divider) {
 	/* Use slice B as clock output
-	 * This should only be used for gladiolus
+	 * This toggles SGPIO8 as aclock
 	 */
 	scu_pinmux(SCU_PINMUX_SGPIO8, SCU_GPIO_FAST | SCU_CONF_FUNCTION6);
-	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
-	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
-	struct gpio_t gladiolus_powerdown = GPIO(5, 3);
-	struct gpio_t gladiolus_enable = GPIO(5, 5);
-	gpio_output(&gladiolus_enable);
-	gpio_output(&gladiolus_powerdown);
-	gpio_write(&gladiolus_enable, 1);
-	gpio_write(&gladiolus_powerdown, 0);
 
 	const uint_fast8_t slice_index = SGPIO_SLICE_B;
 	SGPIO_OUT_MUX_CFG(8) =		// SGPIO8: Input: clock
