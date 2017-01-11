@@ -32,10 +32,12 @@
 #include <libopencm3/lpc43xx/m4/nvic.h>
 #include <libopencm3/lpc43xx/rgu.h>
 #include <libopencm3/lpc43xx/usb.h>
+#include <libopencm3/lpc43xx/scu.h>
 
 usb_device_t* usb_devices[NUM_USB_CONTROLLERS];
 
-usb_queue_head_t usb_qh[NUM_USB_CONTROLLERS][12] ATTR_ALIGNED(2048);
+usb_queue_head_t usb_qh0[12] ATTR_ALIGNED(2048);
+usb_queue_head_t usb_qh1[12] ATTR_ALIGNED(2048);
 
 #define USB_QH_INDEX(endpoint_address) (((endpoint_address & 0xF) * 2) + ((endpoint_address >> 7) & 1))
 
@@ -43,7 +45,8 @@ usb_queue_head_t* usb_queue_head(
 	const uint_fast8_t endpoint_address,
 	const usb_device_t* const device
 ) {
-	return &usb_qh[device->controller][USB_QH_INDEX(endpoint_address)];
+	usb_queue_head_t * endpoint_list = device->controller ? usb_qh1 : usb_qh0;
+	return &endpoint_list[USB_QH_INDEX(endpoint_address)];
 }
 
 static usb_endpoint_t* usb_endpoint_from_address(
@@ -86,10 +89,17 @@ static void usb_phy_enable(const usb_device_t* const device) {
 		CREG_CREG0 &= ~CREG_CREG0_USB0PHY;
 	}
 	if(device->controller == 1) {
-		// FIXME: DGS - the 2 below  is USB_ESEA
-		// This is in greatfet_core.c for now
-		//SCU_SFSUSB != 2;
-		;
+		/* Enable the USB1 FS PHY. */
+		SCU_SFSUSB = 0x12;
+
+		/*
+		 * HACK: The USB1 PHY will only run if we tell it VBUS is
+		 * present by setting SFSUSB bit 5. Shortly, we should use
+		 * the USB1_SENSE pin to drive an interrupt that adjusts this
+		 * bit to match the sense pin's value. For now, we'll lie and
+		 * say VBUS is always there.
+		 */
+		SCU_SFSUSB |= (1 << 5);
 	}
 }
 
@@ -710,7 +720,7 @@ void usb_device_init(
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
-		USB0_ENDPOINTLISTADDR = (uint32_t)usb_qh[0];
+		USB0_ENDPOINTLISTADDR = (uint32_t)usb_qh0;
 	
 		// Enable interrupts
 		USB0_USBINTR_D =
@@ -734,7 +744,7 @@ void usb_device_init(
 		USB1_USBCMD_D &= ~USB1_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
-		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh[1];
+		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh1;
 	
 		// Enable interrupts
 		USB1_USBINTR_D =

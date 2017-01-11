@@ -40,7 +40,9 @@
 
 #define WAIT_CPU_CLOCK_INIT_DELAY   (10000)
 
+/* USB Target interface */
 static struct gpio_t gpio_usb1_en		= GPIO(2, 8);
+static struct gpio_t gpio_usb1_sense	= GPIO(3, 7);
 
 /* CPLD JTAG interface GPIO pins */
 static struct gpio_t gpio_tdo			= GPIO(5, 18);
@@ -328,11 +330,15 @@ void pin_setup(void) {
 	/* Configure external clock in */
 	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
 	
-	/* Enable USB1 controller */
-	SCU_SFSUSB = 0x2;
+	/* Set up the load switch that we'll use if we want to play host on USB1. */
+	/* Default to off, as we don't want to dual-drive VBUS. */
 	scu_pinmux(SCU_PINMUX_USB1_EN, SCU_CONF_FUNCTION0);
 	gpio_output(&gpio_usb1_en);
-	gpio_set(&gpio_usb1_en);
+	gpio_clear(&gpio_usb1_en);
+
+	/* Set up the GPIO we'll be using to sense the presence of USB1 VBUS. */
+	scu_pinmux(SCU_PINMUX_USB1_SENSE, SCU_CONF_FUNCTION0);
+	gpio_input(&gpio_usb1_sense);
 }
 
 void led_on(const led_t led) {

@@ -302,13 +302,13 @@ uint8_t usb1_descriptor_string_product[] = {
 	18,						// bLength
 	USB_DESCRIPTOR_TYPE_STRING,		// bDescriptorType
 	'G', 0x00,
-	'r', 0x00,
-	'e', 0x00,
-	'a', 0x00,
-	't', 0x00,
 	'F', 0x00,
-	'E', 0x00,
 	'T', 0x00,
+	'a', 0x00,
+	'r', 0x00,
+	'g', 0x00,
+	'e', 0x00,
+	't', 0x00,
 };
 uint8_t usb1_descriptor_string_serial_number[] = {
 	14,						// bLength
