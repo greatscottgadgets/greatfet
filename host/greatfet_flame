@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+#
+# Copyright 2016 Dominic Spill <dominicgs@gmail.com)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+
+from __future__ import print_function
+
+import argparse
+import curses
+import sys
+import time
+from itertools import groupby
+
+import greatfet
+import usb  # for errno
+from greatfet import GreatFET
+from greatfet.protocol import vendor_requests
+from greatfet.utils import log_silent, log_verbose
+from pyfiglet import Figlet
+
+from itertools import islice
+
+f = Figlet(font='big')
+fire_text = f.renderText('FIRE!')
+safe_text = f.renderText('     ')
+
+def setup_display():
+    stdscr = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(1)
+
+    begin_x = 20; begin_y = 7
+    height = 5; width = 40
+    win = curses.newwin(height, width, begin_y, begin_x)
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+    return stdscr
+
+colour_number = 0
+def next_colour():
+    global colour_number
+    colour_number = (colour_number + 1) % curses.COLORS
+    colour_pair = curses.color_pair(colour_number+1)
+    return colour_pair
+
+flame_state = False
+flame_state_count = 0
+def fire(stdscr, flame):
+    global flame_state, flame_state_count
+    if flame == flame_state and flame_state_count != 100:
+        flame_state_count += 1
+        return
+    flame_state_count = 0
+    if flame:
+        flame_state = True
+        txt = fire_text
+    else:
+        flame_state = False
+        txt = safe_text
+    colour_pair = next_colour()
+    stdscr.addstr(0, 0, txt, colour_pair)
+    #stdscr.addstr(0, 0, txt)
+    stdscr.refresh()
+
+def teardown_display(stdscr):
+    curses.nocbreak()
+    stdscr.keypad(0)
+    curses.echo()
+    curses.endwin()
+
+def window(seq, n=2):
+    it = iter(seq)
+    result = tuple(islice(it, n))
+    if len(result) == n:
+        yield result    
+    for elem in it:
+        result = result[1:] + (elem,)
+        yield result
+
+def low_pass_filter(samples):
+    new_samples = []
+    for win in window(samples, n=5):
+        x = list(win)
+        x.sort()
+        new_samples.append(x[2])
+    return new_samples
+
+if __name__ == '__main__':
+    logfile = 'log.bin'
+    # Set up a simple argument parser.
+    parser = argparse.ArgumentParser(description="Utility for detecting flames")
+    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
+                        help="Serial number of device, if multiple devices", default=None)
+    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser.add_argument('-a', dest='adc', action='store_true', help="Use internal ADC")
+    args = parser.parse_args()
+
+    log_function = log_verbose if args.verbose else log_silent
+
+    try:
+        log_function("Trying to find a GreatFET device...")
+        device = GreatFET(serial_number=args.serial)
+        log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
+    except greatfet.errors.DeviceNotFoundError:
+        if args.serial:
+            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
+        else:
+            print("No GreatFET board found!", file=sys.stderr)
+        sys.exit(errno.ENODEV)
+
+    if args.adc:
+        device.vendor_request_out(vendor_requests.ADC_INIT)
+        print(device.device)
+
+        background = 0
+        try:
+            for i in range(100):
+                data = device.device.read(0x81, 0x4000, 1000)
+                local_max = max(data)
+                background = max(background, local_max)
+        except KeyboardInterrupt:
+            pass
+        
+        log_function("Backgroung peak: %s" % background)
+        background = background + (background / 10)
+        log_function("Backgroung peak: %s" % background)
+        screen = setup_display()
+
+        try:
+            while True:
+                data = device.device.read(0x81, 0x4000, 1000)
+                samples = [d>background for d in data]
+                #print(samples)
+                for s in samples:
+                    fire(screen, s)
+                
+        except KeyboardInterrupt:
+            pass
+    else:
+        device.vendor_request_out(vendor_requests.SDIR_START)
+
+    teardown_display(screen)
