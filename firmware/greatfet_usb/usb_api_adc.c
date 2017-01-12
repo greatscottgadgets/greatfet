@@ -69,7 +69,6 @@ usb_request_status_t usb_vendor_request_read_adc(
 
 #define BLK_LEN 0x4000
 void adc_mode(void) {
-	uint8_t adc_num = 0;
 	uint8_t pins = 1;
 	uint8_t clkdiv = 45;
 	uint8_t clks = 0x2;
@@ -98,7 +97,7 @@ led_toggle(LED1);
 		for(i=0; i<BLK_LEN; i++) {
 			while(!(ADC0_DR0 & ADC_DR_DONE));
 			ADC0_CR |= ADC_CR_START(1);
-			usb_bulk_buffer[i+j] = (ADC0_DR0>>6) & 0x0ff;
+			usb_bulk_buffer[i+j] = (ADC0_DR0>>8) & 0x0ff;
 		}
 		usb_transfer_schedule_block(
 				&usb0_endpoint_bulk_in,
