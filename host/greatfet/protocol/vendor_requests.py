@@ -77,7 +77,8 @@ requests = [
     'ADC_STREAM',
 
     'SDIR_START',
-    'SDIR_STOP'
+    'SDIR_STOP',
+    'SDIR_TX'
 ]
 
 # Get a reference (as an object) to this module (self)

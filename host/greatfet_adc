@@ -76,6 +76,7 @@ if __name__ == '__main__':
         try:
             while True:
                 d = device.device.read(0x81, 0x4000, 1000)
+                # print(d)
                 f.write(d)
         except KeyboardInterrupt:
             pass

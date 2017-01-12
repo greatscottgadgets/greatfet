@@ -39,13 +39,56 @@
 #include <libopencm3/lpc43xx/m4/nvic.h>
 #include <libopencm3/lpc43xx/sgpio.h>
 #include <libopencm3/cm3/vector.h>
+#include <libopencm3/lpc43xx/timer.h>
 
 volatile bool sdir_enabled = false;
+volatile bool sdir_tx_enabled = false;
 
 static const sgpio_config_t sgpio_config = {
 	.slice_mode_multislice = true,
 	.clock_divider = 20,
 };
+
+static struct gpio_t ir_tx_pin = GPIO(1, 3);
+static uint8_t ir_tx_buf[0x100U];
+static uint16_t tx_buf_len;
+static uint16_t tx_buf_idx = 0;
+
+void sdir_tx_isr() {
+	TIMER1_IR = 1;
+	led_toggle(LED3);
+	gpio_write(&ir_tx_pin, (ir_tx_buf[tx_buf_idx]!=0x00));
+	// gpio_write(&ir_tx_pin, 1);
+	if(++tx_buf_idx != tx_buf_len) {
+		timer_reset(TIMER1);
+	} else {
+		gpio_write(&ir_tx_pin, 0);
+		led_toggle(LED4);		
+	}
+}
+
+#define TIMER_CLK_SPEED 204000000
+
+void sdir_tx_mode(uint32_t samplerate) {
+led_off(LED2);
+led_off(LED3);
+led_off(LED4);
+	/* GPIO Tx pin */	
+	scu_pinmux(SCU_PINMUX_SD_DAT1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	gpio_output(&ir_tx_pin);
+	// gpio_write(&ir_tx_pin, 1);	
+	vector_table.irq[NVIC_TIMER1_IRQ] = sdir_tx_isr;
+	nvic_set_priority(NVIC_TIMER1_IRQ, 0);
+	nvic_enable_irq(NVIC_TIMER1_IRQ);
+	led_toggle(LED2);
+	TIMER1_MCR = 1;
+	TIMER1_MR0 = 3714285;
+	// TIMER1_MR0 = (TIMER_CLK_SPEED / 2) / samplerate;
+	timer_set_prescaler(TIMER1, 1);
+	timer_set_mode(TIMER1, TIMER_CTCR_MODE_TIMER);
+	timer_reset(TIMER1);
+	timer_enable_counter(TIMER1);
+}
 
 static void sdir_sgpio_start() {
 	sgpio_configure_pin_functions(&sgpio_config);
@@ -123,6 +166,23 @@ usb_request_status_t usb_vendor_request_sdir_stop(
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		sdir_enabled = false;
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+usb_request_status_t usb_vendor_request_sdir_tx(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	uint32_t samplerate = 0;
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		usb_transfer_schedule_block(endpoint->out, &ir_tx_buf[0],
+									endpoint->setup.length, NULL, NULL);
+		samplerate = ((uint32_t)endpoint->setup.value) << 16 
+		             | endpoint->setup.index;
+		tx_buf_len = endpoint->setup.length;
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		sdir_tx_mode(samplerate);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
