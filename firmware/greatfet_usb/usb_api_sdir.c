@@ -66,6 +66,7 @@ void sdir_tx_isr() {
 		timer_reset(TIMER1);
 	} else {
 		gpio_write(&ir_tx_pin, 0);
+		timer_disable_counter(TIMER1);
 		led_toggle(LED4);		
 	}
 }
