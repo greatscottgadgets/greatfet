@@ -1,6 +1,7 @@
 /*
  * Copyright 2016 Jared Boone <jared@sharebrained.com>
  * Copyright 2017 Dominic Spill <dominicgs@gmail.com>
+ * Copyright 2017 Schuyler St. Leger <schuyler.st.leger@gmail.com>
  *
  * This file is part of GreatFET.
  *
@@ -54,6 +55,8 @@ static uint8_t ir_tx_buf[0x100U];
 static uint16_t tx_buf_len;
 static uint16_t tx_buf_idx = 0;
 
+uint32_t samplerate = 0;
+
 void sdir_tx_isr() {
 	TIMER1_IR = 1;
 	led_toggle(LED3);
@@ -63,11 +66,13 @@ void sdir_tx_isr() {
 		timer_reset(TIMER1);
 	} else {
 		gpio_write(&ir_tx_pin, 0);
+		timer_disable_counter(TIMER1);
 		led_toggle(LED4);		
 	}
 }
 
 #define TIMER_CLK_SPEED 204000000
+#define TIMER_PRESCALER 1
 
 void sdir_tx_mode(uint32_t samplerate) {
 led_off(LED2);
@@ -76,17 +81,18 @@ led_off(LED4);
 	/* GPIO Tx pin */	
 	scu_pinmux(SCU_PINMUX_SD_DAT1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	gpio_output(&ir_tx_pin);
-	// gpio_write(&ir_tx_pin, 1);	
+
+	/* Timer to update Tx pin */
 	vector_table.irq[NVIC_TIMER1_IRQ] = sdir_tx_isr;
 	nvic_set_priority(NVIC_TIMER1_IRQ, 0);
 	nvic_enable_irq(NVIC_TIMER1_IRQ);
 	led_toggle(LED2);
 	TIMER1_MCR = 1;
-	TIMER1_MR0 = 3714285;
-	// TIMER1_MR0 = (TIMER_CLK_SPEED / 2) / samplerate;
-	timer_set_prescaler(TIMER1, 1);
+	TIMER1_MR0 = (TIMER_CLK_SPEED / (TIMER_PRESCALER + 1)) / samplerate;
+	timer_set_prescaler(TIMER1, TIMER_PRESCALER);
 	timer_set_mode(TIMER1, TIMER_CTCR_MODE_TIMER);
 	timer_reset(TIMER1);
+	tx_buf_idx = 0;
 	timer_enable_counter(TIMER1);
 }
 
@@ -174,7 +180,6 @@ usb_request_status_t usb_vendor_request_sdir_stop(
 usb_request_status_t usb_vendor_request_sdir_tx(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	uint32_t samplerate = 0;
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		usb_transfer_schedule_block(endpoint->out, &ir_tx_buf[0],
 									endpoint->setup.length, NULL, NULL);
