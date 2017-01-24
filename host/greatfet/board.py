@@ -236,7 +236,7 @@ class GreatFETBoard(object):
             request, value, index, length_or_data, timeout)
 
 
-    def vendor_request_in(self, request, length, value=0, index=0):
+    def vendor_request_in(self, request, length, value=0, index=0, timeout=1000):
         """Performs a USB control request that expects a respnose from the GreatFET.
 
         Args:
@@ -245,10 +245,10 @@ class GreatFETBoard(object):
             length -- The length of the data expected in response from the request.
         """
         return self._vendor_request(usb.ENDPOINT_IN, request, length,
-            value=value, index=index)
+            value=value, index=index, timeout=timeout)
 
 
-    def vendor_request_in_string(self, request, length=255, value=0, index=0):
+    def vendor_request_in_string(self, request, length=255, value=0, index=0, timeout=1000):
         """Performs a USB control request that expects a respnose from the GreatFET.
 
         Interprets the result as a UTF-8 encoded string.
@@ -259,7 +259,7 @@ class GreatFETBoard(object):
             length -- The length of the data expected in response from the request.
         """
         raw = self._vendor_request(usb.ENDPOINT_IN, request, length_or_data=length,
-            value=value, index=index)
+            value=value, index=index, timeout=timeout)
         return raw.tostring().decode('utf-8')
 
 

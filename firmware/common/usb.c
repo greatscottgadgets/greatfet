@@ -49,14 +49,14 @@ usb_queue_head_t* usb_queue_head(
 	return &endpoint_list[USB_QH_INDEX(endpoint_address)];
 }
 
-static usb_endpoint_t* usb_endpoint_from_address(
+usb_endpoint_t* usb_endpoint_from_address(
 	const uint_fast8_t endpoint_address,
 	const usb_device_t* const device
 ) {
 	return (usb_endpoint_t*)usb_queue_head(endpoint_address, device)->_reserved_0;
 }
 
-static uint_fast8_t usb_endpoint_address(
+uint_fast8_t usb_endpoint_address(
 	const usb_transfer_direction_t direction,
 	const uint_fast8_t number
 ) {
@@ -466,7 +466,7 @@ void usb_endpoint_stall(
 	// TODO: Also need to reset data toggle in both directions?
 }
 
-static void usb_controller_run(const usb_device_t* const device) {
+void usb_controller_run(const usb_device_t* const device) {
 	if( device->controller == 0) {
 		USB0_USBCMD_D |= USB0_USBCMD_D_RS;
 	}
@@ -541,7 +541,7 @@ static void usb_clear_status(const uint32_t status,
 	}
 }
 
-static uint32_t usb_get_status(const usb_device_t* const device) {
+uint32_t usb_get_status(const usb_device_t* const device) {
     uint32_t status = 0;
 	// Mask status flags with enabled flag interrupts.
  	if( device->controller == 0 ) {
@@ -559,7 +559,7 @@ static uint32_t usb_get_status(const usb_device_t* const device) {
 	return status;
 }
 
-static void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status,
+void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status,
 											const usb_device_t* const device) {
  	if( device->controller == 0 ) {
 		USB0_ENDPTSETUPSTAT = endpoint_setup_status;
@@ -569,7 +569,7 @@ static void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status
 	}
 }
 
-static uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) {
+uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) {
  	if( device->controller == 0 ) {
 		return USB0_ENDPTSETUPSTAT;
 	}
@@ -578,7 +578,7 @@ static uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) 
 	}
 }
 
-static void usb_clear_endpoint_complete(const uint32_t endpoint_complete,
+void usb_clear_endpoint_complete(const uint32_t endpoint_complete,
 										const usb_device_t* const device) {
 	if( device->controller == 0 ) {
 		USB0_ENDPTCOMPLETE = endpoint_complete;
@@ -588,12 +588,22 @@ static void usb_clear_endpoint_complete(const uint32_t endpoint_complete,
 	}
 }
 
-static uint32_t usb_get_endpoint_complete(const usb_device_t* const device) {
+uint32_t usb_get_endpoint_complete(const usb_device_t* const device) {
 	if( device->controller == 0 ) {
 		return USB0_ENDPTCOMPLETE;
 	}
 	if( device->controller == 1 ) {
 		return USB1_ENDPTCOMPLETE;
+	}
+}
+
+
+uint32_t usb_get_endpoint_ready(const usb_device_t* const device) {
+	if( device->controller == 0 ) {
+		return USB0_ENDPTSTAT;
+	}
+	if( device->controller == 1 ) {
+		return USB1_ENDPTSTAT;
 	}
 }
 
@@ -653,7 +663,7 @@ static void usb_reset_all_endpoints(
 	usb_flush_all_primed_endpoints(device);
 }
 
-static void usb_controller_reset(
+void usb_controller_reset(
 	usb_device_t* const device
 ) {
 	// TODO: Good to disable some USB interrupts to avoid priming new
@@ -675,7 +685,7 @@ static void usb_controller_reset(
 	while( usb_controller_is_resetting(device) );
 }
 
-static void usb_bus_reset(
+void usb_bus_reset(
 	usb_device_t* const device
 ) {
 	// According to UM10503 v1.4 section 23.10.3 "Bus reset":
@@ -777,18 +787,13 @@ static void copy_setup(usb_setup_t* const dst, const volatile uint8_t* const src
 	dst->length_h = src[7];
 }
 
-void usb_endpoint_init(
-	const usb_endpoint_t* const endpoint
+
+void usb_endpoint_init_without_descriptor(
+	const usb_endpoint_t* const endpoint,
+  uint_fast16_t max_packet_size,
+  usb_transfer_type_t transfer_type
 ) {
 	usb_endpoint_flush(endpoint);
-	
-	uint_fast16_t max_packet_size = endpoint->device->descriptor[7];
-	usb_transfer_type_t transfer_type = USB_TRANSFER_TYPE_CONTROL;
-	const uint8_t* const endpoint_descriptor = usb_endpoint_descriptor(endpoint);
-	if( endpoint_descriptor ) {
-		max_packet_size = usb_endpoint_descriptor_max_packet_size(endpoint_descriptor);
-		transfer_type = usb_endpoint_descriptor_transfer_type(endpoint_descriptor);
-	}
 	
 	// TODO: There are more capabilities to adjust based on the endpoint
 	// descriptor.
@@ -814,13 +819,28 @@ void usb_endpoint_init(
 	// This is how we look up an endpoint structure from an endpoint address:
 	qh->_reserved_0 = (uint32_t)endpoint;
 
-	// TODO: Should NAK be enabled? I'm kinda squishy on this...
-	//USB0_ENDPTNAKEN |=
-	//	USB0_ENDPTNAKEN_EPRNE(1 << endpoint_out->number);
-
 	usb_endpoint_set_type(endpoint, transfer_type);
 	
 	usb_endpoint_enable(endpoint);
+}
+
+
+
+void usb_endpoint_init(
+	const usb_endpoint_t* const endpoint
+) {
+	usb_endpoint_flush(endpoint);
+
+	uint_fast16_t max_packet_size = endpoint->device->descriptor[7];
+	usb_transfer_type_t transfer_type = USB_TRANSFER_TYPE_CONTROL;
+	const uint8_t* const endpoint_descriptor = usb_endpoint_descriptor(endpoint);
+	if( endpoint_descriptor ) {
+		max_packet_size = usb_endpoint_descriptor_max_packet_size(endpoint_descriptor);
+		transfer_type = usb_endpoint_descriptor_transfer_type(endpoint_descriptor);
+	}
+
+  usb_endpoint_init_without_descriptor(endpoint, max_packet_size, transfer_type);
+
 }
 
 static void usb_check_for_setup_events(const usb_device_t* const device) {
@@ -952,7 +972,7 @@ void usb0_isr() {
 }
 
 void usb1_isr() {
-	led_on(LED3);
+  return;
 	const uint32_t status = usb_get_status(usb_devices[1]);
 	
 	if( status == 0 ) {

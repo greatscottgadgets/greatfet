@@ -43,10 +43,8 @@
 #include "usb_api_gpio.h"
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
+#include "usb_api_greatdancer.h"
 #include "usb_bulk_buffer.h"
-
-usb_request_status_t usb_vendor_request_enable_usb1(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
 usb_request_status_t usb_vendor_request_led_toggle(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
@@ -79,7 +77,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_board_id,
 	usb_vendor_request_read_version_string,
 	usb_vendor_request_read_partid_serialno,
-	usb_vendor_request_enable_usb1,
+	NULL,
 	usb_vendor_request_led_toggle,
 	usb_vendor_request_register_gpio,
 	usb_vendor_request_write_gpio,
@@ -100,6 +98,19 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_sdir_start,
 	usb_vendor_request_sdir_stop,
 	usb_vendor_request_sdir_tx,
+	usb_vendor_request_greatdancer_connect,
+	usb_vendor_request_greatdancer_disconnect,
+	usb_vendor_request_greatdancer_bus_reset,
+	usb_vendor_request_greatdancer_set_address,
+	usb_vendor_request_greatdancer_set_up_endpoints,
+	usb_vendor_request_greatdancer_get_status,
+	usb_vendor_request_greatdancer_read_setup,
+	usb_vendor_request_greatdancer_stall_endpoint,
+  usb_vendor_request_greatdancer_send_on_endpoint,
+  usb_vendor_request_greatdancer_clean_up_transfer,
+  usb_vendor_request_greatdancer_start_nonblocking_read,
+  usb_vendor_request_greatdancer_finish_nonblocking_read,
+  usb_vendor_request_greatdancer_get_nonblocking_data_length,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -126,12 +137,6 @@ const usb_request_handlers_t usb0_request_handlers = {
 	.reserved = 0,
 };
 
-const usb_request_handlers_t usb1_request_handlers = {
-	.standard = usb_standard_request,
-	.class = 0,
-	.vendor = usb0_vendor_request,
-	.reserved = 0,
-};
 
 void usb0_configuration_changed(usb_device_t* const device)
 {
@@ -197,40 +202,6 @@ void init_usb0(void) {
 	usb_run(&usb0_device);
 }
 
-void usb1_configuration_changed(usb_device_t* const device)
-{
-	if( device->configuration->number == 1 ) {
-		led_on(LED1);
-	}
-}
-
-void init_usb1(void) {
-	usb_set_configuration_changed_cb(usb1_configuration_changed);
-
-	usb_peripheral_reset(&usb1_device);
-
-	usb_device_init(&usb1_device);
-
-	usb_queue_init(&usb1_endpoint_control_out_queue);
-	usb_queue_init(&usb1_endpoint_control_in_queue);
-
-	usb_endpoint_init(&usb1_endpoint_control_out);
-	usb_endpoint_init(&usb1_endpoint_control_in);
-
-	nvic_set_priority(NVIC_USB1_IRQ, 255);
-	usb_run(&usb1_device);
-}
-
-
-usb_request_status_t usb_vendor_request_enable_usb1(
-		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		init_usb1();
-		usb_transfer_schedule_ack(endpoint->in);
-	}
-	return USB_REQUEST_STATUS_OK;
-}
 
 int main(void) {
 	pin_setup();
@@ -240,6 +211,7 @@ int main(void) {
 	led_off(LED4);
 
 	init_usb0();
+	init_greatdancer_api();
 	
 	while(true) {
 		if(start_gpio_monitor)
