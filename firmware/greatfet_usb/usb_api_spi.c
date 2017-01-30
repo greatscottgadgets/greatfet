@@ -27,7 +27,7 @@
 #include <spi_bus.h>
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
-#include <greatfet_pins.h>
+#include <pins.h>
 
 uint8_t spi_buffer[256U];
 /* SSP1 SSEL (CS) pin, used as GPIO so that we control

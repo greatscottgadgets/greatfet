@@ -25,6 +25,10 @@
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
 
+#ifndef GREATFET_ONE
+#error greatfet_pins.h included for a non-greatfet board! Use pins.h instead!
+#endif
+
 /*
  * SCU PinMux
  */
