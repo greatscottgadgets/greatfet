@@ -43,3 +43,5 @@ class NXPXplorer(GreatFETBoard):
 
         # Set up the core connection.
         super(NXPXplorer, self).__init__(**device_identifiers)
+
+        self.onboard_flash = SPIFlash(self, device_id=0x15, pages=16384, maximum_address=0x3FFFFF)
