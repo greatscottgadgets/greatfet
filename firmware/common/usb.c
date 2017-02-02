@@ -500,8 +500,7 @@ static void usb_controller_set_device_mode(const usb_device_t* const device) {
 		
 		// Set device-related OTG flags
 		// OTG termination: controls pull-down on USB_DM
-		// VBUS_Discharge: VBUS discharges through resistor
-		USB0_OTGSC = USB0_OTGSC_OT | USB0_OTGSC_VD;
+		USB0_OTGSC = USB0_OTGSC_OT;
 	}
 	if( device->controller == 1) {
 		// Set USB1 peripheral mode
