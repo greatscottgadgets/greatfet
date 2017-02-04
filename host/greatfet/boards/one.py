@@ -30,6 +30,7 @@
 from ..board import GreatFETBoard
 from ..peripherals.spi_flash import SPIFlash
 from ..peripherals.i2c_bus import I2CBus
+from ..peripherals.spi_bus import SPIBus
 from ..peripherals import gpio
 
 class GreatFETOne(GreatFETBoard):
@@ -51,7 +52,9 @@ class GreatFETOne(GreatFETBoard):
         # be dynamically listed?
         self.onboard_flash = SPIFlash(self)
         self.i2c_busses = [ I2CBus(self, 'I2C0') ]
+        self.spi_busses = [ SPIBus(self, 'SPI1') ]
 
-        # Create an easy-to-use alias for the primary I2C bus, for rapid
+        # Create an easy-to-use alias for the primary busses, for rapid
         # hacking/experimentation.
         self.i2c = self.i2c_busses[0]
+        self.spi = self.spi_busses[0]
