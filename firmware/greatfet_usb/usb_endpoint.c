@@ -76,8 +76,8 @@ usb_endpoint_t usb1_endpoint_control_out = {
 	.device = &usb1_device,
 	.in = &usb1_endpoint_control_in,
 	.out = &usb1_endpoint_control_out,
-	.setup_complete = usb_setup_complete,
-	.transfer_complete = usb_control_out_complete,
+	.setup_complete = 0,
+	.transfer_complete = 0,
 };
 USB_DEFINE_QUEUE(usb1_endpoint_control_out, 4);
 
@@ -87,30 +87,76 @@ usb_endpoint_t usb1_endpoint_control_in = {
 	.in = &usb1_endpoint_control_in,
 	.out = &usb1_endpoint_control_out,
 	.setup_complete = 0,
-	.transfer_complete = usb_control_in_complete,
+	.transfer_complete = 0,
 };
 static USB_DEFINE_QUEUE(usb1_endpoint_control_in, 4);
 
-// NOTE: Endpoint number for IN and OUT are different. I wish I had some
-// evidence that having BULK IN and OUT on separate endpoint numbers was
-// actually a good idea. Seems like everybody does it that way, but why?
+//
+// Define endpoint structures & queues for each of the GreatDancer
+// endpoints, just in case we want to use them.
+// TODO: macroize these?
+//
 
-usb_endpoint_t usb1_endpoint_bulk_in = {
+usb_endpoint_t usb1_endpoint1_in = {
 	.address = 0x81,
 	.device = &usb1_device,
-	.in = &usb1_endpoint_bulk_in,
+	.in = &usb1_endpoint1_in,
 	.out = 0,
 	.setup_complete = 0,
-	.transfer_complete = usb_queue_transfer_complete
+	.transfer_complete = 0
 };
-static USB_DEFINE_QUEUE(usb1_endpoint_bulk_in, 1);
+static USB_DEFINE_QUEUE(usb1_endpoint1_in, 1);
 
-usb_endpoint_t usb1_endpoint_bulk_out = {
+usb_endpoint_t usb1_endpoint1_out = {
+	.address = 0x01,
+	.device = &usb1_device,
+	.in = 0,
+	.out = &usb1_endpoint1_out,
+	.setup_complete = 0,
+	.transfer_complete = 0
+};
+static USB_DEFINE_QUEUE(usb1_endpoint1_out, 1);
+
+
+usb_endpoint_t usb1_endpoint2_in = {
+	.address = 0x82,
+	.device = &usb1_device,
+	.in = &usb1_endpoint2_in,
+	.out = 0,
+	.setup_complete = 0,
+	.transfer_complete = 0
+};
+static USB_DEFINE_QUEUE(usb1_endpoint2_in, 1);
+
+usb_endpoint_t usb1_endpoint2_out = {
 	.address = 0x02,
 	.device = &usb1_device,
 	.in = 0,
-	.out = &usb1_endpoint_bulk_out,
+	.out = &usb1_endpoint2_out,
 	.setup_complete = 0,
-	.transfer_complete = usb_queue_transfer_complete
+	.transfer_complete = 0
 };
-static USB_DEFINE_QUEUE(usb1_endpoint_bulk_out, 1);
+static USB_DEFINE_QUEUE(usb1_endpoint2_out, 1);
+
+
+usb_endpoint_t usb1_endpoint3_in = {
+	.address = 0x83,
+	.device = &usb1_device,
+	.in = &usb1_endpoint3_in,
+	.out = 0,
+	.setup_complete = 0,
+	.transfer_complete = 0
+};
+static USB_DEFINE_QUEUE(usb1_endpoint3_in, 1);
+
+usb_endpoint_t usb1_endpoint3_out = {
+	.address = 0x03,
+	.device = &usb1_device,
+	.in = 0,
+	.out = &usb1_endpoint3_out,
+	.setup_complete = 0,
+	.transfer_complete = 0
+};
+static USB_DEFINE_QUEUE(usb1_endpoint3_out, 1);
+
+

@@ -78,9 +78,12 @@ void sdir_tx_mode(uint32_t samplerate) {
 led_off(LED2);
 led_off(LED3);
 led_off(LED4);
+
+
 	/* GPIO Tx pin */	
 	scu_pinmux(SCU_PINMUX_SD_DAT1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	gpio_output(&ir_tx_pin);
+
 
 	/* Timer to update Tx pin */
 	vector_table.irq[NVIC_TIMER1_IRQ] = sdir_tx_isr;
@@ -102,8 +105,12 @@ static void sdir_sgpio_start() {
 	sgpio_clock_out_configure(20);
 
 	/* Enable Gladiolus parts */
+#ifndef NXP_XPLORER
 	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
 	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
+#endif
+
+
 	struct gpio_t gladiolus_powerdown = GPIO(5, 3);
 	struct gpio_t gladiolus_enable = GPIO(5, 5);
 	gpio_output(&gladiolus_enable);
