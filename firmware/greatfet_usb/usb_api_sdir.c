@@ -50,7 +50,7 @@ static const sgpio_config_t sgpio_config = {
 	.clock_divider = 20,
 };
 
-static struct gpio_t ir_tx_pin = GPIO(1, 3);
+static struct gpio_t ir_tx_pin = GPIO(1, 8);
 static uint8_t ir_tx_buf[0x100U];
 static uint16_t tx_buf_len;
 static uint16_t tx_buf_idx = 0;
@@ -81,7 +81,7 @@ led_off(LED4);
 
 
 	/* GPIO Tx pin */	
-	scu_pinmux(SCU_PINMUX_SD_DAT1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_8, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	gpio_output(&ir_tx_pin);
 
 
