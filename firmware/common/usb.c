@@ -272,8 +272,7 @@ void usb_endpoint_prime(
 	const usb_endpoint_t* const endpoint,
 	usb_transfer_descriptor_t* const first_td	
 ) {
-	usb_queue_head_t* const qh = usb_queue_head(endpoint->address,
-												endpoint->device);
+	usb_queue_head_t* const qh = usb_queue_head(endpoint->address, endpoint->device);
 	
 	qh->next_dtd_pointer = first_td;
 	qh->total_bytes
@@ -310,7 +309,7 @@ static bool usb_endpoint_is_priming(
 			return USB0_ENDPTPRIME & USB0_ENDPTPRIME_PERB(1 << endpoint_number);
 		}
 	}
-	if(endpoint->device->controller == 1) {
+	else {
 		if( usb_endpoint_is_in(endpoint->address) ) {
 			return USB1_ENDPTPRIME & USB1_ENDPTPRIME_PETB(1 << endpoint_number);
 		} else {
@@ -415,14 +414,13 @@ bool usb_endpoint_is_ready(
 ) {
 	const uint_fast8_t endpoint_number = usb_endpoint_number(endpoint->address);
 	if(endpoint->device->controller == 0) {
-	if( usb_endpoint_is_in(endpoint->address) ) {
+		if( usb_endpoint_is_in(endpoint->address) ) {
 			return USB0_ENDPTSTAT & USB0_ENDPTSTAT_ETBR(1 << endpoint_number);
 		} else {
 			return USB0_ENDPTSTAT & USB0_ENDPTSTAT_ERBR(1 << endpoint_number);
 		}
-	}
-	if(endpoint->device->controller == 1) {
-	if( usb_endpoint_is_in(endpoint->address) ) {
+	} else {
+		if( usb_endpoint_is_in(endpoint->address) ) {
 			return USB1_ENDPTSTAT & USB1_ENDPTSTAT_ETBR(1 << endpoint_number);
 		} else {
 			return USB1_ENDPTSTAT & USB1_ENDPTSTAT_ERBR(1 << endpoint_number);
@@ -440,8 +438,7 @@ bool usb_endpoint_is_complete(
 		} else {
 			return USB0_ENDPTCOMPLETE & USB0_ENDPTCOMPLETE_ERCE(1 << endpoint_number);
 		}
-	}
-	if(endpoint->device->controller == 1) {
+	} else {
 		if( usb_endpoint_is_in(endpoint->address) ) {
 			return USB1_ENDPTCOMPLETE & USB1_ENDPTCOMPLETE_ETCE(1 << endpoint_number);
 		} else {
@@ -487,8 +484,7 @@ static void usb_controller_stop(const usb_device_t* const device) {
 static uint_fast8_t usb_controller_is_resetting(const usb_device_t* const device) {
 	if( device->controller == 0) {
 		return (USB0_USBCMD_D & USB0_USBCMD_D_RST) != 0;
-	}
-	if( device->controller == 1) {
+	} else {
 		return (USB1_USBCMD_D & USB1_USBCMD_D_RST) != 0;
 	}
 }
@@ -571,8 +567,7 @@ void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status,
 uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) {
  	if( device->controller == 0 ) {
 		return USB0_ENDPTSETUPSTAT;
-	}
-	if( device->controller == 1 ) {
+	} else {
 		return USB1_ENDPTSETUPSTAT;
 	}
 }
@@ -590,8 +585,7 @@ void usb_clear_endpoint_complete(const uint32_t endpoint_complete,
 uint32_t usb_get_endpoint_complete(const usb_device_t* const device) {
 	if( device->controller == 0 ) {
 		return USB0_ENDPTCOMPLETE;
-	}
-	if( device->controller == 1 ) {
+	} else {
 		return USB1_ENDPTCOMPLETE;
 	}
 }
@@ -600,8 +594,7 @@ uint32_t usb_get_endpoint_complete(const usb_device_t* const device) {
 uint32_t usb_get_endpoint_ready(const usb_device_t* const device) {
 	if( device->controller == 0 ) {
 		return USB0_ENDPTSTAT;
-	}
-	if( device->controller == 1 ) {
+	} else {
 		return USB1_ENDPTSTAT;
 	}
 }
