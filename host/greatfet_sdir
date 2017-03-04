@@ -62,9 +62,9 @@ if __name__ == '__main__':
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    data = [(0x00, 0xFF)[i%2] for i in range(256)]
-    print(data)
-    samplerate = 28
+    # data = [(0x00, 0xFF)[i%2] for i in range(256)]
+    # print(data)
+    samplerate = 100000
     index = samplerate & 0xFFFF
     value = (samplerate >> 16) & 0xFFFF
-    device.vendor_request_out(vendor_requests.SDIR_TX, value=value, index=index, data=data)
+    device.vendor_request_out(vendor_requests.SDIR_TX, value=value, index=index)

@@ -50,25 +50,42 @@ static const sgpio_config_t sgpio_config = {
 	.clock_divider = 20,
 };
 
-static struct gpio_t ir_tx_pin = GPIO(1, 8);
-static uint8_t ir_tx_buf[0x100U];
-static uint16_t tx_buf_len;
-static uint16_t tx_buf_idx = 0;
+static struct gpio_t ir_tx[] = {
+	GPIO(1, 0),
+	GPIO(1, 1),
+	GPIO(1, 2),
+	GPIO(1, 3),
+	GPIO(1, 4),
+	GPIO(1, 5),
+	GPIO(1, 6),
+	GPIO(1, 7)
+};
 
+static struct gpio_t ir_tx_sleep = GPIO(2, 9);
+static struct gpio_t ir_tx_clk = GPIO(1, 9);
+static struct gpio_t ir_tx_cmode = GPIO(2, 11);
+static struct gpio_t ir_tx_mode = GPIO(2, 12);
+static struct gpio_t ir_tx_pin = GPIO(2, 14);
+static struct gpio_t ir_tx_refio = GPIO(1, 8);
+
+static uint8_t ir_tx_value = 0;
 uint32_t samplerate = 0;
+static uint8_t clk = 0;
 
 void sdir_tx_isr() {
 	TIMER1_IR = 1;
-	led_toggle(LED3);
-	gpio_write(&ir_tx_pin, (ir_tx_buf[tx_buf_idx]!=0x00));
-	// gpio_write(&ir_tx_pin, 1);
-	if(++tx_buf_idx != tx_buf_len) {
-		timer_reset(TIMER1);
-	} else {
-		gpio_write(&ir_tx_pin, 0);
-		timer_disable_counter(TIMER1);
-		led_toggle(LED4);		
+	clk ^= 1;
+	gpio_write(&ir_tx_clk, clk);
+	timer_reset(TIMER1);
+	if(clk & 0x1) {
+		/* About to clock rising edge, prepare data bits */
+		uint32_t set = ir_tx_value;
+		uint32_t clear = ir_tx_value ^ 0xFF;
+		gpio_write_multiple(&ir_tx[0], set, clear);
+		ir_tx_value ^= 0xFF;
 	}
+	led_toggle(LED3);
+	// timer_disable_counter(TIMER1);
 }
 
 #define TIMER_CLK_SPEED 204000000
@@ -79,12 +96,37 @@ led_off(LED2);
 led_off(LED3);
 led_off(LED4);
 
-
 	/* GPIO Tx pin */	
+#ifndef NXP_XPLORER
+	int i;
+	scu_pinmux(SCU_PINMUX_GPIO1_0, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_2, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_4, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_6, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO1_7, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+
 	scu_pinmux(SCU_PINMUX_GPIO1_8, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
-	gpio_output(&ir_tx_pin);
+	scu_pinmux(SCU_PINMUX_GPIO1_9, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO2_9, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO2_11, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO2_12, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	scu_pinmux(SCU_PINMUX_GPIO2_14, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
+	for(i=0; i<8; i++)
+		gpio_output(&ir_tx[i]);
 
+	gpio_output(&ir_tx_sleep);
+	gpio_output(&ir_tx_clk);
 
+	gpio_input(&ir_tx_cmode);
+	gpio_input(&ir_tx_mode);
+	gpio_input(&ir_tx_pin);
+	gpio_input(&ir_tx_refio);
+#endif
+
+	gpio_write(&ir_tx_sleep, 0);
 	/* Timer to update Tx pin */
 	vector_table.irq[NVIC_TIMER1_IRQ] = sdir_tx_isr;
 	nvic_set_priority(NVIC_TIMER1_IRQ, 0);
@@ -95,7 +137,6 @@ led_off(LED4);
 	timer_set_prescaler(TIMER1, TIMER_PRESCALER);
 	timer_set_mode(TIMER1, TIMER_CTCR_MODE_TIMER);
 	timer_reset(TIMER1);
-	tx_buf_idx = 0;
 	timer_enable_counter(TIMER1);
 }
 
@@ -109,7 +150,6 @@ static void sdir_sgpio_start() {
 	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
 	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
 #endif
-
 
 	struct gpio_t gladiolus_powerdown = GPIO(5, 3);
 	struct gpio_t gladiolus_enable = GPIO(5, 5);
@@ -188,12 +228,8 @@ usb_request_status_t usb_vendor_request_sdir_tx(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_block(endpoint->out, &ir_tx_buf[0],
-									endpoint->setup.length, NULL, NULL);
 		samplerate = ((uint32_t)endpoint->setup.value) << 16 
 		             | endpoint->setup.index;
-		tx_buf_len = endpoint->setup.length;
-	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		sdir_tx_mode(samplerate);
 		usb_transfer_schedule_ack(endpoint->in);
 	}

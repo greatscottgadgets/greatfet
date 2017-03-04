@@ -33,6 +33,11 @@ void gpio_set(gpio_t gpio) {
 	gpio->port->set = gpio->mask;
 }
 
+void gpio_write_multiple(gpio_t gpio, uint32_t set, uint32_t clear) {
+	gpio->port->set = set;
+	gpio->port->clr = clear;
+}
+
 void gpio_clear(gpio_t gpio) {
 	gpio->port->clr = gpio->mask;
 }

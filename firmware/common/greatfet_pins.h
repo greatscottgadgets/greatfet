@@ -119,6 +119,23 @@ static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
 
 
 /* TODO add other Pins */
+#define SCU_PINMUX_GPIO1_0  (P1_7)  /* GPIO1[0] */
+#define SCU_PINMUX_GPIO1_1  (P1_8)  /* GPIO1[1] */
+#define SCU_PINMUX_GPIO1_2  (P1_9)  /* GPIO1[2] */
+#define SCU_PINMUX_GPIO1_3  (P1_10)  /* GPIO1[3] */
+#define SCU_PINMUX_GPIO1_4  (P1_11)  /* GPIO1[4] */
+#define SCU_PINMUX_GPIO1_5  (P1_12)  /* GPIO1[5] */
+#define SCU_PINMUX_GPIO1_6  (P1_13)  /* GPIO1[6] */
+#define SCU_PINMUX_GPIO1_7  (P1_14)  /* GPIO1[7] */
+
+#define SCU_PINMUX_GPIO1_8  (P1_5)  /* GPIO1[8] */
+#define SCU_PINMUX_GPIO1_9  (P1_6)  /* GPIO1[9] */
+#define SCU_PINMUX_GPIO2_9  (P5_0)  /* GPIO2[9] */
+#define SCU_PINMUX_GPIO2_11 (P5_2)  /* GPIO2[11] */
+#define SCU_PINMUX_GPIO2_12 (P5_3)  /* GPIO2[12] */
+#define SCU_PINMUX_GPIO2_14 (P5_5)  /* GPIO2[14] */
+#define SCU_PINMUX_GPIO2_15 (P5_6)  /* GPIO2[15] */
+
 #define SCU_PINMUX_GPIO3_8  (P7_0)  /* GPIO3[8] */
 #define SCU_PINMUX_GPIO3_9  (P7_1)  /* GPIO3[9] */
 #define SCU_PINMUX_GPIO3_10 (P7_2)  /* GPIO3[10] */
