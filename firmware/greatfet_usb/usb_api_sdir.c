@@ -70,26 +70,20 @@ static struct gpio_t ir_tx_refio = GPIO(1, 8);
 
 static uint8_t ir_tx_value = 0;
 uint32_t samplerate = 0;
-static uint8_t clk = 0;
+static uint32_t clk = 0;
 
 void sdir_tx_isr() {
-	TIMER1_IR = 1;
+	TIMER1_IR = TIMER_IR_MR0INT;
 	clk ^= 1;
-	gpio_write(&ir_tx_clk, clk);
-	timer_reset(TIMER1);
 	if(clk & 0x1) {
 		/* About to clock rising edge, prepare data bits */
-		uint32_t set = ir_tx_value;
-		uint32_t clear = ir_tx_value ^ 0xFF;
-		gpio_write_multiple(&ir_tx[0], set, clear);
-		ir_tx_value ^= 0xFF;
+		ir_tx_value++;
 	}
-	led_toggle(LED3);
-	// timer_disable_counter(TIMER1);
+	gpio_write_multiple(&ir_tx[0], (clk << 9) | ir_tx_value);
 }
 
 #define TIMER_CLK_SPEED 204000000
-#define TIMER_PRESCALER 1
+#define TIMER_PRESCALER 0
 
 void sdir_tx_mode(uint32_t samplerate) {
 led_off(LED2);
@@ -128,12 +122,16 @@ led_off(LED4);
 
 	gpio_write(&ir_tx_sleep, 0);
 	/* Timer to update Tx pin */
+	timer_disable_counter(TIMER1);
+	clk = 0;
+	scu_pinmux(P5_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION5));
 	vector_table.irq[NVIC_TIMER1_IRQ] = sdir_tx_isr;
 	nvic_set_priority(NVIC_TIMER1_IRQ, 0);
 	nvic_enable_irq(NVIC_TIMER1_IRQ);
 	led_toggle(LED2);
-	TIMER1_MCR = 1;
-	TIMER1_MR0 = (TIMER_CLK_SPEED / (TIMER_PRESCALER + 1)) / samplerate;
+	TIMER1_MCR = (TIMER_MCR_MR0I | TIMER_MCR_MR0R);
+	TIMER1_MR0 = (TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate;
+	TIMER1_EMR = (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC0_SHIFT);
 	timer_set_prescaler(TIMER1, TIMER_PRESCALER);
 	timer_set_mode(TIMER1, TIMER_CTCR_MODE_TIMER);
 	timer_reset(TIMER1);
