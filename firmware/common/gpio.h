@@ -29,7 +29,7 @@ typedef const struct gpio_t* gpio_t;
 
 void gpio_init();
 void gpio_set(gpio_t gpio);
-void gpio_write_multiple(gpio_t gpio, uint32_t set, uint32_t clear);
+void gpio_write_multiple(gpio_t gpio, uint32_t value);
 void gpio_clear(gpio_t gpio);
 void gpio_toggle(gpio_t gpio);
 void gpio_output(gpio_t gpio);
