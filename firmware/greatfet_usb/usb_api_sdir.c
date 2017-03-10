@@ -107,7 +107,7 @@ led_off(LED4);
 		gpio_output(&ir_tx[i]);
 
 	gpio_output(&ir_tx_sleep);
-	gpio_output(&ir_tx_clk);
+	gpio_input(&ir_tx_clk);
 
 	gpio_input(&ir_tx_cmode);
 	gpio_input(&ir_tx_mode);
