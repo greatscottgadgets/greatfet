@@ -70,16 +70,11 @@ static struct gpio_t ir_tx_refio = GPIO(1, 8);
 
 static uint8_t ir_tx_value = 0;
 uint32_t samplerate = 0;
-static uint32_t clk = 0;
 
 void sdir_tx_isr() {
-	TIMER1_IR = TIMER_IR_MR0INT;
-	clk ^= 1;
-	if(clk & 0x1) {
-		/* About to clock rising edge, prepare data bits */
-		ir_tx_value++;
-	}
-	gpio_write_multiple(&ir_tx[0], (clk << 9) | ir_tx_value);
+	TIMER2_IR = TIMER_IR_MR0INT;
+	ir_tx_value++;
+	gpio_write_multiple(&ir_tx[0], ir_tx_value);
 }
 
 #define TIMER_CLK_SPEED 204000000
@@ -121,20 +116,32 @@ led_off(LED4);
 #endif
 
 	gpio_write(&ir_tx_sleep, 0);
-	/* Timer to update Tx pin */
+	/*
+	 * TIMER1 produces the TX DAC clock signal
+	 * TIMER2 is derived from TIMER1 and triggers DAC data signals
+	 */
 	timer_disable_counter(TIMER1);
-	clk = 0;
+	timer_disable_counter(TIMER2);
 	scu_pinmux(P5_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION5));
-	vector_table.irq[NVIC_TIMER1_IRQ] = sdir_tx_isr;
-	nvic_set_priority(NVIC_TIMER1_IRQ, 0);
-	nvic_enable_irq(NVIC_TIMER1_IRQ);
+	vector_table.irq[NVIC_TIMER2_IRQ] = sdir_tx_isr;
+	nvic_set_priority(NVIC_TIMER2_IRQ, 0);
+	nvic_enable_irq(NVIC_TIMER2_IRQ);
 	led_toggle(LED2);
-	TIMER1_MCR = (TIMER_MCR_MR0I | TIMER_MCR_MR0R);
+	TIMER1_MCR = TIMER_MCR_MR0R;
 	TIMER1_MR0 = (TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate;
-	TIMER1_EMR = (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC0_SHIFT);
+	TIMER1_MR3 = (TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate;
+	TIMER1_EMR = (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC0_SHIFT) | (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC3_SHIFT);
 	timer_set_prescaler(TIMER1, TIMER_PRESCALER);
 	timer_set_mode(TIMER1, TIMER_CTCR_MODE_TIMER);
 	timer_reset(TIMER1);
+	/* T1_MAT3 is connected to T2_CAP3 through the GIMA by default */
+	TIMER2_MCR = (TIMER_MCR_MR0I | TIMER_MCR_MR0R);
+	TIMER2_MR0 = 2;
+	TIMER2_CCR = 0;
+	timer_set_prescaler(TIMER2, TIMER_PRESCALER);
+	timer_set_mode(TIMER2, (TIMER_CTCR_MODE_COUNTER_BOTH | TIMER_CTCR_CINSEL_CAPN_3));
+	timer_reset(TIMER2);
+	timer_enable_counter(TIMER2);
 	timer_enable_counter(TIMER1);
 }
 
