@@ -31,6 +31,8 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_request.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_standard_request.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/gpdma.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/gpio_dma.c"
 	usb_descriptor.c
 	usb_device.c
 	usb_endpoint.c

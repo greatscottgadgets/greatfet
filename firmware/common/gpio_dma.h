@@ -19,26 +19,31 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GPDMA_H__
-#define __GPDMA_H__
+#ifndef __GPIO_DMA_H__
+#define __GPIO_DMA_H__
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include <libopencm3/lpc43xx/gpdma.h>
 
-void gpdma_controller_enable();
+void gpio_dma_config_lli(
+	gpdma_lli_t* const lli,
+	const size_t lli_count,
+	void* const buffer,
+	void* const target_buffer,
+	const size_t transfer_bytes
+);
 
-void gpdma_channel_enable(const uint_fast8_t channel);
-void gpdma_channel_disable(const uint_fast8_t channel);
+void gpio_dma_init();
+void gpio_dma_tx_start(const gpdma_lli_t* const start_lli);
+void gpio_dma_irq_err_clear();
+void gpio_dma_irq_tc_acknowledge();
+int gpio_dma_irq_is_error();
+void gpio_dma_stop();
 
-void gpdma_channel_interrupt_tc_clear(const uint_fast8_t channel);
-void gpdma_channel_interrupt_error_clear(const uint_fast8_t channel);
-int gpdma_channel_interrupt_is_error(const uint_fast8_t channel);
+size_t gpio_dma_current_transfer_index(
+	const gpdma_lli_t* const lli,
+	const size_t lli_count
+);
 
-void gpdma_lli_enable_interrupt(gpdma_lli_t* const lli);
-
-void gpdma_lli_create_loop(gpdma_lli_t* const lli, const size_t lli_count);
-void gpdma_lli_create_oneshot(gpdma_lli_t* const lli, const size_t lli_count);
-
-#endif/*__GPDMA_H__*/
+#endif/*__GPIO_DMA_H__*/
