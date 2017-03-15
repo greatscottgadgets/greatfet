@@ -50,11 +50,11 @@ void gpio_dma_config_lli(
 		lli[i].cdestaddr = peripheral_address;
 		lli[i].clli = (lli[i].clli & ~GPDMA_CLLI_LM_MASK) | GPDMA_CLLI_LM(1);
 		lli[i].ccontrol =
-			GPDMA_CCONTROL_TRANSFERSIZE(1) |
+			GPDMA_CCONTROL_TRANSFERSIZE(transfer_words) |
 			GPDMA_CCONTROL_SBSIZE(0) |
 			GPDMA_CCONTROL_DBSIZE(0) |
-			GPDMA_CCONTROL_SWIDTH(0) | // One byte
-			GPDMA_CCONTROL_DWIDTH(0) | // One byte
+			GPDMA_CCONTROL_SWIDTH(2) | // One byte
+			GPDMA_CCONTROL_DWIDTH(2) | // One byte
 			GPDMA_CCONTROL_S(1) |
 			GPDMA_CCONTROL_D(1) |
 			GPDMA_CCONTROL_SI(1) |
@@ -80,8 +80,8 @@ static void gpio_dma_enable(const uint_fast8_t channel, const gpdma_lli_t* const
 	GPDMA_CCONFIG(channel) =
 		GPDMA_CCONFIG_E(0) |
 		GPDMA_CCONFIG_SRCPERIPHERAL(0) |
-		GPDMA_CCONFIG_DESTPERIPHERAL(0) |
-		GPDMA_CCONFIG_FLOWCNTRL(0) |  /* 0: Memory -> Memory */
+		GPDMA_CCONFIG_DESTPERIPHERAL(5) |
+		GPDMA_CCONFIG_FLOWCNTRL(1) |  /* 1: Memory -> Peripheral */
 		GPDMA_CCONFIG_IE(1) |
 		GPDMA_CCONFIG_ITC(1) |
 		GPDMA_CCONFIG_L(0) |
@@ -113,7 +113,7 @@ void gpio_dma_irq_tc_acknowledge() {
 }
 
 int gpio_dma_irq_is_error() {
-	gpdma_channel_interrupt_is_error(dma_channel_gpio);
+	return gpdma_channel_interrupt_is_error(dma_channel_gpio);
 }
 
 void gpio_dma_stop() {

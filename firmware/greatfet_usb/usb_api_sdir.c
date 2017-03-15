@@ -73,8 +73,6 @@ static uint8_t ir_tx_value = 0;
 
 void sdir_tx_isr() {
 	TIMER2_IR = TIMER_IR_MR0INT;
-	// ir_tx_value++;
-	// gpio_write_multiple(&ir_tx[0], ir_tx_value);
 	led_toggle(LED2);
 }
 void sdir_dma_isr() {
@@ -84,14 +82,13 @@ void sdir_dma_isr() {
 	} else {
 		gpio_dma_irq_tc_acknowledge();
 		led_toggle(LED4);
-	}
+	}                                                        
 }
 
 #define TIMER_CLK_SPEED 204000000
 #define TIMER_PRESCALER 0
 
 uint32_t dma_buffer[512];
-uint32_t dma_target[512];
 gpdma_lli_t dma_lli[2];
 
 void sdir_tx_mode(uint32_t samplerate) {
@@ -104,6 +101,8 @@ led_off(LED4);
 	int i;
 	for(i=0; i<512; i++) {
 		dma_buffer[i] = i;
+		// else
+			// dma_buffer[i] = 0x01010101;
 	}
 		
 	scu_pinmux(SCU_PINMUX_GPIO1_0, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
@@ -142,11 +141,11 @@ led_off(LED4);
 	timer_disable_counter(TIMER1);
 	timer_disable_counter(TIMER2);
 	scu_pinmux(P5_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION5));
-	vector_table.irq[NVIC_TIMER2_IRQ] = sdir_tx_isr;
-	nvic_set_priority(NVIC_TIMER2_IRQ, 0);
-	nvic_enable_irq(NVIC_TIMER2_IRQ);
+	// vector_table.irq[NVIC_TIMER2_IRQ] = sdir_tx_isr;
+	// nvic_set_priority(NVIC_TIMER2_IRQ, 0);
+	// nvic_enable_irq(NVIC_TIMER2_IRQ);
 	vector_table.irq[NVIC_DMA_IRQ] = sdir_dma_isr;
-	nvic_set_priority(NVIC_DMA_IRQ, 6);
+	nvic_set_priority(NVIC_DMA_IRQ, 0);
 	nvic_enable_irq(NVIC_DMA_IRQ);
 
 	led_toggle(LED2);
