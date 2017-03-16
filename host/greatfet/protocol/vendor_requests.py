@@ -76,9 +76,10 @@ requests = [
     'ADC_READ',
     'ADC_STREAM',
 
-    'SDIR_START',
-    'SDIR_STOP',
-    'SDIR_TX',
+    'SDIR_RX_START',
+    'SDIR_RX_STOP',
+    'SDIR_TX_START',
+    'SDIR_TX_STOP',
 
     'GREATDANCER_CONNECT',
     'GREATDANCER_DISCONNECT',

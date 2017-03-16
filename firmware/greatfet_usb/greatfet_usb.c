@@ -95,9 +95,10 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_adc_init,
 	NULL, // ADC read
 	NULL, // ADC stream
-	usb_vendor_request_sdir_start,
-	usb_vendor_request_sdir_stop,
-	usb_vendor_request_sdir_tx,
+	usb_vendor_request_sdir_rx_start,
+	usb_vendor_request_sdir_rx_stop,
+	usb_vendor_request_sdir_tx_start,
+	usb_vendor_request_sdir_tx_stop,
 	usb_vendor_request_greatdancer_connect,
 	usb_vendor_request_greatdancer_disconnect,
 	usb_vendor_request_greatdancer_bus_reset,
@@ -219,8 +220,11 @@ int main(void) {
 		if(logic_analyzer_enabled) {
 			logic_analyzer_mode();
 		}
-		if(sdir_enabled) {
-			sdir_mode();
+		if(sdir_rx_enabled) {
+			sdir_rx_mode();
+		}
+		if(sdir_tx_enabled) {
+			sdir_tx_mode();
 		}
 		if(adc_mode_enabled) {
 			adc_mode();

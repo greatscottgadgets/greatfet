@@ -43,7 +43,7 @@
 #include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/timer.h>
 
-volatile bool sdir_enabled = false;
+volatile bool sdir_rx_enabled = false;
 volatile bool sdir_tx_enabled = false;
 
 static const sgpio_config_t sgpio_config = {
@@ -51,60 +51,43 @@ static const sgpio_config_t sgpio_config = {
 	.clock_divider = 20,
 };
 
-static struct gpio_t ir_tx[] = {
-	GPIO(1, 0),
-	GPIO(1, 1),
-	GPIO(1, 2),
-	GPIO(1, 3),
-	GPIO(1, 4),
-	GPIO(1, 5),
-	GPIO(1, 6),
-	GPIO(1, 7)
-};
-
 static struct gpio_t ir_tx_sleep = GPIO(2, 9);
-static struct gpio_t ir_tx_clk = GPIO(1, 9);
-static struct gpio_t ir_tx_cmode = GPIO(2, 11);
-static struct gpio_t ir_tx_mode = GPIO(2, 12);
-static struct gpio_t ir_tx_pin = GPIO(2, 14);
-static struct gpio_t ir_tx_refio = GPIO(1, 8);
 
-static uint8_t ir_tx_value = 0;
+static uint32_t samplerate;
+static uint8_t dma_phase;
 
-void sdir_tx_isr() {
-	TIMER2_IR = TIMER_IR_MR0INT;
-	led_toggle(LED2);
-}
 void sdir_dma_isr() {
 	if(gpio_dma_irq_is_error()) {
 		gpio_dma_irq_err_clear();
-		led_toggle(LED3);
+		gpio_dma_stop();		
 	} else {
 		gpio_dma_irq_tc_acknowledge();
-		led_toggle(LED4);
+		// Switch phase so MCU can do USB things
+		dma_phase = (dma_phase+1) % 4;
 	}                                                        
 }
 
 #define TIMER_CLK_SPEED 204000000
 #define TIMER_PRESCALER 0
+#define LLI_COUNT 4
+#define USB_XFER_SIZE 0x4000
 
-uint32_t dma_buffer[512];
-gpdma_lli_t dma_lli[2];
+gpdma_lli_t dma_lli[LLI_COUNT];
 
-void sdir_tx_mode(uint32_t samplerate) {
-led_off(LED2);
-led_off(LED3);
-led_off(LED4);
+void sdir_tx_stop() {
+	timer_disable_counter(TIMER1);  /* Disable timers */
+	timer_disable_counter(TIMER2);
+	gpio_write(&ir_tx_sleep, 1);    /* Power down DAC */
+	nvic_disable_irq(NVIC_DMA_IRQ); /* Disable DMA interrupt */
+	gpio_dma_stop();                /* Disable DMA config */
+	gpio_dma_irq_tc_acknowledge();
+	gpio_dma_irq_err_clear();
+}
 
-	/* GPIO Tx pin */	
+void setup_tx_pins() {
+	/* GPIO Tx pins */	
 #ifndef NXP_XPLORER
 	int i;
-	for(i=0; i<512; i++) {
-		dma_buffer[i] = i;
-		// else
-			// dma_buffer[i] = 0x01010101;
-	}
-		
 	scu_pinmux(SCU_PINMUX_GPIO1_0, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO1_1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO1_2, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
@@ -115,43 +98,56 @@ led_off(LED4);
 	scu_pinmux(SCU_PINMUX_GPIO1_7, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 
 	scu_pinmux(SCU_PINMUX_GPIO1_8, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
-	scu_pinmux(SCU_PINMUX_GPIO1_9, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO2_9, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO2_11, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO2_12, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO2_14, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
-	for(i=0; i<8; i++)
-		gpio_output(&ir_tx[i]);
+	scu_pinmux(P5_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION5));
 
-	gpio_output(&ir_tx_sleep);
-	gpio_input(&ir_tx_clk);
-
+	static struct gpio_t ir_tx_cmode = GPIO(2, 11);
+	static struct gpio_t ir_tx_mode = GPIO(2, 12);
+	static struct gpio_t ir_tx_pin = GPIO(2, 14);
+	static struct gpio_t ir_tx_refio = GPIO(1, 8);
 	gpio_input(&ir_tx_cmode);
 	gpio_input(&ir_tx_mode);
 	gpio_input(&ir_tx_pin);
 	gpio_input(&ir_tx_refio);
-#endif
 
+	static struct gpio_t ir_tx[] = {
+		GPIO(1, 0),
+		GPIO(1, 1),
+		GPIO(1, 2),
+		GPIO(1, 3),
+		GPIO(1, 4),
+		GPIO(1, 5),
+		GPIO(1, 6),
+		GPIO(1, 7)
+	};
+	for(i=0; i<8; i++)
+		gpio_output(&ir_tx[i]);
+
+	gpio_output(&ir_tx_sleep);
+#endif
+}
+
+void sdir_tx_start() {
+	setup_tx_pins();
+	/* Make sure nothing is running before we configure it */
+	sdir_tx_stop();
+
+	/* Enable DAC */
 	gpio_write(&ir_tx_sleep, 0);
 
+	vector_table.irq[NVIC_DMA_IRQ] = sdir_dma_isr;
+	nvic_set_priority(NVIC_DMA_IRQ, 0);
+	nvic_enable_irq(NVIC_DMA_IRQ);
 	/*
 	 * TIMER1 produces the TX DAC clock signal
 	 * TIMER2 is derived from TIMER1 and triggers DAC data signals
 	 */
-	timer_disable_counter(TIMER1);
-	timer_disable_counter(TIMER2);
-	scu_pinmux(P5_4, (SCU_GPIO_FAST | SCU_CONF_FUNCTION5));
-	// vector_table.irq[NVIC_TIMER2_IRQ] = sdir_tx_isr;
-	// nvic_set_priority(NVIC_TIMER2_IRQ, 0);
-	// nvic_enable_irq(NVIC_TIMER2_IRQ);
-	vector_table.irq[NVIC_DMA_IRQ] = sdir_dma_isr;
-	nvic_set_priority(NVIC_DMA_IRQ, 0);
-	nvic_enable_irq(NVIC_DMA_IRQ);
-
-	led_toggle(LED2);
 	TIMER1_MCR = TIMER_MCR_MR0R;
-	TIMER1_MR0 = (TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate;
-	TIMER1_MR3 = (TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate;
+	TIMER1_MR0 = ((TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate) - 1;
+	TIMER1_MR3 = TIMER1_MR0;
 	TIMER1_EMR = (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC0_SHIFT) | (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC3_SHIFT);
 	timer_set_prescaler(TIMER1, TIMER_PRESCALER);
 	timer_set_mode(TIMER1, TIMER_CTCR_MODE_TIMER);
@@ -164,14 +160,51 @@ led_off(LED4);
 	timer_set_mode(TIMER2, (TIMER_CTCR_MODE_COUNTER_BOTH | TIMER_CTCR_CINSEL_CAPN_3));
 	timer_reset(TIMER2);
 	void* const target = (void*)&(GPIO_LPC_PORT(1)->pin);
-	gpio_dma_config_lli(&dma_lli[0], 2, dma_buffer, target, 1024);
-	gpio_dma_tx_start(&dma_lli[0]);
+	gpio_dma_config_lli(dma_lli, LLI_COUNT, usb_bulk_buffer, target, USB_XFER_SIZE>>1);
+	gpio_dma_tx_start(dma_lli);
 	gpio_dma_init();
 	timer_enable_counter(TIMER2);
 	timer_enable_counter(TIMER1);
 }
 
-static void sdir_sgpio_start() {
+void sdir_tx_mode(void) {
+	usb_endpoint_init(&usb0_endpoint_bulk_out);
+	usb_transfer_schedule_block(
+ 		&usb0_endpoint_bulk_out,
+ 		&usb_bulk_buffer[0x0000],
+ 		USB_XFER_SIZE, 0, 0
+ 		);
+	uint8_t usb_phase = 0;
+	dma_phase = 0;
+
+	sdir_tx_start();
+led_off(LED3);
+	while(sdir_tx_enabled) {
+ 		// Set up OUT transfer of buffer 0.
+ 		if (((dma_phase == 2) || (dma_phase == 3)) && usb_phase == 1) {
+ 			usb_transfer_schedule_block(
+ 				&usb0_endpoint_bulk_out,
+ 				&usb_bulk_buffer[0x0000],
+ 				USB_XFER_SIZE, 0, 0
+ 				);
+ 			usb_phase = 0;
+ 		}
+ 		// Set up OUT transfer of buffer 1.
+ 		if ( ((dma_phase == 0) || (dma_phase == 1)) && usb_phase == 0) {
+ 			usb_transfer_schedule_block(
+ 				&usb0_endpoint_bulk_out,
+ 				&usb_bulk_buffer[USB_XFER_SIZE],
+ 				USB_XFER_SIZE, 0, 0
+ 			);
+ 			usb_phase = 1;
+ 		}
+		 led_toggle(LED3);
+		//  delay(1000000);
+	}
+	sdir_tx_stop();
+}
+
+static void sdir_rx_start() {
 	sgpio_configure_pin_functions(&sgpio_config);
 	sgpio_configure(&sgpio_config, SGPIO_DIRECTION_INPUT);
 	sgpio_clock_out_configure(20);
@@ -196,19 +229,19 @@ static void sdir_sgpio_start() {
 	SGPIO_SET_EN_1 = (1 << SGPIO_SLICE_A);
 }
 
-static void sdir_sgpio_stop() {
+static void sdir_rx_stop() {
 	SGPIO_CLR_EN_1 = (1 << SGPIO_SLICE_A);
 
 	nvic_disable_irq(NVIC_SGPIO_IRQ);
 }
 
-void sdir_mode(void) {
+void sdir_rx_mode(void) {
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
-	sdir_sgpio_start();
+	sdir_rx_start();
 
 	unsigned int phase = 1;
-	while(sdir_enabled) {
+	while(sdir_rx_enabled) {
  		if ( usb_bulk_buffer_offset >= 0x4000
  		     && phase == 1) {
  			usb_transfer_schedule_block(
@@ -229,40 +262,48 @@ void sdir_mode(void) {
  			phase = 1;
  		}
 	}
-
-	sdir_sgpio_stop();
-
+	sdir_rx_stop();
 	// usb_endpoint_disable(&usb0_endpoint_bulk_in);
 }
 
-usb_request_status_t usb_vendor_request_sdir_start(
+usb_request_status_t usb_vendor_request_sdir_rx_start(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		sdir_enabled = true;
+		sdir_rx_enabled = true;
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
 
-usb_request_status_t usb_vendor_request_sdir_stop(
+usb_request_status_t usb_vendor_request_sdir_rx_stop(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		sdir_enabled = false;
+		sdir_rx_enabled = false;
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
 
-usb_request_status_t usb_vendor_request_sdir_tx(
+usb_request_status_t usb_vendor_request_sdir_tx_start(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	uint32_t samplerate;
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		samplerate = ((uint32_t)endpoint->setup.value) << 16 
 		             | endpoint->setup.index;
-		sdir_tx_mode(samplerate);
+		sdir_tx_enabled = true;
+		led_on(LED4);
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+usb_request_status_t usb_vendor_request_sdir_tx_stop(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		sdir_tx_enabled = false;
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;

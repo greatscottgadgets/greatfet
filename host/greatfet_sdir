@@ -38,7 +38,7 @@ import greatfet
 from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 from greatfet.utils import log_silent, log_verbose
-
+import usb
 if __name__ == '__main__':
     logfile = 'log.bin'
 #    logfile = '/tmp/fifo'
@@ -47,8 +47,11 @@ if __name__ == '__main__':
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-S', dest='samplerate', metavar='<samplerate>', type=int,
-                        help="Sample rate for IR Tx", default=None)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+                        help="Sample rate for IR Tx", default=1000000)
+    parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="File to read or write", default=logfile)
+    parser.add_argument('-r', dest='receive', action='store_true', help="Write data to file")
+    parser.add_argument('-R', dest='repeat', action='store_true', help="Repeat file data (tx only)")
+    parser.add_argument('-v', dest='verbose', action='store_true', help="Increase verbosity of logging")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -64,12 +67,39 @@ if __name__ == '__main__':
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    # data = [(0x00, 0xFF)[i%2] for i in range(256)]
-    # print(data)
-    if args.samplerate:
-        samplerate = args.samplerate
+    if args.receive:
+        device.vendor_request_out(vendor_requests.SDIR_START)
+        time.sleep(1)
+        with open(args.filename, 'wb') as f:
+            try:
+                while True:
+                    d = device.device.read(0x81, 0x4000, 1000)
+                    # print(d)
+                    f.write(d)
+            except KeyboardInterrupt:
+                pass
+        device.vendor_request_out(vendor_requests.SDIR_STOP)
+
     else:
-        samplerate = 123000
-    index = samplerate & 0xFFFF
-    value = (samplerate >> 16) & 0xFFFF
-    device.vendor_request_out(vendor_requests.SDIR_TX, value=value, index=index)
+        index = args.samplerate & 0xFFFF
+        value = (args.samplerate >> 16) & 0xFFFF
+        device.vendor_request_out(vendor_requests.SDIR_TX_START, value=value, index=index)
+        # time.sleep(1)
+        with open(args.filename, 'rb') as f:
+            try:
+                while True:
+                    data = f.read(0x4000)
+                    if len(data) != 0x4000:
+                        if args.repeat:
+                            print("End of file reached. Looping")
+                            f.seek(0,0)
+                        else:
+                            break
+                        if len(data) == 0:
+                            data = f.read(0x4000)
+                    # print(data[:10])
+                    device.device.write(0x02, data)
+            except KeyboardInterrupt:
+                pass
+        device.vendor_request_out(vendor_requests.SDIR_TX_STOP)
+

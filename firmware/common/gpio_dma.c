@@ -37,24 +37,21 @@ void gpio_dma_config_lli(
 	void* const target_buffer,
 	const size_t transfer_bytes
 ) {
-	const size_t bytes_per_word = 4;
-	const size_t transfer_words = (transfer_bytes + bytes_per_word - 1) / bytes_per_word;
-
 	gpdma_lli_create_loop(lli, lli_count);
 
 	for(size_t i=0; i<lli_count; i++) {
 		void* const peripheral_address = (void*)target_buffer;
-		void* const memory_address = buffer + (transfer_words * bytes_per_word * i);
+		void* const memory_address = buffer + (transfer_bytes * i);
 		
 		lli[i].csrcaddr =  memory_address;
 		lli[i].cdestaddr = peripheral_address;
 		lli[i].clli = (lli[i].clli & ~GPDMA_CLLI_LM_MASK) | GPDMA_CLLI_LM(1);
 		lli[i].ccontrol =
-			GPDMA_CCONTROL_TRANSFERSIZE(transfer_words) |
-			GPDMA_CCONTROL_SBSIZE(0) |
+			GPDMA_CCONTROL_TRANSFERSIZE(transfer_bytes>>2) |
+			GPDMA_CCONTROL_SBSIZE(1) |
 			GPDMA_CCONTROL_DBSIZE(0) |
-			GPDMA_CCONTROL_SWIDTH(2) | // One byte
-			GPDMA_CCONTROL_DWIDTH(2) | // One byte
+			GPDMA_CCONTROL_SWIDTH(2) | // Four bytes
+			GPDMA_CCONTROL_DWIDTH(0) | // One byte
 			GPDMA_CCONTROL_S(1) |
 			GPDMA_CCONTROL_D(1) |
 			GPDMA_CCONTROL_SI(1) |
