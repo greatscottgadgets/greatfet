@@ -67,7 +67,7 @@ if __name__ == '__main__':
     if args.adc:
         device.vendor_request_out(vendor_requests.ADC_INIT)
     else:
-        device.vendor_request_out(vendor_requests.SDIR_START)
+        device.vendor_request_out(vendor_requests.SDIR_RX_START)
 
     time.sleep(1)
     print(device.device)
@@ -82,4 +82,4 @@ if __name__ == '__main__':
             pass
 
     if not args.adc:
-        device.vendor_request_out(vendor_requests.SDIR_STOP)
+        device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
