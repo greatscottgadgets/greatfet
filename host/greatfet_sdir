@@ -68,7 +68,7 @@ if __name__ == '__main__':
         sys.exit(errno.ENODEV)
 
     if args.receive:
-        device.vendor_request_out(vendor_requests.SDIR_START)
+        device.vendor_request_out(vendor_requests.SDIR_RX_START)
         time.sleep(1)
         with open(args.filename, 'wb') as f:
             try:
@@ -78,13 +78,13 @@ if __name__ == '__main__':
                     f.write(d)
             except KeyboardInterrupt:
                 pass
-        device.vendor_request_out(vendor_requests.SDIR_STOP)
+        device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
 
     else:
         index = args.samplerate & 0xFFFF
         value = (args.samplerate >> 16) & 0xFFFF
         device.vendor_request_out(vendor_requests.SDIR_TX_START, value=value, index=index)
-        # time.sleep(1)
+        time.sleep(1)
         with open(args.filename, 'rb') as f:
             try:
                 while True:

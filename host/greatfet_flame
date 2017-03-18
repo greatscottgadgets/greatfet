@@ -164,6 +164,6 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             pass
     else:
-        device.vendor_request_out(vendor_requests.SDIR_START)
+        device.vendor_request_out(vendor_requests.SDIR_RX_START)
 
     teardown_display(screen)
