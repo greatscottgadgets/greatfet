@@ -53,18 +53,15 @@ static const sgpio_config_t sgpio_config = {
 
 static struct gpio_t ir_tx_sleep = GPIO(2, 9);
 
-static uint32_t samplerate;
+static uint32_t tx_samplerate;
 static uint8_t dma_phase;
 
 void sdir_dma_isr() {
-	if(gpio_dma_irq_is_error()) {
-		gpio_dma_irq_err_clear();
-		gpio_dma_stop();		
-	} else {
-		gpio_dma_irq_tc_acknowledge();
-		// Switch phase so MCU can do USB things
-		dma_phase = (dma_phase+1) % 4;
-	}                                                        
+	// gpio_dma_irq_tc_acknowledge();
+	// Experimental 
+	GPDMA_INTTCCLEAR = GPDMA_INTTCCLEAR_INTTCCLEAR(0x20);
+	// Switch phase so MCU can do USB things
+	dma_phase = (dma_phase+1) % 4;
 }
 
 #define TIMER_CLK_SPEED 204000000
@@ -146,7 +143,7 @@ void sdir_tx_start() {
 	 * TIMER2 is derived from TIMER1 and triggers DAC data signals
 	 */
 	TIMER1_MCR = TIMER_MCR_MR0R;
-	TIMER1_MR0 = ((TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / samplerate) - 1;
+	TIMER1_MR0 = ((TIMER_CLK_SPEED / (2*(TIMER_PRESCALER + 1))) / tx_samplerate) - 1;
 	TIMER1_MR3 = TIMER1_MR0;
 	TIMER1_EMR = (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC0_SHIFT) | (TIMER_EMR_EMC_TOGGLE << TIMER_EMR_EMC3_SHIFT);
 	timer_set_prescaler(TIMER1, TIMER_PRESCALER);
@@ -290,10 +287,9 @@ usb_request_status_t usb_vendor_request_sdir_tx_start(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		samplerate = ((uint32_t)endpoint->setup.value) << 16 
+		tx_samplerate = ((uint32_t)endpoint->setup.value) << 16 
 		             | endpoint->setup.index;
 		sdir_tx_enabled = true;
-		led_on(LED4);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;

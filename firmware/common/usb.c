@@ -34,8 +34,6 @@
 #include <libopencm3/lpc43xx/usb.h>
 #include <libopencm3/lpc43xx/scu.h>
 
-usb_device_t* usb_devices[NUM_USB_CONTROLLERS];
-
 usb_queue_head_t usb_qh0[12] ATTR_ALIGNED(2048);
 usb_queue_head_t usb_qh1[12] ATTR_ALIGNED(2048);
 
@@ -712,7 +710,7 @@ void usb_device_init(
 	usb_device_t* const device
 ) {
 	if( device->controller == 0 ) {
-		usb_devices[0] = device;
+		//usb_devices[0] = device;
 	
 		usb_phy_enable(device);
 		usb_controller_reset(device);
@@ -736,7 +734,7 @@ void usb_device_init(
 			;
 	}
 	if( device->controller == 1 ) {
-		usb_devices[1] = device;
+		//usb_devices[1] = device;
 	
 		usb_phy_enable(device);
 		usb_controller_reset(device);
@@ -912,7 +910,7 @@ static void usb_check_for_transfer_events(const usb_device_t* const device) {
 }
 
 void usb0_isr() {
-	const uint32_t status = usb_get_status(usb_devices[0]);
+	const uint32_t status = usb_get_status(&usb_devices[0]);
 	
 	if( status == 0 ) {
 		// Nothing to do.
@@ -925,8 +923,8 @@ void usb0_isr() {
 		// - Short packet detected.
 		// - SETUP packet received.
 
-		usb_check_for_setup_events(usb_devices[0]);
-		usb_check_for_transfer_events(usb_devices[0]);
+		usb_check_for_setup_events(&usb_devices[0]);
+		usb_check_for_transfer_events(&usb_devices[0]);
 		
 		// TODO: Reset ignored ENDPTSETUPSTAT and ENDPTCOMPLETE flags?
 	}
@@ -946,7 +944,7 @@ void usb0_isr() {
 
 	if( status & USB0_USBSTS_D_URI ) {
 		// USB reset received.
-		usb_bus_reset(usb_devices[0]);
+		usb_bus_reset(&usb_devices[0]);
 	}
 
 	if( status & USB0_USBSTS_D_UEI ) {
@@ -965,7 +963,7 @@ void usb0_isr() {
 
 void usb1_isr() {
   return;
-	const uint32_t status = usb_get_status(usb_devices[1]);
+	const uint32_t status = usb_get_status(&usb_devices[1]);
 	
 	if( status == 0 ) {
 		// Nothing to do.
@@ -978,8 +976,8 @@ void usb1_isr() {
 		// - Short packet detected.
 		// - SETUP packet received.
 
-		usb_check_for_setup_events(usb_devices[1]);
-		usb_check_for_transfer_events(usb_devices[1]);
+		usb_check_for_setup_events(&usb_devices[1]);
+		usb_check_for_transfer_events(&usb_devices[1]);
 		
 		// TODO: Reset ignored ENDPTSETUPSTAT and ENDPTCOMPLETE flags?
 	}
@@ -999,7 +997,7 @@ void usb1_isr() {
 
 	if( status & USB1_USBSTS_D_URI ) {
 		// USB reset received.
-		usb_bus_reset(usb_devices[1]);
+		usb_bus_reset(&usb_devices[1]);
 	}
 
 	if( status & USB1_USBSTS_D_UEI ) {

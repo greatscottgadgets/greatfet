@@ -79,7 +79,7 @@ static void gpio_dma_enable(const uint_fast8_t channel, const gpdma_lli_t* const
 		GPDMA_CCONFIG_SRCPERIPHERAL(0) |
 		GPDMA_CCONFIG_DESTPERIPHERAL(5) |
 		GPDMA_CCONFIG_FLOWCNTRL(1) |  /* 1: Memory -> Peripheral */
-		GPDMA_CCONFIG_IE(1) |
+		GPDMA_CCONFIG_IE(0) |
 		GPDMA_CCONFIG_ITC(1) |
 		GPDMA_CCONFIG_L(0) |
 		GPDMA_CCONFIG_H(0)

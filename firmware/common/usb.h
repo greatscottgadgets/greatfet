@@ -31,6 +31,8 @@
 #define NUM_USB_CONTROLLERS 2
 #define NUM_USB1_ENDPOINTS 4
 
+extern usb_device_t usb_devices[2];
+
 void usb_peripheral_reset();
 
 void usb_bus_reset(

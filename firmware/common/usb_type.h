@@ -135,7 +135,7 @@ struct usb_endpoint_t {
 	usb_setup_t setup;
 	uint8_t buffer[8];	// Buffer for use during IN stage.
 	const uint_fast8_t address;
-	usb_device_t* const device;
+	usb_device_t* device;
 	usb_endpoint_t* const in;
 	usb_endpoint_t* const out;
 	void (*setup_complete)(usb_endpoint_t* const endpoint);

@@ -185,8 +185,8 @@ void init_usb0(void) {
 
 	usb_set_configuration_changed_cb(usb0_configuration_changed);
 
-	usb_peripheral_reset(&usb0_device);
-	usb_device_init(&usb0_device);
+	usb_peripheral_reset(&usb_devices[0]);
+	usb_device_init(&usb_devices[0]);
 
 	usb_queue_init(&usb0_endpoint_control_out_queue);
 	usb_queue_init(&usb0_endpoint_control_in_queue);
@@ -200,7 +200,7 @@ void init_usb0(void) {
 
 	nvic_set_priority(NVIC_USB0_IRQ, 254);
 
-	usb_run(&usb0_device);
+	usb_run(&usb_devices[0]);
 }
 
 
