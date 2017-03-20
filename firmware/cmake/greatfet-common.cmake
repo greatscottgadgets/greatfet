@@ -84,7 +84,7 @@ SET(CFLAGS_M0 "-std=gnu99 ${CFLAGS_COMMON} ${CPUFLAGS_M0} -DLPC43XX_M0")
 SET(CXXFLAGS_M0 "-std=gnu++0x ${CFLAGS_COMMON} ${CPUFLAGS_M0} -DLPC43XX_M0")
 SET(LDFLAGS_M0 "${LDFLAGS_COMMON} ${CPUFLAGS_M0} ${LDSCRIPT_M0} -Xlinker -Map=m0.map --specs=nano.specs")
 
-SET(CPUFLAGS_M4 "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16")
+SET(CPUFLAGS_M4 "-mthumb -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16")
 SET(CFLAGS_M4 "-std=gnu99 ${CFLAGS_COMMON} ${CPUFLAGS_M4} -DLPC43XX_M4")
 SET(CXXFLAGS_M4 "-std=gnu++0x ${CFLAGS_COMMON} ${CPUFLAGS_M4} -DLPC43XX_M4")
 SET(LDFLAGS_M4 "${LDFLAGS_COMMON} ${CPUFLAGS_M4} ${LDSCRIPT_M4} -Xlinker -Map=m4.map")
@@ -127,6 +127,7 @@ macro(DeclareTargets)
 		c
 		nosys
 		opencm3_lpc43xx_m0
+        /home/richo/GreatFET-experimental/firmware/blinky/rust_greatfet.a
 	)
 
 	set_target_properties(${PROJECT_NAME}_m0.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M0}")
@@ -152,6 +153,7 @@ macro(DeclareTargets)
 		nosys
 		opencm3_lpc43xx
 		m
+        /home/richo/GreatFET-experimental/firmware/blinky/rust_greatfet.a
 	)
 
 	#set_target_properties(${PROJECT_NAME}.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
@@ -172,6 +174,7 @@ macro(DeclareTargets)
 		nosys
 		opencm3_lpc43xx
 		m
+        /home/richo/GreatFET-experimental/firmware/blinky/rust_greatfet.a
 	)
 
 	#set_target_properties(${PROJECT_NAME}_dfu.elf PROPERTIES COMPILE_FLAGS "${CFLAGS_M4}")
@@ -186,6 +189,8 @@ macro(DeclareTargets)
 	add_custom_target(
 		${PROJECT_NAME}.dfu ${DFU_ALL}
 		DEPENDS ${PROJECT_NAME}_dfu.bin
+        COMMAND python ../strip.py ${PROJECT_NAME}_dfu.bin small_dfu
+        COMMAND mv small_dfu ${PROJECT_NAME}_dfu.bin
 		COMMAND rm -f _tmp.dfu _header.bin
 		COMMAND cp ${PROJECT_NAME}_dfu.bin _tmp.dfu
 		COMMAND ${DFU_COMMAND}
