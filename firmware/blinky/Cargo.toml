@@ -1,0 +1,9 @@
+[package]
+name = "rust-greatfet"
+version = "0.0.1"
+
+crate-type = ["staticlib"]
+lto = true
+
+[dependencies]
+rust-libcore = "*"

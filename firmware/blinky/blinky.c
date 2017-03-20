@@ -21,27 +21,41 @@
 
 #include "greatfet_core.h"
 
+extern void blinky_ratchet(void (*f1)(), void (*f2)(), void (*f3)(), void (*f4)());
+
+void led0_on() {
+    led_on(LED1);
+}
+
+void led0_off() {
+    led_off(LED1);
+}
+
+void led1_on() {
+    led_on(LED2);
+}
+
+void led1_off() {
+    led_off(LED2);
+}
+
+
 int main(void)
 {
 	int i;
+
 	pin_setup();
+    led0_off();
 
 	/* Blink LED1/2/3 on the board. */
-	while (1) 
+	while (1)
 	{
-		led_on(LED1);
-		led_off(LED2);
-		led_on(LED3);
-		led_off(LED4);
 
-		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
-			__asm__("nop");
-		
-		led_off(LED1);
-		led_on(LED2);
-		led_off(LED3);
-		led_on(LED4);
-		
+        blinky_ratchet(&led0_on,
+                       &led0_off,
+                       &led1_on,
+                       &led1_off
+                       );
 		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
 			__asm__("nop");
 	}
