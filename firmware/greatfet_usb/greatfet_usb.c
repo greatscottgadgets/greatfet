@@ -45,7 +45,6 @@
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
 #include "usb_bulk_buffer.h"
-#include "debug.h"
 
 usb_request_status_t usb_vendor_request_led_toggle(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
@@ -214,27 +213,25 @@ int main(void) {
 
 	init_usb0();
 	init_greatdancer_api();
-	log_init();
 	
 	while(true) {
-		// if(start_gpio_monitor)
-		// 	gpio_monitor_mode();
-		// if(logic_analyzer_enabled) {
-		// 	logic_analyzer_mode();
-		// }
-		// if(sdir_rx_enabled) {
-		// 	sdir_rx_mode();
-		// }
-		// if(sdir_tx_enabled) {
-		// 	sdir_tx_mode();
-		// }
-		// if(adc_mode_enabled) {
-		// 	adc_mode();
-		// }
+		if(start_gpio_monitor)
+			gpio_monitor_mode();
+		if(logic_analyzer_enabled) {
+			logic_analyzer_mode();
+		}
+		if(sdir_rx_enabled) {
+			sdir_rx_mode();
+		}
+		if(sdir_tx_enabled) {
+			sdir_tx_mode();
+		}
+		if(adc_mode_enabled) {
+			adc_mode();
+		}
 
 		/* Blink LED1 to let us know we're alive */
 		led_toggle(LED1);
-		log_text("ABC", 3);
 		delay(10000000);
 	}
 	
