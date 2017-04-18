@@ -95,7 +95,7 @@ class SPIBus(GreatFETPeripheral):
             receive_length = len(data)
 
         # If we need to receive more than we've transmitted, extend the data out.
-        if receive_length > data:
+        if receive_length > len(data):
             padding = receive_length - len(data)
             data.extend([0] * padding)
 
