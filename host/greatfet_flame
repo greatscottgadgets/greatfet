@@ -137,33 +137,35 @@ if __name__ == '__main__':
 
     if args.adc:
         device.vendor_request_out(vendor_requests.ADC_INIT)
-        print(device.device)
-
-        background = 0
-        try:
-            for i in range(100):
-                data = device.device.read(0x81, 0x4000, 1000)
-                local_max = max(data)
-                background = max(background, local_max)
-        except KeyboardInterrupt:
-            pass
-        
-        log_function("Backgroung peak: %s" % background)
-        background = background + (background / 10)
-        log_function("Backgroung peak: %s" % background)
-        screen = setup_display()
-
-        try:
-            while True:
-                data = device.device.read(0x81, 0x4000, 1000)
-                samples = [d>background for d in data]
-                #print(samples)
-                for s in samples:
-                    fire(screen, s)
-                
-        except KeyboardInterrupt:
-            pass
     else:
         device.vendor_request_out(vendor_requests.SDIR_RX_START)
+
+    background = 0
+    try:
+        for i in range(100):
+            data = device.device.read(0x81, 0x4000, 1000)
+            local_max = max(data)
+            background = max(background, local_max)
+    except KeyboardInterrupt:
+        pass
+
+    log_function("Backgroung peak: %s" % background)
+    background = background + (background / 10)
+    log_function("Backgroung peak: %s" % background)
+    screen = setup_display()
+
+    try:
+        while True:
+            data = device.device.read(0x81, 0x4000, 1000)
+            samples = [d>background for d in data]
+            #print(samples)
+            for s in samples:
+                fire(screen, s)
+
+    except KeyboardInterrupt:
+        pass
+
+    if not args.adc:
+        device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
 
     teardown_display(screen)
