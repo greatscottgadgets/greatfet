@@ -24,9 +24,9 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 
 include(CMakeForceCompiler)
 
-CMAKE_FORCE_C_COMPILER(arm-none-eabi-gcc GNU)
-CMAKE_FORCE_CXX_COMPILER(arm-none-eabi-g++ GNU)
-
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -print-file-name=libc.a
   OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX
