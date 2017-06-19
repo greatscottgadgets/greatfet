@@ -97,7 +97,7 @@ def main():
     # Validate our options.
 
     # If we don't have an option, print our usage.
-    if not (args.read, args.write, args.reset):
+    if not any((args.read, args.write, args.reset,)):
         parser.print_help()
         sys.exit(0)
 
