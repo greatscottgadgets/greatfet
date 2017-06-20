@@ -2,7 +2,7 @@
 # Copyright (c) 2017 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -33,7 +33,7 @@ from ..peripheral import GreatFETPeripheral
 
 class SPIBus(GreatFETPeripheral):
     """
-        Class representing a GreatFET I2C bus.
+        Class representing a GreatFET SPI bus.
 
         For now, supports only the second SPI bus (SPI1), as the first controller
         is being used to control the onboard flash.
@@ -113,6 +113,3 @@ class SPIBus(GreatFETPeripheral):
             result = []
 
         return result
-
-
-
