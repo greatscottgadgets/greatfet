@@ -1,11 +1,11 @@
-#GreatFET Firmware
+# GreatFET Firmware
 
 The primary firmware source code for GreatFET devices is greatfet_usb.  Most
 of the other directories contain firmware source code for test and development.
 The common directory contains source code shared by multiple GreatFET firmware
 projects.
 
-##Building and Installaing to Flash
+## Building and Installaing to Flash
 
 The firmware is set up for compilation with the GCC toolchain available here:
 
@@ -40,7 +40,7 @@ cmake .. -DBOARD=GREATFET_ONE
 make greatfet_usb-flash
 ```
 
-If building for another board, replace ```GREATFET_ONE``` with the the 
+If building for another board, replace ```GREATFET_ONE``` with the the
 appropriate board string. The following board strings are currently recognized:
  * ```GREAFET_ONE``` for the GreatFET One
  * ```NXP_XPLORER``` for the LPC4330 Xplorer.
