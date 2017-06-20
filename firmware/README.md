@@ -42,7 +42,7 @@ make greatfet_usb-flash
 
 If building for another board, replace ```GREATFET_ONE``` with the the
 appropriate board string. The following board strings are currently recognized:
- * ```GREAFET_ONE``` for the GreatFET One
+ * ```GREATFET_ONE``` for the GreatFET One
  * ```NXP_XPLORER``` for the LPC4330 Xplorer.
 
 Reset the device by pressing the RESET button once, and your GreatFET should
