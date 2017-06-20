@@ -93,7 +93,7 @@ class I2CBus(GreatFETPeripheral):
         """
 
         if (not isinstance(receive_length, int)) or receive_length < 0:
-            raise valueerror("invalid receive length!")
+            raise ValueError("invalid receive length!")
 
         if receive_length > self.buffer_size:
             raise ValueError("Tried to receive more than the size of the receive buffer.");
