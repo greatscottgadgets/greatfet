@@ -128,6 +128,8 @@ def main():
         log_function("Writing data to SPI flash...")
         spi_flash_write(device, args.write, args.address, log_function)
         log_function("Write complete!")
+        if not args.reset:
+            log_function("Reset not specified; new firmware will not start until next reset.")
 
     # Handle any read commands.
     if args.read:
