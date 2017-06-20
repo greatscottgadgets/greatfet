@@ -41,12 +41,12 @@ class SPIBus(GreatFETPeripheral):
 
     def __init__(self, board, name='spi bus', buffer_size=255):
         """
-        Initialies a new I2C bus.
+        Initialize a new SPI bus.
 
         Args:
-            board -- The GreatFET board whose I2C bus we want to control.
-            name -- The display name for the given I2C bus.
-            buffer_size -- The size of the I2C receive buffer on the GreatFET.
+            board -- The GreatFET board whose SPI bus we want to control.
+            name -- The display name for the given SPI bus.
+            buffer_size -- The size of the SPI receive buffer on the GreatFET.
         """
 
         # Store a reference to the parent board.
@@ -58,15 +58,15 @@ class SPIBus(GreatFETPeripheral):
         # Create a list that will store all connected devices.
         self.devices = []
 
-        # Set up the I2C bus for communications.
+        # Set up the SPI bus for communications.
         board.vendor_request_out(vendor_requests.SPI_INIT)
 
 
 
     def attach_device(self, device):
         """
-        Attaches a given I2C device to this bus. Typically called
-        by the I2C device as it is constructed.
+        Attaches a given SPI device to this bus. Typically called
+        by the SPI device as it is constructed.
 
         Arguments:
             device -- The device object to attach to the given bus.
