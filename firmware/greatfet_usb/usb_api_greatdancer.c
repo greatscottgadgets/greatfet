@@ -99,7 +99,7 @@ static void set_up_greatdancer(void) {
  * This version can be used even before the USB controller is initialized,
  * but is less flexible.
  *
- * @param address The address for which an endpoint should be located.:w
+ * @param address The address for which an endpoint should be located.
  */
 static usb_endpoint_t *usb_preinit_endpoint_from_address(uint8_t address)
 {
@@ -455,7 +455,7 @@ usb_request_status_t usb_vendor_request_greatdancer_set_address(
 
 		// Currently, this is executed the status stage of the GreatDancer
 		// request is compleed, so we use _immediate. If this ever changes,
-		// this will need to be re-evaluated to see if we should use deferred.:w
+		// this will need to be re-evaluated to see if we should use deferred.
 		//
 		usb_set_address_immediate(&usb_devices[1], address);
 		usb_transfer_schedule_ack(endpoint->in);
