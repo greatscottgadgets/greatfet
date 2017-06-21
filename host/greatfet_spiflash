@@ -3,7 +3,7 @@
 # Copyright 2015 Dominic Spill <dominicgs@gmail.com)
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -30,11 +30,13 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
+import errno
+import sys
 
 import greatfet
 from greatfet import GreatFET
+from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
 from greatfet.protocol import vendor_requests
 from greatfet.peripherals import gpio
@@ -129,7 +131,7 @@ def i2c_xfer(device):
     log_function("Fetching response")
     data = device.vendor_request_in(vendor_requests.I2C_RESPONSE, length=3)
     log_function(data)
-    
+
 if __name__ == '__main__':
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
@@ -167,7 +169,7 @@ if __name__ == '__main__':
         sys.exit(errno.ENODEV)
 
     device.vendor_request_out(vendor_requests.SPI_INIT)
-    
+
     if args.info:
         size = spi_info(device, log_function=log_verbose)
     if args.dump:
