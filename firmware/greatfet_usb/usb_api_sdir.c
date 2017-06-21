@@ -58,7 +58,7 @@ static uint8_t dma_phase;
 
 void sdir_dma_isr() {
 	// gpio_dma_irq_tc_acknowledge();
-	// Experimental 
+	// Experimental
 	GPDMA_INTTCCLEAR = GPDMA_INTTCCLEAR_INTTCCLEAR(0x20);
 	// Switch phase so MCU can do USB things
 	dma_phase = (dma_phase+1) % 4;
@@ -82,7 +82,7 @@ void sdir_tx_stop() {
 }
 
 void setup_tx_pins() {
-	/* GPIO Tx pins */	
+	/* GPIO Tx pins */
 #ifndef NXP_XPLORER
 	int i;
 	scu_pinmux(SCU_PINMUX_GPIO1_0, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
@@ -175,7 +175,7 @@ void sdir_tx_mode(void) {
 	dma_phase = 0;
 
 	sdir_tx_start();
-led_off(LED3);
+
 	while(sdir_tx_enabled) {
  		// Set up OUT transfer of buffer 0.
  		if (((dma_phase == 2) || (dma_phase == 3)) && usb_phase == 1) {
@@ -195,7 +195,6 @@ led_off(LED3);
  			);
  			usb_phase = 1;
  		}
-		 led_toggle(LED3);
 		//  delay(1000000);
 	}
 	sdir_tx_stop();
@@ -287,7 +286,7 @@ usb_request_status_t usb_vendor_request_sdir_tx_start(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		tx_samplerate = ((uint32_t)endpoint->setup.value) << 16 
+		tx_samplerate = ((uint32_t)endpoint->setup.value) << 16
 		             | endpoint->setup.index;
 		sdir_tx_enabled = true;
 		usb_transfer_schedule_ack(endpoint->in);

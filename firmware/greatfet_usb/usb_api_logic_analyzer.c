@@ -60,22 +60,16 @@ static void logic_analyzer_sgpio_stop() {
 }
 
 void logic_analyzer_mode(void) {
-led_off(LED1);
-led_off(LED2);
-led_off(LED3);
-led_off(LED4);
 
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
 	logic_analyzer_sgpio_start();
 
-led_on(LED1);
 	unsigned int phase = 0;
 	while(logic_analyzer_enabled) {
 		if ( usb_bulk_buffer_offset >= 16384
 		     && phase == 1) {
-led_on(LED2);
-led_off(LED3);
+
 			usb_transfer_schedule_block(
 				&usb0_endpoint_bulk_in,
 				&usb_bulk_buffer[0x0000],
@@ -87,8 +81,7 @@ led_off(LED3);
 		// Set up IN transfer of buffer 1.
 		if ( usb_bulk_buffer_offset < 16384
 		     && phase == 0) {
-led_on(LED3);
-led_off(LED2);
+
 			usb_transfer_schedule_block(
 				&usb0_endpoint_bulk_in,
 				&usb_bulk_buffer[0x4000],
@@ -97,10 +90,6 @@ led_off(LED2);
 			phase = 1;
 		}
 	}
-led_off(LED1);
-led_off(LED2);
-led_off(LED3);
-led_off(LED4);
 
 	logic_analyzer_sgpio_stop();
 

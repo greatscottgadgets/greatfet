@@ -53,9 +53,7 @@ usb_request_status_t usb_vendor_request_register_gpio(
 			gpio_set(&gpio_out[gpio_out_count]);
 			gpio_out_count++;
 		}
-		led_on(LED2);
 		usb_transfer_schedule_ack(endpoint->in);
-		led_on(LED3);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
