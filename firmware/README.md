@@ -5,7 +5,7 @@ of the other directories contain firmware source code for test and development.
 The common directory contains source code shared by multiple GreatFET firmware
 projects.
 
-## Building and Installaing to Flash
+## Building and Installing to Flash
 
 The firmware is set up for compilation with the GCC toolchain available here:
 
