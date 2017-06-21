@@ -89,8 +89,8 @@ def main():
                         help="Write data from file", default='')
     parser.add_argument('-s', '--serial', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
-                        help="Enable verbose output")
+    parser.add_argument('-q', '--quiet', dest='quiet', action='store_true',
+                        help="Suppress messages to stdout")
     parser.add_argument('-R', '--reset', dest='reset', action='store_true',
                         help="Reset GreatFET after performing other operations.")
     args = parser.parse_args()
@@ -103,7 +103,7 @@ def main():
         sys.exit(0)
 
     # Determine whether we're going to log to the stdout, or not at all.
-    log_function = log_verbose if args.verbose else log_silent
+    log_function = log_silent if args.quiet else log_verbose
 
     # Create our GreatFET connection.
     try:
