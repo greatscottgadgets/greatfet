@@ -41,7 +41,7 @@ from greatfet.utils import log_silent, log_verbose
 from greatfet.protocol import vendor_requests
 
 
-if __name__ == '__main__':
+def main():
     logfile = 'log.bin'
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
@@ -77,3 +77,7 @@ if __name__ == '__main__':
         pass
 
     device.vendor_request_out(vendor_requests.LOGIC_ANALYZER_STOP)
+
+
+if __name__ == '__main__':
+    main()
