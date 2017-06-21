@@ -31,6 +31,7 @@
 from __future__ import print_function
 
 import argparse
+import errno
 import sys
 import time
 
@@ -39,6 +40,7 @@ from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 from greatfet.utils import log_silent, log_verbose
 import usb
+
 if __name__ == '__main__':
     logfile = 'log.bin'
 #    logfile = '/tmp/fifo'

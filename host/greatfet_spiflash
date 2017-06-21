@@ -30,11 +30,13 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
+import errno
+import sys
 
 import greatfet
 from greatfet import GreatFET
+from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
 from greatfet.protocol import vendor_requests
 from greatfet.peripherals import gpio

@@ -30,15 +30,16 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
+import errno
+import sys
+import time
 
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
 from greatfet.protocol import vendor_requests
 
-import time
 
 if __name__ == '__main__':
     logfile = 'log.bin'

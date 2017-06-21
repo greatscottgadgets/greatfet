@@ -31,6 +31,7 @@ from __future__ import print_function
 
 import argparse
 import curses
+import errno
 import sys
 import time
 from itertools import groupby
