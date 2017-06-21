@@ -29,18 +29,21 @@
 
 from __future__ import print_function
 
+import errno
 import sys
 
 import greatfet
 from greatfet import GreatFET
+from greatfet.errors import DeviceNotFoundError
 from greatfet.protocol import vendor_requests
 
 
 def main():
-    device = GreatFET()
-    if not device:
-        print('No GreatFET devices found!')
-        sys.exit()
+    try:
+        device = GreatFET()
+    except DeviceNotFoundError:
+        print('No GreatFET devices found!', file=sys.stderr)
+        sys.exit(errno.ENODEV)
 
     # Print the board's information...
     print("Found a {}!".format(device.board_name()))
