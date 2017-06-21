@@ -49,11 +49,14 @@ def main():
     print("  Part ID: {}".format(device.part_id()))
     print("  Serial number: {}".format(device.serial_number()))
 
-    # ... and toggle it's third LED, for fun.
-    device.vendor_request_out(vendor_requests.LED_TOGGLE, 3)
 
-    # Dev note: you can still easily use this to test low-level interfaces.
-    # For example, to send the ENABLE_USB1 request, use:
+    # Dev note: you can easily use this to test low-level interfaces.
+    #
+    # For example, toggle its third LED, use:
+    #
+    #   device.vendor_request_out(vendor_requests.LED_TOGGLE, 3)
+    #
+    # Or to send the ENABLE_USB1 request, use:
     #
     #   device.vendor_request_out(vendor_requests.ENABLE_USB1)
     #
