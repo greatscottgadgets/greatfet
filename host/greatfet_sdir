@@ -41,7 +41,8 @@ from greatfet.protocol import vendor_requests
 from greatfet.utils import log_silent, log_verbose
 import usb
 
-if __name__ == '__main__':
+
+def main():
     logfile = 'log.bin'
 #    logfile = '/tmp/fifo'
     # Set up a simple argument parser.
@@ -104,3 +105,7 @@ if __name__ == '__main__':
             except KeyboardInterrupt:
                 pass
         device.vendor_request_out(vendor_requests.SDIR_TX_STOP)
+
+
+if __name__ == '__main__':
+    main()

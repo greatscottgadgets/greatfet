@@ -40,7 +40,8 @@ from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 from greatfet.utils import log_silent, log_verbose
 
-if __name__ == '__main__':
+
+def main():
     logfile = 'log.bin'
 #    logfile = '/tmp/fifo'
     # Set up a simple argument parser.
@@ -84,3 +85,8 @@ if __name__ == '__main__':
 
     if not args.adc:
         device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
+
+
+if __name__ == '__main__':
+    main()
+    

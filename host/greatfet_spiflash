@@ -122,7 +122,7 @@ def dump_flash(device, address=None, length=None, filename="flash.bin", log_func
             file.write(data)
             address += 255
 
-def i2c_xfer(device):
+def i2c_xfer(device, log_function):
     log_function("Starting I2C")
     device.vendor_request_out(vendor_requests.I2C_START)
     log_function("I2C started, writing byte")
@@ -132,7 +132,7 @@ def i2c_xfer(device):
     data = device.vendor_request_in(vendor_requests.I2C_RESPONSE, length=3)
     log_function(data)
 
-if __name__ == '__main__':
+def main():
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
     parser.add_argument('-i', '--info', dest='info', action='store_true',
@@ -171,7 +171,11 @@ if __name__ == '__main__':
     device.vendor_request_out(vendor_requests.SPI_INIT)
 
     if args.info:
-        size = spi_info(device, log_function=log_verbose)
+        spi_info(device, log_function=log_verbose)
     if args.dump:
         dump_flash(device, filename=args.dump, address=args.address,
                    length=args.length, log_function=log_verbose)
+
+
+if __name__ == '__main__':
+    main()

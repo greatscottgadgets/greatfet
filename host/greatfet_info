@@ -35,8 +35,8 @@ import greatfet
 from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 
-if __name__ == '__main__':
 
+def main():
     device = GreatFET()
     if not device:
         print('No GreatFET devices found!')
@@ -58,3 +58,7 @@ if __name__ == '__main__':
     #   device.vendor_request_out(vendor_requests.ENABLE_USB1)
     #
     # where ENABLE_USB1 is just an integer constant.
+
+
+if __name__ == '__main__':
+    main()
