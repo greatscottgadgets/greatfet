@@ -4,7 +4,7 @@
 # Copyright 2016 Jared Boone <jared@sharebrained.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -102,4 +102,3 @@ if __name__ == '__main__':
             except KeyboardInterrupt:
                 pass
         device.vendor_request_out(vendor_requests.SDIR_TX_STOP)
-
