@@ -27,7 +27,6 @@
 #include <gpio.h>
 #include <gpio_lpc.h>
 
-volatile bool start_gpio_monitor = false;
 static uint8_t gpio_in_count = 0;
 static uint8_t gpio_out_count = 0;
 static struct gpio_t gpio_in[80];
@@ -56,8 +55,6 @@ usb_request_status_t usb_vendor_request_register_gpio(
 		}
 		led_on(LED2);
 		usb_transfer_schedule_ack(endpoint->in);
-		if(gpio_out_count)
-			start_gpio_monitor = true;
 		led_on(LED3);
 	}
 	return USB_REQUEST_STATUS_OK;
@@ -74,14 +71,4 @@ usb_request_status_t usb_vendor_request_write_gpio(
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
-}
-
-void gpio_monitor_mode(void) {
-	led_off(LED4);
-	while(true) {
-		led_off(LED3);
-		delay(10000000);
-		led_on(LED3);
-		delay(10000000);
-	}
 }
