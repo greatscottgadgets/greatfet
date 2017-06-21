@@ -11,14 +11,16 @@ setup(
     version='0.0', #TODO: Derive this from the main module.
     url='https://greatscottgadgets.com/greatfet/',
     license='BSD',
-    scripts = [
-        'greatfet_adc',
-        'greatfet_firmware',
-        'greatfet_info',
-        'greatfet_logic',
-        'greatfet_sdir',
-        'greatfet_spiflash',
+    entry_points={
+        'console_scripts': [
+            'greatfet_adc = greatfet.commands.greatfet_adc:main',
+            'greatfet_firmware = greatfet.commands.greatfet_firmware:main',
+            'greatfet_info = greatfet.commands.greatfet_info:main',
+            'greatfet_logic = greatfet.commands.greatfet_logic:main',
+            'greatfet_sdir = greatfet.commands.greatfet_sdir:main',
+            'greatfet_spiflash = greatfet.commands.greatfet_spiflash:main',
         ],
+    },
     #author='', #TODO: Figure out whose name should go here!
     #author_email='',
     tests_require=[''],
