@@ -58,7 +58,7 @@ usb_request_status_t usb_vendor_request_read_adc(
 // void adc0_isr(void) {
 // 	unsigned long dummyRead;
 // 	unsigned long ACD0_GDR_Read = ADC0_GDR;
-	
+
 // 	//Extract Conversion Result
 // 	currentResult = (ACD0_GDR_Read>>6) & 0x3FF;
 // 	//Read to Clear Done flag , Also clears AD0 interrupt
@@ -76,21 +76,15 @@ void adc_mode(void) {
 
 
 // vector_table.irq[NVIC_ADC0_IRQ] = adc0_isr;
-led_off(LED1);
-led_off(LED2);
-led_off(LED3);
-led_off(LED4);
 
 	// adc_init(adc_num, pins, clkdiv, clks);
-	
-led_on(LED2);
-	ADC0_CR = ADC_CR_SEL((uint32_t) pins) | 
-	    	ADC_CR_CLKDIV((uint32_t) clkdiv) | 
-	    	ADC_CR_CLKS((uint32_t) clks) | 
+
+	ADC0_CR = ADC_CR_SEL((uint32_t) pins) |
+	    	ADC_CR_CLKDIV((uint32_t) clkdiv) |
+	    	ADC_CR_CLKS((uint32_t) clks) |
 			ADC_CR_PDN;
 	ADC0_CR |= ADC_CR_START(1);
 	while(adc_mode_enabled) {
-led_toggle(LED1);
 		//adc_start(adc_num);
 		// adc_read_to_buffer(adc_num, pins, buf, 10);
 
@@ -104,5 +98,4 @@ led_toggle(LED1);
 				&usb_bulk_buffer[j], BLK_LEN, 0, 0);
 		j = (j+BLK_LEN) % 0x8000;
 	}
-led_off(LED2);
 }

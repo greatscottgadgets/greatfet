@@ -66,7 +66,6 @@ usb_request_status_t usb_vendor_request_i2c_xfer(
 		i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, i2c_tx_buffer,
 						 endpoint->setup.length, i2c_rx_buffer,
 						 endpoint->setup.index);
-		led_toggle(LED4);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
