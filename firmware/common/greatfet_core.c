@@ -322,6 +322,7 @@ void pin_setup(void) {
 	for (i = 0; i < NUM_LEDS; ++i) {
 		scu_pinmux(pinmux_led[i], SCU_GPIO_NOPULL);
 		gpio_output(&gpio_led[i]);
+		gpio_set(&gpio_led[i]); /* led off */
 	}
 
 	/* enable input on SCL and SDA pins */
