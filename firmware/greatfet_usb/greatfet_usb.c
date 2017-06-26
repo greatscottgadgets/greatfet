@@ -207,9 +207,6 @@ void init_usb0(void) {
 int main(void) {
 	pin_setup();
 	cpu_clock_init();
-	led_off(LED2);
-	led_off(LED3);
-	led_off(LED4);
 
 	init_usb0();
 	init_greatdancer_api();

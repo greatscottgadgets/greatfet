@@ -112,7 +112,7 @@ void delay(uint32_t duration)
 
 /* clock startup for Jellybean with Lemondrop attached
 Configure PLL1 to max speed (204MHz).
-Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1. */ 
+Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1. */
 void cpu_clock_init(void)
 {
 	/* use IRC as clock source for APB1 (including I2C0) */
@@ -211,7 +211,7 @@ void cpu_clock_init(void)
 }
 
 
-/* 
+/*
 Configure PLL1 to low speed (48MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1.
 This function shall be called after cpu_clock_init().
@@ -223,8 +223,8 @@ void cpu_clock_pll1_low_speed(void)
 
 	/* Configure PLL1 Clock (48MHz) */
 	/* Integer mode:
-		FCLKOUT = M*(FCLKIN/N) 
-		FCCO = 2*P*FCLKOUT = 2*P*M*(FCLKIN/N) 
+		FCLKOUT = M*(FCLKIN/N)
+		FCCO = 2*P*FCLKOUT = 2*P*M*(FCLKIN/N)
 	*/
 	pll_reg = CGU_PLL1_CTRL;
 	/* Clear PLL1 bits */
@@ -247,7 +247,7 @@ void cpu_clock_pll1_low_speed(void)
 	delay(WAIT_CPU_CLOCK_INIT_DELAY);
 }
 
-/* 
+/*
 Configure PLL1 (Main MCU Clock) to max speed (204MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1.
 This function shall be called after cpu_clock_init().
@@ -258,8 +258,8 @@ void cpu_clock_pll1_max_speed(void)
 
 	/* Configure PLL1 to Intermediate Clock (between 90 MHz and 110 MHz) */
 	/* Integer mode:
-		FCLKOUT = M*(FCLKIN/N) 
-		FCCO = 2*P*FCLKOUT = 2*P*M*(FCLKIN/N) 
+		FCLKOUT = M*(FCLKIN/N)
+		FCCO = 2*P*FCLKOUT = 2*P*M*(FCLKIN/N)
 	*/
 	pll_reg = CGU_PLL1_CTRL;
 	/* Clear PLL1 bits */
@@ -309,12 +309,12 @@ void pin_setup(void) {
 	scu_pinmux(SCU_PINMUX_TCK, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_TMS, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_TDI, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
-	
+
 	gpio_input(&gpio_tdo);
 	gpio_input(&gpio_tck);
 	gpio_input(&gpio_tms);
 	gpio_input(&gpio_tdi);
-	
+
 	/* Configure all GPIO as Input (safe state) */
 	gpio_init();
 
@@ -322,6 +322,7 @@ void pin_setup(void) {
 	for (i = 0; i < NUM_LEDS; ++i) {
 		scu_pinmux(pinmux_led[i], SCU_GPIO_NOPULL);
 		gpio_output(&gpio_led[i]);
+		gpio_set(&gpio_led[i]); /* led off */
 	}
 
 	/* enable input on SCL and SDA pins */
@@ -329,7 +330,7 @@ void pin_setup(void) {
 
 	/* Configure external clock in */
 	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
-	
+
 	/* Set up the load switch that we'll use if we want to play host on USB1. */
 	/* Default to off, as we don't want to dual-drive VBUS. */
 	scu_pinmux(SCU_PINMUX_USB1_EN, SCU_CONF_FUNCTION0);
@@ -368,17 +369,17 @@ void debug_led(uint8_t val) {
 		led_on(LED1);
 	else
 		led_off(LED1);
-		
+
 	if(val & 0x2)
 		led_on(LED2);
 	else
 		led_off(LED2);
-		
+
 	if(val & 0x4)
 		led_on(LED3);
 	else
 		led_off(LED3);
-		
+
 	if(val & 0x8)
 		led_on(LED4);
 	else
