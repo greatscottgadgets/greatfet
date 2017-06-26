@@ -41,6 +41,7 @@
 #include "usb_api_spi.h"
 #include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
+#include "usb_api_heartbeat.h"
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
@@ -112,6 +113,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
   usb_vendor_request_greatdancer_start_nonblocking_read,
   usb_vendor_request_greatdancer_finish_nonblocking_read,
   usb_vendor_request_greatdancer_get_nonblocking_data_length,
+	usb_vendor_request_heartbeat_start,
+	usb_vendor_request_heartbeat_stop,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -224,10 +227,9 @@ int main(void) {
 		if(adc_mode_enabled) {
 			adc_mode();
 		}
-
-		/* Blink LED1 to let us know we're alive */
-		led_toggle(LED1);
-		delay(10000000);
+		if(heartbeat_mode_enabled) {
+			heartbeat_mode();
+		}
 	}
 
 	return 0;

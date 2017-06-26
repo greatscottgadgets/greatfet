@@ -38,7 +38,7 @@ Ideally we'll add an offset (100?) to per-board vendor requests to separate
 requests that may differ from base-board to base-board.
 """
 
-requests = [
+requests = (
     # Internal programming requests.
     'INIT_SPIFLASH',
     'WRITE_SPIFLASH',
@@ -94,12 +94,14 @@ requests = [
     'GREATDANCER_CLEAN_UP_TRANSFER',
     'GREATDANCER_START_NONBLOCKING_READ',
     'GREATDANCER_FINISH_NONBLOCKING_READ',
-    'GREATDANCER_GET_NONBLOCKING_LENGTH'
-]
+    'GREATDANCER_GET_NONBLOCKING_LENGTH',
 
-# Get a reference (as an object) to this module (self)
-this_module = globals()
+    'HEARTBEAT_START',
+    'HEARTBEAT_STOP',
+)
 
-for i in range(len(requests)):
-    this_module[requests[i]] = i
-
+def _create_module_level_constants():
+    this_module = globals()
+    for i, name in enumerate(this_module['requests']):
+        this_module[name] = i
+_create_module_level_constants()
