@@ -41,34 +41,12 @@
 #include "usb_api_spi.h"
 #include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
+#include "usb_api_leds.h"
 #include "usb_api_heartbeat.h"
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
 #include "usb_bulk_buffer.h"
-
-usb_request_status_t usb_vendor_request_led_toggle(
-		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		switch(endpoint->setup.value) {
-			case 1:
-				led_toggle(LED1);
-				break;
-			case 2:
-				led_toggle(LED2);
-				break;
-			case 3:
-				led_toggle(LED3);
-				break;
-			case 4:
-				led_toggle(LED4);
-				break;
-		}
-		usb_transfer_schedule_ack(endpoint->in);
-	}
-	return USB_REQUEST_STATUS_OK;
-}
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_init_spiflash,
