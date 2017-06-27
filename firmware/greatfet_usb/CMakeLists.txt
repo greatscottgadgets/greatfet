@@ -52,6 +52,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
 )
 
 DeclareTargets()
