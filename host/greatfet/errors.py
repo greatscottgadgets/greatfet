@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -71,14 +71,6 @@ def from_greatfet_error(error_number):
     """
     Returns the error class appropriate for the given GreatFET error.
     """
-
-    if error_number in GREATFET_ERRORS:
-        error_class = GREATFET_ERRORS[error_number]
-    else:
-        error_class = GreatFETError
-
+    error_class = GREATFET_ERRORS.get(error_number, GreatFETError)
     message = "Error {}".format(error_number)
-
     return error_class(message)
-
-
