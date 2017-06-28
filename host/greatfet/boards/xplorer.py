@@ -29,7 +29,7 @@
 
 from ..board import GreatFETBoard
 from ..peripherals.spi_flash import SPIFlash
-from ..peripherals import gpio
+
 
 class NXPXplorer(GreatFETBoard):
     """ Class representing the GreatFET varian of the NXP Xplorer base-boards. """
