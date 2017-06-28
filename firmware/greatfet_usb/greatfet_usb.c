@@ -120,16 +120,6 @@ const usb_request_handlers_t usb0_request_handlers = {
 };
 
 
-void usb0_configuration_changed(usb_device_t* const device)
-{
-	if( device->configuration->number == 1 ) {
-		cpu_clock_pll1_max_speed();
-	} else {
-		/* Configuration number equal 0 means usb bus reset. */
-		cpu_clock_pll1_low_speed();
-	}
-}
-
 void usb_set_descriptor_by_serial_number(void)
 {
 	iap_cmd_res_t iap_cmd_res;
@@ -163,9 +153,6 @@ void usb_set_descriptor_by_serial_number(void)
 
 void init_usb0(void) {
 	usb_set_descriptor_by_serial_number();
-
-	usb_set_configuration_changed_cb(usb0_configuration_changed);
-
 	usb_peripheral_reset(&usb_devices[0]);
 	usb_device_init(&usb_devices[0]);
 
@@ -186,8 +173,9 @@ void init_usb0(void) {
 
 
 int main(void) {
-	pin_setup();
 	cpu_clock_init();
+	cpu_clock_pll1_max_speed();
+	pin_setup();
 	rtc_init();
 
 	init_usb0();

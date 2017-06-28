@@ -31,6 +31,8 @@ void debug_init(void) {
 	// UART2 RX on P7_2
 	scu_pinmux(SCU_PINMUX_GPIO3_10, SCU_UART_RX_TX | SCU_CONF_FUNCTION6);
 	// 9600-N-8-1
+	// Note: UART clock is derived from PLL1; these settings assume that PLL1
+	// has been set to maximum (204 MHz) by calling cpu_clock_pll1_max_speed()
   uart_init(UART2, UART_DATABIT_8, UART_STOPBIT_1, UART_PARITY_NONE,
               /* uart_divisor */   1328,
               /* uart_divaddval */ 0,
