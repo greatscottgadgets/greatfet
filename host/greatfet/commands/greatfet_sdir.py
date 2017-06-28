@@ -39,7 +39,6 @@ import greatfet
 from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 from greatfet.utils import log_silent, log_verbose
-import usb
 
 
 def main():

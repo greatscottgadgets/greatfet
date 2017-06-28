@@ -27,7 +27,6 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-from .. import errors
 from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
 

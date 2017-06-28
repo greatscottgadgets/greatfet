@@ -34,13 +34,11 @@ import argparse
 import errno
 import sys
 
-import greatfet
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
 from greatfet.protocol import vendor_requests
-from greatfet.peripherals import gpio
-from greatfet.peripherals import spi_flash
+
 
 JEDECmanufacturers = {
     0xFF: "MISSING",

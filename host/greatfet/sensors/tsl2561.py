@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -28,7 +28,6 @@
 #
 
 from .. import errors
-from ..protocol import vendor_requests
 from ..sensor import GreatFETSensor
 from ..peripherals.i2c_device import I2CDevice
 
@@ -190,8 +189,3 @@ class TSL256X(I2CDevice, GreatFETSensor):
         reading = {}
         reading[reading_name] = self.intensity_reading()
         return reading
-
-
-
-
-

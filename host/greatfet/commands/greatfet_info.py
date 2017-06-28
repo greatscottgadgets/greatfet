@@ -32,10 +32,8 @@ from __future__ import print_function
 import errno
 import sys
 
-import greatfet
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
-from greatfet.protocol import vendor_requests
 
 
 def main():

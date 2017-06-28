@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -27,9 +27,8 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-from .. import errors
-from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
+
 
 class I2CDevice(GreatFETPeripheral):
     """
@@ -74,5 +73,3 @@ class I2CDevice(GreatFETPeripheral):
                         to read the provided amount of data, in bytes.
         """
         return self.bus.transmit(self.address, data, receive_length)
-
-

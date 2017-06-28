@@ -37,10 +37,10 @@ import sys
 import errno
 import argparse
 
-import greatfet
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
+
 
 # Maximum length to allow, for now.
 MAX_FLASH_LENGTH = 0x100000
