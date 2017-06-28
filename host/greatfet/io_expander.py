@@ -54,7 +54,6 @@ class DIOExpander(object):
         1 represents an output
         """
         directions = self._validate_port_value(directions)
-        write_directions = directions
 
         for i in range(self.number_pins):
             self.set_pin_direction(i, directions & 1)
@@ -89,7 +88,6 @@ class DIOExpander(object):
     def write(self, value):
         """Set the value of the pins."""
         value = self._validate_port_value(value)
-        write_value = value
 
         for i in range(self.number_pins):
             self.write_pin(i, value & 1)
