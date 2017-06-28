@@ -20,6 +20,7 @@
  */
 
 #include "usb_api_heartbeat.h"
+#include <libopencm3/lpc43xx/rtc.h>
 
 #include "usb.h"
 #include "usb_queue.h"
@@ -27,9 +28,18 @@
 
 volatile bool heartbeat_mode_enabled = true;
 
+/* Poll current RTC second and toggle the heartbeat LED if it has changed.
+   This is called from the main loop.  It's polled instead of an ISR so that
+   the LED will stop blinking if the main loop gets stuck. */
 void heartbeat_mode(void) {
-  led_toggle(HEARTBEAT_LED);
-  delay(10000000); // TODO this should be made to be nonblocking
+  static volatile uint32_t oldsec = 0;
+  volatile uint32_t newsec = RTC_SEC;
+
+  if (newsec != oldsec)
+  {
+    led_toggle(HEARTBEAT_LED);
+    oldsec = newsec;
+  }
 }
 
 usb_request_status_t usb_vendor_request_heartbeat_start(

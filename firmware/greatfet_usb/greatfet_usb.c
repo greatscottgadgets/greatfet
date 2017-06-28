@@ -188,6 +188,7 @@ void init_usb0(void) {
 int main(void) {
 	pin_setup();
 	cpu_clock_init();
+	rtc_init();
 
 	init_usb0();
 	init_greatdancer_api();

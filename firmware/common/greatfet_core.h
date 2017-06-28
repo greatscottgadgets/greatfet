@@ -69,6 +69,8 @@ void cpu_clock_init(void);
 void cpu_clock_pll1_low_speed(void);
 void cpu_clock_pll1_max_speed(void);
 
+void rtc_init(void);
+
 void pin_setup(void);
 
 void enable_1v8_power(void);
