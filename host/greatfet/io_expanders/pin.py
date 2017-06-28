@@ -48,7 +48,7 @@ class PinExpander(DIOExpander):
         super(PinExpander, self).set_direction(directions)
 
     def set_pin_direction(self, pin_num, direction):
-        pin_num, value = self._validate_pin_args(pin_num, value)
+        pin_num = self._validate_pin_number(pin_num)
 
         # Once the direction has been successfully changed on the IO expander,
         # `_directions` has to be updated.
