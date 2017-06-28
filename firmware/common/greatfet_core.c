@@ -29,7 +29,9 @@
 #include "spiflash_target.h"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
+#include <libopencm3/lpc43xx/creg.h>
 #include <libopencm3/lpc43xx/cgu.h>
+#include <libopencm3/lpc43xx/rtc.h>
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/ssp.h>
 
@@ -299,6 +301,21 @@ void cpu_clock_pll1_max_speed(void)
 	/* wait until stable */
 	while (!(CGU_PLL1_STAT & CGU_PLL1_STAT_LOCK_MASK));
 
+}
+
+void rtc_init(void) {
+		/* Enable power to 32 KHz oscillator */
+		CREG_CREG0 &= ~CREG_CREG0_PD32KHZ;
+		/* Release 32 KHz oscillator reset */
+		CREG_CREG0 &= ~CREG_CREG0_RESET32KHZ;
+		/* Enable 1 KHz output (required per LPC43xx user manual section 37.2) */
+		CREG_CREG0 |= CREG_CREG0_EN1KHZ;
+		/* Release CTC Reset */
+		RTC_CCR &= ~RTC_CCR_CTCRST(1);
+		/* Disable calibration counter */
+		RTC_CCR &= ~RTC_CCR_CCALEN(1);
+		/* Enable clock */
+		RTC_CCR |= RTC_CCR_CLKEN(1);
 }
 
 void pin_setup(void) {
