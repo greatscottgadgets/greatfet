@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -44,7 +44,7 @@ GREATFET_PRODUCT_ID = 0x60e6
 # up as generic USBErrors with errno 32 on affected platforms.
 LIBUSB_PIPE_ERROR = 32
 
-    
+
 class GreatFETBoard(object):
     """
     Class representing a USB-connected GreatFET device.
@@ -99,15 +99,18 @@ class GreatFETBoard(object):
         """
         try:
             potential_device = cls(**device_identifiers)
-
-            # Accept only GreatFET devices whose board IDs are handled by this
-            # class. This is mostly used by subclasses, which should override
-            # HANDLED_BOARD_IDS.
-            return potential_device.board_id() in cls.HANDLED_BOARD_IDS
         except DeviceNotFoundError:
             return False
+
+        try:
+            board_id = potential_device.board_id()
         finally:
-            pass # TODO: close the board, here; or otherwise release resources?
+            potential_device.close()
+
+        # Accept only GreatFET devices whose board IDs are handled by this
+        # class. This is mostly used by subclasses, which should override
+        # HANDLED_BOARD_IDS.
+        return board_id in cls.HANDLED_BOARD_IDS
 
 
     def __init__(self, **device_identifiers):
@@ -213,6 +216,14 @@ class GreatFETBoard(object):
     def reset(self):
         """Reset the GreatFET device."""
         self.vendor_request_out(vendor_requests.RESET)
+
+
+    def close(self):
+        """
+        Dispose pyUSB resources allocated by this connection.  This connection
+        will no longer be usable.
+        """
+        usb.util.dispose_resources(self.device)
 
 
     def _vendor_request(self, direction, request, length_or_data=0, value=0, index=0, timeout=1000):
