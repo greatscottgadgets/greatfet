@@ -73,9 +73,6 @@ void rtc_init(void);
 
 void pin_setup(void);
 
-void enable_1v8_power(void);
-void disable_1v8_power(void);
-
 typedef enum {
 	LED1 = 0,
 	LED2 = 1,
