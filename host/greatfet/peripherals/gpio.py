@@ -1,8 +1,9 @@
 #
 # Copyright (c) 2016 Dominic Spill <dominicgs@gmail.com>
+# Copyright (c) 2017 Mike Naberezny <mike@naberezny.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -30,108 +31,115 @@
 GPIO pins
 """
 
+def _gpio(port, pin):
+    """Pack an LPC GPIO port and pin into a 16-bit number for USB transfers"""
+    return (port << 8) + pin;
+
 class J1(object):
-    # GND
-    # VCC
-    P3 = 0x050d
-    P4 = 0x0000
-    P5 = 0x050e
-    P6 = 0x0001
-    P7 = 0x0004
-    P8 = 0x0209
-    P9 = 0x020a
-    P10 = 0x0008
-    # CLK0
-    P12 = 0x0009
-    P13 = 0x0108
-    P14 = 0x020b
-    P15 = 0x0100
-    P16 = 0x0109
-    P17 = 0x0102
-    P18 = 0x0101
-    P19 = 0x020c
-    P20 = 0x0103
-    P21 = 0x0105
-    P22 = 0x0104
-    P23 = 0x020e
-    P24 = 0x020d
-    P25 = 0x0107
-    P26 = 0x0106
-    P27 = 0x020f
-    P28 = 0x0002
-    P29 = 0x0207
-    P30 = 0x0003
-    P31 = 0x000d
-    P32 = 0x000c
-    P33 = 0x0512
-    P34 = 0x040b
-    P35 = 0x0500
-    # P6_0 
-    P37 = 0x000f
-    # P1_19
-    P39 = 0x000b
-    P40 = 0x000a
+    """GreatFET One header J1 pins and their LPC GPIO equivalents"""
+    # P1 = GND
+    # P2 = VCC
+    P3 = _gpio(5, 13)
+    P4 = _gpio(0, 0)
+    P5 = _gpio(5, 14)
+    P6 = _gpio(0, 1)
+    P7 = _gpio(0, 4)
+    P8 = _gpio(2, 9)
+    P9 = _gpio(2, 10)
+    P10 = _gpio(0, 8)
+    # P11 = CLK0
+    P12 = _gpio(0, 9)
+    P13 = _gpio(1, 8)
+    P14 = _gpio(2, 11)
+    P15 = _gpio(1, 0)
+    P16 = _gpio(1, 9)
+    P17 = _gpio(1, 2)
+    P18 = _gpio(1, 1)
+    P19 = _gpio(2, 12)
+    P20 = _gpio(1, 3)
+    P21 = _gpio(1, 5)
+    P22 = _gpio(1, 4)
+    P23 = _gpio(2, 14)
+    P24 = _gpio(2, 13)
+    P25 = _gpio(1, 7)
+    P26 = _gpio(1, 6)
+    P27 = _gpio(2, 15)
+    P28 = _gpio(0, 2)
+    P29 = _gpio(2, 7)
+    P30 = _gpio(0, 3)
+    P31 = _gpio(0, 13)
+    P32 = _gpio(0, 12)
+    P33 = _gpio(5, 18)
+    P34 = _gpio(4, 11)
+    P35 = _gpio(5, 0)
+    # P36 = P6_0
+    P37 = _gpio(0, 15)
+    # P38 = P1_19
+    P39 = _gpio(0, 11)
+    P40 = _gpio(0, 10)
 
 class J2(object):
-    # GND
-    # VBUS
-    P3 = 0x050c
-    P4 = 0x0200
-    # ADC0_0
-    P6 = 0x0205
-    P7 = 0x0204
-    P8 = 0x0202
-    P9 = 0x0203
-    P10 = 0x0206
-    # P4_7
-    # CLK2
-    P13 = 0x0507
-    P14 = 0x0007
-    P15 = 0x0506
-    P16 = 0x030f
-    # WAKEUP0
-    P18 = 0x0505
-    P19 = 0x0504
-    P20 = 0x0503
-    # PF_4
-    P22 = 0x0509
-    P23 = 0x030a
-    P24 = 0x0508
-    P25 = 0x0309
-    # P3_0
-    P27 = 0x0308
-    P28 = 0x010e
-    P29 = 0x0510
-    P30 = 0x050a
-    P31 = 0x050f
-    # P3_3
-    P33 = 0x0502
-    P34 = 0x0005
-    P35 = 0x0501
-    P36 = 0x0302
-    P37 = 0x010f
-    P38 = 0x0006
-    # I2C0_SDA
-    # I2C0_SDL
+    """GreatFET One header J2 pins and their LPC GPIO equivalents"""
+    # P1 = GND
+    # P2 = VBUS
+    P3 = _gpio(5, 12)
+    P4 = _gpio(2, 0)
+    # P5 = ADC0_0
+    P6 = _gpio(2, 5)
+    P7 = _gpio(2, 4)
+    P8 = _gpio(2, 2)
+    P9 = _gpio(2, 3)
+    P10 = _gpio(2, 6)
+    # P11 = P4_7
+    # P12 = CLK2
+    P13 = _gpio(5, 7)
+    P14 = _gpio(0, 7)
+    P15 = _gpio(5, 6)
+    P16 = _gpio(3, 15)
+    # P17 = WAKEUP0
+    P18 = _gpio(5, 5)
+    P19 = _gpio(5, 4)
+    P20 = _gpio(5, 3)
+    # P21 = PF_4
+    P22 = _gpio(5, 9)
+    P23 = _gpio(3, 10)
+    P24 = _gpio(5, 8)
+    P25 = _gpio(3, 9)
+    # P26 = P3_0
+    P27 = _gpio(3, 8)
+    P28 = _gpio(1, 14)
+    P29 = _gpio(5, 16)
+    P30 = _gpio(5, 10)
+    P31 = _gpio(5, 15)
+    # P32 = P3_3
+    P33 = _gpio(5, 2)
+    P34 = _gpio(0, 5)
+    P35 = _gpio(5, 1)
+    P36 = _gpio(3, 2)
+    P37 = _gpio(1, 15)
+    P38 = _gpio(0, 6)
+    # P39 = I2C0_SDA
+    # P40 = I2C0_SDL
 
 class J7(object):
-    # GND
-    P2 = 0x0303
-    P3 = 0x0304
-    # ADC0_5
-    # ADC0_2
-    P6 = 0x010a
-    P7 = 0x010c
-    P8 = 0x010d
-    # RTC_ALARM
-    # GND
-    # RESET#
-    # VBAT
-    P13 = 0x010b
-    P14 = 0x000e
-    P15 = 0x0306
-    P16 = 0x0305
-    P17 = 0x0301
-    P18 = 0x0300
-    # GND
-    # VCC
+    """GreatFET One header J7 pins and their LPC GPIO equivalents"""
+    # P1 = GND
+    P2 = _gpio(3, 3)
+    P3 = _gpio(3, 4)
+    # P4 = ADC0_5
+    # P5 = ADC0_2
+    P6 = _gpio(1, 10)
+    P7 = _gpio(1, 12)
+    P8 = _gpio(1, 13)
+    # P9 = RTC_ALARM
+    # P10 = GND
+    # P11 = RESET
+    # P12 = VBAT
+    P13 = _gpio(1, 11)
+    P14 = _gpio(0, 14)
+    P15 = _gpio(3, 6)
+    P16 = _gpio(3, 5)
+    P17 = _gpio(3, 1)
+    P18 = _gpio(3, 0)
+    # P19 = GND
+    # P20 = VCC
