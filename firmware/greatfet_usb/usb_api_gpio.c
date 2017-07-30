@@ -61,7 +61,8 @@ usb_request_status_t usb_vendor_request_register_gpio(
 					 (gpio_params[i] >> 8) & 0xFF, /* port */
 					  gpio_params[i] & 0xFF		     /* pin */
 					);
-			gpio_set(&gpio_in[gpio_in_count]);
+			gpio_input(&gpio_in[gpio_in_count]);
+			/* TODO scu pinmux must be configured to make pin gpio */
 			gpio_in_count++;
 		}
 
@@ -71,7 +72,9 @@ usb_request_status_t usb_vendor_request_register_gpio(
 					 (gpio_params[i]>>8) & 0xFF, /* port */
 					  gpio_params[i] & 0xFF		   /* pin */
 					);
-			gpio_set(&gpio_out[gpio_out_count]);
+			gpio_output(&gpio_out[gpio_out_count]);
+			gpio_clear(&gpio_out[gpio_out_count]);
+			/* TODO scu pinmux must be configured to make pin gpio */
 			gpio_out_count++;
 		}
 
