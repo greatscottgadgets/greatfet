@@ -46,14 +46,17 @@ static uint16_t gpio_params[80];    /* Buffer used for USB transfers */
 usb_request_status_t usb_vendor_request_register_gpio(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	uint8_t in_count, i;
+	uint8_t total_pin_count = endpoint->setup.length / 2;
+	uint8_t input_pin_count = endpoint->setup.value;
+	uint8_t i;
+
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		usb_transfer_schedule_block(endpoint->out, &gpio_params,
-									endpoint->setup.length/2, NULL, NULL);
+									endpoint->setup.length, NULL, NULL);
+
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		in_count = endpoint->setup.value;
 		/* Configure input pins */
-		for(i=0; i<in_count; i++) {
+		for(i=0; i<input_pin_count; i++) {
 			GPIO_SET(gpio_in[gpio_in_count],
 					 (gpio_params[i] >> 8) & 0xFF, /* port */
 					  gpio_params[i] & 0xFF		     /* pin */
@@ -61,8 +64,9 @@ usb_request_status_t usb_vendor_request_register_gpio(
 			gpio_set(&gpio_in[gpio_in_count]);
 			gpio_in_count++;
 		}
+
 		/* Configure output pins */
-		for(; i<endpoint->setup.length; i++) {
+		for(; i<total_pin_count; i++) {
 			GPIO_SET(gpio_out[gpio_out_count],
 					 (gpio_params[i]>>8) & 0xFF, /* port */
 					  gpio_params[i] & 0xFF		   /* pin */
@@ -70,6 +74,7 @@ usb_request_status_t usb_vendor_request_register_gpio(
 			gpio_set(&gpio_out[gpio_out_count]);
 			gpio_out_count++;
 		}
+
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
