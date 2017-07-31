@@ -54,8 +54,8 @@ requests = (
     'ENABLE_USB1',
     'LED_TOGGLE',
 
-    'REGISTER_GPIO',
-    'WRITE_GPIO',
+    'GPIO_REGISTER',
+    'GPIO_WRITE',
 
     'SPI_INIT',
     'SPI_WRITE',

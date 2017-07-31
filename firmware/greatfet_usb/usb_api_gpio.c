@@ -44,7 +44,7 @@ static uint16_t gpio_params[80];    /* Buffer used for USB transfers */
      ordering in packet determines pin direction:
 		   inputs first (determined by wValue), then outputs
 */
-usb_request_status_t usb_vendor_request_register_gpio(
+usb_request_status_t usb_vendor_request_gpio_register(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	uint8_t total_pin_count = endpoint->setup.length / 2;
@@ -92,7 +92,7 @@ usb_request_status_t usb_vendor_request_register_gpio(
 		   high byte = index into gpio_out array
 			 low byte = 0=make pin low, nonzero=make pin high
 */
-usb_request_status_t usb_vendor_request_write_gpio(
+usb_request_status_t usb_vendor_request_gpio_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	uint8_t total_pin_count = endpoint->setup.length / 2;
