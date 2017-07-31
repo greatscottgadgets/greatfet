@@ -33,7 +33,7 @@ GPIO pins
 
 def _gpio(port, pin):
     """Pack an LPC GPIO port and pin into a 16-bit number for USB transfers"""
-    return (port << 8) + pin;
+    return (port << 8) + pin
 
 class J1(object):
     """GreatFET One header J1 pins and their LPC GPIO equivalents"""
