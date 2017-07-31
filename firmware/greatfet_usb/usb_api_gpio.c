@@ -1,5 +1,6 @@
 /*
- * Copyright 2016 Dominic Spill
+ * Copyright 2016 Dominic Spill <dominicgs@gmail.com>
+ * Copyright 2017 Mike Naberezny <mike@naberezny.com>
  *
  * This file is part of GreatFET.
  *
@@ -83,15 +84,38 @@ usb_request_status_t usb_vendor_request_register_gpio(
 	return USB_REQUEST_STATUS_OK;
 }
 
-/* Toggle out pins */
+/* Write to GPIO output pins
+   Setup packet:
+		 wLength: count of all pins in the data packet * 2 for uint16_t
+	 Data packet:
+     consists of one uint16_t for each GPIO output pin to change:
+		   high byte = index into gpio_out array
+			 low byte = 0=make pin low, nonzero=make pin high
+*/
 usb_request_status_t usb_vendor_request_write_gpio(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
+	uint8_t total_pin_count = endpoint->setup.length / 2;
+	uint8_t i;
+	uint8_t gpio_index;
+	struct gpio_t gpio;
+	bool state;
+
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		/* TODO finish me */
-		return USB_REQUEST_STATUS_OK;
+		usb_transfer_schedule_block(endpoint->out, &gpio_params,
+									endpoint->setup.length, NULL, NULL);
+
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		/* TODO finish me */
+		for (i=0; i<total_pin_count; i++) {
+			gpio_index = (gpio_params[i] >> 8) & 0xFF;
+			state = (gpio_params[i] & 0xFF) != 0;
+
+			if (gpio_index < gpio_out_count) {
+				gpio = gpio_out[gpio_index];
+				gpio_write(&gpio, state);
+			}
+		}
+
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
