@@ -29,5 +29,7 @@ usb_request_status_t usb_vendor_request_gpio_register(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 usb_request_status_t usb_vendor_request_gpio_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+usb_request_status_t usb_vendor_request_gpio_reset(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
 #endif /* end of include guard: __USB_API_GPIO_H__ */

@@ -120,3 +120,27 @@ usb_request_status_t usb_vendor_request_gpio_write(
 	}
 	return USB_REQUEST_STATUS_OK;
 }
+
+/* Reset any registered GPIO pins back to their default state and
+ * clear all registrations.
+ */
+usb_request_status_t usb_vendor_request_gpio_reset(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	uint8_t i;
+
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		/* change any outputs back to inputs */
+		for (i=0; i<gpio_out_count; i++) {
+			gpio_input(&gpio_out[i]);
+		}
+
+		/* unregister all */
+		gpio_in_count = 0;
+		gpio_out_count = 0;
+
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+
+	return USB_REQUEST_STATUS_OK;
+}

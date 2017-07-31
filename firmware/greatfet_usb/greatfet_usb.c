@@ -93,6 +93,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
   usb_vendor_request_greatdancer_get_nonblocking_data_length,
 	usb_vendor_request_heartbeat_start,
 	usb_vendor_request_heartbeat_stop,
+	usb_vendor_request_gpio_reset,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
