@@ -2,7 +2,7 @@
 # Copyright (c) 2016 Kyle J. Temkin <kyle@ktemkin.com>
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -62,7 +62,7 @@ class SPIFlash(GreatFETPeripheral):
 
         data = struct.pack("<HHIHB", page_size, pages, page_size*pages,
                            chip_select, device_id)
-        result = self.board.vendor_request_out(vendor_requests.INIT_SPIFLASH,
+        result = self.board.vendor_request_out(vendor_requests.SPIFLASH_INIT,
             value=0, index=0, data=data, timeout=1000)
 
         if result < 0:
@@ -75,7 +75,7 @@ class SPIFlash(GreatFETPeripheral):
         CAUTION: After running this function, you'll need to use DFU mode to
         load a new GreatFET program onto the board. Be careful!
         """
-        result = self.board.vendor_request_out(vendor_requests.ERASE_SPIFLASH)
+        result = self.board.vendor_request_out(vendor_requests.SPIFLASH_ERASE)
 
         if result:
             raise errors.from_greatfet_error(result)
@@ -234,7 +234,7 @@ class SPIFlash(GreatFETPeripheral):
 
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
-        result = self.board.vendor_request_out(vendor_requests.WRITE_SPIFLASH,
+        result = self.board.vendor_request_out(vendor_requests.SPIFLASH_WRITE,
             value=address_high, index=address_low, data=data_array, timeout=0)
 
         if result < 0:
@@ -266,10 +266,7 @@ class SPIFlash(GreatFETPeripheral):
         address_low = address & 0xFFFF;
 
         # Perform the actual read.
-        result = self.board.vendor_request_in(vendor_requests.READ_SPIFLASH,
+        result = self.board.vendor_request_in(vendor_requests.SPIFLASH_READ,
             value=address_high, index=address_low, length=length)
 
         return result
-
-
-

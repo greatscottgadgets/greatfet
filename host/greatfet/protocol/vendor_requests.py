@@ -40,10 +40,10 @@ requests that may differ from base-board to base-board.
 
 requests = (
     # Internal programming requests.
-    'INIT_SPIFLASH',
-    'WRITE_SPIFLASH',
-    'READ_SPIFLASH',
-    'ERASE_SPIFLASH',
+    'SPIFLASH_INIT',
+    'SPIFLASH_WRITE',
+    'SPIFLASH_READ',
+    'SPIFLASH_ERASE',
 
     # Board information API.
     'READ_BOARD_ID',

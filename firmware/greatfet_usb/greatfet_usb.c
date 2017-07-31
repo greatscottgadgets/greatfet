@@ -49,10 +49,10 @@
 #include "usb_bulk_buffer.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
-	usb_vendor_request_init_spiflash,
-	usb_vendor_request_write_spiflash,
-	usb_vendor_request_read_spiflash,
-	usb_vendor_request_erase_spiflash,
+	usb_vendor_request_spiflash_init,
+	usb_vendor_request_spiflash_write,
+	usb_vendor_request_spiflash_read,
+	usb_vendor_request_spiflash_erase,
 	usb_vendor_request_read_board_id,
 	usb_vendor_request_read_version_string,
 	usb_vendor_request_read_partid_serialno,
