@@ -58,11 +58,11 @@ struct flash_params {
 	uint32_t num_bytes;
 	uint16_t gpio_select;
 	uint8_t device_id;
-	
+
 };
 struct flash_params params;
 
-usb_request_status_t usb_vendor_request_init_spiflash(
+usb_request_status_t usb_vendor_request_spiflash_init(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	if ((stage == USB_TRANSFER_STAGE_SETUP) &&
 		(endpoint->setup.length == 11)) {
@@ -76,7 +76,7 @@ usb_request_status_t usb_vendor_request_init_spiflash(
 		spi_flash_drv.device_id = params.device_id;
 		// Can't use the GPIO() define as the struct alreay exists
 		GPIO_SET(gpio_spiflash_select, (params.gpio_select>>8)&0xFF, params.gpio_select&0xFF);
-		
+
 		spi_target.gpio_select = &gpio_spiflash_select;
 		spi_bus_start(spi_flash_drv.target, &ssp_config_spi);
 		spiflash_setup(&spi_flash_drv);
@@ -84,8 +84,8 @@ usb_request_status_t usb_vendor_request_init_spiflash(
 	}
 	return USB_REQUEST_STATUS_OK;
 }
-	
-usb_request_status_t usb_vendor_request_erase_spiflash(
+
+usb_request_status_t usb_vendor_request_spiflash_erase(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 		if (stage == USB_TRANSFER_STAGE_SETUP) {
 			/* only chip erase is implemented */
@@ -95,7 +95,7 @@ usb_request_status_t usb_vendor_request_erase_spiflash(
 	return USB_REQUEST_STATUS_OK;
 }
 
-usb_request_status_t usb_vendor_request_write_spiflash(
+usb_request_status_t usb_vendor_request_spiflash_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	uint32_t addr = 0;
@@ -131,13 +131,13 @@ usb_request_status_t usb_vendor_request_write_spiflash(
 	}
 }
 
-usb_request_status_t usb_vendor_request_read_spiflash(
+usb_request_status_t usb_vendor_request_spiflash_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	uint32_t addr;
 	uint16_t len;
 
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
+	if (stage == USB_TRANSFER_STAGE_SETUP)
 	{
 		addr = (endpoint->setup.value << 16) | endpoint->setup.index;
 		len = endpoint->setup.length;
@@ -150,13 +150,13 @@ usb_request_status_t usb_vendor_request_read_spiflash(
 						    NULL, NULL);
 			return USB_REQUEST_STATUS_OK;
 		}
-	} else if (stage == USB_TRANSFER_STAGE_DATA) 
+	} else if (stage == USB_TRANSFER_STAGE_DATA)
 	{
 			addr = (endpoint->setup.value << 16) | endpoint->setup.index;
 			len = endpoint->setup.length;
 			/* This check is redundant but makes me feel better. */
 			if ((len > spi_flash_drv.page_len) || (addr > spi_flash_drv.num_bytes)
-					|| ((addr + len) > spi_flash_drv.num_bytes)) 
+					|| ((addr + len) > spi_flash_drv.num_bytes))
 			{
 				return USB_REQUEST_STATUS_STALL;
 			} else
@@ -164,9 +164,8 @@ usb_request_status_t usb_vendor_request_read_spiflash(
 				usb_transfer_schedule_ack(endpoint->out);
 				return USB_REQUEST_STATUS_OK;
 			}
-	} else 
+	} else
 	{
 		return USB_REQUEST_STATUS_OK;
 	}
 }
-
