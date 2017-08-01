@@ -60,7 +60,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_led_toggle,
 	usb_vendor_request_gpio_register,
 	usb_vendor_request_gpio_write,
-	usb_vendor_request_init_spi,
+	usb_vendor_request_spi_init,
 	usb_vendor_request_spi_write,
 	usb_vendor_request_spi_read,
 	usb_vendor_request_spi_dump_flash,
