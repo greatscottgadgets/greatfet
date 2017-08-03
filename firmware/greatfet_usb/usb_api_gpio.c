@@ -34,7 +34,7 @@ static struct gpio_t gpio_in[80];   /* Registry of GPIO pins set as inputs */
 static struct gpio_t gpio_out[80];  /* Registry of GPIO pins set as outputs */
 static uint8_t gpio_in_count = 0;   /* Count of elements used in gpio_in */
 static uint8_t gpio_out_count = 0;  /* Count of elements used in gpio_out */
-static uint16_t gpio_params[80];    /* Buffer used for USB transfers */
+static uint8_t gpio_buffer[80 * 2]; /* Buffer used for USB transfers */
 
 
 /* Configure the SCU pinmux to GPIO mode for a pin */
@@ -50,31 +50,30 @@ static void set_scu_pinmux_for_gpio(uint8_t gpio_port, uint8_t gpio_pin)
 /* Set GPIO pin definitions and directions
    Setup packet:
 	   wValue:  count of pins in the data packet that will be inputs
-		 wLength: count of all pins in the data packet * 2 for uint16_t
+		 wLength: count of all pins in the data packet * 2
 	 Data packet:
-     consists of one uint16_t for each LPC GPIO to set up:
-		   high byte = port, low byte = pin
+	 	 consists of a pair of uint8_t for each LPC GPIO to set up:
+		   {port, pin}
      ordering in packet determines pin direction:
 		   inputs first (determined by wValue), then outputs
 */
 usb_request_status_t usb_vendor_request_gpio_register(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	uint8_t total_pin_count = endpoint->setup.length / 2;
-	uint8_t input_pin_count = endpoint->setup.value;
+	uint8_t total_pairs_count = endpoint->setup.length;
+	uint8_t input_pairs_count = endpoint->setup.value * 2;
 	uint8_t i;
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_block(endpoint->out, &gpio_params,
+		usb_transfer_schedule_block(endpoint->out, &gpio_buffer,
 									endpoint->setup.length, NULL, NULL);
 
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		for (i=0; i < total_pairs_count; i+=2) {
+			uint8_t port = gpio_buffer[i];
+			uint8_t pin = gpio_buffer[i+1];
 
-		for (i=0; i < total_pin_count; i++) {
-			uint8_t port = (gpio_params[i] >> 8) & 0xFF;
-			uint8_t pin = gpio_params[i] & 0xFF;
-
-			if (i < input_pin_count) {
+			if (i < input_pairs_count) {
 				/* Configure pin as input */
 				GPIO_SET(gpio_in[gpio_in_count], port, pin);
 				gpio_input(&gpio_in[gpio_in_count]);
@@ -99,29 +98,28 @@ usb_request_status_t usb_vendor_request_gpio_register(
 
 /* Write to GPIO output pins
    Setup packet:
-		 wLength: count of all pins in the data packet * 2 for uint16_t
+		 wLength: count of all GPIO pins in the data packet * 2
 	 Data packet:
-     consists of one uint16_t for each GPIO output pin to change:
-		   high byte = index into gpio_out array
-			 low byte = 0=make pin low, nonzero=make pin high
+     consists of a pair of uint8_t for each GPIO output pin to change:
+		   {index into gpio_out array, 0=low or nonzero=high}
 */
 usb_request_status_t usb_vendor_request_gpio_write(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	uint8_t total_pin_count = endpoint->setup.length / 2;
+	uint8_t total_pairs_count = endpoint->setup.length;
 	uint8_t i;
 	uint8_t gpio_index;
 	struct gpio_t gpio;
 	bool state;
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_block(endpoint->out, &gpio_params,
+		usb_transfer_schedule_block(endpoint->out, &gpio_buffer,
 									endpoint->setup.length, NULL, NULL);
 
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		for (i=0; i<total_pin_count; i++) {
-			gpio_index = (gpio_params[i] >> 8) & 0xFF;
-			state = (gpio_params[i] & 0xFF) != 0;
+		for (i=0; i<total_pairs_count; i+=2) {
+			gpio_index = gpio_buffer[i];
+			state = gpio_buffer[i+1];
 
 			if (gpio_index < gpio_out_count) {
 				gpio = gpio_out[gpio_index];
