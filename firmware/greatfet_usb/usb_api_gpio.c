@@ -27,12 +27,25 @@
 #include <greatfet_core.h>
 #include <gpio.h>
 #include <gpio_lpc.h>
+#include <gpio_scu.h>
+#include <libopencm3/lpc43xx/scu.h>
 
 static struct gpio_t gpio_in[80];   /* Registry of GPIO pins set as inputs */
 static struct gpio_t gpio_out[80];  /* Registry of GPIO pins set as outputs */
 static uint8_t gpio_in_count = 0;   /* Count of elements used in gpio_in */
 static uint8_t gpio_out_count = 0;  /* Count of elements used in gpio_out */
 static uint16_t gpio_params[80];    /* Buffer used for USB transfers */
+
+
+/* Configure the SCU pinmux to GPIO mode for a pin */
+static void set_scu_pinmux_for_gpio(uint8_t gpio_port, uint8_t gpio_pin)
+{
+	scu_grp_pin_t scu_pin = get_scu_pin_for_gpio(gpio_port, gpio_pin);
+	uint32_t scu_func = get_scu_func_for_gpio(gpio_port, gpio_pin);
+	/* TODO: allow pull-up to be configured */
+	scu_pinmux(scu_pin, SCU_GPIO_NOPULL | scu_func);
+}
+
 
 /* Set GPIO pin definitions and directions
    Setup packet:
@@ -56,33 +69,33 @@ usb_request_status_t usb_vendor_request_gpio_register(
 									endpoint->setup.length, NULL, NULL);
 
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		/* Configure input pins */
-		for(i=0; i<input_pin_count; i++) {
-			GPIO_SET(gpio_in[gpio_in_count],
-					 (gpio_params[i] >> 8) & 0xFF, /* port */
-					  gpio_params[i] & 0xFF		     /* pin */
-					);
-			gpio_input(&gpio_in[gpio_in_count]);
-			/* TODO scu pinmux must be configured to make pin gpio */
-			gpio_in_count++;
-		}
 
-		/* Configure output pins */
-		for(; i<total_pin_count; i++) {
-			GPIO_SET(gpio_out[gpio_out_count],
-					 (gpio_params[i]>>8) & 0xFF, /* port */
-					  gpio_params[i] & 0xFF		   /* pin */
-					);
-			gpio_output(&gpio_out[gpio_out_count]);
-			gpio_clear(&gpio_out[gpio_out_count]);
-			/* TODO scu pinmux must be configured to make pin gpio */
-			gpio_out_count++;
+		for (i=0; i < total_pin_count; i++) {
+			uint8_t port = (gpio_params[i] >> 8) & 0xFF;
+			uint8_t pin = gpio_params[i] & 0xFF;
+
+			if (i < input_pin_count) {
+				/* Configure pin as input */
+				GPIO_SET(gpio_in[gpio_in_count], port, pin);
+				gpio_input(&gpio_in[gpio_in_count]);
+				set_scu_pinmux_for_gpio(port, pin);
+				gpio_in_count++;
+			} else {
+				/* Configure pin as output */
+				GPIO_SET(gpio_out[gpio_out_count], port, pin);
+				gpio_output(&gpio_out[gpio_out_count]);
+				gpio_clear(&gpio_out[gpio_out_count]);
+				set_scu_pinmux_for_gpio(port, pin);
+				gpio_out_count++;
+			}
 		}
 
 		usb_transfer_schedule_ack(endpoint->in);
 	}
+
 	return USB_REQUEST_STATUS_OK;
 }
+
 
 /* Write to GPIO output pins
    Setup packet:
@@ -120,6 +133,7 @@ usb_request_status_t usb_vendor_request_gpio_write(
 	}
 	return USB_REQUEST_STATUS_OK;
 }
+
 
 /* Reset any registered GPIO pins back to their default state and
  * clear all registrations.

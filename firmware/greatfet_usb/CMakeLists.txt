@@ -33,6 +33,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_standard_request.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/gpdma.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/gpio_dma.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/gpio_scu.c"
 	usb_descriptor.c
 	usb_device.c
 	usb_endpoint.c
@@ -46,7 +47,7 @@ set(SRC_M4
 	usb_api_heartbeat.c
 	usb_api_logic_analyzer.c
 	usb_api_sdir.c
-    usb_api_greatdancer.c
+	usb_api_greatdancer.c
 	sgpio_isr.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"
