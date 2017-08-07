@@ -78,22 +78,6 @@ void init_greatdancer_api(void) {
 	usb_queue_init(&usb1_endpoint3_in_queue);
 }
 
-
-/**
- * Performs the per-run initialization of the GreatDancer device.
- * Should be between successive executions of the facedancer.
- */
-static void set_up_greatdancer(void) {
-	usb_peripheral_reset(&usb_devices[1]);
-	usb_device_init(&usb_devices[1]);
-
-	// Set up the control endpoint. The application will request setup
-	// for all of the non-standard channels on connection.
-	usb_endpoint_init(&usb1_endpoint_control_out);
-	usb_endpoint_init(&usb1_endpoint_control_in);
-}
-
-
 /**
  * Finds the endpoint object associated with a given address.
  * This version can be used even before the USB controller is initialized,
@@ -121,6 +105,32 @@ static usb_endpoint_t *usb_preinit_endpoint_from_address(uint8_t address)
 }
 
 
+
+/**
+ * Performs the per-run initialization of the GreatDancer device.
+ * Should be between successive executions of the facedancer.
+ */
+static void set_up_greatdancer(uint16_t max_packet_size) {
+  usb_endpoint_t *ep0_in, *ep0_out;
+
+	usb_peripheral_reset(&usb_devices[1]);
+	usb_device_init(&usb_devices[1]);
+
+	// Set up the control endpoint. The application will request setup
+	// for all of the non-standard channels on connection.
+  // Fetch the endpoint to be configured, and configure it.
+  ep0_in  = usb_preinit_endpoint_from_address((uint8_t)0x00);
+  ep0_out = usb_preinit_endpoint_from_address((uint8_t)0x80);
+  if(!ep0_in || !ep0_out) {
+      return;
+  }
+
+  // And initialize the endpoint.
+  usb_endpoint_init_without_descriptor(ep0_in,  max_packet_size, USB_TRANSFER_TYPE_CONTROL);
+  usb_endpoint_init_without_descriptor(ep0_out, max_packet_size, USB_TRANSFER_TYPE_CONTROL);
+}
+
+
 /**
  * Sets up the GreatDancer to make a USB connection, resetting the device
  * if necessary. Enables USB pull-ups to begin the enumeration process.
@@ -133,7 +143,7 @@ usb_request_status_t usb_vendor_request_greatdancer_connect(
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 
 		usb_controller_reset(&usb_devices[1]);
-		set_up_greatdancer();
+		set_up_greatdancer(endpoint->setup.value);
 
 		// Note that we call usb_controller_run and /not/ usb_run.
 		// This in particular leaves all interrupts masked in the NVIC
