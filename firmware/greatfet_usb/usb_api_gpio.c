@@ -133,6 +133,62 @@ usb_request_status_t usb_vendor_request_gpio_write(
 }
 
 
+/* Read GPIO input pins
+ 	 Setup packet:
+	 	 wLength: max count of bytes to return (host typically sends 0xFF)
+	 Data packet:
+	 	 array of uint8_t where GPIO input states are packed as follows:
+			 byte 0, bit 7: gpio_in[0]
+			 byte 0, bit 6: gpio_in[1]
+			 ...
+			 byte 0, bit 0: gpio_in[7]
+			 byte 1, bit 7: gpin_in[8]
+			 ...
+ */
+usb_request_status_t usb_vendor_request_gpio_read(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	uint8_t gpio_index;
+	uint8_t buffer_index;
+	uint8_t buffer_count;
+	uint8_t bit_mask;
+	struct gpio_t gpio;
+
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		buffer_index = 0;
+		gpio_buffer[buffer_index] = 0;
+		bit_mask = 0x80;
+
+		for (gpio_index=0; gpio_index<gpio_in_count; gpio_index++) {
+			gpio = gpio_in[gpio_index];
+			if (gpio_read(&gpio)) {
+				gpio_buffer[buffer_index] |= bit_mask;
+			}
+
+			if (bit_mask == 0x01) {
+				bit_mask = 0x80;
+				gpio_buffer[++buffer_index] = 0;
+			} else {
+				bit_mask >>= 1;
+			}
+		}
+
+		buffer_count = gpio_in_count / 8;
+		if (gpio_in_count % 8 != 0) {
+			buffer_count++;
+		}
+
+		if (buffer_count > endpoint->setup.length) {
+			buffer_count = endpoint->setup.length;
+		}
+
+		usb_transfer_schedule_block(endpoint->in, gpio_buffer, buffer_count, NULL, NULL);
+		usb_transfer_schedule_ack(endpoint->out);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+
 /* Reset any registered GPIO pins back to their default state and
  * clear all registrations.
  */

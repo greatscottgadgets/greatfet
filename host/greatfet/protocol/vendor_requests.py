@@ -100,6 +100,7 @@ requests = (
     'HEARTBEAT_STOP',
 
     'GPIO_RESET',
+    'GPIO_READ',
 )
 
 def _create_module_level_constants():
