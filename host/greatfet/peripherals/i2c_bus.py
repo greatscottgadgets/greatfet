@@ -40,7 +40,7 @@ class I2CBus(GreatFETPeripheral):
 
     def __init__(self, board, name='i2c bus', buffer_size=255):
         """
-            Initialies a new I2C bus.
+            Initialize a new I2C bus.
 
             Args:
                 board -- The GreatFET board whose I2C bus we want to control.

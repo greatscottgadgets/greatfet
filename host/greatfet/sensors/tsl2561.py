@@ -63,7 +63,7 @@ class TSL256X(I2CDevice, GreatFETSensor):
 
     def __init__(self, bus, address=0x39, suffix=''):
         """
-        Initialies a new generic TSL256x light sensor.
+        Initialize a new generic TSL256x light sensor.
 
         Args:
             bus -- An object representing the I2C bus to talk on. For a

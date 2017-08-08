@@ -40,7 +40,7 @@ class I2CDevice(GreatFETPeripheral):
 
     def __init__(self, bus, address, name='i2c device'):
         """
-            Initialies a new generic I2C device.
+            Initialize a new generic I2C device.
 
             Args:
                 bus -- An object representing the I2C bus on which this device
