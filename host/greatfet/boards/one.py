@@ -28,9 +28,10 @@
 #
 
 from ..board import GreatFETBoard
-from ..peripherals.spi_flash import SPIFlash
+from ..peripherals.gpio import GPIO
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
+from ..peripherals.spi_flash import SPIFlash
 
 
 class GreatFETOne(GreatFETBoard):
@@ -58,3 +59,5 @@ class GreatFETOne(GreatFETBoard):
         # hacking/experimentation.
         self.i2c = self.i2c_busses[0]
         self.spi = self.spi_busses[0]
+
+        self.gpio = GPIO(self)
