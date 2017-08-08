@@ -27,9 +27,117 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-"""
-GPIO pins
-"""
+
+from ..peripheral import GreatFETPeripheral
+from ..protocol import vendor_requests
+
+
+class GPIO(GreatFETPeripheral):
+    """
+    Interact with the GPIO lines on a GreatFET board
+    """
+
+    def __init__(self, board):
+        """
+        Args:
+            board -- GreatFET board whose GPIO lines are to be controlled
+        """
+        self.board = board
+        # XXX it's necessary to reset the state of all GPIO on the GreatFET
+        # here because the firmware currently provides no way to read its
+        # existing configuration; this should be fixed so GPIO state is never
+        # changed unless the user requests to change it.
+        self.reset()
+
+    def reset(self):
+        """
+        Reset the state of all GPIO lines.  This changes all lines back
+        to the power-on defaults.
+        """
+        self.board.vendor_request_out(vendor_requests.GPIO_RESET)
+
+        # clear mappings of lines (port, pin) to the indexes the firmware uses
+        # in its gpio_in[] and gpio_out[] arrays
+        # {(port, pin): index, (port, pin): index, ...}
+        self._inputs = {}
+        self._outputs = {}
+
+    def setup(self, line, direction):
+        """
+        Configure a GPIO line for use as an input or output.  This must be
+        called before the line can be used by other functions.
+
+        Args:
+            line -- (port, pin); typically a tuple from J1, J2, J7 below
+            direction -- Directions.IN (input) or Directions.OUT (output)
+
+        TODO: allow pull-up/pull-down resistors to be configured for inputs
+        """
+        if direction == Directions.IN:
+            this_dict, other_dict = self._inputs, self._outputs
+            num_inputs = 1
+        else:
+            this_dict, other_dict = self._outputs, self._inputs
+            num_inputs = 0
+
+        if this_dict.get(line) is None:
+            # register this line if it isn't already registered
+            self.board.vendor_request_out(vendor_requests.GPIO_REGISTER,
+                value=num_inputs, data=line)
+            # save the index that the firmware should have assigned it
+            index = len(this_dict)
+            this_dict[line] = index
+
+        if line in other_dict:
+            # if the line was previously in the other direction, mark that old
+            # registration as unusable.  firmware doesn't support unregistering
+            # so the entry must be kept in the dict to preserve the count.
+            other_dict[line] = None
+
+    def output(self, line, state):
+        """
+        Set the state of an output line.  The line must have previously been
+        configured as an output using setup().
+
+        Args:
+            line -- (port, pin); typically a tuple from J1, J2, J7 below
+            state -- True sets line high, False sets line low
+        """
+        gpio_out_index = self._outputs.get(line)
+        if gpio_out_index is None:
+            raise ValueError("GPIO line %s not set up as output" % repr(line))
+
+        self.board.vendor_request_out(vendor_requests.GPIO_WRITE,
+            data=[gpio_out_index, int(state)])
+
+    def input(self, line):
+        """
+        Get the state of an input line.  The line must have previously been
+        configured as an output using setup().
+
+        Args:
+            line -- (port, pin); typically a tuple from J1, J2, J7 below
+
+        Return:
+            bool -- True if line is high, False if line is low
+        """
+        gpio_in_index = self._inputs.get(line)
+        if gpio_in_index is None:
+            raise ValueError("GPIO line %s not set up as input" % repr(line))
+
+        data = self.board.vendor_request_in(vendor_requests.GPIO_READ,
+            length=255)
+
+        byte = gpio_in_index // 8
+        bit = 7 - (gpio_in_index % 8)
+        return data[byte] & (2**bit) != 0
+
+
+class Directions(object):
+    """"Use for configuring a GPIO line as input or output"""
+    IN = 0
+    OUT = 1
+
 
 class J1(object):
     """GreatFET One header J1 pins and their LPC GPIO (port, pin) equivalents"""
