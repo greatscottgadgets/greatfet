@@ -83,7 +83,7 @@ void sdir_tx_stop() {
 
 void setup_tx_pins() {
 	/* GPIO Tx pins */
-#ifndef NXP_XPLORER
+#ifdef GREATFET_ONE
 	int i;
 	scu_pinmux(SCU_PINMUX_GPIO1_0, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_GPIO1_1, SCU_GPIO_FAST | SCU_CONF_FUNCTION0);
@@ -206,7 +206,7 @@ static void sdir_rx_start() {
 	sgpio_clock_out_configure(20);
 
 	/* Enable Gladiolus parts */
-#ifndef NXP_XPLORER
+#ifdef GREATFET_ONE
 	scu_pinmux(SCU_PINMUX_GPIO5_3, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
 	scu_pinmux(SCU_PINMUX_GPIO5_5, SCU_GPIO_FAST | SCU_CONF_FUNCTION4);
 #endif

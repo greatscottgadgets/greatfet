@@ -26,3 +26,7 @@
 #ifdef NXP_XPLORER
 #include <xplorer_pins.h>
 #endif
+
+#ifdef RAD1O_BADGE
+#include <rad1o_pins.h>
+#endif

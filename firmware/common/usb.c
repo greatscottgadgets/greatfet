@@ -90,6 +90,7 @@ static void usb_phy_enable(const usb_device_t* const device) {
 		/* Enable the USB1 FS PHY. */
 		SCU_SFSUSB = 0x12;
 
+#ifdef BOARD_CAPABILITY_USB1_SENSE_VBUS
 		/*
 		 * HACK: The USB1 PHY will only run if we tell it VBUS is
 		 * present by setting SFSUSB bit 5. Shortly, we should use
@@ -98,6 +99,15 @@ static void usb_phy_enable(const usb_device_t* const device) {
 		 * say VBUS is always there.
 		 */
 		SCU_SFSUSB |= (1 << 5);
+#else
+		/*
+		 * If we don't have the ability to sense VBUS, lie and pretend that we
+		 * always detect it. This actually works pretty perfectly for pretty much
+		 * all USB hosts, even if it's in violation of the spec-- which says we
+		 * shouldn't drive current through D+/D- until VBUS is present.
+		 */
+		SCU_SFSUSB |= (1 << 5);
+#endif
 	}
 }
 

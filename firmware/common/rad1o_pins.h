@@ -1,39 +1,15 @@
 /*
- * Copyright 2016 Kyle J. Temkin <kyle@ktemkin.com>
+ * Copyright 2017 K. J. Temkin <k@ktemkin.com>
  * Copyright 2015 Dominic Spill <dominicgs@gmail.com>
  *
- * This file is part of GreatFET.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * Pins for the CCCamp 2015 rad1o badge.
  */
 
-#ifndef __XPLORER_PINS_H
-#define __XPLORER_PINS_H
+#ifndef __RAD1O_PINS_H
+#define __RAD1O_PINS_H
 
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
-
-/* NXP populates the RTC crystal, so use of the RTC is allowed. */
-#define BOARD_CAPABILITY_RTC
-
-/* We can detect whether USB1's VBUS is present. */
-#define BOARD_CAPABILITY_USB1_SENSE_VBUS
-
-/* We can provide VBUS to devices on USB1. */
-#define BOARD_CAPABILITY_USB1_PROVIDE_VBUS
 
 /*
  * SCU PinMux
@@ -41,31 +17,43 @@
 
 /* GPIO Output PinMux */
 
-#define NUM_LEDS 2
+#define NUM_LEDS 4
 
-#define SCU_PINMUX_LED1     (P2_11)  /* GPIO1[11] on P2_11 */
-#define SCU_PINMUX_LED2     (P2_12)  /* GPIO2[12] on P2_12 */
+#define SCU_PINMUX_LED1     (P4_1)   /* GPIO2[1] */
+#define SCU_PINMUX_LED2     (P4_2)   /* GPIO2[2] */
+#define SCU_PINMUX_LED3     (P6_12)  /* GPIO2[8] */
+#define SCU_PINMUX_LED4     (PB_6)   /* GPIO5[26] */
 
-#define PIN_LED1            (11) /* GPIO3[14] on P7_6 */
-#define PIN_LED2            (12)  /* GPIO2[1] on P4_1 */
+#define PIN_LED1            (1)
+#define PIN_LED2            (2)
+#define PIN_LED3            (8)
+#define PIN_LED4            (26)
 
-#define PORT_LED1           (1) /* PORT for LED1, 3, 4 */
-#define PORT_LED2           (1) /* PORT for LED2 */
+#define PORT_LED1           (2)
+#define PORT_LED2           (2)
+#define PORT_LED3           (2)
+#define PORT_LED4           (5)
 
 /* GPIO Output PinMux */
 static const struct gpio_t gpio_led[NUM_LEDS] = {
 	GPIO(PORT_LED1,  PIN_LED1),
-	GPIO(PORT_LED2,  PIN_LED2)
+	GPIO(PORT_LED2,  PIN_LED2),
+	GPIO(PORT_LED3,  PIN_LED3),
+	GPIO(PORT_LED4,  PIN_LED4)
 };
 
 static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
   SCU_PINMUX_LED1,
   SCU_PINMUX_LED2,
+  SCU_PINMUX_LED3,
+  SCU_PINMUX_LED4
 };
 
 static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
   SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
   SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
+  SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
+  SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4,
 };
 
 /* GPIO Input PinMux */
@@ -117,9 +105,9 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_FLASH_HOLD      (P3_4) /* GPIO1[14] on P3_4 */
 #define SCU_FLASH_WP        (P3_5) /* GPIO1[15] on P3_5 */
 
-#define ONBOARD_FLASH_DEVICE_ID  0x15 /* Expected device_id for S25FL032P */
+#define ONBOARD_FLASH_DEVICE_ID  0x14 /* Expected device_id for W25Q16DV */
 #define ONBOARD_FLASH_PAGE_LEN   256U
-#define ONBOARD_FLASH_NUM_PAGES  16384U
+#define ONBOARD_FLASH_NUM_PAGES  8192U
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
 
 /* TODO add other Pins */
@@ -148,17 +136,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 
 #define SCU_PINMUX_GP_CLKIN	(P4_7)
 
-#define SCU_PINMUX_USB1_SENSE    (P6_11) /* GPIO3[7] */
-#define SCU_PINMUX_USB1_EN       (P6_12) /* GPIO2[8] */
-#define SCU_PINMUX_USB1_FAULT    (P7_3)  /* GPIO3[11] */
+/* Use the large, red LED as the heartbeat indicator. */
+#define HEARTBEAT_LED LED4
 
-#define SCU_PINMUX_USB1_EN_PORT        (2)
-#define SCU_PINMUX_USB1_SENSE_PORT     (3)
-
-#define SCU_PINMUX_USB1_EN_PIN         (8)
-#define SCU_PINMUX_USB1_SENSE_PIN      (7)
-
-/* Use the first LED for the heartbeat indicator. */
-#define HEARTBEAT_LED LED1
-
-#endif /* __XPLORER_PINS_H */
+#endif /* __RAD1O_PINS_H */

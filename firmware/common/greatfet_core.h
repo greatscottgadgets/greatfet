@@ -42,6 +42,7 @@ extern "C"
 /* hardware identification number */
 #define BOARD_ID_ONE 0
 #define BOARD_ID_XPLORER  1
+#define BOARD_ID_RAD1O  2
 
 #ifdef GREATFET_ONE
 #define BOARD_ID BOARD_ID_ONE
@@ -49,6 +50,10 @@ extern "C"
 
 #ifdef NXP_XPLORER
 #define BOARD_ID BOARD_ID_XPLORER
+#endif
+
+#ifdef RAD1O_BADGE
+#define BOARD_ID BOARD_ID_RAD1O
 #endif
 
 

@@ -26,7 +26,11 @@
 #include "usb_queue.h"
 #include "usb_endpoint.h"
 
+#include "pins.h"
+
 volatile bool heartbeat_mode_enabled = true;
+
+#ifdef BOARD_CAPABILITY_RTC
 
 /* Poll current RTC second and toggle the heartbeat LED if it has changed.
    This is called from the main loop.  It's polled instead of an ISR so that
@@ -41,6 +45,14 @@ void heartbeat_mode(void) {
     oldsec = newsec;
   }
 }
+
+#else
+	/* Fall back to the old LED behavior for devices that don't support an RTC. */
+	void heartbeat_mode(void) {
+		led_toggle(HEARTBEAT_LED);
+		delay(10000000);
+	}
+#endif
 
 usb_request_status_t usb_vendor_request_heartbeat_start(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
