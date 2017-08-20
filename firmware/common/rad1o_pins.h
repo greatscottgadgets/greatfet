@@ -136,4 +136,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 
 #define SCU_PINMUX_GP_CLKIN	(P4_7)
 
+/* Use the large, red LED as the heartbeat indicator. */
+#define HEARTBEAT_LED LED4
+
 #endif /* __RAD1O_PINS_H */

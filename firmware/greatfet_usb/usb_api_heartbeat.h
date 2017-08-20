@@ -26,8 +26,6 @@
 #include <usb_type.h>
 #include <usb_request.h>
 
-#define HEARTBEAT_LED LED1
-
 extern volatile bool heartbeat_mode_enabled;
 
 usb_request_status_t usb_vendor_request_heartbeat_start(

@@ -158,4 +158,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_USB1_EN_PIN         (8)
 #define SCU_PINMUX_USB1_SENSE_PIN      (7)
 
+/* Use the first LED for the heartbeat indicator. */
+#define HEARTBEAT_LED LED1
+
 #endif /* __XPLORER_PINS_H */
