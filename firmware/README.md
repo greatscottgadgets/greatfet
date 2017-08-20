@@ -31,19 +31,31 @@ cd firmware/libopencm3
 make
 ```
 
-To build and install a firmware image for the GreatFET One:
+To build a firmware image for the GreatFET One:
 ```
 cd greatfet_usb
 mkdir build
 cd build
 cmake .. -DBOARD=GREATFET_ONE
-make greatfet_usb-flash
+make greatfet_usb
 ```
 
 If building for another board, replace ```GREATFET_ONE``` with the the
 appropriate board string. The following board strings are currently recognized:
- * ```GREATFET_ONE``` for the GreatFET One
- * ```NXP_XPLORER``` for the LPC4330 Xplorer.
+ * `GREATFET_ONE` for the GreatFET One
+ * `NXP_XPLORER` for the LPC4330 Xplorer.
+ * `RAD1O_BADGE` for the CCCamp 2015 rad1o-badge.
+
+If you're running a GreatFET One or NXP Xplorer that's already flashed with a
+GreatFET firmware, you can load your newly-built firmware using the following
+command:
+
+```
+make greatfet_usb-flash
+```
+
+(You'll need the GreatFET tools installed for these commands to work. See the
+top-level readme for this firmware for more information.)
 
 Reset the device by pressing the RESET button once, and your GreatFET should
 start up running the new firmware. You can check the software version by
@@ -57,6 +69,14 @@ Found a GreatFET One!
   Part ID: 300a00a0394358
   Serial number: 0000000000000000ffffffffffffffff
 ```
+
+If you're using a GreatFET One that didn't come pre-flashed (e.g. one you made
+yourself), or using a stock NXP Xplorer, follow the instructions for DFU mode
+below to start off by running the GreatFET firmware from RAM. You can then use
+this firmware to program the device permanenly, from flash.
+
+If you're using a CCCamp rad1o badge, follow the instructions for installing
+as a l0adable below.
 
 ## DFU Mode: Running from RAM
 
@@ -91,3 +111,41 @@ command while the firmware is running.
 ```
 make greatfet_usb-flash
 ```
+
+## Installing as a l0adable
+
+If you have a rad1o badge, you can install the firmware as a "l0adable"
+applciation-- which maintains the ability to use your badge's normal functions.
+
+First, you'll need to build the GreatFET firmware using the instructions above.
+It's important that you specify the `-DBOARD=RAD1O_BADGE` option above in order
+to ensure that the firmware is built and linked as a l0adable.
+
+Next, boot your rad1o in USB Mass Storage mode by holding the joystick UP
+while powering on the device. The screen should display:
+
+```
+MSC enabled
+```
+
+To install the GreatFET application, find the `greatfet_usb.bin` file, which
+should be located in:
+
+```
+# Assuming you created the 'build' directory above...
+build/greatfet_usb/greatfet_usb.bin
+```
+
+To install, you'll need to rename this binary to a filename ending in `b1n`
+on the badge's UMS device. It's recommended to do this from a terminal, rather
+than from the UI on your machine:
+
+```
+# Assuming the rad1o badge has been mounetd to /Volumes/NO\ NAME/:
+cp greatfet_usb/greatfet_usb.bin /Volumes/NO \NAME/greatfet.b1n
+```
+
+Eject the badge's USB mass storage device. You should now be able to select
+your application as a rad1o application. You can always access the list of
+applications-- and choose the startup application-- by holding LEFT on the
+joystick as you start the badge.
