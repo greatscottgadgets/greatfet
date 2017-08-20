@@ -26,6 +26,15 @@
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
 
+/* NXP populates the RTC crystal, so use of the RTC is allowed. */
+#define BOARD_CAPABILITY_RTC
+
+/* We can detect whether USB1's VBUS is present. */
+#define BOARD_CAPABILITY_USB1_SENSE_VBUS
+
+/* We can provide VBUS to devices on USB1. */
+#define BOARD_CAPABILITY_USB1_PROVIDE_VBUS
+
 /*
  * SCU PinMux
  */
@@ -52,6 +61,11 @@ static const struct gpio_t gpio_led[NUM_LEDS] = {
 static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
   SCU_PINMUX_LED1,
   SCU_PINMUX_LED2,
+};
+
+static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
+  SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
+  SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
 };
 
 /* GPIO Input PinMux */
@@ -137,4 +151,11 @@ static const scu_grp_pin_t pinmux_led[NUM_LEDS] = {
 #define SCU_PINMUX_USB1_SENSE    (P6_11) /* GPIO3[7] */
 #define SCU_PINMUX_USB1_EN       (P6_12) /* GPIO2[8] */
 #define SCU_PINMUX_USB1_FAULT    (P7_3)  /* GPIO3[11] */
+
+#define SCU_PINMUX_USB1_EN_PORT        (2)
+#define SCU_PINMUX_USB1_SENSE_PORT     (3)
+
+#define SCU_PINMUX_USB1_EN_PIN         (8)
+#define SCU_PINMUX_USB1_SENSE_PIN      (7)
+
 #endif /* __XPLORER_PINS_H */

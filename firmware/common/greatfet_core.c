@@ -43,8 +43,12 @@
 #define WAIT_CPU_CLOCK_INIT_DELAY   (10000)
 
 /* USB Target interface */
-static struct gpio_t gpio_usb1_en		= GPIO(2, 8);
-static struct gpio_t gpio_usb1_sense	= GPIO(3, 7);
+#ifdef BOARD_CAPABILITY_USB1_SENSE_VBUS
+static struct gpio_t gpio_usb1_sense	= GPIO(SCU_PINMUX_USB1_SENSE_PORT, SCU_PINMUX_USB1_SENSE_PIN);
+#endif
+#ifdef BOARD_CAPABILITY_USB1_PROVIDE_VBUS
+static struct gpio_t gpio_usb1_en	= GPIO(SCU_PINMUX_USB1_EN_PORT, SCU_PINMUX_USB1_EN_PIN);
+#endif
 
 /* CPLD JTAG interface GPIO pins */
 static struct gpio_t gpio_tdo			= GPIO(5, 18);
@@ -304,6 +308,7 @@ void cpu_clock_pll1_max_speed(void)
 }
 
 void rtc_init(void) {
+#ifdef BOARD_CAPABILITY_RTC
 		/* Enable power to 32 KHz oscillator */
 		CREG_CREG0 &= ~CREG_CREG0_PD32KHZ;
 		/* Release 32 KHz oscillator reset */
@@ -316,6 +321,7 @@ void rtc_init(void) {
 		RTC_CCR &= ~RTC_CCR_CCALEN(1);
 		/* Enable clock */
 		RTC_CCR |= RTC_CCR_CLKEN(1);
+#endif
 }
 
 void pin_setup(void) {
@@ -337,7 +343,7 @@ void pin_setup(void) {
 
 	/* Configure each of the LEDs. */
 	for (i = 0; i < NUM_LEDS; ++i) {
-		scu_pinmux(pinmux_led[i], SCU_GPIO_NOPULL);
+		scu_pinmux(pinmux_led[i], scu_type_led[i]);
 		gpio_output(&gpio_led[i]);
 		gpio_set(&gpio_led[i]); /* led off */
 	}
@@ -348,15 +354,19 @@ void pin_setup(void) {
 	/* Configure external clock in */
 	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
 
+#ifdef BOARD_CAPABILITY_USB1_PROVIDE_VBUS
 	/* Set up the load switch that we'll use if we want to play host on USB1. */
 	/* Default to off, as we don't want to dual-drive VBUS. */
 	scu_pinmux(SCU_PINMUX_USB1_EN, SCU_CONF_FUNCTION0);
 	gpio_output(&gpio_usb1_en);
 	gpio_clear(&gpio_usb1_en);
+#endif
 
+#ifdef BOARD_CAPABILITY_USB1_SENSE_VBUS
 	/* Set up the GPIO we'll be using to sense the presence of USB1 VBUS. */
 	scu_pinmux(SCU_PINMUX_USB1_SENSE, SCU_CONF_FUNCTION0);
 	gpio_input(&gpio_usb1_sense);
+#endif
 }
 
 void led_on(const led_t led) {

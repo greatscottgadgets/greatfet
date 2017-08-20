@@ -4,6 +4,7 @@
 # Copyright 2012 Benjamin Vernoux <titanmkd@gmail.com>
 # Copyright 2012 Jared Boone <jared@sharebrained.com>
 # Copyright 2016 Dominic Spill <dominicgs@gmail.com>
+# Copyright 2017 K. J. Temkin <k@ktemkin.com>
 #
 # This file is part of GreatFET.
 #
@@ -60,13 +61,22 @@ if(BOARD STREQUAL "NXP_XPLORER")
 	set(MCU_PARTNO LPC4330)
 endif()
 
+if(BOARD STREQUAL "RAD1O_BADGE")
+	set(MCU_PARTNO LPC4330)
+	set(BUILD_OUTPUT_TYPE "L0ADABLE")
+endif()
+
 if(NOT DEFINED SRC_M0)
 	set(SRC_M0 "${PATH_GREATFET_FIRMWARE_COMMON}/m0_sleep.c")
 endif(NOT DEFINED SRC_M0)
 
 SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -D'VERSION_STRING=\"git-${VERSION}\"'")
 
-SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx_rom_to_ram.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+if(BUILD_OUTPUT_TYPE STREQUAL "L0ADABLE")
+	SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory_l0adable.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/lpc43xx_l0adable.ld")
+else()
+	SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx_rom_to_ram.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+endif()
 
 SET(LDSCRIPT_M4_DFU "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
 

@@ -1,42 +1,15 @@
 /*
+ * Copyright 2017 K. J. Temkin <k@ktemkin.com>
  * Copyright 2015 Dominic Spill <dominicgs@gmail.com>
  *
- * This file is part of GreatFET.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * Pins for the CCCamp 2015 rad1o badge.
  */
 
-#ifndef __GREATFET_PINS_H
-#define __GREATFET_PINS_H
+#ifndef __RAD1O_PINS_H
+#define __RAD1O_PINS_H
 
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
-
-#ifndef GREATFET_ONE
-#error greatfet_pins.h included for a non-greatfet board! Use pins.h instead!
-#endif
-
-/* We populate the RTC crystal, so use of the RTC is allowed. */
-#define BOARD_CAPABILITY_RTC
-
-/* We can detect whether USB1's VBUS is present. */
-#define BOARD_CAPABILITY_USB1_SENSE_VBUS
-
-/* We can provide VBUS to devices on USB1. */
-#define BOARD_CAPABILITY_USB1_PROVIDE_VBUS
 
 /*
  * SCU PinMux
@@ -46,20 +19,20 @@
 
 #define NUM_LEDS 4
 
-#define SCU_PINMUX_LED1     (P7_6)  /* GPIO3[14] on P7_6 */
-#define SCU_PINMUX_LED2     (P4_1)  /* GPIO2[1] on P4_1 */
-#define SCU_PINMUX_LED3     (P7_5)  /* GPIO3[13] on P7_5 */
-#define SCU_PINMUX_LED4     (P7_4)  /* GPIO3[12] on P7_4 */
+#define SCU_PINMUX_LED1     (P4_1)   /* GPIO2[1] */
+#define SCU_PINMUX_LED2     (P4_2)   /* GPIO2[2] */
+#define SCU_PINMUX_LED3     (P6_12)  /* GPIO2[8] */
+#define SCU_PINMUX_LED4     (PB_6)   /* GPIO5[26] */
 
-#define PIN_LED1            (14) /* GPIO3[14] on P7_6 */
-#define PIN_LED2            (1)  /* GPIO2[1] on P4_1 */
-#define PIN_LED3            (13) /* GPIO3[13] on P7_5 */
-#define PIN_LED4            (12) /* GPIO3[12] on P7_4 */
+#define PIN_LED1            (1)
+#define PIN_LED2            (2)
+#define PIN_LED3            (8)
+#define PIN_LED4            (26)
 
-#define PORT_LED1           (3) /* PORT for LED1, 3, 4 */
-#define PORT_LED2           (2) /* PORT for LED2 */
-#define PORT_LED3           (3) /* PORT for LED1, 3, 4 */
-#define PORT_LED4           (3) /* PORT for LED1, 3, 4 */
+#define PORT_LED1           (2)
+#define PORT_LED2           (2)
+#define PORT_LED3           (2)
+#define PORT_LED4           (5)
 
 /* GPIO Output PinMux */
 static const struct gpio_t gpio_led[NUM_LEDS] = {
@@ -80,9 +53,8 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
   SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
   SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
   SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
-  SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0,
+  SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4,
 };
-
 
 /* GPIO Input PinMux */
 #define SCU_PINMUX_BOOT0    (P1_1)  /* GPIO0[8] on P1_1 */
@@ -120,6 +92,10 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_SGPIO13  (P4_8)
 #define SCU_PINMUX_SGPIO14  (P4_9)
 #define SCU_PINMUX_SGPIO15  (P4_10)
+#define SCU_PINMUX_GPIO5_3  (P2_3)
+#define SCU_PINMUX_GPIO5_5  (P2_5)
+
+
 
 /* SPI flash */
 #define SCU_SSP0_MISO       (P3_6)
@@ -134,25 +110,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define ONBOARD_FLASH_NUM_PAGES  8192U
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
 
-
 /* TODO add other Pins */
-#define SCU_PINMUX_GPIO1_0  (P1_7)  /* GPIO1[0] */
-#define SCU_PINMUX_GPIO1_1  (P1_8)  /* GPIO1[1] */
-#define SCU_PINMUX_GPIO1_2  (P1_9)  /* GPIO1[2] */
-#define SCU_PINMUX_GPIO1_3  (P1_10)  /* GPIO1[3] */
-#define SCU_PINMUX_GPIO1_4  (P1_11)  /* GPIO1[4] */
-#define SCU_PINMUX_GPIO1_5  (P1_12)  /* GPIO1[5] */
-#define SCU_PINMUX_GPIO1_6  (P1_13)  /* GPIO1[6] */
-#define SCU_PINMUX_GPIO1_7  (P1_14)  /* GPIO1[7] */
-
-#define SCU_PINMUX_GPIO1_8  (P1_5)  /* GPIO1[8] */
-#define SCU_PINMUX_GPIO1_9  (P1_6)  /* GPIO1[9] */
-#define SCU_PINMUX_GPIO2_9  (P5_0)  /* GPIO2[9] */
-#define SCU_PINMUX_GPIO2_11 (P5_2)  /* GPIO2[11] */
-#define SCU_PINMUX_GPIO2_12 (P5_3)  /* GPIO2[12] */
-#define SCU_PINMUX_GPIO2_14 (P5_5)  /* GPIO2[14] */
-#define SCU_PINMUX_GPIO2_15 (P5_6)  /* GPIO2[15] */
-
 #define SCU_PINMUX_GPIO3_8  (P7_0)  /* GPIO3[8] */
 #define SCU_PINMUX_GPIO3_9  (P7_1)  /* GPIO3[9] */
 #define SCU_PINMUX_GPIO3_10 (P7_2)  /* GPIO3[10] */
@@ -161,10 +119,6 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_GPIO3_13 (P7_5)  /* GPIO3[13] */
 #define SCU_PINMUX_GPIO3_14 (P7_6)  /* GPIO3[14] */
 #define SCU_PINMUX_GPIO3_15 (P7_7)  /* GPIO3[15] */
-#define SCU_PINMUX_GPIO5_3  (P2_3)  /* GPIO5[3] */
-#define SCU_PINMUX_GPIO5_5  (P2_5)  /* GPIO5[5] */
-
-#define SCU_PINMUX_GPIO1_8  (P1_5)  /* GPIO1[8] */
 
 #define SCU_PINMUX_SD_POW   (P1_5)  /* GPIO1[8] */
 #define SCU_PINMUX_SD_CMD   (P1_6)  /* GPIO1[9] */
@@ -182,14 +136,4 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 
 #define SCU_PINMUX_GP_CLKIN	(P4_7)
 
-#define SCU_PINMUX_USB1_SENSE    (P6_11) /* GPIO3[7] */
-#define SCU_PINMUX_USB1_EN       (P6_12) /* GPIO2[8] */
-#define SCU_PINMUX_USB1_FAULT    (P7_3)  /* GPIO3[11] */
-
-#define SCU_PINMUX_USB1_EN_PORT        (2)
-#define SCU_PINMUX_USB1_SENSE_PORT     (3)
-
-#define SCU_PINMUX_USB1_EN_PIN         (8)
-#define SCU_PINMUX_USB1_SENSE_PIN      (7)
-
-#endif /* __GREATFET_PINS_H */
+#endif /* __RAD1O_PINS_H */
