@@ -11,6 +11,10 @@
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
 
+#ifndef RAD1O_BADGE
+#error pins_rad1o.h included for a non-rad1o board! Use pins.h instead!
+#endif
+
 /*
  * SCU PinMux
  */
