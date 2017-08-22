@@ -115,7 +115,7 @@ make greatfet_usb-flash
 ## Installing as a l0adable
 
 If you have a rad1o badge, you can install the firmware as a "l0adable"
-applciation-- which maintains the ability to use your badge's normal functions.
+application-- which maintains the ability to use your badge's normal functions.
 
 First, you'll need to build the GreatFET firmware using the instructions above.
 It's important that you specify the `-DBOARD=RAD1O_BADGE` option above in order
@@ -141,7 +141,7 @@ on the badge's UMS device. It's recommended to do this from a terminal, rather
 than from the UI on your machine:
 
 ```
-# Assuming the rad1o badge has been mounetd to /Volumes/NO\ NAME/:
+# Assuming the rad1o badge has been mounted to /Volumes/NO\ NAME/:
 cp greatfet_usb/greatfet_usb.bin /Volumes/NO \NAME/greatfet.b1n
 ```
 
