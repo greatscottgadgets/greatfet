@@ -26,7 +26,7 @@
 #include <libopencm3/lpc43xx/scu.h>
 
 #ifndef GREATFET_ONE
-#error greatfet_pins.h included for a non-greatfet board! Use pins.h instead!
+#error pins_greatfet.h included for a non-greatfet board! Use pins.h instead!
 #endif
 
 /* We populate the RTC crystal, so use of the RTC is allowed. */
