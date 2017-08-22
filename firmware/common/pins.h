@@ -20,13 +20,13 @@
  */
 
 #ifdef GREATFET_ONE
-#include <greatfet_pins.h>
+#include <pins_greatfet.h>
 #endif
 
 #ifdef NXP_XPLORER
-#include <xplorer_pins.h>
+#include <pins_xplorer.h>
 #endif
 
 #ifdef RAD1O_BADGE
-#include <rad1o_pins.h>
+#include <pins_rad1o.h>
 #endif
