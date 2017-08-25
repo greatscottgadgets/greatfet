@@ -47,6 +47,7 @@ void spi1_init(spi_target_t* const target) {
 	scu_pinmux(SCU_SSP1_MOSI, (SCU_SSP_IO | SCU_CONF_FUNCTION5));
 	scu_pinmux(SCU_SSP1_SCK,  (SCU_SSP_IO | SCU_CONF_FUNCTION1));
 	scu_pinmux(SCU_SSP1_SSEL, (SCU_GPIO_FAST | SCU_CONF_FUNCTION0));
+	(void) target;
 }
 
 static spiflash_driver_t spi1_target_drv = {
