@@ -1,0 +1,60 @@
+language: c
+
+cache: apt
+
+sudo: false
+dist: trusty
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
+    - os: linux
+      compiler: clang
+
+before_script:
+  - export CFLAGS="-Wall -Wextra -Werror"
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap PX4/homebrew-px4; brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc-arm-none-eabi dfu-util; fi
+  # For virtualenv(?) reasons we can't apt-get install python-yaml
+  - pip install PyYAML
+
+script:
+  - cd host
+  - python setup.py build
+  - python setup.py install
+  - cd ..
+  - mkdir firmware/build-greatfet_one
+  - mkdir firmware/build-nxp_xplorer
+  - mkdir firmware/build-rad1o_badge
+  - cd firmware/libopencm3
+  - make
+  - cd ../build-greatfet_one
+  - cmake ..
+  - make
+  - cd ../build-nxp_xplorer
+  - cmake -DBOARD=NXP_XPLORER ..
+  - make
+  - cd ../build-rad1o_badge
+  - cmake -DBOARD=RAD1O_BADGE ..
+  - make
+
+addons:
+  apt:
+    sources:
+      - debian-sid
+    packages:
+      - python-usb
+      - gcc-arm-none-eabi
+      - libnewlib-arm-none-eabi
+      - dfu-util
