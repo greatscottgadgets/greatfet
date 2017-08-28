@@ -1,0 +1,16 @@
+Here is an inevitably incomplete list of MUCH-APPRECIATED CONTRIBUTORS --
+people who have submitted patches, reported bugs, added translations, helped
+answer newbie questions, and generally made GreatFET that much better:
+
+	Ben Gamari
+	Benjamin Vernoux <titanmkd@gmail.com>
+	Dominic Spill <dominicgs@gmail.com>
+	Jared Boone <jared@sharebrained.com>
+	K. J. Temkin <k@ktemkin.com>
+	Michael Ossmann <mike@ossmann.com>
+	Mike Naberezny <mike@naberezny.com>
+	Schuyler St. Leger <schuyler.st.leger@gmail.com>
+
+A large amount of firmware comes from the HackRF project, copyright
+should be determined from the git commit history of both this project and
+the commits at https://github.com/mossmann/hackrf

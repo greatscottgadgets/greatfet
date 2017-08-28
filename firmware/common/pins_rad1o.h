@@ -1,7 +1,5 @@
 /*
- * Copyright 2017 K. J. Temkin <k@ktemkin.com>
- * Copyright 2015 Dominic Spill <dominicgs@gmail.com>
- *
+ * This file is part of GreatFET
  * Pins for the CCCamp 2015 rad1o badge.
  */
 
