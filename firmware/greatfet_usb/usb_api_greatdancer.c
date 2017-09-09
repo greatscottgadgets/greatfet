@@ -450,7 +450,12 @@ usb_request_status_t usb_vendor_request_greatdancer_set_address(
 		// request is compleed, so we use _immediate. If this ever changes,
 		// this will need to be re-evaluated to see if we should use deferred.
 		//
-		usb_set_address_immediate(&usb_devices[1], address);
+		if(endpoint->setup.index)
+			usb_set_address_deferred(&usb_devices[1], address);
+		else
+			usb_set_address_immediate(&usb_devices[1], address);
+
+
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
