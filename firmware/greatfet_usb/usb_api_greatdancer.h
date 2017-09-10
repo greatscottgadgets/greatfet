@@ -21,6 +21,11 @@ enum greatdancer_status_request {
 };
 typedef enum greatdancer_status_request greatdancer_status_request_t;
 
+enum greatdancer_quirks {
+	MANUAL_SET_ADDRESS = 0x01,
+};
+typedef enum greatdancer_quirks greatdancer_quirks_t;
+
 //
 // XXX: These are just being added on as I hack them in.
 // Once I know which ones and what form they'll take, I'll collapse them

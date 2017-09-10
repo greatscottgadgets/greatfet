@@ -688,6 +688,18 @@ void usb_bus_reset(
 	//}
 }
 
+void usb_set_irq_handler(
+	usb_device_t* const device,
+	vector_table_entry_t isr
+) {
+	if( device->controller == 0 ) {
+		vector_table.irq[NVIC_USB0_IRQ] = isr;
+	}
+	if( device->controller == 1 ) {
+		vector_table.irq[NVIC_USB1_IRQ] = isr;
+	}
+}
+
 static void usb_interrupt_enable(
 	usb_device_t* const device
 ) {
@@ -759,7 +771,7 @@ void usb_run(
 	usb_controller_run(device);
 }
 
-static void copy_setup(usb_setup_t* const dst, const volatile uint8_t* const src) {
+void usb_copy_setup(usb_setup_t* const dst, const volatile uint8_t* const src) {
 	dst->request_type = src[0];
 	dst->request = src[1];
 	dst->value_l = src[2];
@@ -843,11 +855,11 @@ static void usb_check_for_setup_events(const usb_device_t* const device) {
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, i),
 						device);
 				if( endpoint && endpoint->setup_complete ) {
-					copy_setup(&endpoint->setup,
+					usb_copy_setup(&endpoint->setup,
 							   usb_queue_head(endpoint->address, endpoint->device)->setup);
 					// TODO: Clean up this duplicated effort by providing
 					// a cleaner way to get the SETUP data.
-					copy_setup(&endpoint->in->setup,
+					usb_copy_setup(&endpoint->in->setup,
 							   usb_queue_head(endpoint->address, endpoint->device)->setup);
 					usb_clear_endpoint_setup_status(endptsetupstat_bit, device);
 					endpoint->setup_complete(endpoint);

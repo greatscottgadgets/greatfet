@@ -20,6 +20,8 @@
 #include "usb_endpoint.h"
 #include "usb_request.h"
 
+static void greatdancer_usb_isr(void);
+
 struct _endpoint_setup_command_t {
 	uint8_t address;
 	uint16_t max_packet_size;
@@ -32,6 +34,12 @@ typedef char packet_buffer[512];
 packet_buffer endpoint_buffer[NUM_USB1_ENDPOINTS];
 uint32_t total_received_data[NUM_USB1_ENDPOINTS];
 
+/* Stores the current status of the USB controller, as managed by our interrupts. */
+static uint32_t usbsts_deferred;
+
+/* True iff we should automatically and transparently handle SET_ADDRESS requests. */
+static bool automatically_handle_set_address = true;
+
 /**
  * When using the GreatDancer, all events are generated
  * and handled on the host side, so we don't need to generate
@@ -43,6 +51,7 @@ const usb_request_handlers_t usb1_request_handlers = {
 	.vendor = NULL,
 	.reserved = NULL,
 };
+
 
 
 /**
@@ -128,10 +137,13 @@ usb_request_status_t usb_vendor_request_greatdancer_connect(
 		usb_controller_reset(&usb_devices[1]);
 		set_up_greatdancer(endpoint->setup.value);
 
-		// Note that we call usb_controller_run and /not/ usb_run.
-		// This in particular leaves all interrupts masked in the NVIC
-		// so we can poll them manually from the host side.
-		usb_controller_run(&usb_devices[1]);
+		// Apply the platform quirks we'll be using
+		automatically_handle_set_address = !(endpoint->setup.index & MANUAL_SET_ADDRESS);
+
+		// Set up our IRQ handler and enable the USB controller.
+		// From this point forward, the greatdancer_usb_isr can be generated.
+		usb_set_irq_handler(&usb_devices[1], greatdancer_usb_isr);
+		usb_run(&usb_devices[1]);
 
 		usb_transfer_schedule_ack(endpoint->in);
 	}
@@ -208,6 +220,19 @@ usb_request_status_t usb_vendor_request_greatdancer_disconnect(
 	return USB_REQUEST_STATUS_OK;
 }
 
+/**
+ * Handle requests for the USB controller's status. Normally, we'd
+ * read this from the USBSTS register, and clear the USBSTS register;
+ * but our interrupt routine should have already done this for us.
+ *
+ * Instead, read its results.
+ */
+static uint32_t greatdancer_get_usb_status()
+{
+	// Read the currently pending events, and clear them.
+	return __sync_fetch_and_and(&usbsts_deferred, ~USB1_USBINTR_D);
+}
+
 
 /**
  * Retrieves the value of a the stauts register corresponding to a given
@@ -221,7 +246,7 @@ static uint32_t get_status_register(greatdancer_status_request_t index,
 		const usb_device_t* const device)
 {
 	switch(index) {
-		case GET_USBSTS: return usb_get_status(device);
+		case GET_USBSTS: return greatdancer_get_usb_status();
 		case GET_ENDPTSETUPSTAT: return usb_get_endpoint_setup_status(device);
 		case GET_ENDPTCOMPLETE: return usb_get_endpoint_complete(device);
 		case GET_ENDPTSTATUS: return usb_get_endpoint_ready(device);
@@ -530,4 +555,66 @@ usb_request_status_t usb_vendor_request_greatdancer_clean_up_transfer(
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
+}
+
+/**
+ * There are a few events we'll often want to handle asynchronously of
+ * the host-- including events with very tight timing requirements. We
+ * check for them here, and handle them if appropriate.
+ */
+static void greatdancer_check_for_asynchronous_events()
+{
+
+	// Read the status of all current endpoints...
+	const uint32_t endptsetupstat = usb_get_endpoint_setup_status(&usb_devices[1]);
+	const uint32_t endptsetupstat_bit = USB1_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << 0);
+
+	// Quirk 1:
+	// Check for SET_ADDRESS events on EP0.
+	
+	// If we have an event on EP0::out, check to see if it's a setup event.
+	if( endptsetupstat && endptsetupstat_bit ) {
+		usb_endpoint_t* const endpoint = &usb1_endpoint_control_out;
+
+		usb_copy_setup(&endpoint->setup, usb_queue_head(endpoint->address, endpoint->device)->setup);
+		usb_copy_setup(&endpoint->in->setup, usb_queue_head(endpoint->address, endpoint->device)->setup);
+
+		// Check to see if this is a standard SET_ADDRESS request,
+		// and check to see if we want to handle set_address requests.
+		if( (endpoint->setup.request == USB_STANDARD_REQUEST_SET_ADDRESS) &&
+				(endpoint->setup.request_type == 0x00) &&
+				automatically_handle_set_address) {
+			uint8_t address = endpoint->setup.value_l;
+
+			// Mark this particular event as handled...
+			usb_clear_endpoint_setup_status(endptsetupstat_bit, &usb_devices[1]);
+
+			// Transparently adopt the address specified for this device.
+			usb_set_address_deferred(&usb_devices[1], address);
+			usb_transfer_schedule_ack(endpoint->in);
+		}
+	}
+}
+
+/**
+ * Handle interrupts for the Greatdancer's USB controller.
+ */
+static void greatdancer_usb_isr(void) {
+	const uint32_t status = usb_get_status(&usb_devices[1]);
+
+	if( status == 0 ) {
+		// Nothing to do.
+		return;
+	}
+
+	// If a USB event has happened, handle it.
+	if( status & USB1_USBSTS_D_UI ) {
+		greatdancer_check_for_asynchronous_events();
+	}
+
+	// We've now handled everything we wanted to-- and cleared the USBSTS register
+	// of its status bits. This is necessary, so this interrupt doesn't re-fire
+	// continuously, but it also steals information that the host wants. We thus
+	// store the remaining USBSTS bits our our module's state.
+	__sync_fetch_and_or(&usbsts_deferred, status);
 }

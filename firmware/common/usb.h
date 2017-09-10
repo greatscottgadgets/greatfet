@@ -8,6 +8,7 @@
 // TODO: Refactor to support high performance operations without having to
 // expose usb_transfer_descriptor_t. Or usb_endpoint_prime(). Or, or, or...
 #include <libopencm3/lpc43xx/usb.h>
+#include <libopencm3/cm3/vector.h>
 
 #include "usb_type.h"
 
@@ -36,6 +37,11 @@ usb_endpoint_t* usb_endpoint_from_address(
 uint_fast8_t usb_endpoint_address(
 	const usb_transfer_direction_t direction,
 	const uint_fast8_t number
+);
+
+void usb_set_irq_handler(
+	usb_device_t* const device,
+	vector_table_entry_t isr
 );
 
 void usb_device_init(
@@ -140,6 +146,12 @@ void usb_endpoint_schedule_append(
         const usb_endpoint_t* const endpoint,
         usb_transfer_descriptor_t* const tail_td,
         usb_transfer_descriptor_t* const new_td
+);
+
+
+void usb_copy_setup(
+	usb_setup_t* const dst,
+	const volatile uint8_t* const src
 );
 
 #endif//__USB_H__
