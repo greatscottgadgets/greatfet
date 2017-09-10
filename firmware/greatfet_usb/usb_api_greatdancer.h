@@ -17,7 +17,8 @@ enum greatdancer_status_request {
 	GET_USBSTS = 0,
 	GET_ENDPTSETUPSTAT = 1,
 	GET_ENDPTCOMPLETE = 2,
-	GET_ENDPTSTATUS = 3
+	GET_ENDPTSTATUS = 3,
+	GET_ENDPTNAK = 4
 };
 typedef enum greatdancer_status_request greatdancer_status_request_t;
 

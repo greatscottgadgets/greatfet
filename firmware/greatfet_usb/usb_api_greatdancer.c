@@ -35,7 +35,8 @@ packet_buffer endpoint_buffer[NUM_USB1_ENDPOINTS];
 uint32_t total_received_data[NUM_USB1_ENDPOINTS];
 
 /* Stores the current status of the USB controller, as managed by our interrupts. */
-static uint32_t usbsts_deferred;
+static volatile uint32_t endptnak_deferred;
+static volatile uint32_t usbsts_deferred;
 
 /* True iff we should automatically and transparently handle SET_ADDRESS requests. */
 static bool automatically_handle_set_address = true;
@@ -174,6 +175,10 @@ usb_request_status_t usb_vendor_request_greatdancer_set_up_endpoints(
 		int i;
 		endpoint_setup_command_t *command = NULL;
 
+		// XXX abstract me away
+		USB1_ENDPTNAKEN = 0x00;
+		USB1_ENDPTNAK  |= 0xFFFFFFFF;
+
 		// Iterate over each of the provided "endpoint setup" packets...
 		for(i = 0; i < endpoint->setup.length; i += 4) {
 			usb_endpoint_t* target_endpoint;
@@ -199,6 +204,12 @@ usb_request_status_t usb_vendor_request_greatdancer_set_up_endpoints(
 
 			// And initialize the endpoint.
 			usb_endpoint_init_without_descriptor(target_endpoint, command->max_packet_size, command->transfer_type);
+
+			// Finally, enable notifications when NAKs occur for this endpoint.
+			// TODO: Make this optional?
+			if(command->address & 0x80) {
+				usb_in_endpoint_enable_nak_interrupt(target_endpoint);
+			}
 		}
 
 		usb_transfer_schedule_ack(endpoint->in);
@@ -235,6 +246,20 @@ static uint32_t greatdancer_get_usb_status()
 
 
 /**
+ * Handle requests for the USB controller's status. Normally, we'd
+ * read this from the USBSTS register, and clear the USBSTS register;
+ * but our interrupt routine should have already done this for us.
+ *
+ * Instead, read its results.
+ */
+static uint32_t greatdancer_get_nak_status()
+{
+	// Read the currently pending events, and clear them.
+	return __sync_fetch_and_and(&endptnak_deferred, ~USB1_ENDPTNAKEN);
+}
+
+
+/**
  * Retrieves the value of a the stauts register corresponding to a given
  * greatfet_status_request_t.
  *
@@ -250,6 +275,7 @@ static uint32_t get_status_register(greatdancer_status_request_t index,
 		case GET_ENDPTSETUPSTAT: return usb_get_endpoint_setup_status(device);
 		case GET_ENDPTCOMPLETE: return usb_get_endpoint_complete(device);
 		case GET_ENDPTSTATUS: return usb_get_endpoint_ready(device);
+		case GET_ENDPTNAK: return greatdancer_get_nak_status();
 	}
 
 	// TODO: more meaningfull error handling, here?
@@ -596,6 +622,17 @@ static void greatdancer_check_for_asynchronous_events()
 	}
 }
 
+static void greatdancer_handle_naks()
+{
+		uint32_t status = USB1_ENDPTNAK;// & USB1_ENDPTNAKEN;
+
+		// Store the array of NAKs that have happened...
+		__sync_fetch_and_or(&endptnak_deferred, status);
+
+		//... and mark the relevant interrupts as serviced.
+		USB1_ENDPTNAK = status;
+}
+
 /**
  * Handle interrupts for the Greatdancer's USB controller.
  */
@@ -610,6 +647,11 @@ static void greatdancer_usb_isr(void) {
 	// If a USB event has happened, handle it.
 	if( status & USB1_USBSTS_D_UI ) {
 		greatdancer_check_for_asynchronous_events();
+	}
+
+	// If we've issued a NAK, service the relevant interrupt.
+	if (status & USB1_USBSTS_D_NAKI ) {
+		greatdancer_handle_naks();
 	}
 
 	// We've now handled everything we wanted to-- and cleared the USBSTS register

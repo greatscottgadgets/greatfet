@@ -112,6 +112,14 @@ void usb_endpoint_init_without_descriptor(
   usb_transfer_type_t transfer_type
 );
 
+void usb_in_endpoint_enable_nak_interrupt(
+	const usb_endpoint_t* const endpoint
+);
+
+void usb_in_endpoint_disable_nak_interrupt(
+	const usb_endpoint_t* const endpoint
+);
+
 void usb_endpoint_init(
 	const usb_endpoint_t* const endpoint
 );

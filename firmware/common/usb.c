@@ -752,6 +752,8 @@ void usb_device_init(
 		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh1;
 	
 		// Enable interrupts
+		// TODO: Check to see if these actually need to generate interrupts
+		// for us to read their status out of USBSTS.
 		USB1_USBINTR_D =
 			  USB1_USBINTR_D_UE
 			| USB1_USBINTR_D_UEE
@@ -759,7 +761,7 @@ void usb_device_init(
 			| USB1_USBINTR_D_URE
 			//| USB1_USBINTR_D_SRE
 			| USB1_USBINTR_D_SLE
-			//| USB1_USBINTR_D_NAKE
+			| USB1_USBINTR_D_NAKE
 			;
 	}
 }
@@ -820,6 +822,29 @@ void usb_endpoint_init_without_descriptor(
 }
 
 
+void usb_in_endpoint_enable_nak_interrupt(
+	const usb_endpoint_t* const endpoint
+) {
+	uint8_t endpoint_number = usb_endpoint_number(endpoint->address);
+
+	if( endpoint->device->controller == 0 ) {
+		USB0_ENDPTNAKEN |= USB0_ENDPTNAKEN_EPTNE(1 << endpoint_number);
+	} else {
+		USB1_ENDPTNAKEN |= USB1_ENDPTNAKEN_EPTNE(1 << endpoint_number);
+	}
+}
+
+void usb_in_endpoint_disable_nak_interrupt(
+	const usb_endpoint_t* const endpoint
+) {
+	uint8_t endpoint_number = usb_endpoint_number(endpoint->address);
+
+	if( endpoint->device->controller == 0 ) {
+		USB0_ENDPTNAKEN &= ~USB0_ENDPTNAKEN_EPTNE(1 << endpoint_number);
+	} else {
+		USB1_ENDPTNAKEN &= ~USB1_ENDPTNAKEN_EPTNE(1 << endpoint_number);
+	}
+}
 
 void usb_endpoint_init(
 	const usb_endpoint_t* const endpoint
