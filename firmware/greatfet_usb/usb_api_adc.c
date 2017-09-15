@@ -28,37 +28,40 @@ usb_request_status_t usb_vendor_request_adc_init(
 
 usb_request_status_t usb_vendor_request_read_adc(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+	uint8_t pins = 1;
+	uint8_t clkdiv = 45;
+	uint8_t clks = 0x2;
+	uint16_t value;
+
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		usb_transfer_schedule_ack(endpoint->in);
+
+		ADC0_CR = ADC_CR_SEL((uint32_t) pins) |
+		ADC_CR_CLKDIV((uint32_t) clkdiv) |
+		ADC_CR_CLKS((uint32_t) clks) |
+		ADC_CR_PDN;
+		ADC0_CR |= ADC_CR_START(1);
+
+		while(!(ADC0_DR0 & ADC_DR_DONE));
+		ADC0_CR |= ADC_CR_START(1);
+		value = (ADC0_DR0>>6) & 0x3ff;
+
+		usb_transfer_schedule_block(endpoint->in, &value, 2, NULL, NULL);
+		usb_transfer_schedule_ack(endpoint->out);
 	}
+
 	return USB_REQUEST_STATUS_OK;
 }
 
-// int currentResult=0;
-
-// //AD0 Interrupt Function
-// void adc0_isr(void) {
-// 	unsigned long dummyRead;
-// 	unsigned long ACD0_GDR_Read = ADC0_GDR;
-
-// 	//Extract Conversion Result
-// 	currentResult = (ACD0_GDR_Read>>6) & 0x3FF;
-// 	//Read to Clear Done flag , Also clears AD0 interrupt
-// 	dummyRead = ADC0_DR0;
-// 	//Signal that ISR has finished
-// 	//VICVectAddr = 0x0;
-// }
-
 #define BLK_LEN 0x4000
+
 void adc_mode(void) {
 	uint8_t pins = 1;
 	uint8_t clkdiv = 45;
 	uint8_t clks = 0x2;
 	uint16_t i, j = 0;
 
-
 // vector_table.irq[NVIC_ADC0_IRQ] = adc0_isr;
-
 	// adc_init(adc_num, pins, clkdiv, clks);
 
 	ADC0_CR = ADC_CR_SEL((uint32_t) pins) |
