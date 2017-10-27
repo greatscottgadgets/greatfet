@@ -32,7 +32,7 @@ before_install:
 script:
   - cd host
   - python setup.py build
-  - python setup.py install
+  - python setup.py --prefix=. install
   - cd ..
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
