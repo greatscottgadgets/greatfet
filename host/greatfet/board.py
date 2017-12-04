@@ -266,7 +266,7 @@ class GreatFETBoard(object):
         """Adds the standard set of LEDs to the board object.
 
         Args:
-            request -- The number of LEDS present on the board.
+            led_count -- The number of LEDS present on the board.
         """
         self.leds = {}
         for i in range(1, led_count + 1):
