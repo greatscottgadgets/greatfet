@@ -10,6 +10,7 @@ import usb
 
 from .protocol import vendor_requests
 from .errors import DeviceNotFoundError
+from .peripherals.led import LED
 
 # Default device identifiers.
 GREATFET_VENDOR_ID = 0x1d50
@@ -259,6 +260,17 @@ class GreatFETBoard(object):
         """
         return self._vendor_request(usb.ENDPOINT_OUT, request, value=value,
             index=index, length_or_data=data, timeout=timeout)
+
+
+    def _populate_leds(self, led_count):
+        """Adds the standard set of LEDs to the board object.
+
+        Args:
+            request -- The number of LEDS present on the board.
+        """
+        self.leds = {}
+        for i in range(1, led_count + 1):
+            self.leds[i] = LED(self, i)
 
 
 

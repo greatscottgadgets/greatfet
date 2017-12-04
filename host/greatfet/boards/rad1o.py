@@ -16,6 +16,7 @@ class Rad1oBadge(GreatFETBoard):
     HANDLED_BOARD_IDS = [2]
     BOARD_NAME = "rad1o badge"
 
+    SUPPORTED_LEDS = 4
 
     def __init__(self, **device_identifiers):
         """ Initialize a new rad1o-badge connection. """
@@ -35,3 +36,9 @@ class Rad1oBadge(GreatFETBoard):
         self.spi = self.spi_busses[0]
 
         self.gpio = GPIO(self)
+
+        # Add objects for each of our LEDs.
+        self._populate_leds(self.SUPPORTED_LEDS)
+
+
+
