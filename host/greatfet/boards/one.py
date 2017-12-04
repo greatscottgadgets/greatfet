@@ -4,6 +4,7 @@
 
 from ..board import GreatFETBoard
 from ..peripherals.gpio import GPIO
+from ..peripherals.led import LED
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.spi_flash import SPIFlash
@@ -15,6 +16,9 @@ class GreatFETOne(GreatFETBoard):
     # Currently, all GreatFET One boards have an ID of zero.
     HANDLED_BOARD_IDS = [0]
     BOARD_NAME = "GreatFET One"
+
+    # The GreatFET one has four LEDs.
+    SUPPORTED_LEDS = 4
 
 
     def __init__(self, **device_identifiers):
@@ -36,3 +40,6 @@ class GreatFETOne(GreatFETBoard):
         self.spi = self.spi_busses[0]
 
         self.gpio = GPIO(self)
+
+        # Add objects for each of our LEDs.
+        self._populate_leds(self.SUPPORTED_LEDS)

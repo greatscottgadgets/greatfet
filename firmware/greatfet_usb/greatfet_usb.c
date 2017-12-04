@@ -38,7 +38,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_read_version_string,
 	usb_vendor_request_read_partid_serialno,
 	NULL,
-	usb_vendor_request_led_toggle,
+	usb_vendor_request_set_leds,
 	usb_vendor_request_gpio_register,
 	usb_vendor_request_gpio_write,
 	usb_vendor_request_spi_init,

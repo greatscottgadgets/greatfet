@@ -19,6 +19,9 @@ extern "C"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 
+/* convenience macros */
+#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+
 /* hardware identification number */
 #define BOARD_ID_ONE 0
 #define BOARD_ID_XPLORER  1
