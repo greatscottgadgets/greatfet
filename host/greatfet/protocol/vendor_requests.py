@@ -75,6 +75,8 @@ requests = (
 
     'GPIO_RESET',
     'GPIO_READ',
+
+    'GLITCHKIT_SIMPLE_ENABLE_TRIGGER',
 )
 
 def _create_module_level_constants():

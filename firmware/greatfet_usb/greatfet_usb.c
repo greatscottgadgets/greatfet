@@ -27,7 +27,10 @@
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
+#include "usb_api_glitchkit_simple.h"
 #include "usb_bulk_buffer.h"
+
+#include "glitchkit.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spiflash_init,
@@ -76,6 +79,9 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_heartbeat_stop,
 	usb_vendor_request_gpio_reset,
 	usb_vendor_request_gpio_read,
+
+	// GlitchKit
+	usb_vendor_request_glitchkit_simple_enable_trigger, // Simple triggers
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -179,6 +185,9 @@ int main(void) {
 		}
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
+		}
+		if(glitchkit_enabled) {
+			service_glitchkit();
 		}
 	}
 
