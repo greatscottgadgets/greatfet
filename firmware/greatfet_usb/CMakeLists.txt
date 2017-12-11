@@ -27,7 +27,7 @@ set(SRC_M4
 	usb_api_adc.c
 	usb_api_i2c.c
 	usb_api_gpio.c
-  usb_api_leds.c
+	usb_api_leds.c
 	usb_api_heartbeat.c
 	usb_api_logic_analyzer.c
 	usb_api_sdir.c
@@ -38,6 +38,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
 )
 
 DeclareTargets()
