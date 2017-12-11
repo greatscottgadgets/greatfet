@@ -91,6 +91,8 @@ macro(DeclareTargets)
 		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_bus.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/i2c_lpc.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_int.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c
 	)
 
 	configure_file(
