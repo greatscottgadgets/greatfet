@@ -290,6 +290,16 @@ class GPIOPin(object):
         self.gpio.output(self.port_and_pin, high)
 
 
+    def get_port(self):
+        """ Returns device's port number. """
+        return self.port_and_pin[0]
+
+
+    def get_pin(self):
+        """ Returns pin's pin number within its port. """
+        return self.port_and_pin[1]
+
+
     # TODO: Toggle-- we have the hardware for this :)
 
     # TODO: handle pulldowns/pull-ups, etc.
