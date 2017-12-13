@@ -11,6 +11,7 @@ import usb
 from .protocol import vendor_requests
 from .errors import DeviceNotFoundError
 from .peripherals.led import LED
+from .peripherals.gpio import GPIO
 
 # Default device identifiers.
 GREATFET_VENDOR_ID = 0x1d50
@@ -38,6 +39,14 @@ class GreatFETBoard(object):
     this with a more appropriate name.
     """
     BOARD_NAME = "Unknown GreatFET"
+
+
+    """
+    The mappings from GPIO names to port numbers. Paths in names can be delineated
+    with underscores to group gpios. For example, if Jumper 7, Pin 3 is Port 5, Pin 11,
+    you could add an entry that reads "J7_P3": (5, 11).
+    """
+    GPIO_MAPPINGS = {}
 
 
     @classmethod
@@ -272,6 +281,15 @@ class GreatFETBoard(object):
         for i in range(1, led_count + 1):
             self.leds[i] = LED(self, i)
 
+
+    def _populate_gpio(self):
+        """Adds GPIO pin definitions to the board's main GPIO object."""
+
+        self.gpio = GPIO(self)
+
+        # Handle each GPIO mapping.
+        for name, pin in self.GPIO_MAPPINGS.iteritems():
+            self.gpio.register_gpio(name, pin)
 
 
 def _to_hex_string(byte_array):

@@ -5,6 +5,17 @@
 from ..peripheral import GreatFETPeripheral
 from ..protocol import vendor_requests
 
+# TODOs:
+#  - XXX: Overhaul the GPIO(Collection) class to be more efficient
+#  - More cleanup to use the GPIOPin model.
+#  - Support ranges of pins from the same port (GPIOPort objects?)
+#  - Integrate the "reservation" system on the board, so other peripherals
+#    (or the board) know what peripherals use which reservations.
+#  - Implement a release function so if e.g. an I2C device is no longer in use
+#    it releases its pins back to the GPIO pool.
+
+DIRECTION_IN  = 0
+DIRECTION_OUT = 1
 
 class GPIO(GreatFETPeripheral):
     """
@@ -17,11 +28,114 @@ class GPIO(GreatFETPeripheral):
             board -- GreatFET board whose GPIO lines are to be controlled
         """
         self.board = board
+        self.pin_mappings = {}
+
+        self.available_pins = []
+        self.active_gpio = {}
+
+        # For convenience:
+        self.DIRECTION_IN = DIRECTION_IN
+        self.DIRECTION_OUT = DIRECTION_OUT
+
         # XXX it's necessary to reset the state of all GPIO on the GreatFET
         # here because the firmware currently provides no way to read its
         # existing configuration; this should be fixed so GPIO state is never
         # changed unless the user requests to change it.
         self.reset()
+
+
+    def register_gpio(self, name, pin, used=False):
+        """
+        Registers a GPIO pin for later use. Usually only used in board setup.
+
+        Args:
+            name -- The name for the GPIO, usually expressed as a position on
+                a GreatFET header.
+            pin -- A 2-tuple containing the port and pin number on the LPC43xx.
+        """
+
+        # Store the full name in our pin mappings.
+        self.pin_mappings[name] = pin
+
+        # TODO: Create 'image' objects for pin groupings-- e.g. a J1 object
+        # that lets you work with the pins on J1 without qualifying them.
+
+        if not used:
+            self.mark_pin_as_unused(name)
+
+
+    def mark_pin_as_used(self, name):
+        """ Marks a pin as used by another peripheral. """
+
+        if name not in self.pin_mappings:
+            raise ValueError("Unknown GPIO pin {}".format(name))
+
+        self.available_pins.remove(name)
+
+
+    def mark_pin_as_unused(self, name):
+        """ Mark a pin as no longer used by another peripheral. """
+
+        if name not in self.pin_mappings:
+            raise ValueError("Unknown GPIO pin {}".format(name))
+
+        if name not in self.available_pins:
+            self.available_pins.append(name)
+
+
+    def get_available_gpio(self, include_active=True):
+        """ Returns a list of available GPIO names. """
+        available = self.available_pins[:]
+        available.extend(self.active_gpio.keys())
+
+        return available
+
+
+    def get_pin(self, name, unique=False):
+        """
+        Returns a GPIOPin object by which a given pin can be controlled.
+
+        Args:
+            name -- The GPIO name to be used.
+            unique -- True if this should fail if a GPIO object for this pin
+                already exists.
+        """
+
+        # If we already have an active GPIO pin for the relevant name, return it.
+        if name in self.active_gpio and not unique:
+            return self.active_gpio[name]
+
+        # If the pin's available for GPIO use, grab it.
+        if name in self.available_pins:
+            port = self.pin_mappings[name]
+
+            self.active_gpio[name] = GPIOPin(self, name, port)
+            self.mark_pin_as_used(name)
+
+            return self.active_gpio[name]
+
+        # If we couldn't create the GPIO pin, fail out.
+        raise ValueError("No available GPIO pin {}".format(name))
+
+
+    def release_pin(self, gpio_pin):
+        """
+        Releases a GPIO pin back to the system for re-use, potentially
+        not as a GPIO.
+        """
+
+        if gpio_pin.name != self.active_gpio:
+            raise ValueError("Trying to release a pin we don't own?")
+
+        # Mark the pin as an input, placing it into High-Z mode.
+        # TODO: Disable any pull-ups present on the pin.
+        gpio_pin.set_direction(DIRECTION_IN)
+
+        # Remove the GPIO pin from our active array, and add it back to the
+        # available pool.
+        del self.active_gpio[gpio_pin.name]
+        self.mark_pin_as_unused(gpio_pin.name)
+
 
     def reset(self):
         """
@@ -36,6 +150,7 @@ class GPIO(GreatFETPeripheral):
         self._inputs = {}
         self._outputs = {}
 
+
     def setup(self, line, direction):
         """
         Configure a GPIO line for use as an input or output.  This must be
@@ -47,7 +162,7 @@ class GPIO(GreatFETPeripheral):
 
         TODO: allow pull-up/pull-down resistors to be configured for inputs
         """
-        if direction == Directions.IN:
+        if direction == DIRECTION_IN:
             this_dict, other_dict = self._inputs, self._outputs
             num_inputs = 1
         else:
@@ -68,6 +183,7 @@ class GPIO(GreatFETPeripheral):
             # so the entry must be kept in the dict to preserve the count.
             other_dict[line] = None
 
+
     def output(self, line, state):
         """
         Set the state of an output line.  The line must have previously been
@@ -84,6 +200,7 @@ class GPIO(GreatFETPeripheral):
         self.board.vendor_request_out(vendor_requests.GPIO_WRITE,
             data=[gpio_out_index, int(state)])
 
+
     def input(self, line):
         """
         Get the state of an input line.  The line must have previously been
@@ -95,6 +212,9 @@ class GPIO(GreatFETPeripheral):
         Return:
             bool -- True if line is high, False if line is low
         """
+
+        # XXX: This is super inefficient. Fixme?
+
         gpio_in_index = self._inputs.get(line)
         if gpio_in_index is None:
             raise ValueError("GPIO line %s not set up as input" % repr(line))
@@ -107,117 +227,69 @@ class GPIO(GreatFETPeripheral):
         return data[byte] & (2**bit) != 0
 
 
-class Directions(object):
-    """"Use for configuring a GPIO line as input or output"""
-    IN = 0
-    OUT = 1
+class GPIOPin(object):
+    """
+    Class representing a single GPIO pin.
+    """
+
+    def __init__(self, gpio_collection, name, port_and_pin):
+        """
+        Creates a new object representing a GPIO Pin. Usually instantiated via
+        a GPIO object.
+
+        Args:
+            gpio_collection -- The GPIO object to which this pin belongs.
+            name -- The name of the given pin. Should match a name registered
+                in its GPIO collection.
+            port_and_pin -- A 2-tuple containing LPC4330 (port, pin) numbers.
+
+        """
+
+        self.gpio = gpio_collection
+        self.name = name
+        self.port_and_pin = port_and_pin
+
+        # Assume no direction until one is provided.
+        self.direction = None
 
 
-class J1(object):
-    """GreatFET One header J1 pins and their LPC GPIO (port, pin) equivalents"""
-    # P1 = GND
-    # P2 = VCC
-    P3 = (5, 13)
-    P4 = (0, 0)
-    P5 = (5, 14)
-    P6 = (0, 1)
-    P7 = (0, 4)
-    P8 = (2, 9)
-    P9 = (2, 10)
-    P10 = (0, 8)
-    # P11 = CLK0
-    P12 = (0, 9)
-    P13 = (1, 8)
-    P14 = (2, 11)
-    P15 = (1, 0)
-    P16 = (1, 9)
-    P17 = (1, 2)
-    P18 = (1, 1)
-    P19 = (2, 12)
-    P20 = (1, 3)
-    P21 = (1, 5)
-    P22 = (1, 4)
-    P23 = (2, 14)
-    P24 = (2, 13)
-    P25 = (1, 7)
-    P26 = (1, 6)
-    P27 = (2, 15)
-    P28 = (0, 2)
-    P29 = (2, 7)
-    P30 = (0, 3)
-    P31 = (0, 13)
-    P32 = (0, 12)
-    P33 = (5, 18)
-    P34 = (4, 11)
-    P35 = (5, 0)
-    # P36 = P6_0
-    P37 = (0, 15)
-    # P38 = P1_19
-    P39 = (0, 11)
-    P40 = (0, 10)
+    def set_direction(self, direction):
+        """
+        Sets the GPIO pin to use a given direction.
+        """
+        self.gpio.setup(self.port_and_pin, direction)
+        self.direction = direction
 
-class J2(object):
-    """GreatFET One header J2 pins and their LPC GPIO (port, pin) equivalents"""
-    # P1 = GND
-    # P2 = VBUS
-    P3 = (5, 12)
-    P4 = (2, 0)
-    # P5 = ADC0_0
-    P6 = (2, 5)
-    P7 = (2, 4)
-    P8 = (2, 2)
-    P9 = (2, 3)
-    P10 = (2, 6)
-    # P11 = P4_7
-    # P12 = CLK2
-    P13 = (5, 7)
-    P14 = (0, 7)
-    P15 = (5, 6)
-    P16 = (3, 15)
-    # P17 = WAKEUP0
-    P18 = (5, 5)
-    P19 = (5, 4)
-    P20 = (5, 3)
-    # P21 = PF_4
-    P22 = (5, 9)
-    P23 = (3, 10)
-    P24 = (5, 8)
-    P25 = (3, 9)
-    # P26 = P3_0
-    P27 = (3, 8)
-    P28 = (1, 14)
-    P29 = (5, 16)
-    P30 = (5, 10)
-    P31 = (5, 15)
-    # P32 = P3_3
-    P33 = (5, 2)
-    P34 = (0, 5)
-    P35 = (5, 1)
-    P36 = (3, 2)
-    P37 = (1, 15)
-    P38 = (0, 6)
-    # P39 = I2C0_SDA
-    # P40 = I2C0_SDL
 
-class J7(object):
-    """GreatFET One header J7 pins and their LPC GPIO (port, pin) equivalents"""
-    # P1 = GND
-    P2 = (3, 3)
-    P3 = (3, 4)
-    # P4 = ADC0_5
-    # P5 = ADC0_2
-    P6 = (1, 10)
-    P7 = (1, 12)
-    P8 = (1, 13)
-    # P9 = RTC_ALARM
-    # P10 = GND
-    # P11 = RESET
-    # P12 = VBAT
-    P13 = (1, 11)
-    P14 = (0, 14)
-    P15 = (3, 6)
-    P16 = (3, 5)
-    P17 = (3, 1)
-    P18 = (3, 0)
-    # P19 = GND
-    # P20 = VCC
+    def get_direction(self):
+        """ Returns the pin's direction; will be eitther gpio.DIRECTION_IN or gpio.DIRECTION_OUT """
+        return self.direction
+
+
+    def read(self, high_value=True, low_value=False):
+        """ Returns the value of a GPIO pin. """
+
+        if self.direction != DIRECTION_IN:
+            raise ValueError("Trying to read from a non-input pin {}! Set up the pin first with set_direction.".format(self.name))
+
+        raw = self.gpio.input(self.port_and_pin)
+        return high_value if raw else low_value
+
+
+    def write(self, high):
+        """ Write a given value to the GPIO port.
+
+        Args:
+            high -- True iff the pin should be set to high; the pin will be set
+                to low otherwise.
+        """
+
+        if self.direction != DIRECTION_OUT:
+            raise ValueError("Trying to write to a non-output pin {}! Set up the pin first with set_direction.".format(self.name))
+
+        self.gpio.output(self.port_and_pin, high)
+
+
+    # TODO: Toggle-- we have the hardware for this :)
+
+    # TODO: handle pulldowns/pull-ups, etc.
