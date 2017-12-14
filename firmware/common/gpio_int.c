@@ -62,7 +62,7 @@ static void _route_gpio_to_interrupt_block(int interrupt_number,
     offset_into_register = (interrupt_number % 4) * 8;
 
     // Figure out the value that will need to be written into the given register...
-    value_to_write = (port_number << 4) | pin_number;
+    value_to_write = (port_number << 5) | pin_number;
 
     // ... and write that into the given register section.
     *interrupt_select_register &= ~(0xFF << offset_into_register);
@@ -83,9 +83,9 @@ static void _gpio_set_up_pin_change_interrupt(int interrupt_number,
 
     // Set the interrupt as either level or edge sensitive.
     if((sensitivity == LEVEL_SENSITIVE_LOW) || (sensitivity == LEVEL_SENSITIVE_HIGH)) {
-        GPIO_PIN_INTERRUPT_ISEL &= ~mask; // level sensitive
+        GPIO_PIN_INTERRUPT_ISEL |= mask; // level sensitive
     } else {
-        GPIO_PIN_INTERRUPT_ISEL |= mask; // edge sensitive
+        GPIO_PIN_INTERRUPT_ISEL &= ~mask; // edge sensitive
     }
 
     // Enable the various types of interrupt depending on the requested sensitivyt.
@@ -165,5 +165,5 @@ void gpio_interrupt_disable(int interrupt_number)
     uint8_t irq = irq_for_interrupt[interrupt_number];
 
     // ... and enable the interrupt at the requested priority.
-    nvic_enable_irq(irq);
+    nvic_disable_irq(irq);
 }
