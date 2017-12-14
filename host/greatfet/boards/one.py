@@ -3,11 +3,15 @@
 #
 
 from ..board import GreatFETBoard
+
 from ..peripherals.gpio import GPIO
 from ..peripherals.led import LED
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.spi_flash import SPIFlash
+
+from ..glitchkit import *
+
 
 
 class GreatFETOne(GreatFETBoard):
@@ -132,6 +136,9 @@ class GreatFETOne(GreatFETBoard):
         # Set up the core connection.
         super(GreatFETOne, self).__init__(**device_identifiers)
 
+        # TODO: Abstract the below into a 'pull out standard peripherals'
+        # method?
+
         # Initialize the fixed peripherals that come on the board.
         # TODO: Use a self.add_peripheral mechanism, so peripherals can
         # be dynamically listed?
@@ -144,10 +151,13 @@ class GreatFETOne(GreatFETBoard):
         self.i2c = self.i2c_busses[0]
         self.spi = self.spi_busses[0]
 
-        # TODO: Populate the per-board GPIO here.
+        # Populate the per-board GPIO.
         self._populate_gpio()
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)
+
+        # Implement any GlitchKit modules we support.
+        self.glitchkit = GlitchKitCollection(self)
 
 

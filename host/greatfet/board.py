@@ -288,7 +288,7 @@ class GreatFETBoard(object):
         self.gpio = GPIO(self)
 
         # Handle each GPIO mapping.
-        for name, pin in self.GPIO_MAPPINGS.iteritems():
+        for name, pin in self.GPIO_MAPPINGS.items():
             self.gpio.register_gpio(name, pin)
 
 

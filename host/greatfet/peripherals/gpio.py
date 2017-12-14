@@ -83,7 +83,7 @@ class GPIO(GreatFETPeripheral):
             self.available_pins.append(name)
 
 
-    def get_available_gpio(self, include_active=True):
+    def get_available_pins(self, include_active=True):
         """ Returns a list of available GPIO names. """
         available = self.available_pins[:]
         available.extend(self.active_gpio.keys())

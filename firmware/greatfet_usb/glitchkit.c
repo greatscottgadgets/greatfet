@@ -8,11 +8,17 @@
 #include "glitchkit.h"
 
 #include <greatfet_core.h>
+#include <gpio_lpc.h>
 
 
 // Start off with glitchkit functionality disabled.
 volatile bool glitchkit_enabled = false;
 
+// Start off with no trigger set up.
+volatile struct gpio_t trigger_gpio = GPIO(5, 14);
+
+// FIXME: temporary, replace me with a timer!
+volatile bool glitchkit_triggered = false;
 
 /**
  * Enables GlitchKit functionality. This should be called by any GlitchKit
@@ -24,6 +30,10 @@ void glitchkit_enable(void) {
       return;
 
     glitchkit_enabled = true;
+
+    // Set up our default trigger GPIO, if none has been set up already.
+    // TODO: Allow this to be customizable, instead of fixed to Indigo?
+    gpio_input(&trigger_gpio);
 }
 
 
@@ -44,13 +54,32 @@ void glitchkit_disable(void) {
  * ChipWhisperer to e.g. induce a glitch.
  */
 void glitchkit_trigger() {
-    // TODO: implement
+
+    // FIXME: Remove when we're no longer debugging.
     led_toggle(LED4);
+
+    // Set the GPIO pin high, immediately...
+    gpio_write(&trigger_gpio, true);
+
+    //... and then schedule it to turn off later.
+    // FIXME: This should really be on a timer.
+    glitchkit_triggered = true;
 }
 
 /**
  * Main loop service routine for GlitchKit.
  */
 void service_glitchkit() {
-    // TODO: deassert trigger after a period of time?
+
+    // Temporary implementation: hold the trigger high for >1ms.
+    // FIXME: Replace me with a timer!
+    if(glitchkit_triggered) {
+
+        // Wait 1 ms...
+        delay(1000);
+
+        // ... and then de-assert the trigger.
+        gpio_write(&trigger_gpio, true);
+        glitchkit_triggered = false;
+    }
 }
