@@ -7,6 +7,21 @@
 #ifndef __GLITCHKIT_H__
 #define __GLITCHKIT_H__
 
+#include <stdbool.h>
+
+/**
+ * The event values here are _not fixed_; and they should not be used
+ * externally. Instead, the USB API should resolve hard event names.
+ *
+ * This seems like a pain, but it allows us to replace this data structure
+ * when we need to add more events.
+ */
+typedef enum {
+	GLITCHKIT_SIMPLE_COUNT_REACHED = 0x01,
+} glitchkit_event_t;
+
+
+
 // The interrupt priority to use for GlitchKit interrupts. Usually, we want this
 // to be the highest possible in order to ensure our timing is consistent. (We
 // don't want the variation of interrupt skid.)
@@ -37,10 +52,33 @@ void glitchkit_disable(void);
  */
 void glitchkit_trigger();
 
+
 /**
  * Main loop service routine for GlitchKit.
  */
 void service_glitchkit();
+
+
+/**
+ * Requests that GlitchKit issue a trigger to the ChipWhisperer when
+ * the given event happens.
+ */
+void glitchkit_enable_trigger_on(glitchkit_event_t event);
+
+
+/**
+ * Requests that GlitchKit no longer issue a trigger to the ChipWhisperer
+ * when the given event happens.
+ */
+void glitchkit_disable_trigger_on(glitchkit_event_t event);
+
+
+/**
+ * Notify GlitchKit of a GlitchKit-observable event.
+ *
+ * @param event The type of event observed.
+ */
+void glitchkit_notify_event(glitchkit_event_t event);
 
 
 #endif

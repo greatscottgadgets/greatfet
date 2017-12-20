@@ -205,9 +205,9 @@ static void _disable_module_interrupts(void) {
 void handle_glitchkit_event(void) {
   ++event_count;
 
-  // If we've reached our count target, 
+  // If we've reached our count target, notify GlitchKit.
   if(event_count == event_count_target) {
-    glitchkit_trigger();
+    glitchkit_notify_event(GLITCHKIT_SIMPLE_COUNT_REACHED);
     _disable_module_interrupts();
   }
 }
