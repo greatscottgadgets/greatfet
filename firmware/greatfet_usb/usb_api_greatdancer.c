@@ -103,11 +103,11 @@ static usb_endpoint_t *usb_preinit_endpoint_from_address(uint8_t address)
  * Performs the per-run initialization of the GreatDancer device.
  * Should be between successive executions of the facedancer.
  */
-static void set_up_greatdancer(uint16_t max_packet_size) {
+static void set_up_greatdancer_device(uint16_t max_packet_size) {
   usb_endpoint_t *ep0_in, *ep0_out;
 
-	usb_peripheral_reset(&usb_devices[1]);
-	usb_device_init(&usb_devices[1]);
+	usb_peripheral_reset(&usb_peripherals[1]);
+	usb_device_init(&usb_peripherals[1]);
 
 	// Set up the control endpoint. The application will request setup
 	// for all of the non-standard channels on connection.
@@ -128,23 +128,24 @@ static void set_up_greatdancer(uint16_t max_packet_size) {
  * Sets up the GreatDancer to make a USB connection, resetting the device
  * if necessary. Enables USB pull-ups to begin the enumeration process.
  *
- * Setup arguments not used.
+ * Value: the maximuim packet size on EP0
+ * Index: an array of quirks to be applied
  */
 usb_request_status_t usb_vendor_request_greatdancer_connect(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 
-		usb_controller_reset(&usb_devices[1]);
-		set_up_greatdancer(endpoint->setup.value);
+		usb_controller_reset(&usb_peripherals[1]);
+		set_up_greatdancer_device(endpoint->setup.value);
 
 		// Apply the platform quirks we'll be using
 		automatically_handle_set_address = !(endpoint->setup.index & MANUAL_SET_ADDRESS);
 
 		// Set up our IRQ handler and enable the USB controller.
 		// From this point forward, the greatdancer_usb_isr can be generated.
-		usb_set_irq_handler(&usb_devices[1], greatdancer_usb_isr);
-		usb_run(&usb_devices[1]);
+		usb_set_irq_handler(&usb_peripherals[1], greatdancer_usb_isr);
+		usb_run(&usb_peripherals[1]);
 
 		usb_transfer_schedule_ack(endpoint->in);
 	}
@@ -225,7 +226,7 @@ usb_request_status_t usb_vendor_request_greatdancer_disconnect(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_controller_reset(&usb_devices[1]);
+		usb_controller_reset(&usb_peripherals[1]);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
@@ -268,7 +269,7 @@ static uint32_t greatdancer_get_nak_status()
  * @return The value of the status register.
  */
 static uint32_t get_status_register(greatdancer_status_request_t index,
-		const usb_device_t* const device)
+		const usb_peripheral_t* const device)
 {
 	switch(index) {
 		case GET_USBSTS: return greatdancer_get_usb_status();
@@ -299,7 +300,7 @@ usb_request_status_t usb_vendor_request_greatdancer_get_status(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		uint32_t status = get_status_register(endpoint->setup.index, &usb_devices[1]);
+		uint32_t status = get_status_register(endpoint->setup.index, &usb_peripherals[1]);
 		usb_transfer_schedule_block(endpoint->in, (void * const)&status, sizeof(status), NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
@@ -323,7 +324,7 @@ usb_request_status_t usb_vendor_request_greatdancer_read_setup(
 
 		// Figure out the endpoint we're reading setup data from...
 		uint_fast8_t address = usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, endpoint_number);
-		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_devices[1]);
+		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_peripherals[1]);
 
 		// ... and find its setup data.
 		uint8_t * const setup_data =
@@ -333,7 +334,7 @@ usb_request_status_t usb_vendor_request_greatdancer_read_setup(
 		usb_transfer_schedule_block(endpoint->in, setup_data, 8, NULL, NULL);
 
 		// ... and mark that packet as handled.
-		usb_clear_endpoint_setup_status(1 << endpoint_number, &usb_devices[1]);
+		usb_clear_endpoint_setup_status(1 << endpoint_number, &usb_peripherals[1]);
 
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
@@ -371,7 +372,7 @@ usb_request_status_t usb_vendor_request_greatdancer_start_nonblocking_read(
 
 		// Figure out the endpoint we're reading setup data from...
 		uint_fast8_t address = usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, endpoint_number);
-		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_devices[1]);
+		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_peripherals[1]);
 
 		// ... and start a nonblocking transfer.
 		usb_transfer_schedule(target_endpoint, &endpoint_buffer[endpoint_number], sizeof(packet_buffer), store_transfer_count_callback, &total_received_data[endpoint_number]);
@@ -455,7 +456,7 @@ usb_request_status_t usb_vendor_request_greatdancer_send_on_endpoint(
 
 	// Figure out the endpoint we're reading setup data from...
 	uint_fast8_t address = usb_endpoint_address(USB_TRANSFER_DIRECTION_IN, endpoint_number);
-	usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_devices[1]);
+	usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_peripherals[1]);
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 
@@ -502,9 +503,9 @@ usb_request_status_t usb_vendor_request_greatdancer_set_address(
 		// this will need to be re-evaluated to see if we should use deferred.
 		//
 		if(endpoint->setup.index)
-			usb_set_address_deferred(&usb_devices[1], address);
+			usb_set_address_deferred(&usb_peripherals[1], address);
 		else
-			usb_set_address_immediate(&usb_devices[1], address);
+			usb_set_address_immediate(&usb_peripherals[1], address);
 
 
 		usb_transfer_schedule_ack(endpoint->in);
@@ -520,7 +521,7 @@ usb_request_status_t usb_vendor_request_greatdancer_bus_reset(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_bus_reset(&usb_devices[1]);
+		usb_bus_reset(&usb_peripherals[1]);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
@@ -540,7 +541,7 @@ usb_request_status_t usb_vendor_request_greatdancer_stall_endpoint(
 
 		// Figure out the endpoint we're reading setup data from...
 		uint_fast8_t address = usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, endpoint_number);
-		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_devices[1]);
+		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_peripherals[1]);
 
 		usb_endpoint_stall(target_endpoint);
 		usb_transfer_schedule_ack(endpoint->in);
@@ -565,13 +566,13 @@ usb_request_status_t usb_vendor_request_greatdancer_clean_up_transfer(
 
 		// Figure out the endpoint we're reading setup data from...
 		uint_fast8_t address = usb_endpoint_address(direction, endpoint_number);
-		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_devices[1]);
+		usb_endpoint_t* const target_endpoint = usb_endpoint_from_address(address, &usb_peripherals[1]);
 
 		// Clear the "transfer complete" bit.
 		if(direction == USB_TRANSFER_DIRECTION_IN) {
-			usb_clear_endpoint_complete(USB1_ENDPTCOMPLETE_ETCE(1 << endpoint_number), &usb_devices[1]);
+			usb_clear_endpoint_complete(USB1_ENDPTCOMPLETE_ETCE(1 << endpoint_number), &usb_peripherals[1]);
 		} else {
-			usb_clear_endpoint_complete(USB1_ENDPTCOMPLETE_ERCE(1 << endpoint_number), &usb_devices[1]);
+			usb_clear_endpoint_complete(USB1_ENDPTCOMPLETE_ERCE(1 << endpoint_number), &usb_peripherals[1]);
 		}
 
 		// Clean up any transfers that are complete on the given endpoint.
@@ -592,7 +593,7 @@ static void greatdancer_check_for_asynchronous_events()
 {
 
 	// Read the status of all current endpoints...
-	const uint32_t endptsetupstat = usb_get_endpoint_setup_status(&usb_devices[1]);
+	const uint32_t endptsetupstat = usb_get_endpoint_setup_status(&usb_peripherals[1]);
 	const uint32_t endptsetupstat_bit = USB1_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << 0);
 
 	// Quirk 1:
@@ -613,10 +614,10 @@ static void greatdancer_check_for_asynchronous_events()
 			uint8_t address = endpoint->setup.value_l;
 
 			// Mark this particular event as handled...
-			usb_clear_endpoint_setup_status(endptsetupstat_bit, &usb_devices[1]);
+			usb_clear_endpoint_setup_status(endptsetupstat_bit, &usb_peripherals[1]);
 
 			// Transparently adopt the address specified for this device.
-			usb_set_address_deferred(&usb_devices[1], address);
+			usb_set_address_deferred(&usb_peripherals[1], address);
 			usb_transfer_schedule_ack(endpoint->in);
 		}
 	}
@@ -637,7 +638,7 @@ static void greatdancer_handle_naks()
  * Handle interrupts for the Greatdancer's USB controller.
  */
 static void greatdancer_usb_isr(void) {
-	const uint32_t status = usb_get_status(&usb_devices[1]);
+	const uint32_t status = usb_get_status(&usb_peripherals[1]);
 
 	if( status == 0 ) {
 		// Nothing to do.
@@ -660,3 +661,5 @@ static void greatdancer_usb_isr(void) {
 	// store the remaining USBSTS bits our our module's state.
 	__sync_fetch_and_or(&usbsts_deferred, status);
 }
+
+

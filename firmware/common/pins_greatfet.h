@@ -17,9 +17,12 @@
 
 /* We can detect whether USB1's VBUS is present. */
 #define BOARD_CAPABILITY_USB1_SENSE_VBUS
+extern struct gpio_t gpio_usb1_sense;
 
 /* We can provide VBUS to devices on USB1. */
 #define BOARD_CAPABILITY_USB1_PROVIDE_VBUS
+extern struct gpio_t gpio_usb1_en;
+
 
 /*
  * SCU PinMux

@@ -42,16 +42,16 @@ usb_transfer_type_t usb_endpoint_descriptor_transfer_type(
 	return (endpoint_descriptor[3] & 0x3);
 }
 
-void (*usb_configuration_changed_cb)(usb_device_t* const) = NULL;
+void (*usb_configuration_changed_cb)(usb_peripheral_t* const) = NULL;
 
 void usb_set_configuration_changed_cb(
-	void (*callback)(usb_device_t* const)
+	void (*callback)(usb_peripheral_t* const)
 ) {
 	usb_configuration_changed_cb = callback;
 }
 
 bool usb_set_configuration(
-	usb_device_t* const device,
+	usb_peripheral_t* const device,
 	const uint_fast8_t configuration_number
 ) {
 

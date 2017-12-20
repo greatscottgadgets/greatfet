@@ -13,6 +13,7 @@ set(SRC_M4
 	greatfet_usb.c
 	usb_bulk_buffer.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_host.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_request.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_standard_request.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/gpdma.c"
@@ -32,6 +33,7 @@ set(SRC_M4
 	usb_api_logic_analyzer.c
 	usb_api_sdir.c
 	usb_api_greatdancer.c
+  usb_api_usbhost.c
 	usb_api_glitchkit_simple.c
 	sgpio_isr.c
 	glitchkit.c

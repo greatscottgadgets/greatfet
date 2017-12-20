@@ -23,11 +23,13 @@
 #define WAIT_CPU_CLOCK_INIT_DELAY   (10000)
 
 /* USB Target interface */
+// FIXME: move these to board-specific functions so we don't assume a load switch
+// for all boards
 #ifdef BOARD_CAPABILITY_USB1_SENSE_VBUS
-static struct gpio_t gpio_usb1_sense	= GPIO(SCU_PINMUX_USB1_SENSE_PORT, SCU_PINMUX_USB1_SENSE_PIN);
+struct gpio_t gpio_usb1_sense	= GPIO(SCU_PINMUX_USB1_SENSE_PORT, SCU_PINMUX_USB1_SENSE_PIN);
 #endif
 #ifdef BOARD_CAPABILITY_USB1_PROVIDE_VBUS
-static struct gpio_t gpio_usb1_en	= GPIO(SCU_PINMUX_USB1_EN_PORT, SCU_PINMUX_USB1_EN_PIN);
+struct gpio_t gpio_usb1_en	= GPIO(SCU_PINMUX_USB1_EN_PORT, SCU_PINMUX_USB1_EN_PIN);
 #endif
 
 /* CPLD JTAG interface GPIO pins */

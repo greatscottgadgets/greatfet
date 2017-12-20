@@ -8,6 +8,7 @@
 #include "usb.h"
 #include "usb_type.h"
 #include "usb_queue.h"
+#include "usb_registers.h"
 #include "usb_standard_request.h"
 #include "greatfet_core.h"
 
@@ -17,22 +18,21 @@
 #include <libopencm3/lpc43xx/usb.h>
 #include <libopencm3/lpc43xx/scu.h>
 
-usb_queue_head_t usb_qh0[12] ATTR_ALIGNED(2048);
-usb_queue_head_t usb_qh1[12] ATTR_ALIGNED(2048);
+// FIXME: Clean me up to use the USB_REG macro from usb_registers.h to reduce duplication!
 
 #define USB_QH_INDEX(endpoint_address) (((endpoint_address & 0xF) * 2) + ((endpoint_address >> 7) & 1))
 
 usb_queue_head_t* usb_queue_head(
 	const uint_fast8_t endpoint_address,
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 ) {
-	usb_queue_head_t * endpoint_list = device->controller ? usb_qh1 : usb_qh0;
+	usb_queue_head_t * endpoint_list = device->queue_heads_device;
 	return &endpoint_list[USB_QH_INDEX(endpoint_address)];
 }
 
 usb_endpoint_t* usb_endpoint_from_address(
 	const uint_fast8_t endpoint_address,
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 ) {
 	return (usb_endpoint_t*)usb_queue_head(endpoint_address, device)->_reserved_0;
 }
@@ -52,7 +52,7 @@ static uint_fast8_t usb_endpoint_number(const uint_fast8_t endpoint_address) {
 	return (endpoint_address & 0xF);
 }
 
-void usb_peripheral_reset(const usb_device_t* const device) {
+void usb_peripheral_reset(const usb_peripheral_t* const device) {
 	if( device->controller == 0 ) {
 		RESET_CTRL0 = RESET_CTRL0_USB0_RST;
 		RESET_CTRL0 = 0;
@@ -65,7 +65,7 @@ void usb_peripheral_reset(const usb_device_t* const device) {
 	}
 }
 
-static void usb_phy_enable(const usb_device_t* const device) {
+void usb_phy_enable(const usb_peripheral_t* const device) {
 	if(device->controller == 0) {
 		CREG_CREG0 &= ~CREG_CREG0_USB0PHY;
 	}
@@ -95,7 +95,7 @@ static void usb_phy_enable(const usb_device_t* const device) {
 }
 
 static void usb_clear_pending_interrupts(const uint32_t mask,
-										 const usb_device_t* const device) {
+										 const usb_peripheral_t* const device) {
 	if(device->controller == 0) {
 		USB0_ENDPTNAK = mask;
 		USB0_ENDPTNAKEN = mask;
@@ -112,12 +112,12 @@ static void usb_clear_pending_interrupts(const uint32_t mask,
 	}
 }
 
-static void usb_clear_all_pending_interrupts(const usb_device_t* const device) {
+static void usb_clear_all_pending_interrupts(const usb_peripheral_t* const device) {
 	usb_clear_pending_interrupts(0xFFFFFFFF, device);
 }
 
 static void usb_wait_for_endpoint_priming_to_finish(const uint32_t mask,
-													const usb_device_t* const device) {
+													const usb_peripheral_t* const device) {
 	// Wait until controller has parsed new transfer descriptors and prepared
 	// receive buffers.
 	if(device->controller == 0) {
@@ -129,7 +129,7 @@ static void usb_wait_for_endpoint_priming_to_finish(const uint32_t mask,
 }
 
 static void usb_flush_endpoints(const uint32_t mask,
-								const usb_device_t* const device) {
+								const usb_peripheral_t* const device) {
 	// Clear any primed buffers. If a packet is in progress, that transfer
 	// will continue until completion.
 	if(device->controller == 0) {
@@ -141,7 +141,7 @@ static void usb_flush_endpoints(const uint32_t mask,
 }
 
 static void usb_wait_for_endpoint_flushing_to_finish(const uint32_t mask,
-													 const usb_device_t* const device) {
+													 const usb_peripheral_t* const device) {
 	// Wait until controller has flushed all endpoints / cleared any primed
 	// buffers.
 	if(device->controller == 0) {
@@ -153,13 +153,13 @@ static void usb_wait_for_endpoint_flushing_to_finish(const uint32_t mask,
 }
 
 static void usb_flush_primed_endpoints(const uint32_t mask,
-									   const usb_device_t* const device) {
+									   const usb_peripheral_t* const device) {
 	usb_wait_for_endpoint_priming_to_finish(mask, device);
 	usb_flush_endpoints(mask, device);
 	usb_wait_for_endpoint_flushing_to_finish(mask, device);
 }
 
-static void usb_flush_all_primed_endpoints(const usb_device_t* const device) {
+static void usb_flush_all_primed_endpoints(const usb_peripheral_t* const device) {
 	usb_flush_primed_endpoints(0xFFFFFFFF, device);
 }
 
@@ -454,16 +454,11 @@ void usb_endpoint_stall(
 	// TODO: Also need to reset data toggle in both directions?
 }
 
-void usb_controller_run(const usb_device_t* const device) {
-	if( device->controller == 0) {
-		USB0_USBCMD_D |= USB0_USBCMD_D_RS;
-	}
-	if( device->controller == 1) {
-		USB1_USBCMD_D |= USB1_USBCMD_D_RS;
-	}
+void usb_controller_run(const usb_peripheral_t* const device) {
+	USB_REG(device->controller)->USBCMD |= USB0_USBCMD_D_RS;
 }
 
-static void usb_controller_stop(const usb_device_t* const device) {
+static void usb_controller_stop(const usb_peripheral_t* const device) {
 	if( device->controller == 0) {
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_RS;
 	}
@@ -472,7 +467,7 @@ static void usb_controller_stop(const usb_device_t* const device) {
 	}
 }
 
-static uint_fast8_t usb_controller_is_resetting(const usb_device_t* const device) {
+static uint_fast8_t usb_controller_is_resetting(const usb_peripheral_t* const device) {
 	if( device->controller == 0) {
 		return (USB0_USBCMD_D & USB0_USBCMD_D_RST) != 0;
 	} else {
@@ -480,7 +475,11 @@ static uint_fast8_t usb_controller_is_resetting(const usb_device_t* const device
 	}
 }
 
-static void usb_controller_set_device_mode(const usb_device_t* const device) {
+static void usb_controller_set_device_mode(usb_peripheral_t* device) {
+
+	// Mark the peripheral as in DEVICE mode.
+	device->mode = USB_CONTROLLER_MODE_DEVICE;
+
 	if( device->controller == 0) {
 		// Set USB0 peripheral mode
 		USB0_USBMODE_D = USB0_USBMODE_D_CM1_0(2);
@@ -496,7 +495,7 @@ static void usb_controller_set_device_mode(const usb_device_t* const device) {
 }
 
 usb_speed_t usb_speed(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 ) {
 	if( device->controller == 0 ) {
 		switch( USB0_PORTSC1_D & USB0_PORTSC1_D_PSPD_MASK ) {
@@ -518,7 +517,7 @@ usb_speed_t usb_speed(
 }
 
 static void usb_clear_status(const uint32_t status,
-							 const usb_device_t* const device) {
+							 const usb_peripheral_t* const device) {
  	if( device->controller == 0 ) {
 		USB0_USBSTS_D = status;
 	}
@@ -527,7 +526,7 @@ static void usb_clear_status(const uint32_t status,
 	}
 }
 
-uint32_t usb_get_status(const usb_device_t* const device) {
+uint32_t usb_get_status(const usb_peripheral_t* const device) {
     uint32_t status = 0;
 	// Mask status flags with enabled flag interrupts.
  	if( device->controller == 0 ) {
@@ -546,7 +545,7 @@ uint32_t usb_get_status(const usb_device_t* const device) {
 }
 
 void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status,
-											const usb_device_t* const device) {
+											const usb_peripheral_t* const device) {
  	if( device->controller == 0 ) {
 		USB0_ENDPTSETUPSTAT = endpoint_setup_status;
 	}
@@ -555,7 +554,7 @@ void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status,
 	}
 }
 
-uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) {
+uint32_t usb_get_endpoint_setup_status(const usb_peripheral_t* const device) {
  	if( device->controller == 0 ) {
 		return USB0_ENDPTSETUPSTAT;
 	} else {
@@ -564,7 +563,7 @@ uint32_t usb_get_endpoint_setup_status(const usb_device_t* const device) {
 }
 
 void usb_clear_endpoint_complete(const uint32_t endpoint_complete,
-										const usb_device_t* const device) {
+										const usb_peripheral_t* const device) {
 	if( device->controller == 0 ) {
 		USB0_ENDPTCOMPLETE = endpoint_complete;
 	}
@@ -573,7 +572,7 @@ void usb_clear_endpoint_complete(const uint32_t endpoint_complete,
 	}
 }
 
-uint32_t usb_get_endpoint_complete(const usb_device_t* const device) {
+uint32_t usb_get_endpoint_complete(const usb_peripheral_t* const device) {
 	if( device->controller == 0 ) {
 		return USB0_ENDPTCOMPLETE;
 	} else {
@@ -582,7 +581,7 @@ uint32_t usb_get_endpoint_complete(const usb_device_t* const device) {
 }
 
 
-uint32_t usb_get_endpoint_ready(const usb_device_t* const device) {
+uint32_t usb_get_endpoint_ready(const usb_peripheral_t* const device) {
 	if( device->controller == 0 ) {
 		return USB0_ENDPTSTAT;
 	} else {
@@ -590,7 +589,7 @@ uint32_t usb_get_endpoint_ready(const usb_device_t* const device) {
 	}
 }
 
-static void usb_disable_all_endpoints(const usb_device_t* const device) {
+static void usb_disable_all_endpoints(const usb_peripheral_t* const device) {
 	// Endpoint 0 is always enabled. TODO: So why set ENDPTCTRL0?
 	if( device->controller == 0 ) {
 		USB0_ENDPTCTRL0 &= ~(USB0_ENDPTCTRL0_RXE | USB0_ENDPTCTRL0_TXE);
@@ -609,7 +608,7 @@ static void usb_disable_all_endpoints(const usb_device_t* const device) {
 }
 
 void usb_set_address_immediate(
-	const usb_device_t* const device,
+	const usb_peripheral_t* const device,
 	const uint_fast8_t address
 ) {
 	if( device->controller == 0 ) {
@@ -621,7 +620,7 @@ void usb_set_address_immediate(
 }
 
 void usb_set_address_deferred(
-	const usb_device_t* const device,
+	const usb_peripheral_t* const device,
 	const uint_fast8_t address
 ) {
 	if( device->controller == 0 ) {
@@ -639,7 +638,7 @@ void usb_set_address_deferred(
 }
 
 static void usb_reset_all_endpoints(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 ) {
 	usb_disable_all_endpoints(device);
 	usb_clear_all_pending_interrupts(device);
@@ -647,7 +646,7 @@ static void usb_reset_all_endpoints(
 }
 
 void usb_controller_reset(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 ) {
 	// TODO: Good to disable some USB interrupts to avoid priming new
 	// new endpoints before the controller is reset?
@@ -669,7 +668,7 @@ void usb_controller_reset(
 }
 
 void usb_bus_reset(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 ) {
 	// According to UM10503 v1.4 section 23.10.3 "Bus reset":
 	usb_reset_all_endpoints(device);
@@ -689,7 +688,7 @@ void usb_bus_reset(
 }
 
 void usb_set_irq_handler(
-	usb_device_t* const device,
+	usb_peripheral_t* const device,
 	vector_table_entry_t isr
 ) {
 	if( device->controller == 0 ) {
@@ -701,7 +700,7 @@ void usb_set_irq_handler(
 }
 
 static void usb_interrupt_enable(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 ) {
 	if( device->controller == 0 ) {
 		nvic_enable_irq(NVIC_USB0_IRQ);
@@ -712,20 +711,21 @@ static void usb_interrupt_enable(
 }
 
 void usb_device_init(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 ) {
 	if( device->controller == 0 ) {
-		//usb_devices[0] = device;
+		//usb_peripherals[0] = device;
 	
 		usb_phy_enable(device);
 		usb_controller_reset(device);
 		usb_controller_set_device_mode(device);
+
 	
 		// Set interrupt threshold interval to 0
 		USB0_USBCMD_D &= ~USB0_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
-		USB0_ENDPOINTLISTADDR = (uint32_t)usb_qh0;
+		USB0_ENDPOINTLISTADDR = (uint32_t)&device->queue_heads_device;
 	
 		// Enable interrupts
 		USB0_USBINTR_D =
@@ -739,7 +739,7 @@ void usb_device_init(
 			;
 	}
 	if( device->controller == 1 ) {
-		//usb_devices[1] = device;
+		//usb_peripherals[1] = device;
 	
 		usb_phy_enable(device);
 		usb_controller_reset(device);
@@ -749,7 +749,7 @@ void usb_device_init(
 		USB1_USBCMD_D &= ~USB1_USBCMD_D_ITC_MASK;
 
 		// Configure endpoint list address 
-		USB1_ENDPOINTLISTADDR = (uint32_t)usb_qh1;
+		USB1_ENDPOINTLISTADDR = (uint32_t)&device->queue_heads_device;
 	
 		// Enable interrupts
 		// TODO: Check to see if these actually need to generate interrupts
@@ -767,7 +767,7 @@ void usb_device_init(
 }
 
 void usb_run(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 ) {
 	usb_interrupt_enable(device);
 	usb_controller_run(device);
@@ -863,7 +863,7 @@ void usb_endpoint_init(
 
 }
 
-static void usb_check_for_setup_events(const usb_device_t* const device) {
+static void usb_check_for_setup_events(const usb_peripheral_t* const device) {
 	const uint32_t endptsetupstat = usb_get_endpoint_setup_status(device);
 	uint32_t endptsetupstat_bit = 0;
 	if( endptsetupstat ) {
@@ -896,7 +896,7 @@ static void usb_check_for_setup_events(const usb_device_t* const device) {
 	}
 }
 
-static void usb_check_for_transfer_events(const usb_device_t* const device) {
+static void usb_check_for_transfer_events(const usb_peripheral_t* const device) {
 	const uint32_t endptcomplete = usb_get_endpoint_complete(device);
 	uint32_t endptcomplete_out_bit = 0;
 	uint32_t endptcomplete_in_bit = 0;
@@ -940,7 +940,7 @@ static void usb_check_for_transfer_events(const usb_device_t* const device) {
 }
 
 void usb0_isr() {
-	const uint32_t status = usb_get_status(&usb_devices[0]);
+	const uint32_t status = usb_get_status(&usb_peripherals[0]);
 	
 	if( status == 0 ) {
 		// Nothing to do.
@@ -953,8 +953,8 @@ void usb0_isr() {
 		// - Short packet detected.
 		// - SETUP packet received.
 
-		usb_check_for_setup_events(&usb_devices[0]);
-		usb_check_for_transfer_events(&usb_devices[0]);
+		usb_check_for_setup_events(&usb_peripherals[0]);
+		usb_check_for_transfer_events(&usb_peripherals[0]);
 		
 		// TODO: Reset ignored ENDPTSETUPSTAT and ENDPTCOMPLETE flags?
 	}
@@ -974,7 +974,7 @@ void usb0_isr() {
 
 	if( status & USB0_USBSTS_D_URI ) {
 		// USB reset received.
-		usb_bus_reset(&usb_devices[0]);
+		usb_bus_reset(&usb_peripherals[0]);
 	}
 
 	if( status & USB0_USBSTS_D_UEI ) {
@@ -993,7 +993,7 @@ void usb0_isr() {
 
 void usb1_isr() {
   return;
-	const uint32_t status = usb_get_status(&usb_devices[1]);
+	const uint32_t status = usb_get_status(&usb_peripherals[1]);
 	
 	if( status == 0 ) {
 		// Nothing to do.
@@ -1006,8 +1006,8 @@ void usb1_isr() {
 		// - Short packet detected.
 		// - SETUP packet received.
 
-		usb_check_for_setup_events(&usb_devices[1]);
-		usb_check_for_transfer_events(&usb_devices[1]);
+		usb_check_for_setup_events(&usb_peripherals[1]);
+		usb_check_for_transfer_events(&usb_peripherals[1]);
 		
 		// TODO: Reset ignored ENDPTSETUPSTAT and ENDPTCOMPLETE flags?
 	}
@@ -1027,7 +1027,7 @@ void usb1_isr() {
 
 	if( status & USB1_USBSTS_D_URI ) {
 		// USB reset received.
-		usb_bus_reset(&usb_devices[1]);
+		usb_bus_reset(&usb_peripherals[1]);
 	}
 
 	if( status & USB1_USBSTS_D_UEI ) {

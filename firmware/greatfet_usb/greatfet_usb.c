@@ -27,6 +27,7 @@
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
+#include "usb_api_usbhost.h"
 #include "usb_api_glitchkit_simple.h"
 #include "usb_bulk_buffer.h"
 
@@ -82,6 +83,11 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 
 	// GlitchKit
 	usb_vendor_request_glitchkit_simple_enable_trigger, // Simple triggers
+
+	// USB Host
+	usb_vendor_request_usbhost_connect,
+	usb_vendor_request_usbhost_bus_reset,
+	usb_vendor_request_usbhost_get_status
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -142,8 +148,8 @@ void usb_set_descriptor_by_serial_number(void)
 
 void init_usb0(void) {
 	usb_set_descriptor_by_serial_number();
-	usb_peripheral_reset(&usb_devices[0]);
-	usb_device_init(&usb_devices[0]);
+	usb_peripheral_reset(&usb_peripherals[0]);
+	usb_device_init(&usb_peripherals[0]);
 
 	usb_queue_init(&usb0_endpoint_control_out_queue);
 	usb_queue_init(&usb0_endpoint_control_in_queue);
@@ -157,7 +163,7 @@ void init_usb0(void) {
 
 	nvic_set_priority(NVIC_USB0_IRQ, 254);
 
-	usb_run(&usb_devices[0]);
+	usb_run(&usb_peripherals[0]);
 }
 
 

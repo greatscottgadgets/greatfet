@@ -77,6 +77,10 @@ requests = (
     'GPIO_READ',
 
     'GLITCHKIT_SIMPLE_START_EVENT_COUNT',
+
+    'USBHOST_CONNECT',
+    'USBHOST_BUS_RESET',
+    'USBHOST_GET_STATUS'
 )
 
 def _create_module_level_constants():
