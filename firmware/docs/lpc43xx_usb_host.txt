@@ -1,0 +1,108 @@
+# LPC43xx-variant almost-EHCI-compliant controller use
+
+GENERAL PROCESS FOR STARTING THE HOST CONTROLLER
+-------------------------------------------------
+
+- Check USBSTS, and if HCHalted is set, stop the host.
+		- Clear the RunStop bit in USBCMD, then wait for the HCHalted bit to clear.
+- Reset the host by writing the HostReset bit in USBCMD. Wait for the bit to clear.
+- Set host controller mode in USBMODE (HostController | VBusPowerSelect)
+
+- Clear interupts and their status (zero out interrupt bits in USBINTR and USBSTS).
+- Enable the interrupts you want in USBINTR.
+		- Some suggestions from NXP: Async, Period, PortChange, USBErrorInt,
+		  AsyncAdvance, FrameListRollover
+
+- Set up the asynchronous list [see NXP's EHCI.c:1164; DOCUMENT ME MORE]
+- Set up the periodic list [see NXP's EHCI.c:1175; DOCUMENT ME MORE]
+
+- Enable the asychronous schedule (ASE) and set the Frame List Size (FS0/FS1/FS2)
+  per datasheet Table 471, in the USBCMD register.
+- Turn on port power by writing the PP bit in PORTSC1 _and_ activating the load switch.
+- Set the RunStop bit in USBCMD, and wait for HCHalted to clear.
+
+- Enable your interrupt in the NVIC. From here on out, things should be handled
+  either in the relevant ISRs or in user code. :)
+
+
+ONCE THE HOST CONTROLLER IS STARTED (INITIAL SETUP / ENUMERATION)
+-----------------------------------------------
+- Turn on VBUS if it's not already (activate the load switch) and it seems safe to do so
+- Reset the device using a bus reset
+	- Disable the port in PORTSC1 by clearing PortEnable
+	- Reset the port in PORTSC1 by writing to PortReset; wait for PortReset to clear
+	- Wait a reset delay of 100ms
+- Ensure the device is connected by reading CurrentConnectionStatus from PORTSC1
+- Read the port speed from PORTSC1's PortSpeed bits
+- Set up the control endpoint. See SETTING UP AN ENDPOINT below.
+- Do any control requests you want before setting the device address here :)
+- Set the device address and store it for your own use (?)
+- Finish enumeration by e.g. reading configuration descriptors and applying
+  a configuraiton.
+
+
+SETTING UP AN ENDPOINT
+-----------------------------------------------
+- Allocate a new Queue Head for the endpoint. This likely involves searching a
+  list of existing Queue Heads for one that's not in_use.
+- Set up the Queue Head's parameters:
+	- in_use = 1
+	- direction
+	- interval = interval, for a periodic endpoint
+	- status = STATUS_OK
+	- device addr = the address of the downstream device-- for our single-device
+		support, we probably want just e.g. address 0 or 1
+	- inactivate_on_next_transaction = 0
+	- endpoint_number
+	- endpoint_speed <= should match the device speed
+	- data_toggle_control = 1 for control endpoints, 0 otherwise
+	- head_reclamation_flag = 0
+	- max_packet_size
+	- control_endpoint_flag = 1 for control endpoints on low or full speed devices, 0 otherwise
+	- nak_count_reload = 0 (for now)
+	- uframe_smask <= 0 for anything but an interrupt endpoint
+	- uframe_cmask <= 0 unless we're on the periodic list
+	- hub_address = 0 (assuming single-device single-port operation)
+	- port_number = 0 (assuming single-device single-port operation)
+	- mult = 0, unless we start supporting high speed
+	- next transfer descriptor <= anything with terminate = 1
+	- alternate next transfer descriptor <= anything with terminate = 1
+	- ping_state_err = 0 (assuming no high speed)
+- Add the new Queue Head to the relevant schedule (typically async or periodic)
+	- Disable the relevant schedule
+	- Add the Queue Head to the linked list
+	- Re-eanable the relevant schedule
+
+
+ON CONFIGURATION (SETTING UP OTHER ENDPOINTS)
+----------------------------------------------
+- Once you know which configuration we're going to use, we'll want to set up
+  each of the endpoints we'll use to talk to the target USB device.
+		- This is mostly allocating Queue Heads and sticking them in schedules.
+		  See SETTING UP AND ENDPOINT above.
+
+
+SENDING or RECIEVING DATA ON AN ENDPOINT
+------------------------------------------------
+- Allocate a transfer descriptor for the relevant bit(s) of data.
+	- Populate the transfer type, the QHD index, and the Host ID.
+	- Set in_use, active, the PID code (sets direction), the total transfer length,
+		the data_toggle, the IOC bit, and the DMA addresses for the data to send.
+- Link together additional TDs if necessary, terminating with an address with 
+  the Terminate flag set.
+- Add the transfer descriptors into the endpoint's Queue Head.
+		- Set the head's status to TRANSFER_QUEUED.
+		- Write the head's overlay->next_qtd with the newly-allocated QTD.
+- Wait for things to be completed, if desired.
+		- Wait for the head's status to no longer be QUEUED.
+
+
+SENDING a CONTROL REQUEST
+------------------------------------------------
+- Allocate a transfer descriptor for each of the stages of the control request:
+		- The SETUP stage, always
+		- The DATA stage, if present (be sure to specify direction in the PID code for this)
+		- The STATUS stage (be sure to match the direction up)
+- Link all of the stages together...
+- ... and issue the control request as you would any other data 
+  (see SENDING/RECIEVING DATA ON AN ENDPOINT).
