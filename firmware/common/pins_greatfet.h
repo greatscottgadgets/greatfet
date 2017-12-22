@@ -23,6 +23,9 @@ extern struct gpio_t gpio_usb1_sense;
 #define BOARD_CAPABILITY_USB1_PROVIDE_VBUS
 extern struct gpio_t gpio_usb1_en;
 
+/* If we don't provide a switchable DM pulldown, use the board's
+ * internal one for host mode. */
+#define BOARD_QUIRK_USE_INTERNAL_DM_PULLDOWN
 
 /*
  * SCU PinMux

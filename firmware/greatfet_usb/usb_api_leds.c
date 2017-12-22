@@ -32,7 +32,7 @@ usb_request_status_t usb_vendor_request_set_leds(
 		led_func handler;
 
 		/* If we've been passed an invalid request number, stall. */
-		if(request_type >= COUNT_OF(led_request_handlers)) {
+		if(request_type >= ARRAY_SIZE(led_request_handlers)) {
 			usb_endpoint_stall(endpoint);
 		}
 

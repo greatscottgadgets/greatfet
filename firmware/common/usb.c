@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "usb.h"
+#include "usb_host.h"
 #include "usb_type.h"
 #include "usb_queue.h"
 #include "usb_registers.h"
@@ -480,6 +481,9 @@ static void usb_controller_set_device_mode(usb_peripheral_t* device) {
 	// Mark the peripheral as in DEVICE mode.
 	device->mode = USB_CONTROLLER_MODE_DEVICE;
 
+	// And disable any host-mode pull-downs used.
+	usb_host_disable_pulldowns(device);
+
 	if( device->controller == 0) {
 		// Set USB0 peripheral mode
 		USB0_USBMODE_D = USB0_USBMODE_D_CM1_0(2);
@@ -516,31 +520,17 @@ usb_speed_t usb_speed(
 	}
 }
 
-static void usb_clear_status(const uint32_t status,
-							 const usb_peripheral_t* const device) {
- 	if( device->controller == 0 ) {
-		USB0_USBSTS_D = status;
-	}
-	if( device->controller == 1 ) {
-		USB1_USBSTS_D = status;
-	}
-}
-
 uint32_t usb_get_status(const usb_peripheral_t* const device) {
-    uint32_t status = 0;
-	// Mask status flags with enabled flag interrupts.
- 	if( device->controller == 0 ) {
-		status = USB0_USBSTS_D & USB0_USBINTR_D;
-	}
-	if( device->controller == 1 ) {
-		status = USB1_USBSTS_D & USB1_USBINTR_D;
-	}
+	uint32_t status = 0;
+	int usb_number = device->controller;
 
-    // Clear flags that were just read, leaving alone any flags that
-    // were just set (after the read). It's important to read and
-    // reset flags atomically! :-)
-	usb_clear_status(status, device);
+	// Read the status of the activated interrupts...
+	status = USB_REG(usb_number)->USBSTS & USB_REG(usb_number)->USBINTR;
 
+	// Clear flags that were just read, leaving alone any flags that
+	// were just set (after the read). It's important to read and
+	// reset flags atomically! :-)
+	USB_REG(usb_number)->USBSTS = status;
 	return status;
 }
 

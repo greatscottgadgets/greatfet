@@ -19,8 +19,11 @@ extern "C"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 
-/* convenience macros */
-#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define CONTAINER_OF(ptr, type, member) ({                      \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
+
 
 /* hardware identification number */
 #define BOARD_ID_ONE 0

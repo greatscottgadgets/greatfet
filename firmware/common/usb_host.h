@@ -21,6 +21,17 @@
  */
 void usb_host_init(usb_peripheral_t* host);
 
+/**
+ * Enable pull-down resistors on DM/DP, as required in host mode.
+ */
+void usb_host_enable_pulldowns(usb_peripheral_t *host);
+
+
+/**
+ * Disable pull-down resistors on DM/DP, e.g. when switching out of host mode.
+ */
+void usb_host_disable_pulldowns(usb_peripheral_t *host);
+
 
 /**
  * Enable sourcing a given USB port's VBUS, if possible.
@@ -31,7 +42,7 @@ int usb_provide_vbus(usb_peripheral_t *host);
 /**
  * Disable sourcing a given USB port's VBUS, if possible.
  */
-int usb_stop_providing_vbus(usb_peripheral_t *host);
+void usb_stop_providing_vbus(usb_peripheral_t *host);
 
 
 /**

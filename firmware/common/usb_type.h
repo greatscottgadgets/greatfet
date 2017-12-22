@@ -246,9 +246,7 @@ typedef struct {
 
 			// Head for the asynchronous queue.
 			ehci_queue_head_t async_queue_head;
-
-			// TODO: rename me, I'm not really a head?
-			ehci_queue_head_t periodic_queue_head;
+			ehci_queue_head_t periodic_queue_head;  // TODO: rename me, I'm not really a head?
 
 			// TODO: abstract these counts?
 			ehci_link_t periodic_list[8];
@@ -257,6 +255,9 @@ typedef struct {
 
 			// FIXME: Pull me into an endpoint object; keep those here.
 			ehci_queue_head_t *control_endpoint_queue;
+
+      // Linked list of pending transfers.
+      ehci_link_t pending_transfers;
 
 		};
 	};

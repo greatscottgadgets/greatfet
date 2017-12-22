@@ -22,6 +22,14 @@
 #include <libopencm3/lpc43xx/usb.h>
 #include <libopencm3/lpc43xx/scu.h>
 
+static void usb_host_isr(usb_peripheral_t *host);
+
+// Thunks to allow injection of USB0/USB1.
+static void usb_host_isr_usb0(void) { usb_host_isr(&usb_peripherals[0]); }
+static void usb_host_isr_usb1(void) { usb_host_isr(&usb_peripherals[1]); }
+
+// Look up table to find our thunks easily.
+static const vector_table_entry_t usb_peripheral_isrs[] = { usb_host_isr_usb0, usb_host_isr_usb1 };
 
 /**
  * Enable sourcing a given USB port's VBUS, if possible.
@@ -62,15 +70,15 @@ int usb_provide_vbus(usb_peripheral_t *host)
 		gpio_set(&gpio_usb1_en);
 
 #endif
+	}
 
 	return 0;
-	}
 }
 
 /**
  * Disable a given USB port's VBUS, if possible.
  */
-int usb_stop_providing_vbus(usb_peripheral_t *host)
+void usb_stop_providing_vbus(usb_peripheral_t *host)
 {
 	if(host->controller == 0) {
 		// TODO: handle supply of USB1 VBUS, where possible:
@@ -82,6 +90,45 @@ int usb_stop_providing_vbus(usb_peripheral_t *host)
 #endif
 		}
 }
+
+
+
+
+/**
+ * Enable pull-down resistors on DM/DP, as required in host mode.
+ */
+void usb_host_enable_pulldowns(usb_peripheral_t *host)
+{
+#ifdef BOARD_QUIRK_USE_INTERNAL_DM_PULLDOWN
+	// If this board doesn't explicitly provide a pull-down resistor on DM,
+	// we can use the OTG termination resistor as a pull-down. Turn it on.
+	USB_REG(host->controller)->OTGSC |= USB0_OTGSC_OT;
+#endif
+
+	// FIXME: The GreatFET one currently has no pull-down resistor on DP.
+	// This isn't great, but we can potentially work without it, as the pin
+	// tends to float down.
+
+}
+
+
+/**
+ * Disable pull-down resistors on DM/DP, e.g. when switching out of host mode.
+ */
+void usb_host_disable_pulldowns(usb_peripheral_t *host)
+{
+#ifdef BOARD_QUIRK_USE_INTERNAL_DM_PULLDOWN
+	// If this board doesn't explicitly provide a pull-down resistor on DM,
+	// we use the OTG termination resistor as a pull-down. Turn it off.
+		USB_REG(host->controller)->OTGSC &= ~USB0_OTGSC_OT;
+#endif
+
+	// FIXME: The GreatFET one currently has no pull-down resistor on DP.
+	// This isn't great, but we can potentially work without it, as the pin
+	// tends to float down.
+}
+
+
 
 
 
@@ -99,7 +146,10 @@ static void usb_controller_set_host_mode(usb_peripheral_t *host)
 
 	// Place the USB controller in host mode.
 	USB_REG(host_number)->USBMODE &= ~(USB0_USBMODE_H_CM_MASK);
-	USB_REG(host_number)->USBMODE |= USB0_USBMODE_H_CM(USBMODE_HOST_MODE); // | USB0_USBMODE_H_VBPS;
+	USB_REG(host_number)->USBMODE |= USB0_USBMODE_H_CM(USBMODE_HOST_MODE);
+
+	// Enable the required pull-down resistors.
+	usb_host_enable_pulldowns(host);
 
 	// Mark this device as in host mode.
 	host->mode = USB_CONTROLLER_MODE_HOST;
@@ -108,6 +158,9 @@ static void usb_controller_set_host_mode(usb_peripheral_t *host)
 
 /**
  * Configures the USB host to support the interrupts we use for host mode.
+ *
+ * Installs an interrupt handler for USB events. If desired, this can
+ * be replaced afterwards with usb_set_irq_handler.
  */
 static void usb_controller_set_up_host_interrupts(usb_peripheral_t *host)
 {
@@ -120,13 +173,14 @@ static void usb_controller_set_up_host_interrupts(usb_peripheral_t *host)
 
 	// Enable the interrupt modes we want by default for this controller.
 	USB_REG(host_number)->USBINTR |=
-		USB0_USBINTR_H_UE		|
-		USB0_USBINTR_H_UEE	|
-		USB0_USBINTR_H_PCE	|
-		USB0_USBINTR_H_AAE	|
-		USB0_USBINTR_H_SRE	|
-		USB0_USBINTR_H_UAIE |
-		USB0_USBINTR_H_UPIA;
+		USB0_USBINTR_H_UEE	| // USB Error
+		USB0_USBINTR_H_PCE	| // Port Change
+		USB0_USBINTR_H_AAE	| // Asynch Queue Advance
+		USB0_USBINTR_H_UAIE | // transaction from Async queue finished
+		USB0_USBINTR_H_UPIA;  // transaction from the Periodc queue finished
+
+	// Set up a default handler for USB events.
+	usb_set_irq_handler(host, usb_peripheral_isrs[host_number]);
 }
 
 
@@ -218,6 +272,9 @@ static void usb_controller_set_up_lists(usb_peripheral_t *host)
 	usb_controller_set_up_async_list(host);
 	usb_controller_set_up_periodic_list(host);
 
+	// Set up an emtpy linked list of pending transfers.
+	host->pending_transfers.ptr = (ehci_link_t *)TERMINATING_LINK;
+
 	// For now, trigger interrupts after a frame list of 32 elements.
 	USB_REG(host->controller)->USBCMD |= (USB0_USBCMD_H_FS0 | USB1_USBCMD_H_FS2);
 	USB_REG(host->controller)->USBCMD &= ~USB0_USBCMD_H_FS1;
@@ -261,4 +318,39 @@ void usb_host_reset_device(usb_peripheral_t *host)
 
 	// Wait for the USB reset to complete.
 	while(USB_REG(host_number)->PORTSC1 & USB0_PORTSC1_H_PR);
+}
+
+
+/**
+ * Handle an error interrupt. Normally, we migth want to use this
+ * opportunity to clear out any error'd transfer descriptors.
+ */
+void usb_host_handle_error(usb_peripheral_t *host)
+{
+		//TODO:
+		(void)host;
+}
+
+
+/**
+ * Handle interrupts for the USB host controller.
+ */
+static void usb_host_isr(usb_peripheral_t *host) {
+
+	// Read (and clear) the set of active ISRs to be handled.
+	const uint32_t status = usb_get_status(host);
+
+	// TODO: Handle other interrupts?
+
+	// If we've just finished an event on the asynchronous queue,
+	// handle it.
+	if (status & USB0_USBSTS_H_UAI) {
+		usb_host_handle_asynchronous_transfer_complete(host);
+	}
+
+	if (status & USB0_USBSTS_H_UEI) {
+		usb_host_handle_error(host);
+	}
+
+
 }
