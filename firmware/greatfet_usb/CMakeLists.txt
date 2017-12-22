@@ -38,6 +38,7 @@ set(SRC_M4
 	sgpio_isr.c
 	glitchkit.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue_host.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"

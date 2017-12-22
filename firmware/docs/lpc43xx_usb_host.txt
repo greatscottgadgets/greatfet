@@ -47,9 +47,6 @@ SETTING UP AN ENDPOINT
   list of existing Queue Heads for one that's not in_use.
 - Set up the Queue Head's parameters:
 	- in_use = 1
-	- direction
-	- interval = interval, for a periodic endpoint
-	- status = STATUS_OK
 	- device addr = the address of the downstream device-- for our single-device
 		support, we probably want just e.g. address 0 or 1
 	- inactivate_on_next_transaction = 0
@@ -85,16 +82,14 @@ ON CONFIGURATION (SETTING UP OTHER ENDPOINTS)
 SENDING or RECIEVING DATA ON AN ENDPOINT
 ------------------------------------------------
 - Allocate a transfer descriptor for the relevant bit(s) of data.
-	- Populate the transfer type, the QHD index, and the Host ID.
-	- Set in_use, active, the PID code (sets direction), the total transfer length,
+	- Populate the transfer type, active, PID code (sets directoin), total length,
 		the data_toggle, the IOC bit, and the DMA addresses for the data to send.
 - Link together additional TDs if necessary, terminating with an address with 
   the Terminate flag set.
 - Add the transfer descriptors into the endpoint's Queue Head.
-		- Set the head's status to TRANSFER_QUEUED.
 		- Write the head's overlay->next_qtd with the newly-allocated QTD.
-- Wait for things to be completed, if desired.
-		- Wait for the head's status to no longer be QUEUED.
+- Wait for things to be completed, if desired. This is essentially waiting
+     for that interrupt to be called back.
 
 
 SENDING a CONTROL REQUEST

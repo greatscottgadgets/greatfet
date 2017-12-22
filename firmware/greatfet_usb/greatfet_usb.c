@@ -87,7 +87,9 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	// USB Host
 	usb_vendor_request_usbhost_connect,
 	usb_vendor_request_usbhost_bus_reset,
-	usb_vendor_request_usbhost_get_status
+	usb_vendor_request_usbhost_get_status,
+	usb_vendor_request_usbhost_set_up_endpoints,
+	usb_vendor_request_usbhost_send_setup_packet,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -175,6 +177,7 @@ int main(void) {
 
 	init_usb0();
 	init_greatdancer_api();
+	init_usbhost_api();
 
 	while(true) {
 		if(logic_analyzer_enabled) {

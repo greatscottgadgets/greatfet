@@ -9,7 +9,7 @@
 #include "usb.h"
 #include "usb_host.h"
 #include "usb_type.h"
-#include "usb_queue.h"
+#include "usb_queue_host.h"
 #include "usb_registers.h"
 #include "usb_standard_request.h"
 #include "greatfet_core.h"
@@ -98,9 +98,8 @@ static void usb_controller_set_host_mode(usb_peripheral_t *host)
 	while(USB_REG(host_number)->USBSTS & USB0_USBSTS_H_HCH);
 
 	// Place the USB controller in host mode.
-	// TODO: Is this what we want for VBus power select?
 	USB_REG(host_number)->USBMODE &= ~(USB0_USBMODE_H_CM_MASK);
-	USB_REG(host_number)->USBMODE |= USB0_USBMODE_H_CM(USBMODE_HOST_MODE) | USB0_USBMODE_H_VBPS;
+	USB_REG(host_number)->USBMODE |= USB0_USBMODE_H_CM(USBMODE_HOST_MODE); // | USB0_USBMODE_H_VBPS;
 
 	// Mark this device as in host mode.
 	host->mode = USB_CONTROLLER_MODE_HOST;
@@ -121,11 +120,11 @@ static void usb_controller_set_up_host_interrupts(usb_peripheral_t *host)
 
 	// Enable the interrupt modes we want by default for this controller.
 	USB_REG(host_number)->USBINTR |=
-		USB0_USBINTR_H_UE   |
-		USB0_USBINTR_H_UEE  |
-		USB0_USBINTR_H_PCE  |
-		USB0_USBINTR_H_AAE  |
-		USB0_USBINTR_H_SRE  |
+		USB0_USBINTR_H_UE		|
+		USB0_USBINTR_H_UEE	|
+		USB0_USBINTR_H_PCE	|
+		USB0_USBINTR_H_AAE	|
+		USB0_USBINTR_H_SRE	|
 		USB0_USBINTR_H_UAIE |
 		USB0_USBINTR_H_UPIA;
 }
@@ -183,6 +182,34 @@ static void usb_controller_set_up_periodic_list(usb_peripheral_t *host)
 
 
 /**
+ * Disables the asynchronous schedule, blocking until it's fully down.
+ */
+void usb_host_disable_asynchronous_schedule(usb_peripheral_t *host)
+{
+	// Clear the asynchronous schedule enabled bit..
+	USB_REG(host->controller)->USBCMD &= ~USB0_USBCMD_H_ASE;
+
+	// ... and wait for the host to report that the schedule has been disabled.
+	while(USB_REG(host->controller)->USBSTS & USB0_USBSTS_H_AS);
+}
+
+
+/**
+ * Enables the asynchronous schedule, blocking until it fully comes up.
+ */
+void usb_host_enable_asynchronous_schedule(usb_peripheral_t *host)
+{
+	// Clear the asynchronous schedule enabled bit..
+	USB_REG(host->controller)->USBCMD |= USB0_USBCMD_H_ASE;
+
+	// ... and wait for the host to report that the schedule has been enabled.
+	while(!(USB_REG(host->controller)->USBSTS & USB0_USBSTS_H_AS));
+}
+
+
+
+
+/**
  * Configures the USB host to support the interrupts we use for host mode.
  */
 static void usb_controller_set_up_lists(usb_peripheral_t *host)
@@ -211,7 +238,7 @@ void usb_host_init(usb_peripheral_t *host)
 		usb_phy_enable(host);
 		usb_controller_reset(host);
 
-		//... set it up for host use..
+		//... set it up for host use...
 		usb_controller_set_host_mode(host);
 		usb_controller_set_up_host_interrupts(host);
 		usb_controller_set_up_lists(host);

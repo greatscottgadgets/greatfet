@@ -113,11 +113,20 @@ typedef enum {
   USB_CONTROLLER_MODE_HOST = 1
 } usb_controller_mode_t;
 
+typedef enum {
+	USB_PID_TOKEN_OUT   = 0,
+	USB_PID_TOKEN_IN    = 1,
+	USB_PID_TOKEN_SETUP = 2
+} usb_token_t;
+
+
 typedef struct {
 	const uint8_t* const descriptor;
 	const uint32_t number;
 	const usb_speed_t speed;
 } usb_configuration_t;
+
+
 
 // From the EHCI specification, section 3.5
 typedef struct ehci_transfer_descriptor ehci_transfer_descriptor_t;
@@ -148,7 +157,7 @@ struct ehci_transfer_descriptor {
 
 	volatile uint32_t buffer_pointer_page[5];
 	volatile uint32_t _reserved;
-};
+} __attribute__((packed, aligned(64)));
 
 
 // From Table 3-18 in the EHCI Spec, section 3.6
@@ -160,14 +169,18 @@ typedef enum {
 } ehci_data_descriptor_t;
 
 // From the EHCI specificaitons, section 3.1/3.5
-typedef union {
+typedef union ehci_link ehci_link_t;
+union ehci_link {
+	// Convenience deviation from the USB spec.
+	union ehci_link *ptr;
+
 	uint32_t link;
 	struct  {
 		uint32_t terminate : 1;
 		uint32_t type      : 2;
 		uint32_t           : 29;
 	};
-} ehci_link_t;
+};
 
 
 // From the ECHI specification, section 3.6
@@ -207,7 +220,7 @@ typedef struct {
 	// Any custom data we want, here; the hardware won't
 	// touch past the end of the structure above.
 
-} __attribute__((packed, aligned(2048))) ehci_queue_head_t;
+} __attribute__((packed, aligned(64))) ehci_queue_head_t;
 
 
 typedef struct {
@@ -230,19 +243,20 @@ typedef struct {
 		// Host mode fields.
 		struct {
 
-			// Queue heads
-			// TODO: should these be folded into queue_heads below?
+
+			// Head for the asynchronous queue.
 			ehci_queue_head_t async_queue_head;
 
 			// TODO: rename me, I'm not really a head?
 			ehci_queue_head_t periodic_queue_head;
 
 			// TODO: abstract these counts?
-			ehci_queue_head_t queue_heads_host[8];
 			ehci_link_t periodic_list[8];
-			ehci_transfer_descriptor_t transfer_descriptors[8];
 
 			// TODO: support Isochronous trasfers
+
+			// FIXME: Pull me into an endpoint object; keep those here.
+			ehci_queue_head_t *control_endpoint_queue;
 
 		};
 	};

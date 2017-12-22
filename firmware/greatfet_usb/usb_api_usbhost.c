@@ -3,7 +3,6 @@
  */
 
 #include "usb_api_spi.h"
-#include "usb_queue.h"
 
 #include <stddef.h>
 #include "usb_api_usbhost.h"
@@ -20,9 +19,43 @@
 #include "usb_endpoint.h"
 #include "usb_request.h"
 #include "usb_host.h"
+#include "usb_queue_host.h"
 #include "usb_registers.h"
 
 static void usbhost_usb_isr(void);
+
+typedef char packet_buffer[512];
+
+// To save storage, use the same buffers as GreatDancer, for now.
+// For now, we shouldn't have both host and GreatDancer running at the
+// same time. This _could_ change in the future.
+//
+extern packet_buffer endpoint_buffer[NUM_USB1_ENDPOINTS];
+extern uint32_t total_received_data[NUM_USB1_ENDPOINTS];
+
+
+/**
+ * Command used for issuing an endpoint setup.
+ */
+struct _endpoint_setup_command_t {
+	uint8_t endpoint_schedule;
+	uint8_t device_address;
+	uint8_t endpoint_number;
+	uint8_t endpoint_speed;
+	uint8_t is_control_endpoint;
+	uint16_t max_packet_size;
+} __attribute__((packed));
+typedef struct _endpoint_setup_command_t endpoint_setup_command_t;
+
+
+
+/**
+ * Start-of-day setup for the USBHost API.
+ */
+void init_usbhost_api(void)
+{
+	usb_host_initialize_storage_pools();
+}
 
 
 /**
@@ -102,6 +135,92 @@ usb_request_status_t usb_vendor_request_usbhost_bus_reset(
 	}
 	return USB_REQUEST_STATUS_OK;
 }
+
+
+/**
+ * Sets up an endpoint on the USB host for use in comms.
+ *
+ * Expects a data stage with an _endpoint_setup_command_t packet
+ * describing the endpoint to be initialized. See its documentation above.
+ *
+ * FIXME: drop the 's' in the name
+ */
+usb_request_status_t usb_vendor_request_usbhost_set_up_endpoints(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	static endpoint_setup_command_t command;
+
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+
+		if(endpoint->setup.length != sizeof(endpoint_setup_command_t)) {
+			return USB_REQUEST_STATUS_STALL;
+		}
+
+		// Read the command from the host.
+		usb_transfer_schedule_block(endpoint->out, &command, endpoint->setup.length, NULL, NULL);
+
+	} else if(stage == USB_TRANSFER_STAGE_DATA) {
+
+		// ... and process it.
+
+		// Acknowledge early, as this can take a bit. :)
+		usb_transfer_schedule_ack(endpoint->in);
+
+		// TODO: Support schedules other than asynchronous.
+		// TODO: Use an endpoint API, rather than the queue set up directly.
+
+		ehci_queue_head_t *qh = set_up_asynchronous_endpoint_queue(&usb_peripherals[1], command.device_address,
+				command.endpoint_number, command.endpoint_speed, command.is_control_endpoint,
+				command.max_packet_size);
+
+		// FIXME: this is temporary placeholder code
+		usb_peripherals[1].control_endpoint_queue = qh;
+
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+
+/**
+ * Sends a SETUP packet to the given host.
+ *
+ * TODO: accept arguments to specify the endpoint it should be sent on
+ *
+ * Expects a populated usb_setup_t with the data to be transmitted.
+ */
+usb_request_status_t usb_vendor_request_usbhost_send_setup_packet(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	static usb_setup_t command;
+
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+
+		if(endpoint->setup.length != sizeof(usb_setup_t)) {
+			return USB_REQUEST_STATUS_STALL;
+		}
+
+		// Read the command from the host.
+		usb_transfer_schedule_block(endpoint->out, &command, endpoint->setup.length, NULL, NULL);
+
+	} else if(stage == USB_TRANSFER_STAGE_DATA) {
+
+    // Send the setup packet...
+    usb_host_transfer_schedule(
+        usb_peripherals[1].control_endpoint_queue,
+        USB_PID_TOKEN_SETUP,
+        &command,
+        sizeof(usb_setup_t),
+        NULL,
+        NULL
+      );
+
+    // ... and ack the send to the host.
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+
+	return USB_REQUEST_STATUS_OK;
+}
+
 
 
 /**

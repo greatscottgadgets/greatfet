@@ -43,6 +43,18 @@ int usb_stop_providing_vbus(usb_peripheral_t *host);
 void usb_host_reset_device(usb_peripheral_t *host);
 
 
+/**
+ * Disables the asynchronous schedule, blocking until it's fully down.
+ */
+void usb_host_disable_asynchronous_schedule(usb_peripheral_t *host);
+
+
+/**
+ * Enables the asynchronous schedule, blocking until it fully comes up.
+ */
+void usb_host_enable_asynchronous_schedule(usb_peripheral_t *host);
+
+
 #endif
 
 
