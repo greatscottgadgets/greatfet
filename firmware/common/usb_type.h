@@ -259,6 +259,9 @@ typedef struct {
       // Linked list of pending transfers.
       ehci_link_t pending_transfers;
 
+      // FIXME: Replace this queue with anything nicer?
+      uint32_t pending_glitchkit_events[2];
+
 		};
 	};
 } usb_peripheral_t;

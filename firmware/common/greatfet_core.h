@@ -42,6 +42,20 @@ extern "C"
 #define BOARD_ID BOARD_ID_RAD1O
 #endif
 
+typedef enum {
+	// Keep these unique, so the RAM is unlikely to settle into these on first
+	// boot.
+	RESET_REASON_UNKNOWN      = 0,
+	RESET_REASON_SOFT_RESET   = 0xAA55AA55,
+	RESET_REASON_USE_EXTCLOCK = 0xAABBCCDD,
+}	reset_reason_t;
+
+/**
+ * This special register is not cleared on reset-- it thus can
+ * be used to pass reset reasons to future software stages.
+ */
+extern volatile uint32_t reset_reason;
+
 
 void delay(uint32_t duration);
 

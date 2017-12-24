@@ -20,6 +20,8 @@
 #include "usb_endpoint.h"
 #include "usb_request.h"
 
+#include "glitchkit.h"
+
 static void greatdancer_usb_isr(void);
 
 struct _endpoint_setup_command_t {
@@ -108,6 +110,10 @@ static void set_up_greatdancer_device(uint16_t max_packet_size) {
 
 	usb_peripheral_reset(&usb_peripherals[1]);
 	usb_device_init(&usb_peripherals[1]);
+
+	// XXX temporary
+	glitchkit_enable();
+	glitchkit_enable_trigger_on(GLITCHKIT_USBDEVICE_FINISH_TD);
 
 	// Set up the control endpoint. The application will request setup
 	// for all of the non-standard channels on connection.
@@ -647,6 +653,7 @@ static void greatdancer_usb_isr(void) {
 
 	// If a USB event has happened, handle it.
 	if( status & USB1_USBSTS_D_UI ) {
+		glitchkit_notify_event(GLITCHKIT_USBDEVICE_FINISH_TD);
 		greatdancer_check_for_asynchronous_events();
 	}
 

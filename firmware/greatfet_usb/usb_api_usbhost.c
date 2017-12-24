@@ -22,6 +22,9 @@
 #include "usb_queue_host.h"
 #include "usb_registers.h"
 
+// XXX: temporary
+#include "glitchkit.h"
+
 typedef char packet_buffer[512];
 
 // To save storage, use the same buffers as GreatDancer, for now.
@@ -87,6 +90,10 @@ usb_request_status_t usb_vendor_request_usbhost_connect(
 		// Set up the device in host mode...
 		usb_controller_reset(&usb_peripherals[1]);
 		usb_host_init(&usb_peripherals[1]);
+
+		// XXX: inject some glitchkit setup for hax
+		glitchkit_enable();
+		glitchkit_enable_trigger_on(GLITCHKIT_USBHOST_FINISH_TD);
 
 		// Provide VBUS to the target, if possible.
 		// TODO: maybe this should be its own vendor request

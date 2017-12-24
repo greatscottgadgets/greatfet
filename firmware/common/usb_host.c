@@ -14,6 +14,8 @@
 #include "usb_standard_request.h"
 #include "greatfet_core.h"
 
+#include "glitchkit.h"
+
 #include "pins.h"
 
 #include <libopencm3/lpc43xx/creg.h>
@@ -148,6 +150,7 @@ static void usb_controller_set_host_mode(usb_peripheral_t *host)
 	USB_REG(host_number)->USBMODE &= ~(USB0_USBMODE_H_CM_MASK);
 	USB_REG(host_number)->USBMODE |= USB0_USBMODE_H_CM(USBMODE_HOST_MODE);
 
+
 	// Enable the required pull-down resistors.
 	usb_host_enable_pulldowns(host);
 
@@ -173,6 +176,8 @@ static void usb_controller_set_up_host_interrupts(usb_peripheral_t *host)
 
 	// Enable the interrupt modes we want by default for this controller.
 	USB_REG(host_number)->USBINTR |=
+		USB0_USBINTR_H_UE   |
+		USB0_USBINTR_H_SRE  |
 		USB0_USBINTR_H_UEE	| // USB Error
 		USB0_USBINTR_H_PCE	| // Port Change
 		USB0_USBINTR_H_AAE	| // Asynch Queue Advance
@@ -327,9 +332,37 @@ void usb_host_reset_device(usb_peripheral_t *host)
  */
 void usb_host_handle_error(usb_peripheral_t *host)
 {
-		//TODO:
-		(void)host;
+	//TODO:
+	(void)host;
 }
+
+
+/**
+ * Handle any events that we need to take care of once per USB frame.
+ */
+static void usb_host_service_per_frame_events(usb_peripheral_t *host)
+{
+	//static uint32_t last_frame_number = 0;
+	//uint32_t current_frame_number = USB_REG(host)->FRINDEX & ~0b111;
+
+	//// If we've already checked for events this frame, abort.
+	//if (last_frame_number == current_frame_number) {
+	//		return;
+	//}
+
+	// Update the current frame number.
+	//last_frame_number = current_frame_number;
+
+	// Apply any pending GlitchKit events that were waiting for frame synchronization.
+	glitchkit_apply_deferred_events(
+		GLITCHKIT_USBHOST_START_TD    |
+		GLITCHKIT_USBHOST_START_OUT   |
+		GLITCHKIT_USBHOST_START_IN    |
+		GLITCHKIT_USBHOST_START_SETUP
+	);
+}
+
+
 
 
 /**
@@ -340,11 +373,16 @@ static void usb_host_isr(usb_peripheral_t *host) {
 	// Read (and clear) the set of active ISRs to be handled.
 	const uint32_t status = usb_get_status(host);
 
-	// TODO: Handle other interrupts?
+	// Start of frame: handle any events that need synchronization
+	// to the (micro)frame timer.
+	if (status & USB0_USBSTS_H_SRI) {
+		usb_host_service_per_frame_events(host);
+	}
 
 	// If we've just finished an event on the asynchronous queue,
 	// handle it.
-	if (status & USB0_USBSTS_H_UAI) {
+	if (status & USB0_USBSTS_H_UI) {
+		glitchkit_notify_event(GLITCHKIT_USBHOST_FINISH_TD);
 		usb_host_handle_asynchronous_transfer_complete(host);
 	}
 

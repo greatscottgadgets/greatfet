@@ -91,6 +91,9 @@ void _gpio_condition_add(pin_condition_t* condition){
  *    'index' value: low byte of the 32-bit counter
  *    data stage: a collection of pin_conditions to be applied; see the
  *        struct definition above
+ *
+ *  TODO: rename, this no longer enables triggering but just events
+ *		(which can be used for synchronization)
  */
 usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
     usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)

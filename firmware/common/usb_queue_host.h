@@ -127,8 +127,8 @@ ehci_queue_head_t * set_up_asynchronous_endpoint_queue(usb_peripheral_t *host, u
  * @return 0 on success, or an error code on failure.
  */
 int usb_host_transfer_schedule(
-	const usb_peripheral_t *host,
-	const ehci_queue_head_t *qh,
+	usb_peripheral_t *host,
+	ehci_queue_head_t *qh,
 	const usb_token_t pid_code,
 
 	void* const data,

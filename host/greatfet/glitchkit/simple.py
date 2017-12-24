@@ -15,6 +15,9 @@ class GlitchKitSimple(GlitchKitModule):
 
     SHORT_NAME = 'simple'
 
+    # Event flags.
+    COUNT_REACHED = 0x001
+
     # Store the max number of each type of condition we can have.
     MAX_EDGE_CONDITIONS  = 8
     MAX_LEVEL_CONDITIONS = 8
@@ -46,8 +49,14 @@ class GlitchKitSimple(GlitchKitModule):
 
 
     def prime_trigger_on_event_count(self, count, conditions):
+
+        # TODO: get rid of this alias
+        self.watch_for_event(condition, count)
+
+
+    def watch_for_event(self, count, conditions):
         """
-        Sets up the GreatFET to trigger when a given number of events have passed.
+        Sets up the GreatFET to issue an event when a given number of events have passed.
 
         Args:
             count -- The count to reach.
@@ -63,8 +72,6 @@ class GlitchKitSimple(GlitchKitModule):
         # fields.
         count_high = count >> 16
         count_low  = count & 0xFFFF
-
-        print("Packet: {}", packet)
 
         # Finally, issue the raw request that should generate the relevant count.
         self.board.vendor_request_out(vendor_requests.GLITCHKIT_SIMPLE_START_EVENT_COUNT,

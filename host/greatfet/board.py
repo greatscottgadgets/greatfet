@@ -200,7 +200,23 @@ class GreatFETBoard(object):
 
     def reset(self):
         """Reset the GreatFET device."""
-        self.vendor_request_out(vendor_requests.RESET)
+
+        # FIXME: Potentially re-create the internal libusb object?
+
+        try:
+            self.vendor_request_out(vendor_requests.RESET)
+        except usb.core.USBError as e:
+            pass
+
+
+    def switch_to_external_clock(self):
+        """
+        Resets the GreatFET, and starts it up again using an external clock 
+        source, rather than the onboard crystal oscillator.
+        """
+        # XXX FIXME XXX
+        pass
+
 
 
     def close(self):

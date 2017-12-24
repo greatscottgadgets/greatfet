@@ -75,13 +75,27 @@ usb_request_status_t usb_vendor_request_read_partid_serialno(
 	return USB_REQUEST_STATUS_OK;
 }
 
+/**
+ * Arguments:
+ *
+ *		value = 0: regular reset
+ *		value = 1: switch to an external clock after eset
+ */
 usb_request_status_t usb_vendor_request_reset(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		// reset_mode = true;
+		if(endpoint->setup.value == 1) {
+			reset_reason = RESET_REASON_USE_EXTCLOCK;
+		} else {
+			reset_reason = RESET_REASON_SOFT_RESET;
+		}
+	
 		wwdt_reset(100000);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
 }
+
+

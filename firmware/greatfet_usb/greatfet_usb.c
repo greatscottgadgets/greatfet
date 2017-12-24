@@ -28,7 +28,9 @@
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
 #include "usb_api_usbhost.h"
+#include "usb_api_glitchkit.h"
 #include "usb_api_glitchkit_simple.h"
+#include "usb_api_glitchkit_usb.h"
 #include "usb_bulk_buffer.h"
 
 #include "glitchkit.h"
@@ -82,7 +84,11 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_gpio_read,
 
 	// GlitchKit
+	usb_vendor_request_glitchkit_setup,
 	usb_vendor_request_glitchkit_simple_enable_trigger, // Simple triggers
+	usb_vendor_request_glitchkit_control_in_start,
+	usb_vendor_request_glitchkit_usb_result_length,
+	usb_vendor_request_glitchkit_usb_read_result,
 
 	// USB Host
 	usb_vendor_request_usbhost_connect,
@@ -92,7 +98,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_usbhost_send_on_endpoint,
 	usb_vendor_request_usbhost_start_nonblocking_read,
 	usb_vendor_request_usbhost_finish_nonblocking_read,
-	usb_vendor_request_usbhost_get_nonblocking_data_length,
+	usb_vendor_request_usbhost_get_nonblocking_data_length
+
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -198,9 +205,9 @@ int main(void) {
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
 		}
-		if(glitchkit_enabled) {
-			service_glitchkit();
-		}
+
+
+		service_glitchkit();
 	}
 
 	return 0;

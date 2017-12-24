@@ -10,8 +10,10 @@
 #include "usb.h"
 #include "usb_host.h"
 #include "usb_queue_host.h"
+#include "usb_registers.h"
 
 #include "greatfet_core.h"
+#include "glitchkit.h"
 
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/sync.h>
@@ -22,6 +24,13 @@ static ehci_link_t transfer_freelist;
 
 static ehci_queue_head_t queue_head_pool[USB_HOST_MAX_QUEUE_HEADS];
 static ehci_transfer_t transfer_pool[USB_HOST_MAX_TRANSFER_DESCRIPTORS];
+
+// Look up table for converting PID codes to the relevant GlitchKIT events.
+static const glitchkit_event_t glitchkit_events_for_pid_start[] =
+		{  GLITCHKIT_USBHOST_START_OUT, GLITCHKIT_USBHOST_START_IN, GLITCHKIT_USBHOST_START_SETUP };
+static const glitchkit_event_t glitchkit_events_for_pid_finish[] =
+		{  GLITCHKIT_USBHOST_FINISH_OUT, GLITCHKIT_USBHOST_FINISH_IN, GLITCHKIT_USBHOST_FINISH_SETUP };
+
 
 // TODO: Figure out how to handle locking on the below, if we ever wind up
 // in a situation where things can be allocated or freed from different contexts
@@ -281,8 +290,8 @@ static inline bool dtd_link_is_nonterminating(volatile ehci_transfer_descriptor_
  * @return 0 on success, or an error code on failure.
  */
 int usb_host_transfer_schedule(
-	const usb_peripheral_t *host,
-	const ehci_queue_head_t *qh,
+	usb_peripheral_t *host,
+	ehci_queue_head_t *qh,
 	const usb_token_t pid_code,
 
 	void* const data,
@@ -298,6 +307,13 @@ int usb_host_transfer_schedule(
 	if (transfer == NULL) {
 		return -1; // FIXME: error codes
 	}
+
+	// Mark any relevant glitchkit events as having occurred.
+	//glitchkit_notify_event_deferred(GLITCHKIT_USBHOST_START_TD);
+	//glitchkit_notify_event_deferred(glitchkit_events_for_pid_start[pid_code]);
+
+	glitchkit_notify_event(GLITCHKIT_USBHOST_START_TD);
+	glitchkit_notify_event(glitchkit_events_for_pid_start[pid_code]);
 
 	// Get a reference to the core transfer descriptor used by the hardware.
 	ehci_transfer_descriptor_t* const td = &transfer->td;
@@ -329,11 +345,12 @@ int usb_host_transfer_schedule(
 	// Finally, we're ready to add our transfer to the relevant queue head.
 	ehci_transfer_descriptor_t *tail;
 
+	// Ensure this critical section executes atomically.
+	cm_disable_interrupts();
+
 	// Add the transfer to our list of pending transfers.
 	// This is what we'll use to know when to clean up the transfer.
 	usb_host_add_transfer_to_pending_list(host, transfer);
-
-	cm_disable_interrupts();
 
 	// Iterate until we find a link that has the Terminate bit set, and then
 	// add our new transfer descriptor there.
@@ -342,7 +359,6 @@ int usb_host_transfer_schedule(
 			tail = (ehci_transfer_descriptor_t *)tail->next_dtd_pointer;
 	}
 	tail->next_dtd_pointer = td;
-
 
 	cm_enable_interrupts();
 	return 0;
@@ -376,6 +392,20 @@ static ehci_link_t *next_link(ehci_link_t *link)
 
 
 /**
+ *
+ */
+static void usb_host_notify_glitchkit_of_completed_packet_type(uint8_t pid_code)
+{
+		if (pid_code >= ARRAY_SIZE(glitchkit_events_for_pid_finish)) {
+				return;
+		}
+
+		// Notify GlitckKit of the events.
+		glitchkit_notify_event(glitchkit_events_for_pid_finish[pid_code]);
+}
+
+
+/**
  * Handle completion of an asynchronous transfer. This is automatically called
  * from the default interrupt handler when a scheudled host transfer completes.
  */
@@ -393,6 +423,9 @@ void usb_host_handle_asynchronous_transfer_complete(usb_peripheral_t *host)
 
 		// If this transfer is complete...
 		if(!transfer->td.active) {
+
+			// Notify GlitchKit of the type of event.
+			usb_host_notify_glitchkit_of_completed_packet_type(transfer->td.pid_code);
 
 			// If we have a completion callback, call it.
 			if(transfer->completion_cb) {

@@ -34,9 +34,11 @@ set(SRC_M4
 	usb_api_sdir.c
 	usb_api_greatdancer.c
   usb_api_usbhost.c
+	usb_api_glitchkit.c
 	usb_api_glitchkit_simple.c
+	usb_api_glitchkit_usb.c
 	sgpio_isr.c
-	glitchkit.c
+	"${PATH_GREATFET_FIRMWARE_COMMON}/glitchkit.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue_host.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"
