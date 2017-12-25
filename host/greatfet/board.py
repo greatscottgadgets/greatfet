@@ -7,6 +7,7 @@ Module containing the core definitions for a GreatFET board.
 """
 
 import usb
+import time
 
 from .protocol import vendor_requests
 from .errors import DeviceNotFoundError
@@ -20,6 +21,9 @@ GREATFET_PRODUCT_ID = 0x60e6
 # Quirk constant that helps us identify libusb's pipe errors, which bubble
 # up as generic USBErrors with errno 32 on affected platforms.
 LIBUSB_PIPE_ERROR = 32
+
+# Total seconds we should wait after a reset before reconnecting.
+RECONNECT_DELAY = 6
 
 
 class GreatFETBoard(object):
@@ -108,21 +112,21 @@ class GreatFETBoard(object):
         """
 
         # By default, accept any device with the default vendor/product IDs.
-        identifiers = {
+        self.identifiers = {
             'idVendor': GREATFET_VENDOR_ID,
             'idProduct': GREATFET_PRODUCT_ID,
         }
-        identifiers.update(device_identifiers)
+        self.identifiers.update(device_identifiers)
 
         # For convenience, allow serial_number=None to be equivalent to not
         # providing a serial number: a  GreatFET with any serail number will be
         # accepted.
-        if 'serial_number' in identifiers and identifiers['serial_number'] is None:
-            del identifiers['serial_number']
+        if 'serial_number' in self.identifiers and self.identifiers['serial_number'] is None:
+            del self.identifiers['serial_number']
 
         # Connect to the first available GreatFET device.
         try:
-            self.device = usb.core.find(**identifiers)
+            self.device = usb.core.find(**self.identifiers)
         except usb.core.USBError as e:
             # On some platforms, providing identifiers that don't match with any
             # real device produces a USBError/Pipe Error. We'll convert it into a
@@ -198,15 +202,30 @@ class GreatFETBoard(object):
         return result
 
 
-    def reset(self):
-        """Reset the GreatFET device."""
+    def reset(self, reconnect=True, switch_to_external_clock=False):
+        """
+        Reset the GreatFET device.
 
-        # FIXME: Potentially re-create the internal libusb object?
+        Arguments:
+            reconect -- If True, this method will wait for the device to
+                finish the reset and then attempt to reconnect.
+            switch_to_external_clock -- If true, the device will accept a 12MHz
+                clock signal on P4_7 (J2_P11 on the GreatFET one) after the reset.
+        """
+
+        type = 1 if switch_to_external_clock else 0
 
         try:
-            self.vendor_request_out(vendor_requests.RESET)
+            self.vendor_request_out(vendor_requests.RESET, value=type)
         except usb.core.USBError as e:
             pass
+
+        # If we're to attempt a reconnect, do so.
+        if reconnect:
+            time.sleep(RECONNECT_DELAY)
+            self.__init__(**self.identifiers)
+
+            # FIXME: issue a reset to all device peripherals with state, here?
 
 
     def switch_to_external_clock(self):
@@ -214,8 +233,7 @@ class GreatFETBoard(object):
         Resets the GreatFET, and starts it up again using an external clock 
         source, rather than the onboard crystal oscillator.
         """
-        # XXX FIXME XXX
-        pass
+        self.reset(switch_to_external_clock=True)
 
 
 

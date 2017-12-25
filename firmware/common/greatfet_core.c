@@ -205,9 +205,10 @@ void cpu_clock_init(void)
 	 * clock (e.g. for synchronization with other systems), use the GP_CLKIN
 	 * instead of the XTAL as the main system clock source. */
 	if(reset_reason == RESET_REASON_USE_EXTCLOCK) {
-		// XXX: remove after test
-		led_on(LED3);
+		// Switch the clock input pin into clock input mode.
+		scu_pinmux(SCU_PINMUX_GP_CLKIN, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION1);
 
+		// And set our main clock source to the extclk.
 		main_clock_source = CGU_SRC_GP_CLKIN;
 	}
 
