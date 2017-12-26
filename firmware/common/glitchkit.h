@@ -8,6 +8,7 @@
 #define __GLITCHKIT_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
  * The event values here are _not fixed_; and they should not be used
@@ -30,7 +31,9 @@ typedef enum {
 	GLITCHKIT_USBHOST_FINISH_OUT   = 0x080,
 	GLITCHKIT_USBHOST_FINISH_IN    = 0x100,
 
-	GLITCHKIT_USBDEVICE_FINISH_TD  = 0x200
+	GLITCHKIT_USBDEVICE_FINISH_TD  = 0x200,
+	
+	GLITCHKIT_USBHOST_VBUS_ENABLED = 0x400
 
 	// GLITCHKIT_USBHOST_START_PACKET = 0x400, // TODO: manual monitoring with M0?
 	// GLITCHKIT_USBHOST_END_PACKET   = 0x800, // TODO: manual monitoring with M0?
@@ -136,6 +139,17 @@ void glitchkit_use_event_for_synchronization(glitchkit_event_t event_to_sync_on)
  *		this method will use the values previously set by used_event_for_synchronization.
  */
 void glitchkit_wait_for_events(glitchkit_event_t event_to_wait_for);
+
+
+/**
+ * Sets up GlitchKit to provide the output clock.
+ *
+ * @param source The clock to be provided. Should match one of the CGU_SRC_*
+ *		constants from cgu.h; see table 147 in the datasheet.
+ * @param requirements If nonzero, enabling of the clock will be deferred until
+ *		the given events occur.
+ */
+void glitchkit_provide_target_clock(uint32_t source, glitchkit_event_t requirements);
 
 
 #endif

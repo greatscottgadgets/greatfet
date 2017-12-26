@@ -200,7 +200,6 @@ Configure PLL1 to max speed (204MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1. */
 void cpu_clock_init(void)
 {
-
 	/* If we've been asked to reset in order to switch to using an external
 	 * clock (e.g. for synchronization with other systems), use the GP_CLKIN
 	 * instead of the XTAL as the main system clock source. */
@@ -210,6 +209,7 @@ void cpu_clock_init(void)
 
 		// And set our main clock source to the extclk.
 		main_clock_source = CGU_SRC_GP_CLKIN;
+
 	}
 
 	// TODO: Figure out a place to do this explicitly?
@@ -287,9 +287,9 @@ void cpu_clock_init(void)
 			| CGU_IDIVB_CTRL_AUTOBLOCK(1)
 			| CGU_IDIVA_CTRL_CLK_SEL(CGU_SRC_IDIVA);
 
-	/* Use IDIVB for CLKOUT */
+	/* Use the GP input clock to drive the clock out; but disable it initially. */
 	CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
-			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_IDIVB);
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_GP_CLKIN) | CGU_BASE_OUT_CLK_PD(1);
 
 	/* use IDIVB as clock source for USB1 */
 	CGU_BASE_USB1_CLK = CGU_BASE_USB1_CLK_AUTOBLOCK(1)
@@ -431,6 +431,9 @@ void pin_setup(void) {
 	scu_pinmux(SCU_PINMUX_TMS, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
 	scu_pinmux(SCU_PINMUX_TDI, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
 
+	/* By default, use CLK0 as an external clock. */
+	scu_pinmux(CLK0, SCU_CLK_OUT | SCU_CONF_FUNCTION1);
+
 	gpio_input(&gpio_tdo);
 	gpio_input(&gpio_tck);
 	gpio_input(&gpio_tms);
@@ -448,9 +451,6 @@ void pin_setup(void) {
 
 	/* enable input on SCL and SDA pins */
 	SCU_SFSI2C0 = SCU_I2C0_NOMINAL;
-
-	/* Configure external clock in */
-	scu_pinmux(CLK0, SCU_CONF_FUNCTION1 | SCU_CLK_OUT);
 
 #ifdef BOARD_CAPABILITY_USB1_PROVIDE_VBUS
 	/* Set up the load switch that we'll use if we want to play host on USB1. */

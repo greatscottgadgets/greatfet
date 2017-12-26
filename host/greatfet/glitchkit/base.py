@@ -15,6 +15,23 @@ class GlitchKitCollection(object):
     SETUP_COMMAND_SET_TRIGGER         = 1
     SETUP_COMMAND_ADD_TRIGGER         = 2
 
+    # Clock sources constants.
+    CLOCK_SOURCE_32K       = 0x00
+    CLOCK_SOURCE_IRC       = 0x01
+    CLOCK_SOURCE_ENET_RX   = 0x02
+    CLOCK_SOURCE_ENET_TX   = 0x03
+    CLOCK_SOURCE_GP_CLKIN  = 0x04
+    CLOCK_SOURCE_CLKIN     = 0x04
+    CLOCK_SOURCE_XTAL      = 0x06
+    CLOCK_SOURCE_PLL0USB   = 0x07
+    CLOCK_SOURCE_PLL0AUDIO = 0x08
+    CLOCK_SOURCE_PLL1      = 0x09
+    CLOCK_SOURCE_IDIVA     = 0x0C
+    CLOCK_SOURCE_IDIVB     = 0x0D
+    CLOCK_SOURCE_IDIVC     = 0x0E
+    CLOCK_SOURCE_IDIVD     = 0x0F
+    CLOCK_SOURCE_IDIVE     = 0x10
+
     def __init__(self, board):
         """
         Creates a new GlitchKit collection.
@@ -100,6 +117,27 @@ class GlitchKitCollection(object):
             data_to_send.append(byte)
 
         self.board.vendor_request_out(vendor_requests.GLITCHKIT_SETUP, index=index, data=data_to_send)
+
+
+    def provide_target_clock(self, *events):
+        """
+        Configure the GreatFET to provide the target clock.
+        Currently only supports output to CLK0 (J1_P11); may support more in the future.
+
+        Arguments
+            events -- optional; if provided, the clock will not be enabled until all of
+                the provided events occur
+        """
+        flags = 0
+
+        # Compute the flags to be sent, and then convert them into a set of bytes.
+        for event in events:
+            flags |= event
+
+        index = flags >> 16
+        value = flags & 0xFFFF
+
+        self.board.vendor_request_out(vendor_requests.GLITCHKIT_PROVIDE_TARGET_CLOCK, index=index, value=value)
 
 
 

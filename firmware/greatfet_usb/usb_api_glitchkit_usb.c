@@ -69,6 +69,7 @@ usb_request_status_t usb_vendor_request_glitchkit_control_in_start(
 		// Provide VBUS to the target, if possible.
 		// TODO: maybe this should be its own vendor request
 		usb_provide_vbus(&usb_peripherals[1]);
+		glitchkit_notify_event(GLITCHKIT_USBHOST_VBUS_ENABLED);
 
 		// Synchronize ourself to any synchronizations requested.
 		// Note that we do this _after_ VBUS is present to give any devices we power a chance
@@ -91,6 +92,9 @@ usb_request_status_t usb_vendor_request_glitchkit_control_in_start(
 			usb_host_reset_device(&usb_peripherals[1]);
 			delay(100 * 1000);
 		}
+
+		
+		led_on(LED2);
 
 		// FIXME: Read the speed from the status register here,
 		// and set up the maximum packet size accordingly.
@@ -144,7 +148,7 @@ usb_request_status_t usb_vendor_request_glitchkit_usb_result_length(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_block(endpoint->in, &read_size, sizeof(read_size), NULL, NULL);
+		usb_transfer_schedule(endpoint->in, &read_size, sizeof(read_size), NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}

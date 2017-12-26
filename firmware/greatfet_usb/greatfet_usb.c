@@ -85,6 +85,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 
 	// GlitchKit
 	usb_vendor_request_glitchkit_setup,
+	usb_vendor_request_glitchkit_provide_target_clock,
 	usb_vendor_request_glitchkit_simple_enable_trigger, // Simple triggers
 	usb_vendor_request_glitchkit_control_in_start,
 	usb_vendor_request_glitchkit_usb_result_length,

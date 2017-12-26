@@ -17,6 +17,8 @@
 #include "usb_queue.h"
 #include "usb_endpoint.h"
 
+#include <libopencm3/lpc43xx/cgu.h>
+
 typedef enum {
 
 	/* Accepts a glitchkit_event_t set of flags that will specify the set of _all_
@@ -87,3 +89,24 @@ usb_request_status_t usb_vendor_request_glitchkit_setup(
 }
 
 
+/**
+ * Vendor request that configures the GreatFET to provide a target clock.
+ *
+ * index & value: the events required to enable the clock source, or
+ *		zero if the clock should be enabled immediately
+ *
+ *	TODO: use value to determine which CLKn pin we're targeting?
+ */
+usb_request_status_t usb_vendor_request_glitchkit_provide_target_clock(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	uint32_t requirements =
+		((uint32_t)endpoint->setup.index << 16UL) | endpoint->setup.value;
+
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		glitchkit_provide_target_clock(CGU_SRC_GP_CLKIN, requirements);
+    usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
+
+}

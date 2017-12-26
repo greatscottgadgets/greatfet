@@ -12,7 +12,12 @@
 #include <gpio.h>
 #include <gpio_lpc.h>
 #include <gpio_scu.h>
+
 #include <libopencm3/lpc43xx/scu.h>
+#include <libopencm3/lpc43xx/cgu.h>
+
+// FIXME: make synchronization explicit using atomic operations :)
+// [even though these are currently all atomic due to bus configuration]
 
 /**
  * Structure that coalesces the state of the GlitchKit trigger/stimulus system.
@@ -38,6 +43,14 @@ struct glitchkit_state {
 	// Stores the name of an event (or events) that we're blocking on.
 	// For use by glitchkit_wait_for_events().
 	glitchkit_event_t blocking_on;
+
+	// Stores a set of events necessary to enable a target clock,
+	// if relevant.
+	glitchkit_event_t enable_clock_on;
+
+	// Stores the source of the target clock. Should match a CGU_SRC_*
+	// constant.
+	uint32_t target_clock_source;
 
 
 };
@@ -131,6 +144,11 @@ void glitchkit_notify_event(glitchkit_event_t event)
 	// If we're watching for this event, trigger.
 	if(glitchkit.active_events & event) {
 		glitchkit_trigger();
+	}
+
+	// If we're waiting for this event to enable the clock, enable it.
+	if(glitchkit.enable_clock_on & event) {
+		glitchkit_provide_target_clock(glitchkit.target_clock_source, glitchkit.enable_clock_on & ~event);
 	}
 
 	// Clear the event from the list of events we're waiting for,
@@ -247,3 +265,34 @@ void service_glitchkit() {
 			glitchkit.triggered = false;
 		}
 }
+
+
+/**
+ * Sets up GlitchKit to provide the output clock.
+ *
+ * @param source The clock to be provided. Should match one of the CGU_SRC_*
+ *		constants from cgu.h; see table 147 in the datasheet.
+ * @param requirements If nonzero, enabling of the clock will be deferred until
+ *		the given events occur.
+ */
+void glitchkit_provide_target_clock(uint32_t source, glitchkit_event_t requirements)
+{
+		source &= 0x1F;
+
+		// If this is a deferred enable, store the requirements and then bail.
+		if(requirements) {
+			glitchkit.enable_clock_on = requirements;
+			glitchkit.target_clock_source = source;
+			return;
+		}
+
+		// Set the clock source for the target clock...
+		// FIXME: uncomment
+		CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+				| CGU_BASE_OUT_CLK_CLK_SEL(source) | CGU_BASE_OUT_CLK_PD(0);
+
+		// Set up CLK0 (provided on the GreatFET one) to drive a strong clock output.
+		scu_pinmux(CLK0, SCU_CLK_OUT | SCU_CONF_FUNCTION1);
+}
+
+

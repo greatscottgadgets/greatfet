@@ -23,7 +23,7 @@ GREATFET_PRODUCT_ID = 0x60e6
 LIBUSB_PIPE_ERROR = 32
 
 # Total seconds we should wait after a reset before reconnecting.
-RECONNECT_DELAY = 6
+RECONNECT_DELAY = 3
 
 
 class GreatFETBoard(object):
@@ -221,6 +221,7 @@ class GreatFETBoard(object):
             pass
 
         # If we're to attempt a reconnect, do so.
+        connected = False
         if reconnect:
             time.sleep(RECONNECT_DELAY)
             self.__init__(**self.identifiers)

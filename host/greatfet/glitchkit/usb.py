@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import usb
+import time
 import codecs
 
 from .base import GlitchKitModule
@@ -34,8 +35,12 @@ class GlitchKitUSB(GlitchKitModule):
     HOST_OUT_TRANSFER_COMPLETE   = 0x080
 
     DEVICE_TRANSFER_COMPLETE     = 0x200
+    VBUS_ENABLED                 = 0x400
 
     READ_INCOMPLETE = 0xFFFFFFFF
+
+    PRE_RESPONSE_DELAY = 0.01
+
 
     # TODO: Figure out what should be in here vs in FaceDancer.
     GET_DESCRIPTOR        = 0x6
@@ -96,7 +101,7 @@ class GlitchKitUSB(GlitchKitModule):
         return setup_request
 
 
-    def capture_control_in(self, request_type=0, recipient=0, request=0, value=0, index=0, length=0, timeout=30):
+    def capture_control_in(self, request_type=0, recipient=0, request=0, value=0, index=0, length=0, timeout=30, ui_event_call=False):
 
         # Build a setup packet...
         setup_packet = self.build_setup_request(True, request_type, recipient, request, value, index, length)
@@ -108,6 +113,10 @@ class GlitchKitUSB(GlitchKitModule):
         length_read = self.READ_INCOMPLETE
         while length_read == self.READ_INCOMPLETE:
             try:
+                time.sleep(self.PRE_RESPONSE_DELAY)
+                if(callable(ui_event_call)):
+                    ui_event_call()
+
                 raw = self.board.vendor_request_in(vendor_requests.GLITCHKIT_USB_RESULT_LENGTH, length=4, timeout=timeout)
                 length_read = self._decode_reg(raw)
             except usb.core.USBError as e:
