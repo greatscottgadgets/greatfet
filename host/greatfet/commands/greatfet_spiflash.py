@@ -93,7 +93,7 @@ def dump_flash(device, address=None, length=None, filename="flash.bin", log_func
             data = device.vendor_request_in(vendor_requests.SPI_DUMP_FLASH,
                                             length=block_length, index=index, value=value)
             file.write(data)
-            address += 255
+            address += 256
 
 def i2c_xfer(device, log_function):
     log_function("Starting I2C")
