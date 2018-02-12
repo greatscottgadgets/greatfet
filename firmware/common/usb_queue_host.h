@@ -86,6 +86,7 @@ ehci_transfer_t * usb_host_allocate_transfer(void);
  */
 void usb_host_free_transfer(ehci_transfer_t *to_free);
 
+
 /**
  * Sets up an endpoint for use in issuing USB transactions. This can be used
  * for any endpoint on the asynchronous queue (e.g. not interrupt or iso).
@@ -93,18 +94,23 @@ void usb_host_free_transfer(ehci_transfer_t *to_free);
  * Intended to be used internally to the endpoint API, but accessible for
  * low-level access if e.g. Host APIs require.
  *
+ * @param host The host this endpoint queue is associated with.
  * @param device_address The address of the downstream device.
  * @param endpoint_number The endpoint number of the endpoint being configurd,
  *		_not_ including the direction bit.
  * @param endpoint_speed The speed of the endpoint. Should match the speed of
  *		the attached device.
  * @param is_control_endpoint True iff the endpoint is a control endpoint.
+ * @param handle_data_toggle If set, the endpoint should handle data toggling 
+ *		automatically; otherwise, it will use the values specified when calling
+ *		usb_host_transfer_schedule.
  * @param max_packet_size The maximum packet size transmissable on the endpoint;
  *		up to 1024.
  */
-ehci_queue_head_t * set_up_asynchronous_endpoint_queue(usb_peripheral_t *host, uint8_t device_address,
+ehci_queue_head_t * usb_host_set_up_asynchronous_endpoint_queue(
+		usb_peripheral_t *host, volatile ehci_queue_head_t *qh, uint8_t device_address,
 		uint8_t endpoint_number, usb_speed_t endpoint_speed,
-		bool is_control_endpoint, uint16_t max_packet_size);
+		bool is_control_endpoint, bool handle_data_toggle, uint16_t max_packet_size);
 
 
 /**
@@ -130,6 +136,7 @@ int usb_host_transfer_schedule(
 	usb_peripheral_t *host,
 	ehci_queue_head_t *qh,
 	const usb_token_t pid_code,
+  const int data_toggle,
 
 	void* const data,
 	const uint32_t maximum_length,

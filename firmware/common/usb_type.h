@@ -223,6 +223,7 @@ typedef struct {
 } __attribute__((packed, aligned(64))) ehci_queue_head_t;
 
 
+
 typedef struct {
 	usb_controller_mode_t mode;
 	const uint8_t controller;
@@ -253,15 +254,8 @@ typedef struct {
 
 			// TODO: support Isochronous trasfers
 
-			// FIXME: Pull me into an endpoint object; keep those here.
-			ehci_queue_head_t *control_endpoint_queue;
-
-      // Linked list of pending transfers.
-      ehci_link_t pending_transfers;
-
-      // FIXME: Replace this queue with anything nicer?
-      uint32_t pending_glitchkit_events[2];
-
+			// Linked list of pending transfers.
+			ehci_link_t pending_transfers;
 		};
 	};
 } usb_peripheral_t;

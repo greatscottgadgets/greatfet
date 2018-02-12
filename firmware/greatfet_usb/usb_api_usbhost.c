@@ -21,6 +21,7 @@
 #include "usb_host.h"
 #include "usb_queue_host.h"
 #include "usb_registers.h"
+#include "usb_type.h"
 
 // XXX: temporary
 #include "glitchkit.h"
@@ -35,12 +36,17 @@ extern packet_buffer endpoint_buffer[NUM_USB1_ENDPOINTS];
 extern uint32_t total_received_data[NUM_USB1_ENDPOINTS];
 
 // State for the USB read-and-write APIS.
+// FIXME: this needs to store errors, somehow; so we can differentiate
+// them from stalls
 // -Upper 16 bits: set if the given endpoint has completed the last
 //  scheduled read/write.
 // -Lower 16 bits: set if the last read/write on the given endpoint stalled.
 static volatile uint32_t usb_host_read_status  = 0;
 static volatile uint32_t usb_host_write_status = 0;
 
+// Store the currently active Queue Heads for the endpoint APIs.
+static volatile ehci_queue_head_t *endpoint_out_qh[NUM_USB1_ENDPOINTS];
+static volatile ehci_queue_head_t *endpoint_in_qh[NUM_USB1_ENDPOINTS];
 
 /**
  * Enumeration describing each of the possible Index values for GET_STATUS
@@ -64,6 +70,7 @@ struct _endpoint_setup_command_t {
 	uint8_t endpoint_speed;
 	uint8_t is_control_endpoint;
 	uint16_t max_packet_size;
+	uint8_t handle_data_toggle; // True if the endpoint will handle data toggles for us.
 } __attribute__((packed));
 typedef struct _endpoint_setup_command_t endpoint_setup_command_t;
 
@@ -74,8 +81,23 @@ typedef struct _endpoint_setup_command_t endpoint_setup_command_t;
  */
 void init_usbhost_api(void)
 {
+
 	usb_host_initialize_storage_pools();
 }
+
+
+volatile ehci_queue_head_t *get_queue_head_for_endpoint(uint32_t endpoint_number)
+{
+		// Grab the existing QH, if we have one-- if this is non-NULL,
+		// we'll update
+		if(endpoint_number & 0x80) {
+			return endpoint_in_qh[endpoint_number & 0x7F];
+		}
+		else {
+			return endpoint_out_qh[endpoint_number];
+		}
+}
+
 
 
 /**
@@ -87,13 +109,14 @@ usb_request_status_t usb_vendor_request_usbhost_connect(
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 
+		for(int i = 0; i < NUM_USB1_ENDPOINTS; ++i) {
+				endpoint_in_qh[i] = NULL;
+				endpoint_out_qh[i] = NULL;
+		}
+
 		// Set up the device in host mode...
 		usb_controller_reset(&usb_peripherals[1]);
 		usb_host_init(&usb_peripherals[1]);
-
-		// XXX: inject some glitchkit setup for hax
-		glitchkit_enable();
-		glitchkit_enable_trigger_on(GLITCHKIT_USBHOST_FINISH_TD);
 
 		// Provide VBUS to the target, if possible.
 		// TODO: maybe this should be its own vendor request
@@ -212,7 +235,22 @@ usb_request_status_t usb_vendor_request_usbhost_set_up_endpoint(
 
 	} else if(stage == USB_TRANSFER_STAGE_DATA) {
 
+		//
+		// FIXME: clean up these magic numbers
+		// FIXME: always clear out the QH array on init
+		//
+
 		// ... and process it.
+		uint8_t endpoint_number = command.endpoint_number & 0x7F;
+		volatile ehci_queue_head_t *qh;
+
+		if(endpoint_number >= NUM_USB1_ENDPOINTS) {
+			return USB_REQUEST_STATUS_STALL;
+		}
+
+		// Grab the existing QH, if we have one-- if this is non-NULL,
+		// we'll update the QH instead of allocating a new one.
+		qh = get_queue_head_for_endpoint(endpoint_number);
 
 		// Acknowledge early, as this can take a bit. :)
 		usb_transfer_schedule_ack(endpoint->in);
@@ -220,12 +258,17 @@ usb_request_status_t usb_vendor_request_usbhost_set_up_endpoint(
 		// TODO: Support schedules other than asynchronous.
 		// TODO: Use an endpoint API, rather than the queue set up directly.
 
-		ehci_queue_head_t *qh = set_up_asynchronous_endpoint_queue(&usb_peripherals[1], command.device_address,
-				command.endpoint_number, command.endpoint_speed, command.is_control_endpoint,
-				command.max_packet_size);
+		qh = usb_host_set_up_asynchronous_endpoint_queue(&usb_peripherals[1], qh,
+				command.device_address, endpoint_number, command.endpoint_speed,
+				command.is_control_endpoint, command.handle_data_toggle, command.max_packet_size);
 
-		// FIXME: this is temporary placeholder code
-		usb_peripherals[1].control_endpoint_queue = qh;
+		// Store the configuration to the appropriate array.
+		if(command.endpoint_number & 0x80) {
+			endpoint_in_qh[endpoint_number] = qh;
+		} else {
+			endpoint_out_qh[endpoint_number] = qh;
+		}
+
 
 	}
 	return USB_REQUEST_STATUS_OK;
@@ -235,6 +278,8 @@ usb_request_status_t usb_vendor_request_usbhost_set_up_endpoint(
 /**
  * Callback that's executed each time a nonblocking read completes.
  * Stores the number of bytes transferred when the read executed.
+ *
+ * FIXME: don't duplicate this code: merge with handle_read_complete_callback
  */
 static void handle_write_complete_callback(void * const user_data,
 		unsigned int transferred, bool stalled, bool error)
@@ -266,7 +311,8 @@ static void handle_write_complete_callback(void * const user_data,
  *
  * Setup parameters:
  *		index: the endpoint to send on
- *		value: the type of PID token to accompany the transaction;
+ *		value_h: the data toggle bit, if used by this endpoint
+ *		value_l: the type of PID token to accompany the transaction;
  *				we don't validate this so FaceDancer can potentially be horrible
  * Data stage:
  *		the data to be transmitted
@@ -277,18 +323,17 @@ usb_request_status_t usb_vendor_request_usbhost_send_on_endpoint(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	int endpoint_number = endpoint->setup.index;
-	int pid_token       = endpoint->setup.value;
+	int data_toggle     = endpoint->setup.value_h;
+	int pid_token       = endpoint->setup.value_l;
 
-	// FIXME: Grab the endpoint queue for the given endpoint, rather than always
-	// assuming EP0.
-	ehci_queue_head_t *endpoint_queue = usb_peripherals[1].control_endpoint_queue;
+	// If this isn't a valid endpoint, stall the request.
+	if(endpoint_number >= NUM_USB1_ENDPOINTS) {
+			return USB_REQUEST_STATUS_STALL;
+	}
+
+	ehci_queue_head_t *endpoint_queue = get_queue_head_for_endpoint(endpoint_number);
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-
-		// If this isn't a valid endpoint, stall the request.
-		if(endpoint_number >= NUM_USB1_ENDPOINTS) {
-				return USB_REQUEST_STATUS_STALL;
-		}
 
 		// If we're requesting a ZLP issue it immediately.
 		if(endpoint->setup.length == 0) {
@@ -298,6 +343,7 @@ usb_request_status_t usb_vendor_request_usbhost_send_on_endpoint(
 					&usb_peripherals[1],
 					endpoint_queue,
 					pid_token,
+					data_toggle,
 					NULL,
 					0,
 					handle_write_complete_callback,
@@ -319,6 +365,7 @@ usb_request_status_t usb_vendor_request_usbhost_send_on_endpoint(
 				&usb_peripherals[1],
 				endpoint_queue,
 				pid_token,
+				data_toggle,
 				&endpoint_buffer[endpoint_number],
 				endpoint->setup.length,
 				handle_write_complete_callback,
@@ -367,7 +414,8 @@ static void handle_read_complete_callback(void * const user_data,
  * does not wait for a transfer to complete. The transfer's status can be
  * checked with get_transfer_status and then read with finish_nonblocking_read.
  *
- * The index parameter specifies which endpoint we should be reading from.
+ * The index_l parameter specifies which endpoint we should be reading from.
+ * The index_h parameter specifies the data toggle, if the endpoint uses it.
  * The value parameter specifies the maximum length that shoud be read during
  * this transaction.
  */
@@ -375,20 +423,27 @@ usb_request_status_t usb_vendor_request_usbhost_start_nonblocking_read(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		int endpoint_number = endpoint->setup.index;
-		int total_data = endpoint->setup.value;
+		int endpoint_number = endpoint->setup.index_l;
+		int data_toggle     = endpoint->setup.index_h;
+		int total_data      = endpoint->setup.value;
 
 		// FIXME: Grab the endpoint queue for the given endpoint, rather than always
 		// assuming EP0.
-		ehci_queue_head_t *endpoint_queue = usb_peripherals[1].control_endpoint_queue;
+		ehci_queue_head_t *endpoint_queue = get_queue_head_for_endpoint(endpoint_number);
+
+		// If we don't have a endpoint queue set up for this endpoint, fail out.
+		if(!endpoint_queue) {
+			return USB_REQUEST_STATUS_STALL;
+		}
 
 		// ... and start a nonblocking transfer.
 		usb_host_transfer_schedule(
 				&usb_peripherals[1],
 				endpoint_queue,
 				USB_PID_TOKEN_IN,
+				data_toggle,
 				&endpoint_buffer[endpoint_number],
-				sizeof(endpoint_buffer[endpoint_number]),
+				total_data,
 				handle_read_complete_callback,
 				(void *)endpoint_number);
 

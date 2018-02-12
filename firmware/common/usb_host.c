@@ -106,11 +106,6 @@ void usb_host_enable_pulldowns(usb_peripheral_t *host)
 	// we can use the OTG termination resistor as a pull-down. Turn it on.
 	USB_REG(host->controller)->OTGSC |= USB0_OTGSC_OT;
 #endif
-
-	// FIXME: The GreatFET one currently has no pull-down resistor on DP.
-	// This isn't great, but we can potentially work without it, as the pin
-	// tends to float down.
-
 }
 
 
