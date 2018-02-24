@@ -4,9 +4,9 @@
 
 enable_language(C CXX ASM)
 
-include(../cmake/dfu-util.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/dfu-util.cmake)
 
-SET(PATH_GREATFET ../..)
+SET(PATH_GREATFET ${CMAKE_CURRENT_LIST_DIR}/../..)
 SET(PATH_GREATFET_FIRMWARE ${PATH_GREATFET}/firmware)
 SET(PATH_GREATFET_FIRMWARE_COMMON ${PATH_GREATFET_FIRMWARE}/common)
 SET(LIBOPENCM3 ${PATH_GREATFET_FIRMWARE}/libopencm3)
@@ -94,7 +94,7 @@ macro(DeclareTargets)
 	)
 
 	configure_file(
-		../cmake/m0_bin.s.cmake
+		${PATH_GREATFET_FIRMWARE}/cmake/m0_bin.s.cmake
 		m0_bin.s
 	)
 
