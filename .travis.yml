@@ -25,7 +25,8 @@ matrix:
       compiler: clang
 
 before_script:
-  - export CFLAGS="-Wall -Wextra -Werror -Werror=discarded-qualifiers -Werror=old-style-declaration"
+  - export CFLAGS="-Wall -Wextra"
+#  - export CFLAGS="-Wall -Wextra -Werror"
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew tap PX4/homebrew-px4; fi
