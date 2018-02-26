@@ -176,7 +176,7 @@ macro(DeclareTargets)
 		COMMAND rm -f _tmp.dfu _header.bin
 		COMMAND cp ${PROJECT_NAME}_dfu.bin _tmp.dfu
 		COMMAND ${DFU_COMMAND}
-		COMMAND python ../../dfu.py ${PROJECT_NAME}
+		COMMAND python ${PATH_GREATFET_FIRMWARE}/dfu.py ${PROJECT_NAME}
 		COMMAND cat _header.bin _tmp.dfu >${PROJECT_NAME}.dfu
 	)
 
