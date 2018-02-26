@@ -38,7 +38,7 @@ usb_configuration_t* usb1_configurations[] = {
 	0,
 };
 
-usb_device_t usb_devices[] = {
+usb_peripheral_t usb_peripherals[] = {
 	{
 		.descriptor = usb0_descriptor_device,
 		.descriptor_strings = usb0_descriptor_strings,

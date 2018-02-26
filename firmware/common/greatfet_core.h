@@ -19,8 +19,11 @@ extern "C"
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 
-/* convenience macros */
-#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define CONTAINER_OF(ptr, type, member) ({                      \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
+
 
 /* hardware identification number */
 #define BOARD_ID_ONE 0
@@ -38,6 +41,20 @@ extern "C"
 #ifdef RAD1O_BADGE
 #define BOARD_ID BOARD_ID_RAD1O
 #endif
+
+typedef enum {
+	// Keep these unique, so the RAM is unlikely to settle into these on first
+	// boot.
+	RESET_REASON_UNKNOWN      = 0,
+	RESET_REASON_SOFT_RESET   = 0xAA55AA55,
+	RESET_REASON_USE_EXTCLOCK = 0xAABBCCDD,
+}	reset_reason_t;
+
+/**
+ * This special register is not cleared on reset-- it thus can
+ * be used to pass reset reasons to future software stages.
+ */
+extern volatile uint32_t reset_reason;
 
 
 void delay(uint32_t duration);

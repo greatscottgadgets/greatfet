@@ -27,7 +27,28 @@
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
+#include "usb_api_usbhost.h"
+#include "usb_api_glitchkit.h"
+#include "usb_api_glitchkit_simple.h"
+#include "usb_api_glitchkit_usb.h"
 #include "usb_bulk_buffer.h"
+
+#include "glitchkit.h"
+
+
+usb_request_status_t usb_vendor_request_super_hacky(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		uint32_t address = (((uint32_t)endpoint->setup.index << 16UL) | (uint32_t)endpoint->setup.value);
+		char * hack_pointer = (char *)address;
+		usb_transfer_schedule_block(endpoint->in, hack_pointer, endpoint->setup.length, NULL, NULL);
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		usb_transfer_schedule_ack(endpoint->out);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spiflash_init,
@@ -67,15 +88,35 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_greatdancer_get_status,
 	usb_vendor_request_greatdancer_read_setup,
 	usb_vendor_request_greatdancer_stall_endpoint,
-  usb_vendor_request_greatdancer_send_on_endpoint,
-  usb_vendor_request_greatdancer_clean_up_transfer,
-  usb_vendor_request_greatdancer_start_nonblocking_read,
-  usb_vendor_request_greatdancer_finish_nonblocking_read,
-  usb_vendor_request_greatdancer_get_nonblocking_data_length,
+	usb_vendor_request_greatdancer_send_on_endpoint,
+	usb_vendor_request_greatdancer_clean_up_transfer,
+	usb_vendor_request_greatdancer_start_nonblocking_read,
+	usb_vendor_request_greatdancer_finish_nonblocking_read,
+	usb_vendor_request_greatdancer_get_nonblocking_data_length,
 	usb_vendor_request_heartbeat_start,
 	usb_vendor_request_heartbeat_stop,
 	usb_vendor_request_gpio_reset,
 	usb_vendor_request_gpio_read,
+
+	// GlitchKit
+	usb_vendor_request_glitchkit_setup,
+	usb_vendor_request_glitchkit_provide_target_clock,
+	usb_vendor_request_glitchkit_simple_enable_trigger, // Simple triggers
+	usb_vendor_request_glitchkit_control_in_start,
+	usb_vendor_request_glitchkit_usb_result_length,
+	usb_vendor_request_glitchkit_usb_read_result,
+
+	// USB Host
+	usb_vendor_request_usbhost_connect,
+	usb_vendor_request_usbhost_bus_reset,
+	usb_vendor_request_usbhost_get_status,
+	usb_vendor_request_usbhost_set_up_endpoint,
+	usb_vendor_request_usbhost_send_on_endpoint,
+	usb_vendor_request_usbhost_start_nonblocking_read,
+	usb_vendor_request_usbhost_finish_nonblocking_read,
+	usb_vendor_request_usbhost_get_nonblocking_data_length,
+	usb_vendor_request_super_hacky
+
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
@@ -136,8 +177,8 @@ void usb_set_descriptor_by_serial_number(void)
 
 void init_usb0(void) {
 	usb_set_descriptor_by_serial_number();
-	usb_peripheral_reset(&usb_devices[0]);
-	usb_device_init(&usb_devices[0]);
+	usb_peripheral_reset(&usb_peripherals[0]);
+	usb_device_init(&usb_peripherals[0]);
 
 	usb_queue_init(&usb0_endpoint_control_out_queue);
 	usb_queue_init(&usb0_endpoint_control_in_queue);
@@ -151,7 +192,7 @@ void init_usb0(void) {
 
 	nvic_set_priority(NVIC_USB0_IRQ, 254);
 
-	usb_run(&usb_devices[0]);
+	usb_run(&usb_peripherals[0]);
 }
 
 
@@ -163,6 +204,7 @@ int main(void) {
 
 	init_usb0();
 	init_greatdancer_api();
+	init_usbhost_api();
 
 	while(true) {
 		if(logic_analyzer_enabled) {
@@ -180,6 +222,9 @@ int main(void) {
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
 		}
+
+
+		service_glitchkit();
 	}
 
 	return 0;

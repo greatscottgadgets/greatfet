@@ -15,23 +15,23 @@
 #define NUM_USB_CONTROLLERS 2
 #define NUM_USB1_ENDPOINTS 4
 
-extern usb_device_t usb_devices[2];
+extern usb_peripheral_t usb_peripherals[2];
 
 void usb_peripheral_reset();
 
 void usb_bus_reset(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 );
 
 usb_queue_head_t* usb_queue_head(
 	const uint_fast8_t endpoint_address,
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 
 usb_endpoint_t* usb_endpoint_from_address(
 	const uint_fast8_t endpoint_address,
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 uint_fast8_t usb_endpoint_address(
@@ -39,70 +39,76 @@ uint_fast8_t usb_endpoint_address(
 	const uint_fast8_t number
 );
 
+
+void usb_phy_enable(
+	const usb_peripheral_t* const device
+);
+
+
 void usb_set_irq_handler(
-	usb_device_t* const device,
+	usb_peripheral_t* const device,
 	vector_table_entry_t isr
 );
 
 void usb_device_init(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 );
 
 void usb_controller_reset(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 );
 
 
 void usb_controller_run(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 void usb_run(
-	usb_device_t* const device
+	usb_peripheral_t* const device
 );
 
 void usb_run_tasks(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 usb_speed_t usb_speed(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 uint32_t usb_get_status(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 uint32_t usb_get_endpoint_setup_status(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 void usb_clear_endpoint_setup_status(
 	const uint32_t endpoint_setup_status,
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 
 uint32_t usb_get_endpoint_ready(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 uint32_t usb_get_endpoint_complete(
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 void usb_clear_endpoint_complete(
 	const uint32_t endpoint_complete,
-	const usb_device_t* const device
+	const usb_peripheral_t* const device
 );
 
 void usb_set_address_immediate(
-	const usb_device_t* const device,
+	const usb_peripheral_t* const device,
 	const uint_fast8_t address
 );
 
 void usb_set_address_deferred(
-	const usb_device_t* const device,
+	const usb_peripheral_t* const device,
 	const uint_fast8_t address
 );
 

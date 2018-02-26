@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <assert.h>
+#include <string.h>
 
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/sync.h>
