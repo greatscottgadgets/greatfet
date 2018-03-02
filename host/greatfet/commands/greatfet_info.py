@@ -12,18 +12,21 @@ from greatfet.errors import DeviceNotFoundError
 
 
 def main():
-    try:
-        device = GreatFET()
-    except DeviceNotFoundError:
+
+    # Try to find all existing devices
+    devices = GreatFET(find_all=True)
+    if not devices:
         print('No GreatFET devices found!', file=sys.stderr)
         sys.exit(errno.ENODEV)
 
     # Print the board's information...
-    print("Found a {}!".format(device.board_name()))
-    print("  Board ID: {}".format(device.board_id()))
-    print("  Firmware version: {}".format(device.firmware_version()))
-    print("  Part ID: {}".format(device.part_id()))
-    print("  Serial number: {}".format(device.serial_number()))
+    for device in devices:
+        print("Found a {}!".format(device.board_name()))
+        print("  Board ID: {}".format(device.board_id()))
+        print("  Firmware version: {}".format(device.firmware_version()))
+        print("  Part ID: {}".format(device.part_id()))
+        print("  Serial number: {}".format(device.serial_number()))
+        print(" ")
 
 
     # Dev note: you can easily use this to test low-level interfaces.

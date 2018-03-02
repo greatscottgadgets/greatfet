@@ -78,6 +78,74 @@ class GreatFETBoard(object):
 
 
     @classmethod
+    def autodetect_all(cls, **device_identifiers):
+        """
+        Attempts to create a new instance of the GreatFETBoard subclass
+        most applicable for each board present on the system-- similar to the
+        behavior of autodetect.
+
+        Accepts the same arguments as pyusb's usb.find() method, allowing narrowing
+        to a more specific GreatFET by e.g. serial number.
+
+        Returns a list of GreatFET devices, which may be empty if none are found.
+        """
+
+        devices = []
+
+        # Iterate over each subclass of GreatFETBoard until we find a board
+        # that accepts the given board ID.
+        for subclass in cls.__subclasses__():
+
+            # Get objects for all devices accepted by the given subclass.
+            subclass_devices = subclass.all_accepted_devices(**device_identifiers)
+
+            # FIXME: It's possible that two classes may choose to both advertise support
+            # for the same device, in which case we'd wind up with duplicats here. We could
+            # try to filter out duplicates using e.g. USB bus/device, but that assumes
+            # things are USB connected.
+            devices.extend(subclass_devices)
+
+        # Return the list of all subclasses.
+        return devices
+
+
+    @classmethod
+    def all_accepted_devices(cls, **device_identifiers):
+        """
+        Returns a list of all devices supported by the given class. This should be
+        overridden if the device connects via anything other that USB.
+
+        Accepts the same arguments as pyusb's usb.find() method, allowing narrowing
+        to a more specific GreatFET by e.g. serial number.
+        """
+
+        devices = []
+
+        # Grab the list of all devices that we theoretically could use.
+        identifiers = cls.populate_default_identifiers(device_identifiers, find_all=True)
+        raw_devices = usb.core.find(**identifiers)
+
+        # Iterate over all of the connected devices, and filter out the devices
+        # that this class doesn't connect.
+        for raw_device in raw_devices:
+
+            # We need to be specific about which device in particular we're
+            # grabbing when we query things-- or we'll get the first acceptable
+            # device every time. The trick here is to populate enough information
+            # into the identifier to uniquely identify the device. The address
+            # should do, as pyusb is only touching enmerated devices.
+            identifiers['address'] = raw_device.address
+            identifiers['find_all'] = False
+
+            # If we support the relevant device _instance_, and it to our list.
+            if cls.accepts_connected_device(**identifiers):
+                devices.append(cls(**identifiers))
+
+        return devices
+
+
+
+    @classmethod
     def accepts_connected_device(cls, **device_identifiers):
         """
         Returns true iff the provided class is appropriate for handling a connected
@@ -102,6 +170,28 @@ class GreatFETBoard(object):
         return board_id in cls.HANDLED_BOARD_IDS
 
 
+    @staticmethod
+    def populate_default_identifiers(device_identifiers, find_all=False):
+        """
+        Populate a dictionary of default identifiers-- which can
+        be overridden or extended by arguments to the function.
+
+        device_identifiers -- any user-specified identifers; will override
+            the default identifiers in the event of a conflit
+        """
+
+        # By default, accept any device with the default vendor/product IDs.
+        identifiers = {
+            'idVendor': GREATFET_VENDOR_ID,
+            'idProduct': GREATFET_PRODUCT_ID,
+            'find_all': find_all,
+        }
+        identifiers.update(device_identifiers)
+
+        return identifiers
+
+
+
     def __init__(self, **device_identifiers):
         """
         Instantiates a new connection to a GreatFET device; by default connects
@@ -112,11 +202,7 @@ class GreatFETBoard(object):
         """
 
         # By default, accept any device with the default vendor/product IDs.
-        self.identifiers = {
-            'idVendor': GREATFET_VENDOR_ID,
-            'idProduct': GREATFET_PRODUCT_ID,
-        }
-        self.identifiers.update(device_identifiers)
+        self.identifiers = self.populate_default_identifiers(device_identifiers)
 
         # For convenience, allow serial_number=None to be equivalent to not
         # providing a serial number: a  GreatFET with any serail number will be

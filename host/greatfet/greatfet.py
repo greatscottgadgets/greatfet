@@ -18,8 +18,14 @@ def GreatFET(**board_identifiers):
             GreatFETOne object.
 
             Accepts the same arguments as pyusb's usb.find() method, allowing narrowing
-            to a more specific GreatFET by e.g. serial number.
+            to a more specific GreatFET by e.g. serial number. Like usb.find(), providing
+            find_all will return a list of all found devices.
 
-            Throws a DeviceNotFoundError if no device is avaiable.
+            Throws a DeviceNotFoundError if no device is avaiable and find_all is not set.
     """
-    return GreatFETBoard.autodetect(**board_identifiers)
+
+    if 'find_all' in board_identifiers and board_identifiers['find_all']:
+        del board_identifiers['find_all']
+        return GreatFETBoard.autodetect_all(**board_identifiers)
+    else:
+        return GreatFETBoard.autodetect(**board_identifiers)
