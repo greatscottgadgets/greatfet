@@ -49,6 +49,28 @@ def spi_flash_write(device, filename, address, log_function=log_silent):
     log_function('')
 
 
+def find_greatfet(args):
+    """ Finds a GreatFET matching the relevant arguments."""
+
+    # If we have a serial number, look only for a single device. Theoretically,
+    # we should never have more than one GreatFET with the same serial number.
+    # Technically, this is violable, but libusb doesn't properly handle searching
+    # by serial number if there are multiple devices with the same one, so we
+    # enforce this.
+    if args.serial:
+        return GreatFET(serial_number=args.serial, find_all=True)
+
+    # Otherwise, attempt to use the index selector.
+    else:
+        # Find _all_ GreatFETs...
+        devices = GreatFET(find_all=True)
+
+        # ... and then select the one with the provided index.
+        if len(devices) <= args.index:
+            raise DeviceNotFoundError
+        return devices[args.index]
+
+
 def main():
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(
@@ -64,6 +86,8 @@ def main():
                         help="Write data from file", default='')
     parser.add_argument('-s', '--serial', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
+    parser.add_argument('-i', '--index', dest='index', metavar='<i>', type=int,
+                        help="number of the attached device (default: 0)", default=0)
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_true',
                         help="Suppress messages to stdout")
     parser.add_argument('-R', '--reset', dest='reset', action='store_true',
@@ -80,14 +104,18 @@ def main():
     # Determine whether we're going to log to the stdout, or not at all.
     log_function = log_silent if args.quiet else log_verbose
 
+    # FIXME: Handle setting up a device that's in DFU mode.
+
     # Create our GreatFET connection.
     try:
         log_function("Trying to find a GreatFET device...")
-        device = GreatFET(serial_number=args.serial)
+        device = find_greatfet(args)
         log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
     except DeviceNotFoundError:
         if args.serial:
             print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
+        elif args.index:
+            print("No GreatFET board found with index '{}'.".format(args.index), file=sys.stderr)
         else:
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
