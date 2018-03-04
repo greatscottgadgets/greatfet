@@ -8,14 +8,27 @@
 
 from __future__ import print_function
 
+import os
 import sys
+import time
 import errno
 import argparse
+import subprocess
+
+import usb
 
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
 
+# The serial number expected from the DFU flash stub.
+DFU_STUB_SERIAL = "dfu_flash_stub"
+DFU_STUB_NAME  = 'flash_stub.dfu'
+DFU_STUB_PATHS = [ '~/.local/share/greatfet']
+
+# Vendor VID/PID if the device is in DFU.
+NXP_DFU_VID = 0x1fc9
+NXP_DFU_PID = 0x000c
 
 # Maximum length to allow, for now.
 MAX_FLASH_LENGTH = 0x100000
@@ -49,19 +62,68 @@ def spi_flash_write(device, filename, address, log_function=log_silent):
     log_function('')
 
 
+def find_dfu_stub(args):
+    """ Finds the DFU stub. """
+
+    # FIXME: This should be cleaned up to search paths that make sense given
+    # where and how we might install GreatFET.
+
+    # If we have an explicit DFU stub location, use it.
+    if args.dfu_stub:
+        path = os.path.expanduser(args.dfu_stub)
+
+        if os.path.isfile(path):
+            return path
+
+    # Otherwise, search each of the paths around.
+    for path in DFU_STUB_PATHS:
+        filename = os.path.expanduser(os.path.join(path, DFU_STUB_NAME))
+        print(filename)
+
+        if os.path.isfile(filename):
+            return filename
+
+    # If we weren't able to find it, give up, for now.
+    # TODO: eventually ship this with the GreatFET distribution and/or
+    # download it on demand?
+    return None
+
+
+
+def load_dfu_stub(args):
+    """ Loads a DFU programming stub onto a GreatFET in DFU mode. """
+
+    # First: check to make sure we _have_ a DFU'able device.
+    dev = usb.core.find(idVendor=NXP_DFU_VID, idProduct=NXP_DFU_PID)
+    if not dev:
+        raise DeviceNotFoundError
+    del dev
+
+    # If we have a DFU'able device, find the DFU stub and load it.
+    stub_path = find_dfu_stub(args)
+    if stub_path is None:
+        raise ValueError("Could not find the DFU stub!")
+
+    #
+    # FIXME: This isn't a good way to do things. It's being stubbed in
+    # for now, but it'd be better to talk DFU from python directly.
+    #
+    rc = subprocess.call(['dfu-util', '--device', format(NXP_DFU_VID, 'x'), format(NXP_DFU_PID, 'x'), '--alt', '0', '--download', stub_path])
+    if rc:
+        raise IOError("Error using DFU-util!")
+
+
+
 def find_greatfet(args):
     """ Finds a GreatFET matching the relevant arguments."""
 
-    # If we have a serial number, look only for a single device. Theoretically,
-    # we should never have more than one GreatFET with the same serial number.
-    # Technically, this is violable, but libusb doesn't properly handle searching
-    # by serial number if there are multiple devices with the same one, so we
-    # enforce this.
-    if args.serial:
-        return GreatFET(serial_number=args.serial, find_all=True)
+    # If we're prorgamming via DFU mode, look for a device that sports the DFU stub.
+    # Note that we only support a single DFU-mode device for now.
+    if args.dfu:
+        return GreatFET(serial_number=DFU_STUB_SERIAL)
 
-    # Otherwise, attempt to use the index selector.
-    else:
+    # If we have an index argument, grab _all_ greatFETs and select by index.
+    elif args.index:
         # Find _all_ GreatFETs...
         devices = GreatFET(find_all=True)
 
@@ -69,6 +131,15 @@ def find_greatfet(args):
         if len(devices) <= args.index:
             raise DeviceNotFoundError
         return devices[args.index]
+
+    # If we have a serial number, look only for a single device. Theoretically,
+    # we should never have more than one GreatFET with the same serial number.
+    # Technically, this is violable, but libusb doesn't properly handle searching
+    # by serial number if there are multiple devices with the same one, so we
+    # enforce this.
+    else:
+        return GreatFET(serial_number=args.serial)
+
 
 
 def main():
@@ -92,6 +163,12 @@ def main():
                         help="Suppress messages to stdout")
     parser.add_argument('-R', '--reset', dest='reset', action='store_true',
                         help="Reset GreatFET after performing other operations.")
+    parser.add_argument('--wait', dest='wait', action='store_true',
+                        help="Wait for a GreatFET device to come online if none is found.")
+    parser.add_argument('-d', '--dfu', dest='dfu', action='store_true',
+                        help="Flash a device from DFU mode by first loading a stub. Always resets.")
+    parser.add_argument('--dfu-stub', dest='dfu_stub', metavar='<stub.dfu>', type=str,
+                        help="The stub to use for DFU programming. If not provided, the utility will attempt to automtaically find one.")
     args = parser.parse_args()
 
     # Validate our options.
@@ -104,21 +181,37 @@ def main():
     # Determine whether we're going to log to the stdout, or not at all.
     log_function = log_silent if args.quiet else log_verbose
 
-    # FIXME: Handle setting up a device that's in DFU mode.
+    # If we're supposed to install firmware via a DFU stub, install it first.
+    if args.dfu:
+        try:
+            load_dfu_stub(args)
+        except DeviceNotFoundError:
+            print("Couldn't find a GreatFET-compatible board in DFU mode!", file=sys.stderr)
+            sys.exit(errno.ENODEV)
+
 
     # Create our GreatFET connection.
-    try:
-        log_function("Trying to find a GreatFET device...")
-        device = find_greatfet(args)
-        log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
-    except DeviceNotFoundError:
-        if args.serial:
-            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
-        elif args.index:
-            print("No GreatFET board found with index '{}'.".format(args.index), file=sys.stderr)
-        else:
-            print("No GreatFET board found!", file=sys.stderr)
-        sys.exit(errno.ENODEV)
+    log_function("Trying to find a GreatFET device...")
+    device = None
+
+    while device is None:
+        try:
+            device = find_greatfet(args)
+            log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
+        except DeviceNotFoundError:
+
+            # If we're not in wait mode (or waiting for a DFU flash stub to come up), bail out.
+            if not (args.dfu or args.wait):
+                if args.serial:
+                    print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
+                elif args.index:
+                    print("No GreatFET board found with index '{}'.".format(args.index), file=sys.stderr)
+                else:
+                    print("No GreatFET board found!", file=sys.stderr)
+                sys.exit(errno.ENODEV)
+            else:
+                time.sleep(1)
+
 
     # Ensure that the device supports an onboard SPI flash.
     try:
@@ -132,7 +225,7 @@ def main():
         log_function("Writing data to SPI flash...")
         spi_flash_write(device, args.write, args.address, log_function)
         log_function("Write complete!")
-        if not args.reset:
+        if not (args.reset or args.dfu):
             log_function("Reset not specified; new firmware will not start until next reset.")
 
     # Handle any read commands.
@@ -142,9 +235,9 @@ def main():
         log_function("Read complete!")
 
     # Finally, reset the target
-    if args.reset:
+    if args.reset or args.dfu:
         log_function("Resetting GreatFET...")
-        device.reset()
+        device.reset(reconnect=False)
         log_function("Reset complete!")
 
 if __name__ == '__main__':

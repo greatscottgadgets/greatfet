@@ -158,6 +158,15 @@ class GreatFETBoard(object):
             potential_device = cls(**device_identifiers)
         except DeviceNotFoundError:
             return False
+        except usb.core.USBError as e:
+
+            # A pipe error here likely means the device didn't support a start-up
+            # command, and STALLED.
+            # We'll interpret that as a "we don't accept this device" by default.
+            if e.errno == LIBUSB_PIPE_ERROR:
+                return False
+            else:
+                raise e
 
         try:
             board_id = potential_device.board_id()
@@ -274,6 +283,11 @@ class GreatFETBoard(object):
             result = _to_hex_string(result)
 
         return result
+
+
+    def usb_serial_number(self):
+        """ Reports the device's USB serial number. """
+        return self.device.serial_number
 
 
     def part_id(self, as_hex_string=True):
