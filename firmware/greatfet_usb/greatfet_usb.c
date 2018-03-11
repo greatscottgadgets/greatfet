@@ -35,7 +35,7 @@
 
 #include "glitchkit.h"
 
-
+/* For educational purposes only */
 usb_request_status_t usb_vendor_request_super_hacky(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
