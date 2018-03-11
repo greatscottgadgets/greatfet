@@ -24,7 +24,7 @@ from greatfet.utils import log_silent, log_verbose
 # The serial number expected from the DFU flash stub.
 DFU_STUB_SERIAL = "dfu_flash_stub"
 DFU_STUB_NAME  = 'flash_stub.dfu'
-DFU_STUB_PATHS = [ '~/.local/share/greatfet']
+DFU_STUB_PATHS = [ '~/.local/share/greatfet', '~/.local/share/GreatFET' ]
 
 # Vendor VID/PID if the device is in DFU.
 NXP_DFU_VID = 0x1fc9
