@@ -75,11 +75,11 @@ i2c_bus_t i2c1 = {
 };
 
 const i2c_lpc_config_t i2c_config_slow_clock = {
-        .duty_cycle_count = 15,
+	.duty_cycle_count = 15,
 };
 
 const i2c_lpc_config_t i2c_config_fast_clock = {
-        .duty_cycle_count = 255,
+	.duty_cycle_count = 255,
 };
 
 const ssp_config_t ssp_config_spi = {
@@ -294,6 +294,33 @@ void cpu_clock_init(void)
 	/* use IDIVB as clock source for USB1 */
 	CGU_BASE_USB1_CLK = CGU_BASE_USB1_CLK_AUTOBLOCK(1)
 			| CGU_BASE_USB1_CLK_CLK_SEL(CGU_SRC_IDIVB);
+
+	/* PLL0AUDIO */
+	/* use XTAL_OSC as clock source for PLL0AUDIO */
+	CGU_PLL0AUDIO_CTRL = CGU_PLL0AUDIO_CTRL_PD(1)
+			| CGU_PLL0AUDIO_CTRL_AUTOBLOCK(1)
+			| CGU_PLL0AUDIO_CTRL_CLK_SEL(CGU_SRC_XTAL);
+	while (CGU_PLL0AUDIO_STAT & CGU_PLL0AUDIO_STAT_LOCK_MASK);
+
+	/* configure PLL0AUDIO to produce 433.92MHz clock from 12 MHz XTAL_OSC */
+	/* nsel = 25, msel = 452 */
+	CGU_PLL0AUDIO_MDIV = 0x0679E;
+	CGU_PLL0AUDIO_NP_DIV = 0x3F000;
+	CGU_PLL0AUDIO_CTRL |= (CGU_PLL0AUDIO_CTRL_PD(1)
+			| CGU_PLL0AUDIO_CTRL_DIRECTI(0)
+			| CGU_PLL0AUDIO_CTRL_DIRECTO(1)
+			| CGU_PLL0AUDIO_CTRL_SEL_EXT(1));
+
+	/* power on PLL0AUDIO and wait until stable */
+	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_PD_MASK;
+	//while (!(CGU_PLL0AUDIO_STAT & CGU_PLL0AUDIO_STAT_LOCK_MASK));
+
+	/* Use PLL0AUDIO for CLKOUT */
+	CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
+
+	/* Enable PLL0AUDIO and blast out CLKOUT */
+	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
 
 	/* Switch peripheral clock over to use PLL1 (204MHz) */
 	CGU_BASE_PERIPH_CLK = CGU_BASE_PERIPH_CLK_AUTOBLOCK(1)
