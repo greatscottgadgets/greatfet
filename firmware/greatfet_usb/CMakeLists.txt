@@ -11,6 +11,7 @@ include(../cmake/greatfet-common.cmake)
 
 set(SRC_M4
 	greatfet_usb.c
+	usb_request_handlers.c
 	usb_bulk_buffer.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_host.c"

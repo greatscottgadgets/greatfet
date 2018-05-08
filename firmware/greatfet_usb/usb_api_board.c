@@ -98,4 +98,16 @@ usb_request_status_t usb_vendor_request_reset(
 	return USB_REQUEST_STATUS_OK;
 }
 
-
+/* For educational purposes only */
+usb_request_status_t usb_vendor_request_super_hacky(
+		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		uint32_t address = (((uint32_t)endpoint->setup.index << 16UL) | (uint32_t)endpoint->setup.value);
+		char * hack_pointer = (char *)address;
+		usb_transfer_schedule_block(endpoint->in, hack_pointer, endpoint->setup.length, NULL, NULL);
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		usb_transfer_schedule_ack(endpoint->out);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
