@@ -19,19 +19,12 @@
 #include "usb_api_heartbeat.h"
 #include "usb_api_greatdancer.h"
 #include "glitchkit.h"
-<<<<<<< HEAD
 #include "usb_api_rfhax.h"
-=======
->>>>>>> Move USB request handlers out of main firmware file
 
 #include <rom_iap.h>
 #include "usb_descriptor.h"
 #include "usb_device.h"
 #include "usb_endpoint.h"
-<<<<<<< HEAD
-=======
-
->>>>>>> Move USB request handlers out of main firmware file
 #include "usb_bulk_buffer.h"
 
 

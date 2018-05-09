@@ -19,11 +19,8 @@
 #include "usb_api_glitchkit.h"
 #include "usb_api_glitchkit_simple.h"
 #include "usb_api_glitchkit_usb.h"
-<<<<<<< HEAD
 #include "usb_api_DS18B20.h"
 #include "usb_api_rfhax.h"
-=======
->>>>>>> Move USB request handlers out of main firmware file
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spiflash_init,
@@ -97,6 +94,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 
 	// RF hax
 	usb_vendor_request_rfhax,
+
 
 };
 
