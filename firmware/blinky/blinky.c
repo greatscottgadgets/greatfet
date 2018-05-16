@@ -3,6 +3,7 @@
  */
 
 #include "greatfet_core.h"
+#include "clocks.h"
 
 int main(void)
 {

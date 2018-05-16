@@ -85,6 +85,7 @@ macro(DeclareTargets)
 	SET(SRC_M4
 		${SRC_M4}
 		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/clocks.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spi_ssp.c

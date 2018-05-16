@@ -8,6 +8,7 @@
 #include <libopencm3/lpc43xx/m4/nvic.h>
 
 #include <greatfet_core.h>
+#include <clocks.h>
 
 #include "usb.h"
 #include "usb_standard_request.h"
