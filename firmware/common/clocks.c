@@ -137,6 +137,40 @@ void cpu_clock_init(void)
 }
 
 
+<<<<<<< HEAD
+=======
+/* PLL0AUDIO */
+uint8_t pll0audio_config(void)
+{
+	/* use XTAL_OSC as clock source for PLL0AUDIO */
+	CGU_PLL0AUDIO_CTRL = CGU_PLL0AUDIO_CTRL_PD(1)
+			| CGU_PLL0AUDIO_CTRL_AUTOBLOCK(1)
+			| CGU_PLL0AUDIO_CTRL_CLK_SEL(CGU_SRC_XTAL);
+	while (CGU_PLL0AUDIO_STAT & CGU_PLL0AUDIO_STAT_LOCK_MASK);
+
+	/* configure PLL0AUDIO to produce 433.92MHz clock from 12 MHz XTAL_OSC */
+	/* nsel = 25, msel = 452 */
+	CGU_PLL0AUDIO_MDIV = 0x0679E;
+	CGU_PLL0AUDIO_NP_DIV = 0x3F000;
+	CGU_PLL0AUDIO_CTRL |= (CGU_PLL0AUDIO_CTRL_PD(1)
+			| CGU_PLL0AUDIO_CTRL_DIRECTI(0)
+			| CGU_PLL0AUDIO_CTRL_DIRECTO(1)
+			| CGU_PLL0AUDIO_CTRL_SEL_EXT(1));
+
+	/* power on PLL0AUDIO and wait until stable */
+	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_PD_MASK;
+	//while (!(CGU_PLL0AUDIO_STAT & CGU_PLL0AUDIO_STAT_LOCK_MASK));
+
+	/* Use PLL0AUDIO for CLKOUT */
+	CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
+
+	/* Enable PLL0AUDIO and blast out CLKOUT */
+	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
+	return 0;
+}
+
+>>>>>>> Move clock control to a separate source file in common/clocks.c
 /*
 Configure PLL1 to low speed (48MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1.
@@ -243,6 +277,7 @@ void rtc_init(void) {
 		RTC_CCR |= RTC_CCR_CLKEN(1);
 #endif
 }
+<<<<<<< HEAD
 
 #define PLL0_MSEL_MAX (1<<15)
 /* multiplier: compute mdec from msel */
@@ -339,3 +374,5 @@ uint8_t pll0audio_tune(uint16_t msel)
 	CGU_PLL0AUDIO_MDIV = mdec(msel);
     return 0;
 }
+=======
+>>>>>>> Move clock control to a separate source file in common/clocks.c
