@@ -4,17 +4,8 @@
 
 #include "greatfet_core.h"
 #include "pins.h"
-#include "spi_ssp.h"
-#include "spiflash.h"
-#include "spiflash_target.h"
-#include "i2c_bus.h"
-#include "i2c_lpc.h"
 #include <libopencm3/cm3/scb.h>
 #include <libopencm3/lpc43xx/creg.h>
-#include <libopencm3/lpc43xx/cgu.h>
-#include <libopencm3/lpc43xx/rtc.h>
-#include <libopencm3/lpc43xx/scu.h>
-#include <libopencm3/lpc43xx/ssp.h>
 
 #include "gpio_lpc.h"
 
