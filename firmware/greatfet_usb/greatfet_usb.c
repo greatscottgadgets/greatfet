@@ -27,6 +27,7 @@
 #include "usb_api_heartbeat.h"
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
+#include "usb_api_rfhax.h"
 #include "usb_api_greatdancer.h"
 #include "usb_api_usbhost.h"
 #include "usb_api_glitchkit.h"
@@ -116,8 +117,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_usbhost_start_nonblocking_read,
 	usb_vendor_request_usbhost_finish_nonblocking_read,
 	usb_vendor_request_usbhost_get_nonblocking_data_length,
-	usb_vendor_request_super_hacky
-
+	usb_vendor_request_super_hacky,
+	usb_vendor_request_rfhax
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
