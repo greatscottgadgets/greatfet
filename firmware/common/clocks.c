@@ -284,7 +284,7 @@ uint32_t ndec(uint8_t nsel) {
 }
 
 /* PLL0AUDIO */
-uint8_t pll0audio_config(void)
+uint8_t pll0audio_config(uint16_t msel)
 {
 	/* use XTAL_OSC as clock source for PLL0AUDIO */
 	CGU_PLL0AUDIO_CTRL = CGU_PLL0AUDIO_CTRL_PD(1)
@@ -300,8 +300,8 @@ uint8_t pll0audio_config(void)
      * That means we set the N pre-divider and the M multiplier
      * We do not use the P post-divider
     */
-	CGU_PLL0AUDIO_MDIV = mdec(8678);
-	CGU_PLL0AUDIO_NP_DIV = ndec(240);
+	CGU_PLL0AUDIO_MDIV = mdec(msel);
+	CGU_PLL0AUDIO_NP_DIV = ndec(240) << 12;
 	CGU_PLL0AUDIO_CTRL |= (CGU_PLL0AUDIO_CTRL_PD(1)
 			| CGU_PLL0AUDIO_CTRL_DIRECTI(0)
 			| CGU_PLL0AUDIO_CTRL_DIRECTO(1)
@@ -316,7 +316,7 @@ uint8_t pll0audio_config(void)
 			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
 
 	/* Enable PLL0AUDIO and blast out CLKOUT */
-	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
+	// CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
 	return 0;
 }
 
@@ -328,12 +328,13 @@ void pll0audio_on(void)
 
 void pll0audio_off(void)
 {
-	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(0);
+    /* Disable PLL0AUDIO */
+	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_CLKEN(1);
 }
 
 uint8_t pll0audio_tune(uint16_t msel)
 {
-    if(msel < PLL0_MSEL_MAX)
+    if(msel > PLL0_MSEL_MAX)
         return 1;
 	CGU_PLL0AUDIO_MDIV = mdec(msel);
     return 0;

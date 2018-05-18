@@ -221,11 +221,11 @@ int main(void) {
 		if(adc_mode_enabled) {
 			adc_mode();
 		}
+		if(rfhax_enabled) {
+			rfhax();
+		}
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
-		}
-		if(rfhax_mode_enabled) {
-			rfhax();
 		}
 
 
