@@ -246,7 +246,7 @@ void rtc_init(void) {
 
 #define PLL0_MSEL_MAX (1<<15)
 /* multiplier: compute mdec from msel */
-uint32_t mdec(uint32_t msel) {
+uint32_t mdec(uint16_t msel) {
 	uint32_t x=0x4000, im;
 	switch (msel) {
 	case 0:
@@ -292,15 +292,15 @@ uint8_t pll0audio_config(void)
 			| CGU_PLL0AUDIO_CTRL_CLK_SEL(CGU_SRC_XTAL);
 	while (CGU_PLL0AUDIO_STAT & CGU_PLL0AUDIO_STAT_LOCK_MASK);
 
-	/* configure PLL0AUDIO to produce 433.92MHz clock from 12 MHz XTAL_OSC */
+	/* configure PLL0AUDIO to produce 433.90MHz clock from 12 MHz XTAL_OSC */
 	/* nsel = 240 - gives us a frequency step of 50 kHz
-     * msel = 452
+     * msel = 8678
      * Trying to work this out? See the CGU section of the user manual
      * We're using mode 1c (input pre-divider, direct output)
      * That means we set the N pre-divider and the M multiplier
      * We do not use the P post-divider
     */
-	CGU_PLL0AUDIO_MDIV = mdec(452);
+	CGU_PLL0AUDIO_MDIV = mdec(8678);
 	CGU_PLL0AUDIO_NP_DIV = ndec(240);
 	CGU_PLL0AUDIO_CTRL |= (CGU_PLL0AUDIO_CTRL_PD(1)
 			| CGU_PLL0AUDIO_CTRL_DIRECTI(0)
@@ -318,4 +318,23 @@ uint8_t pll0audio_config(void)
 	/* Enable PLL0AUDIO and blast out CLKOUT */
 	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
 	return 0;
+}
+
+void pll0audio_on(void)
+{
+    /* Enable PLL0AUDIO and blast out CLKOUT */
+	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
+}
+
+void pll0audio_off(void)
+{
+	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(0);
+}
+
+uint8_t pll0audio_tune(uint16_t msel)
+{
+    if(msel < PLL0_MSEL_MAX)
+        return 1;
+	CGU_PLL0AUDIO_MDIV = mdec(msel);
+    return 0;
 }

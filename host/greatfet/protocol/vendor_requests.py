@@ -92,6 +92,10 @@ requests = (
     'USBHOST_FINISH_NONBLOCKING_READ',
     'USBHOST_GET_NONBLOCKING_LENGTH',
 
+    # DMA to USB bulk buffer
+    'SUPER_HACKY',
+    # Ridiculous Radios
+    'RFHAX',
 )
 
 def _create_module_level_constants():
