@@ -109,6 +109,9 @@ int main(void) {
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
 		}
+		if(rfhax_enabled) {
+			rfhax();
+		}
 
 
 		service_glitchkit();
