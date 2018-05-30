@@ -19,6 +19,7 @@
 #include "usb_api_heartbeat.h"
 #include "usb_api_greatdancer.h"
 #include "glitchkit.h"
+#include "usb_api_rfhax.h"
 
 #include <rom_iap.h>
 #include "usb_descriptor.h"
