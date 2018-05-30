@@ -11,6 +11,7 @@
 #include <greatfet_core.h>
 #include <pins.h>
 #include <gpio_lpc.h>
+#include <one_wire.h>
 
 #include <libopencm3/lpc43xx/scu.h>
 
