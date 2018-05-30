@@ -91,9 +91,10 @@ requests = (
     'USBHOST_START_NONBLOCKING_READ',
     'USBHOST_FINISH_NONBLOCKING_READ',
     'USBHOST_GET_NONBLOCKING_LENGTH',
+    
+    'SUPER_HACKY',
 
-    '1WIRE_INIT',
-    '1WIRE_READ',
+    'DS18B20_READ',
 )
 
 def _create_module_level_constants():

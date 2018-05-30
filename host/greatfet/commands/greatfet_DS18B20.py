@@ -16,12 +16,10 @@ from greatfet.protocol import vendor_requests
 
 
 def main():
-    logfile = 'log.bin'
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
-    parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="Write data to file", default=logfile)
     parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
     args = parser.parse_args()
 
@@ -38,20 +36,12 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    device.vendor_request_out(vendor_requests.LOGIC_ANALYZER_START)
-
-    time.sleep(1)
-
-    f = open(args.filename, 'wb')
-    try:
-        while True:
-            d = device.device.read(0x81, 16384, 1000)
-            f.write(d)
-    except KeyboardInterrupt:
-        pass
-
-    device.vendor_request_out(vendor_requests.LOGIC_ANALYZER_STOP)
-
+    while True:
+        data = device.vendor_request_in(vendor_requests.DS18B20_READ, length=2)
+        # print(data)
+        temp = (data[1] << 8 | data[0]) / 16.0
+        print(time.strftime("%H:%M:%S"), temp)
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()

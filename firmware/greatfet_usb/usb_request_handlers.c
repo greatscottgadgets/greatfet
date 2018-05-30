@@ -19,7 +19,7 @@
 #include "usb_api_glitchkit.h"
 #include "usb_api_glitchkit_simple.h"
 #include "usb_api_glitchkit_usb.h"
-#include "usb_api_1-Wire.h"
+#include "usb_api_DS18B20.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spiflash_init,
@@ -88,9 +88,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_usbhost_get_nonblocking_data_length,
 	usb_vendor_request_super_hacky,
 
-	// 1-Wire bus
-	usb_vendor_request_1wire_init,
-	usb_vendor_request_1wire_read
+	// DS18B20 over 1-Wire bus
+	usb_vendor_request_DS18B20_read
 
 };
 
