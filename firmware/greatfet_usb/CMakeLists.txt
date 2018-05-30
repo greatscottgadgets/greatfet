@@ -11,6 +11,7 @@ include(../cmake/greatfet-common.cmake)
 
 set(SRC_M4
 	greatfet_usb.c
+	usb_request_handlers.c
 	usb_bulk_buffer.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_host.c"
@@ -38,6 +39,7 @@ set(SRC_M4
 	usb_api_glitchkit.c
 	usb_api_glitchkit_simple.c
 	usb_api_glitchkit_usb.c
+	usb_api_DS18B20.c
 	sgpio_isr.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/glitchkit.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
@@ -47,6 +49,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/one_wire.c"
 )
 
 DeclareTargets()

@@ -20,6 +20,7 @@ setup(
             'greatfet_rfhax = greatfet.commands.greatfet_rfhax:main',
             'greatfet_sdir = greatfet.commands.greatfet_sdir:main',
             'greatfet_spiflash = greatfet.commands.greatfet_spiflash:main',
+            'greatfet_1wire = greatfet.commands.greatfet_1wire:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!

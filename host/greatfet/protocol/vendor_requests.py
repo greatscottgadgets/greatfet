@@ -91,9 +91,13 @@ requests = (
     'USBHOST_START_NONBLOCKING_READ',
     'USBHOST_FINISH_NONBLOCKING_READ',
     'USBHOST_GET_NONBLOCKING_LENGTH',
+    
+    'SUPER_HACKY',
 
     # DMA to USB bulk buffer
     'SUPER_HACKY',
+    # DS18B20 Temperature sensor
+    'DS18B20_READ',
     # Ridiculous Radios
     'RFHAX',
 )

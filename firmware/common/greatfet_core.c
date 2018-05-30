@@ -95,6 +95,8 @@ spi_bus_t spi_bus_ssp1 = {
 	.transfer_gather = spi_ssp_transfer_gather,
 };
 
+#define DELAY_CLK_SPEED 204000000
+#define DELAY_PRESCALER 0
 void delay(uint32_t duration)
 {
 	uint32_t i;
