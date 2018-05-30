@@ -15,6 +15,7 @@
 #include <libopencm3/lpc43xx/rtc.h>
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/ssp.h>
+#include <libopencm3/lpc43xx/timer.h>
 
 #include "gpio_lpc.h"
 
@@ -112,6 +113,8 @@ spi_bus_t spi_bus_ssp1 = {
 	.transfer_gather = spi_ssp_transfer_gather,
 };
 
+#define DELAY_CLK_SPEED 204000000
+#define DELAY_PRESCALER 0
 void delay(uint32_t duration)
 {
 	uint32_t i;

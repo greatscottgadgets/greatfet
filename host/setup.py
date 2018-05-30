@@ -19,6 +19,7 @@ setup(
             'greatfet_logic = greatfet.commands.greatfet_logic:main',
             'greatfet_sdir = greatfet.commands.greatfet_sdir:main',
             'greatfet_spiflash = greatfet.commands.greatfet_spiflash:main',
+            'greatfet_1wire = greatfet.commands.greatfet_1wire:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!
