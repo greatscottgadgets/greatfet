@@ -51,6 +51,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/one_wire.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/jtag.c"
 )
 
 DeclareTargets()
