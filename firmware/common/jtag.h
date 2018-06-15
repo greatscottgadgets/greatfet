@@ -6,9 +6,9 @@
 #ifndef __JTAG_H__
 #define __JTAG_H__
 
+#include <gpio.h>
+#include <gpio_lpc.h>
 #include <stdint.h>
-
-#define JTAG 0x10
 
 // All states in the JTAG TAP
 enum eTAPState
@@ -55,6 +55,29 @@ enum eTransFlags
 	NORETIDLE			= 0x4
 };
 
+static struct gpio_t tdo = GPIO(0, 10);
+static struct gpio_t tdi = GPIO(0, 11);
+static struct gpio_t tms = GPIO(0, 15);
+static struct gpio_t tck = GPIO(1, 14);
+static struct gpio_t rst = GPIO(2, 3);
+static struct gpio_t tst = GPIO(2, 2);
+
+#define SETTDI gpio_write(&tdi, 1)
+#define CLRTDI gpio_write(&tdi, 0)
+#define READTDO gpio_read(&tdo)
+#define SETTMS gpio_write(&tms, 1)
+#define CLRTMS gpio_write(&tms, 0)
+#define SETTCK gpio_write(&tck, 1)
+#define CLRTCK gpio_write(&tck, 0)
+
+#define SETTST gpio_write(&tst, 1)
+#define CLRTST gpio_write(&tst, 0)
+#define SETRST gpio_write(&rst, 1)
+#define CLRRST gpio_write(&rst, 0)
+
+#define SETTCLK SETTDI
+#define CLRTCLK CLRTDI
+
 //! Shift n bytes.
 uint32_t jtag_trans_n(uint32_t word, 
 					  uint8_t bitcount, 
@@ -72,7 +95,7 @@ void jtag_stop(void);
 //! Setup the JTAG pin directions.
 void jtag_setup(void);
 //! Ratchet Clock Down and Up
-void jtag_ticktock();
+void jtag_tcktock();
 //! Reset the target device
 void jtag_reset_target();
 //! TAP RESET
@@ -92,4 +115,4 @@ uint16_t jtag_detect_chain_length();
 //! Gets device ID for specified chip in the chain
 uint32_t jtag_get_device_id(int chip);
 
-#endif /*__JTAG_H__*/
+#endif /* __JTAG_H__ */

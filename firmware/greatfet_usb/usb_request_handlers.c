@@ -20,7 +20,11 @@
 #include "usb_api_glitchkit_simple.h"
 #include "usb_api_glitchkit_usb.h"
 #include "usb_api_DS18B20.h"
+<<<<<<< HEAD
 #include "usb_api_rfhax.h"
+=======
+#include "usb_api_msp430.h"
+>>>>>>> Very early JTAG support for the MSP430
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spiflash_init,

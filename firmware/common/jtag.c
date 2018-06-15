@@ -5,8 +5,6 @@
 
 #include <libopencm3/lpc43xx/scu.h>
 #include <greatfet_core.h>
-#include <gpio.h>
-#include <gpio_lpc.h>
 #include <pins.h>
 #include "jtag.h"
 
@@ -21,12 +19,6 @@
 #define JTAG_DR_SHIFT_MORE 0x87 // used for shiftings > 32bits.  assumes JTAG_DR_SHIFT with NOEND first
 //#define JTAG_DR_SHIFT20 0x91
 
-static struct gpio_t tdo = GPIO(0, 10);
-static struct gpio_t tdi = GPIO(0, 11);
-static struct gpio_t tms = GPIO(0, 15);
-static struct gpio_t tck = GPIO(1, 14);
-static struct gpio_t rst = GPIO(2, 3);
-static struct gpio_t tst = GPIO(2, 2);
 
 //! Set up the pins for JTAG mode.
 void jtag_setup(void)
@@ -57,19 +49,6 @@ void jtag_stop(void)
 {
 	;
 }
-
-#define SETTDI gpio_write(&tdi, 1)
-#define CLRTDI gpio_write(&tdi, 0)
-#define READTDO gpio_read(&tdo)
-#define SETTMS gpio_write(&tms, 1)
-#define CLRTMS gpio_write(&tms, 0)
-#define SETTCK gpio_write(&tck, 1)
-#define CLRTCK gpio_write(&tck, 0)
-
-#define SETTST gpio_write(&tst, 1)
-#define CLRTST gpio_write(&tst, 0)
-#define SETRST gpio_write(&rst, 1)
-#define CLRRST gpio_write(&rst, 0)
 
 uint8_t savedtclk;
 #define SAVETCLK savedtclk=gpio_read(&tdi)
@@ -120,7 +99,7 @@ void jtag_reset_target()
 }
 
 //! Clock the JTAG clock line
-void jtag_ticktock() 
+void jtag_tcktock() 
 {
 	CLRTCK; 
 	led_toggle(LED4);
@@ -133,13 +112,13 @@ void jtag_reset_tap()
 {
 	CLRTDI;
 	SETTMS;
-	jtag_ticktock();
-	jtag_ticktock();
-	jtag_ticktock();
-	jtag_ticktock();
-	jtag_ticktock();  // now in Reset state
+	jtag_tcktock();
+	jtag_tcktock();
+	jtag_tcktock();
+	jtag_tcktock();
+	jtag_tcktock();  // now in Reset state
 	CLRTMS;
-	jtag_ticktock();  // now in Run-Test/Idle state
+	jtag_tcktock();  // now in Run-Test/Idle state
 	jtag_state = RUN_TEST_IDLE;
 }
 
@@ -156,7 +135,7 @@ void jtag_shift_register()
 
 	CLRTDI;
 	CLRTMS;
-	jtag_ticktock();
+	jtag_tcktock();
 
 	if (in_dr())
 		jtag_state = SHIFT_DR;
@@ -176,10 +155,10 @@ void jtag_capture_ir()
 
 	CLRTDI;
 	SETTMS;
-	jtag_ticktock(); // Select-DR-Scan
-	jtag_ticktock(); // Select-IR-Scan
+	jtag_tcktock(); // Select-DR-Scan
+	jtag_tcktock(); // Select-IR-Scan
 	CLRTMS;
-	jtag_ticktock(); // Capture-IR
+	jtag_tcktock(); // Capture-IR
 
 	jtag_state = CAPTURE_IR;
 }
@@ -196,9 +175,9 @@ void jtag_capture_dr()
 
 	CLRTDI;
 	SETTMS;
-	jtag_ticktock(); // Select-DR-Scan
+	jtag_tcktock(); // Select-DR-Scan
 	CLRTMS;
-	jtag_ticktock(); // Capture-IR
+	jtag_tcktock(); // Capture-IR
 
 	jtag_state = CAPTURE_DR;
 }
@@ -211,49 +190,49 @@ void jtag_run_test_idle()
 	if (in_state(SELECT_DR_SCAN | SELECT_IR_SCAN))
 	{
 		CLRTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state <<= 1; //CAPTURE_DR or CAPTURE_IR
 	}
 
 	if (in_state(CAPTURE_DR | CAPTURE_IR))
 	{
 		SETTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state <<= 2; //EXIT1_DR or EXIT1_IR
 	}
 
 	if (in_state(SHIFT_DR | SHIFT_IR))
 	{
 		SETTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state <<= 1; //EXIT1_DR or EXIT1_IR
 	}
 
 	if (in_state(EXIT1_DR | EXIT1_IR))
 	{
 		SETTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state <<=3; //UPDATE_DR or UPDATE_IR
 	}
 
 	if (in_state(PAUSE_DR | PAUSE_IR))
 	{
 		SETTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state <<= 1; // EXIT2_DR or EXIT2_IR
 	}
 
 	if (in_state(EXIT2_DR | EXIT2_IR))
 	{
 		SETTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state <<= 1; // UPDATE_DR or UPDATE_IR
 	}
 
 	if (in_state(UPDATE_DR | UPDATE_IR | TEST_LOGIC_RESET))
 	{
 		CLRTMS;
-		jtag_ticktock();
+		jtag_tcktock();
 		jtag_state = RUN_TEST_IDLE;
 	}
 }
@@ -307,7 +286,7 @@ uint32_t jtag_trans_n(uint32_t word,
 			if ((bit == 1) && !(flags & NOEND))
 				SETTMS; //TMS high on last bit to exit.
 
-			jtag_ticktock();
+			jtag_tcktock();
 
 			if ((bit == 1) && !(flags & NOEND))
 				jtag_state <<= 1; // Exit1-DR or Exit1-IR
@@ -337,7 +316,7 @@ uint32_t jtag_trans_n(uint32_t word,
 			if ((bit==1) && !(flags & NOEND))
 				SETTMS; //TMS high on last bit to exit.
 
-			jtag_ticktock();
+			jtag_tcktock();
 
 			if ((bit == 1) && !(flags & NOEND))
 				jtag_state <<= 1; // Exit1-DR or Exit1-IR
@@ -358,7 +337,7 @@ uint32_t jtag_trans_n(uint32_t word,
 	if (!(flags & NOEND))
 	{
 		// exit state
-		jtag_ticktock();
+		jtag_tcktock();
 
 		jtag_state <<= 3; // Update-DR or Update-IR
 
@@ -366,7 +345,7 @@ uint32_t jtag_trans_n(uint32_t word,
 		if (!(flags & NORETIDLE))
 		{
 			CLRTMS;
-			jtag_ticktock();
+			jtag_tcktock();
 
 			jtag_state = RUN_TEST_IDLE;
 		}
@@ -395,14 +374,14 @@ uint16_t jtag_detect_ir_width()
 	CLRTDI;
 	for(i = 0; i < 1024; i++)
 	{
-		jtag_ticktock();
+		jtag_tcktock();
 	}
 
 	// now we'll clock in ones until we see one
 	SETTDI;
 	for(i = 0; i < 1024; i++)
 	{
-		jtag_ticktock();
+		jtag_tcktock();
 		if(READTDO)
 			break;
 		width++;
@@ -444,13 +423,13 @@ uint16_t jtag_detect_chain_length()
 	{
 		if (i == 1023)
 			SETTMS; // exit on last bit
-		jtag_ticktock();
+		jtag_tcktock();
 	}
 	jtag_state = EXIT1_IR;
 
 	// go to Update-IR
 	CLRTDI;
-	jtag_ticktock();
+	jtag_tcktock();
 	jtag_state = UPDATE_IR;
 
 	// go to Shift-DR state
@@ -462,14 +441,14 @@ uint16_t jtag_detect_chain_length()
 	CLRTDI;
 	for (i = 0; i < 1024; i++)
 	{
-		jtag_ticktock();
+		jtag_tcktock();
 	}
 
 	// send 1's into the DRs until we see one come out the other side
 	SETTDI;
 	for (i = 0; i < 1024; i++)
 	{
-		jtag_ticktock();
+		jtag_tcktock();
 		bit = READTDO;
 		if (bit)
 			break;
@@ -556,14 +535,14 @@ uint8_t jtag_ir_shift_8(uint8_t in)
   */
   // idle
   SETTMS;
-  jtag_ticktock();
+  jtag_tcktock();
   // select DR
-  jtag_ticktock();
+  jtag_tcktock();
   // select IR
   CLRTMS;
-  jtag_ticktock();
+  jtag_tcktock();
   // capture IR
-  jtag_ticktock();
+  jtag_tcktock();
   //jtag_state = CAPTURE_IR;
   jtag_state = SHIFT_IR;
   // shift IR bits
