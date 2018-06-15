@@ -39,6 +39,7 @@ set(SRC_M4
 	usb_api_glitchkit_simple.c
 	usb_api_glitchkit_usb.c
 	usb_api_DS18B20.c
+	usb_api_msp430.c
 	sgpio_isr.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/glitchkit.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
@@ -50,6 +51,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/one_wire.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/jtag.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/jtag430.c"
 )
 
 DeclareTargets()

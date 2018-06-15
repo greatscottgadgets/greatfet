@@ -95,6 +95,7 @@ requests = (
     'SUPER_HACKY',
 
     'DS18B20_READ',
+    'MSP430_JTAG',
 )
 
 def _create_module_level_constants():
