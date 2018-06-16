@@ -2,14 +2,13 @@
  * This file is part of GreatFET
  * derived from GoodFET (thanks Travis)
  */
-
+#include <stdbool.h>
 #include <greatfet_core.h>
 #include "jtag430.h"
 #include "jtag.h"
 
-unsigned int jtag430mode=MSP430X2MODE;
-
-unsigned int drwidth=16;
+uint8_t jtag430mode=MSP430X2MODE;
+uint8_t drwidth=16;
 
 //! Shift an address width of data
 uint32_t jtag430_shift_addr( uint32_t addr )
@@ -49,7 +48,7 @@ void jtag430_setr(uint8_t reg, uint16_t val){
 }
 
 //! Set the program counter.
-void jtag430_setpc(unsigned int adr){
+void jtag430_setpc(uint16_t adr){
   jtag430_setr(0,adr);
 }
 
@@ -81,8 +80,8 @@ void jtag430_releasecpu(){
 }
 
 //! Read data from address
-unsigned int jtag430_readmem(unsigned int adr){
-  unsigned int toret;
+uint16_t jtag430_readmem(uint16_t adr){
+  uint16_t toret;
   jtag430_haltcpu();
   
   CLRTCLK;
@@ -104,7 +103,7 @@ unsigned int jtag430_readmem(unsigned int adr){
 }
 
 //! Write data to address.
-void jtag430_writemem(unsigned int adr, unsigned int data){
+void jtag430_writemem(uint16_t adr, uint16_t data){
   CLRTCLK;
   jtag_ir_shift_8(IR_CNTRL_SIG_16BIT);
   if(adr>0xFF)
@@ -118,15 +117,15 @@ void jtag430_writemem(unsigned int adr, unsigned int data){
   SETTCLK;
 }
 
-void jtag430_tclk_flashpulses(uint8_t count)
+void jtag430_tclk_flashpulses(uint16_t count)
 {
   int i;
-  for(i=0; i< count; i++)
+  for(i=0; i < count; i++)
     jtag_tcktock();
 }
 
 //! Write data to flash memory.  Must be preconfigured.
-void jtag430_writeflashword(unsigned int adr, unsigned int data){
+void jtag430_writeflashword(uint16_t adr, uint16_t data){
   
   CLRTCLK;
   jtag_ir_shift_8(IR_CNTRL_SIG_16BIT);
@@ -147,7 +146,7 @@ void jtag430_writeflashword(unsigned int adr, unsigned int data){
 }
 
 //! Configure flash, then write a word.
-void jtag430_writeflash(unsigned int adr, unsigned int data){
+void jtag430_writeflash(uint16_t adr, uint16_t data){
   jtag430_haltcpu();
   
   //FCTL1=0xA540, enabling flash write
@@ -195,8 +194,8 @@ void jtag430_por(){
 #define ERASE_SGMT 0xA502
 
 //! Configure flash, then write a word.
-void jtag430_eraseflash(unsigned int mode, unsigned int adr, unsigned int count,
-			unsigned int info){
+void jtag430_eraseflash(uint16_t mode, uint16_t adr, uint16_t count, bool info)
+{
   jtag430_haltcpu();
   
   //FCTL1= erase mode
@@ -263,7 +262,7 @@ void jtag430_resettap(){
 
 
 //! Get the JTAG ID
-unsigned char jtag430x2_jtagid(){
+uint8_t jtag430x2_jtagid(){
   jtag430_resettap();
   jtagid = jtag_ir_shift_8(IR_BYPASS);
   if(jtagid!=0x89 && jtagid!=0x91){
@@ -273,7 +272,7 @@ unsigned char jtag430x2_jtagid(){
   return jtagid;
 }
 //! Start JTAG, take pins
-unsigned char jtag430x2_start(){
+uint8_t jtag430x2_start(){
   jtag_setup();
   
   //Known-good starting position.
@@ -311,8 +310,6 @@ void jtag430_start(){
   SETRST;
   delay(0xFFFF);
 
-
-  #ifndef SBWREWRITE
   //Entry sequence from Page 67 of SLAU265A for 4-wire MSP430 JTAG
   CLRRST;
   delay(100); //100
@@ -323,7 +320,6 @@ void jtag430_start(){
   SETRST;
   // P5DIR&=~RST;
   delay(0xFFFF);
-  #endif
   
   //Perform a reset and disable watchdog.
   jtag430_por();
@@ -333,13 +329,12 @@ void jtag430_start(){
 }
 
 //! Stop JTAG.
-void jtag430_stop(){
+void jtag430_stop() {
   // debugstr("Exiting JTAG.");
   jtag_setup();
   
   //Known-good starting position.
   //Might be unnecessary.
-  //SETTST;
   CLRTST;
   SETRST;
   delay(0xFFFF);
@@ -348,8 +343,6 @@ void jtag430_stop(){
   CLRRST;
   delay(0xFFFF);
   SETRST;
-  //P5DIR&=~RST;
-  //delay(0xFFFF);
   
 }
 
@@ -368,7 +361,25 @@ void jtag430_setinstrfetch(){
 }
 
 
+//JTAG430 commands
+#define JTAG430_HALTCPU 0xA0
+#define JTAG430_RELEASECPU 0xA1
+#define JTAG430_SETINSTRFETCH 0xC1
+#define JTAG430_SETPC 0xC2
+#define JTAG430_SETREG 0xD2
+#define JTAG430_GETREG 0xD3
 
+#define JTAG430_WRITEMEM 0xE0
+#define JTAG430_WRITEFLASH 0xE1
+#define JTAG430_READMEM 0xE2
+#define JTAG430_ERASEFLASH 0xE3
+#define JTAG430_ERASECHECK 0xE4
+#define JTAG430_VERIFYMEM 0xE5
+#define JTAG430_BLOWFUSE 0xE6
+#define JTAG430_ISFUSEBLOWN 0xE7
+#define JTAG430_ERASEINFO 0xE8
+#define JTAG430_COREIP_ID 0xF0
+#define JTAG430_DEVICE_ID 0xF1
 
 
 // //! Handles classic MSP430 JTAG commands.  Forwards others to JTAG.

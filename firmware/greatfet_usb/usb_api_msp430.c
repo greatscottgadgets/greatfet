@@ -15,10 +15,10 @@ usb_request_status_t usb_vendor_request_msp430_jtag(
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		jtag430_start();
+		// These values are taken from jtag430.c
+		// In the future we'll have a sensible API for this
 		jtag430_eraseflash(0xA506,0xFFFE,0x3000,0);
-		// jtag430_haltcpu();
-		// usb_transfer_schedule_block(endpoint->in, &spi_buffer,
-		//  							endpoint->setup.length, NULL, NULL);
+		jtag430_stop();
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
