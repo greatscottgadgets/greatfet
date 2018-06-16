@@ -6,30 +6,29 @@
 #ifndef __JTAG430_H__
 #define __JTAG430_H__
 
-extern unsigned int drwidth;
-
 #define MSP430MODE 0
 #define MSP430XMODE 1
 #define MSP430X2MODE 2
-extern unsigned int jtag430mode;
 
 // JTAG430 Commands
 
 //! Start JTAG, unique to the '430.  Deprecated.
 void jtag430_start();
 //! Same thing, but also for '430X2.
-unsigned char jtag430x2_start();
+uint8_t jtag430x2_start();
+//! Stop JTAG
+void jtag430_stop();
 //! Reset the TAP state machine, check the fuse.
 void jtag430_resettap();
 
 //! Defined in jtag430asm.S
-void jtag430_tclk_flashpulses(uint8_t);
+void jtag430_tclk_flashpulses(uint16_t count);
 
 //High-level Macros follow
 //! Write data to address.
-void jtag430_writemem(unsigned int adr, unsigned int data);
+void jtag430_writemem(uint16_t adr, uint16_t data);
 //! Read data from address
-unsigned int jtag430_readmem(unsigned int adr);
+uint16_t jtag430_readmem(uint16_t adr);
 //! Halt the CPU
 void jtag430_haltcpu();
 //! Release the CPU
@@ -37,9 +36,11 @@ void jtag430_releasecpu();
 //! Set CPU to Instruction Fetch
 void jtag430_setinstrfetch();
 //! Set the program counter.
-void jtag430_setpc(unsigned int adr);
+void jtag430_setpc(uint16_t adr);
+//! Erase target flash from address
+void jtag430_eraseflash(uint16_t mode, uint16_t adr, uint16_t count, bool info);
 //! Write data to address.
-void jtag430_writeflash(unsigned int adr, unsigned int data);
+void jtag430_writeflash(uint16_t adr, uint16_t data);
 //! Shift an address width of data
 uint32_t jtag430_shift_addr( uint32_t addr );
 
@@ -74,31 +75,10 @@ uint32_t jtag430_shift_addr( uint32_t addr );
 #define MSP430X2JTAGID 0x91
 
 //! Syncs a POR.
-unsigned int jtag430x2_syncpor();
+uint16_t jtag430x2_syncpor();
 //! Executes an MSP430X2 POR
-unsigned int jtag430x2_por();
+uint16_t jtag430x2_por();
 //! Power-On Reset
 void jtag430_por();
-
-
-//JTAG430 commands
-#define JTAG430_HALTCPU 0xA0
-#define JTAG430_RELEASECPU 0xA1
-#define JTAG430_SETINSTRFETCH 0xC1
-#define JTAG430_SETPC 0xC2
-#define JTAG430_SETREG 0xD2
-#define JTAG430_GETREG 0xD3
-
-#define JTAG430_WRITEMEM 0xE0
-#define JTAG430_WRITEFLASH 0xE1
-#define JTAG430_READMEM 0xE2
-#define JTAG430_ERASEFLASH 0xE3
-#define JTAG430_ERASECHECK 0xE4
-#define JTAG430_VERIFYMEM 0xE5
-#define JTAG430_BLOWFUSE 0xE6
-#define JTAG430_ISFUSEBLOWN 0xE7
-#define JTAG430_ERASEINFO 0xE8
-#define JTAG430_COREIP_ID 0xF0
-#define JTAG430_DEVICE_ID 0xF1
 
 #endif /* __JTAG430_H__ */
