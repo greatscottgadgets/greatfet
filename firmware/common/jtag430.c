@@ -262,37 +262,39 @@ void jtag430_resettap(){
   
 }
 
-
 //! Get the JTAG ID
 uint8_t jtag430x2_jtagid(){
-  jtag430_resettap();
+  
   jtagid = jtag_ir_shift_8(IR_BYPASS);
-  if(jtagid!=0x89 && jtagid!=0x91){
-    // debugstr("Unknown JTAG ID");
-    // debughex(jtagid);
-  }
+  // if(jtagid!=0x89 && jtagid!=0x91){
+  //   // debugstr("Unknown JTAG ID");
+  //   // debughex(jtagid);
+  // }
   return jtagid;
 }
+
+void jtag430_entry_sequence() {
+   //Entry sequence from Page 67 of SLAU265A for 4-wire MSP430 JTAG
+  CLRRST;
+  delay_us(10);
+  CLRTST;
+  delay_us(10);
+  SETTST;
+  delay_us(1000);
+  SETRST;
+  delay_us(10000);
+  jtag430_resettap();
+}
+
 //! Start JTAG, take pins
 uint8_t jtag430x2_start(){
   jtag_setup();
-  
-  //Known-good starting position.
-  //Might be unnecessary.
+  delay_us(1000);
   SETTST;
-  SETRST;
-  
-  //Entry sequence from Page 67 of SLAU265A for 4-wire MSP430 JTAG
-  CLRRST;
-  delay(20);
-  CLRTST;
-  delay(20);
-  SETTST;
-  delay_us(10);
-  SETRST;
-  // P5DIR&=~RST;
-  
-  delay_us(10);
+  delay_us(6000);
+  jtag430_entry_sequence();
+  delay_us(10000);
+  jtag430_entry_sequence();
   
   //Perform a reset and disable watchdog.
   return jtag430x2_jtagid();
@@ -353,7 +355,7 @@ void jtag430_setinstrfetch(){
 #define JTAG430_DEVICE_ID 0xF1
 
 
-void jtag430_do_a_thing()
+uint8_t jtag430_do_a_thing()
 {
   jtag430x2_start();
   jtag430mode=MSP430MODE;
@@ -362,6 +364,7 @@ void jtag430_do_a_thing()
   jtag430_writemem(0x120,0x5a80);//disable watchdog
   jtag430_haltcpu();
   jtag430_resettap();
+  return jtagid;
 
 }
 // //! Handles classic MSP430 JTAG commands.  Forwards others to JTAG.
