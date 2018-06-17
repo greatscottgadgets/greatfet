@@ -79,6 +79,6 @@ uint16_t jtag430x2_por();
 //! Power-On Reset
 void jtag430_por();
 
-void jtag430_do_a_thing();
+uint8_t jtag430_do_a_thing();
 
 #endif /* __JTAG430_H__ */

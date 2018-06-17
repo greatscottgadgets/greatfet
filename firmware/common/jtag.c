@@ -31,24 +31,24 @@ void jtag_setup(void)
 	scu_pinmux(SCU_PINMUX_GPIO2_2, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
 
 	gpio_write(&tdi, 0);
-	gpio_write(&tms, 0);
-	gpio_write(&tck, 0);
+	gpio_write(&tms, 1);
+	gpio_write(&tck, 1);
 	gpio_write(&rst, 1);
-	gpio_write(&tst, 1);
+	gpio_write(&tst, 0);
 
 	gpio_input(&tdo);
+	gpio_output(&tst);
 	gpio_output(&tdi);
 	gpio_output(&tms);
 	gpio_output(&tck);
 	gpio_output(&rst);
-	gpio_output(&tst);
 	jtag_state = UNKNOWN;
 }
 
 //! Stop JTAG, release pins
 void jtag_stop(void)
 {
-	;
+	gpio_write(&tst, 0);
 }
 
 uint8_t savedtclk;
