@@ -56,8 +56,10 @@ typedef enum {
  */
 extern volatile uint32_t reset_reason;
 
-
+/* Delay in clock cycles */
 void delay(uint32_t duration);
+/* Delay in us - VERY rough */
+void delay_us(uint32_t duration);
 
 /* TODO: Hide these configurations */
 extern const ssp_config_t ssp_config_spi;

@@ -12,8 +12,6 @@
 
 // JTAG430 Commands
 
-//! Start JTAG, unique to the '430.  Deprecated.
-void jtag430_start();
 //! Same thing, but also for '430X2.
 uint8_t jtag430x2_start();
 //! Stop JTAG
@@ -80,5 +78,7 @@ uint16_t jtag430x2_syncpor();
 uint16_t jtag430x2_por();
 //! Power-On Reset
 void jtag430_por();
+
+void jtag430_do_a_thing();
 
 #endif /* __JTAG430_H__ */

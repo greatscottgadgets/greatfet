@@ -250,11 +250,13 @@ void jtag430_resettap(){
   /* sacred, by spec.
      Sometimes this isn't necessary.  */
   // fuse check
+  delay_us(1);
   CLRTMS;
-  delay(50);
+  delay_us(1);
   SETTMS;
+  delay_us(1);
   CLRTMS;
-  delay(50);
+  delay_us(1);
   SETTMS;
   /**/
   
@@ -280,53 +282,22 @@ uint8_t jtag430x2_start(){
   SETTST;
   SETRST;
   
-  delay(0xFFFF);
-  
   //Entry sequence from Page 67 of SLAU265A for 4-wire MSP430 JTAG
   CLRRST;
-  delay(20);//10
+  delay(20);
   CLRTST;
-
-  delay(10);//5
+  delay(20);
   SETTST;
-  delay(10);//5
+  delay_us(10);
   SETRST;
   // P5DIR&=~RST;
   
-  delay(0xFFFF);
+  delay_us(10);
   
   //Perform a reset and disable watchdog.
   return jtag430x2_jtagid();
 }
 
-
-//! Start JTAG, take pins
-void jtag430_start(){
-  jtag_setup();
-  
-  //Known-good starting position.
-  //Might be unnecessary.
-  SETTST;
-  SETRST;
-  delay(0xFFFF);
-
-  //Entry sequence from Page 67 of SLAU265A for 4-wire MSP430 JTAG
-  CLRRST;
-  delay(100); //100
-  CLRTST;
-  delay(50);  //50
-  SETTST;
-  delay(50);  //50
-  SETRST;
-  // P5DIR&=~RST;
-  delay(0xFFFF);
-  
-  //Perform a reset and disable watchdog.
-  jtag430_por();
-  jtag430_writemem(0x120,0x5a80);//disable watchdog
-  
-  jtag430_haltcpu();
-}
 
 //! Stop JTAG.
 void jtag430_stop() {
@@ -382,6 +353,17 @@ void jtag430_setinstrfetch(){
 #define JTAG430_DEVICE_ID 0xF1
 
 
+void jtag430_do_a_thing()
+{
+  jtag430x2_start();
+  jtag430mode=MSP430MODE;
+  drwidth=20;
+  jtag430_por();
+  jtag430_writemem(0x120,0x5a80);//disable watchdog
+  jtag430_haltcpu();
+  jtag430_resettap();
+
+}
 // //! Handles classic MSP430 JTAG commands.  Forwards others to JTAG.
 // void jtag430_handle_fn(uint8_t const app,
 // 		       uint8_t const verb,

@@ -185,7 +185,7 @@ macro(DeclareTargets)
 	add_custom_target(
 		${PROJECT_NAME}-flash
 		DEPENDS ${PROJECT_NAME}.bin
-		COMMAND greatfet_firmware -w ${PROJECT_NAME}.bin
+		COMMAND greatfet_firmware -Rw ${PROJECT_NAME}.bin
 	)
 
 	add_custom_target(
