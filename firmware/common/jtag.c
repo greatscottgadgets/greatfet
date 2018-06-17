@@ -23,23 +23,24 @@
 //! Set up the pins for JTAG mode.
 void jtag_setup(void)
 {
-	// TDO
 	scu_pinmux(SCU_PINMUX_GPIO0_10, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
-	gpio_input(&tdo);
-	// TDI
 	scu_pinmux(SCU_PINMUX_GPIO0_11, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
-	gpio_output(&tdi);
-	// TMS
 	scu_pinmux(SCU_PINMUX_GPIO0_15, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
-	gpio_output(&tms);
-	// TCK
 	scu_pinmux(SCU_PINMUX_GPIO1_14, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
-	gpio_output(&tck);
-	// !RST
 	scu_pinmux(SCU_PINMUX_GPIO2_3, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
-	gpio_output(&rst);
-	// TST
 	scu_pinmux(SCU_PINMUX_GPIO2_2, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
+
+	gpio_write(&tdi, 0);
+	gpio_write(&tms, 0);
+	gpio_write(&tck, 0);
+	gpio_write(&rst, 1);
+	gpio_write(&tst, 1);
+
+	gpio_input(&tdo);
+	gpio_output(&tdi);
+	gpio_output(&tms);
+	gpio_output(&tck);
+	gpio_output(&rst);
 	gpio_output(&tst);
 	jtag_state = UNKNOWN;
 }
@@ -101,10 +102,10 @@ void jtag_reset_target()
 //! Clock the JTAG clock line
 void jtag_tcktock() 
 {
-	CLRTCK; 
-	led_toggle(LED4);
-	SETTCK; 
-	led_toggle(LED4);
+	CLRTCK;
+	delay_us(1);
+	SETTCK;
+	delay_us(1);
 }
 
 //! Goes through test-logic-reset and ends in run-test-idle
@@ -535,6 +536,7 @@ uint8_t jtag_ir_shift_8(uint8_t in)
   */
   // idle
   SETTMS;
+  delay_us(1);
   jtag_tcktock();
   // select DR
   jtag_tcktock();
@@ -543,7 +545,7 @@ uint8_t jtag_ir_shift_8(uint8_t in)
   jtag_tcktock();
   // capture IR
   jtag_tcktock();
-  //jtag_state = CAPTURE_IR;
+  // shift IR
   jtag_state = SHIFT_IR;
   // shift IR bits
   return jtag_trans_8(in);
