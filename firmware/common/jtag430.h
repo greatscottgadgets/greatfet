@@ -39,6 +39,8 @@ void jtag430_setpc(uint16_t adr);
 void jtag430_eraseflash(uint16_t mode, uint16_t adr, uint16_t count, bool info);
 //! Write data to address.
 void jtag430_writeflash(uint16_t adr, uint16_t data);
+//!
+void jtag430_writeflash_bulk(uint16_t adr, uint16_t len, uint16_t *data);
 //! Shift an address width of data
 uint32_t jtag430_shift_addr( uint32_t addr );
 
@@ -79,6 +81,6 @@ uint16_t jtag430x2_por();
 //! Power-On Reset
 void jtag430_por();
 
-uint8_t jtag430_do_a_thing();
+uint8_t jtag430_start_reset_halt();
 
 #endif /* __JTAG430_H__ */

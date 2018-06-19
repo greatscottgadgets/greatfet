@@ -120,8 +120,12 @@ void jtag430_writemem(uint16_t adr, uint16_t data){
 void jtag430_tclk_flashpulses(uint16_t count)
 {
   int i;
-  for(i=0; i < count; i++)
-    jtag_tcktock();
+  for(i=0; i < count; i++) {
+    SETTCLK;
+    delay(80);
+    CLRTCLK;
+    delay(10);
+  }
 }
 
 //! Write data to flash memory.  Must be preconfigured.
@@ -166,7 +170,14 @@ void jtag430_writeflash(uint16_t adr, uint16_t data){
   //jtag430_releasecpu();
 }
 
-
+//! Write a buffer to flash a word at a time
+void jtag430_writeflash_bulk(uint16_t adr, uint16_t len, uint16_t *data) {
+  int i;
+  for(i = 0; i < len; i++) {
+    //// debugstr("Poking flash memory.");
+    jtag430_writeflash(adr+(i*2), data[i]);
+  }
+}
 
 //! Power-On Reset
 void jtag430_por(){
@@ -355,7 +366,7 @@ void jtag430_setinstrfetch(){
 #define JTAG430_DEVICE_ID 0xF1
 
 
-uint8_t jtag430_do_a_thing()
+uint8_t jtag430_start_reset_halt()
 {
   jtag430x2_start();
   jtag430mode=MSP430MODE;
@@ -367,160 +378,3 @@ uint8_t jtag430_do_a_thing()
   return jtagid;
 
 }
-// //! Handles classic MSP430 JTAG commands.  Forwards others to JTAG.
-// void jtag430_handle_fn(uint8_t const app,
-// 		       uint8_t const verb,
-// 		       uint32_t const len)
-// {
-//   unsigned long at, l;
-//   unsigned int i, val;
-  
-  
-//   /* FIXME
-//    * Sometimes JTAG doesn't init correctly.
-//    * This restarts the connection if the masked-rom
-//    * chip ID cannot be read.  Should print warning
-//    * for testing server.
-//    */
-//   if (jtagid!=0)
-//     while((i=jtag430_readmem(0xff0))==0xFFFF){
-//       // debugstr("Reconnecting to target MSP430.");
-//       jtag430x2_start();
-//       led_toggle();
-//     }
-//   led_off();
-  
-  
-//   switch(verb){
-//   case START:
-//     // debugstr("Using JTAG430 (instead of JTAG430X2)!");
-    
-//     jtag430x2_start();
-//     cmddata[0]=jtagid;
-    
-//     jtag430mode=MSP430MODE;
-    
-//     /* So the way this works is that a width of 20 does some
-//        backward-compatibility finagling, causing the correct value
-//        to be exchanged for addresses on 16-bit chips as well as the
-//        new MSP430X chips.  (This has only been verified on the
-//        MSP430F2xx family.  TODO verify for others.)
-//     */
-    
-//     drwidth=20;
-    
-//     //Perform a reset and disable watchdog.
-//     jtag430_por();
-//     jtag430_writemem(0x120,0x5a80);//disable watchdog
-    
-//     jtag430_haltcpu();
-    
-//     jtag430_resettap();
-//     txdata(app,verb,1);
-    
-
-//     break;
-//   case STOP:
-//     jtag430_stop();
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_HALTCPU:
-//     jtag430_haltcpu();
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_RELEASECPU:
-//     jtag430_releasecpu();
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_SETINSTRFETCH:
-//     jtag430_setinstrfetch();
-//     txdata(app,verb,0);
-//     break;
-    
-//   case JTAG430_READMEM:
-//   case PEEK:
-//     at=cmddatalong[0];
-    
-//     //Fetch large blocks for bulk fetches,
-//     //small blocks for individual peeks.
-//     if(len>5)
-//       l=(cmddataword[2]);//always even.
-//     else
-//       l=2;
-//     l&=~1;//clear lsbit
-    
-//     txhead(app,verb,l);
-//     for(i = 0; i < l; i += 2) {
-//       jtag430_resettap();
-//       val=jtag430_readmem(at);
-      
-//       at+=2;
-//       serial_tx(val&0xFF);
-//       serial_tx((val&0xFF00)>>8);
-//     }
-//     break;
-//   case JTAG430_WRITEMEM:
-//   case POKE:
-//     jtag430_haltcpu();
-//     jtag430_writemem(cmddataword[0],cmddataword[2]);
-//     cmddataword[0]=jtag430_readmem(cmddataword[0]);
-//     txdata(app,verb,2);
-//     break;
-//   case JTAG430_WRITEFLASH:
-//     at=cmddataword[0];
-    
-//     for(i=0;i<(len>>1)-2;i++){
-//       //// debugstr("Poking flash memory.");
-//       jtag430_writeflash(at+(i<<1),cmddataword[i+2]);
-//       //Reflash if needed.  Try this twice to save grace?
-//       if(cmddataword[i]!=jtag430_readmem(at))
-// 	jtag430_writeflash(at+(i<<1),cmddataword[i+2]);
-//     }
-    
-//     //Return result of first write as a word.
-//     cmddataword[0]=jtag430_readmem(cmddataword[0]);
-    
-//     txdata(app,verb,2);
-//     break;
-//   case JTAG430_ERASEFLASH:
-//     jtag430_eraseflash(ERASE_MASS,0xFFFE,0x3000,0);
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_ERASEINFO:
-//     jtag430_eraseflash(ERASE_SGMT,0x1000,0x3000,1);
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_SETPC:
-//     jtag430_haltcpu();
-//     // debughex("Setting PC.");
-//     // debughex(cmddataword[0]);
-//     jtag430_setpc(cmddataword[0]);
-//     jtag430_releasecpu();
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_SETREG:
-//     jtag430_setr(cmddata[0],cmddataword[1]);
-//     txdata(app,verb,0);
-//     break;
-//   case JTAG430_GETREG:
-//     //jtag430_getr(cmddata[0]);
-//     // debugstr("JTAG430_GETREG not yet implemented.");
-//     cmddataword[0]=0xDEAD;
-//     txdata(app,verb,2);
-//     break;
-//   case JTAG430_COREIP_ID:
-//     //cmddataword[0]=jtag430_coreid();
-//     cmddataword[0]=0xdead;
-//     txdata(app,verb,2);
-//     break;
-//   case JTAG430_DEVICE_ID:
-//     //cmddatalong[0]=jtag430_deviceid();
-//     cmddataword[0]=0xdead;
-//     cmddataword[1]=0xbeef;
-//     txdata(app,verb,4);
-//     break;
-//   default:
-//     (*(jtag_app.handle))(app,verb,len);
-//   }
-//   //jtag430_resettap();  //DO NOT UNCOMMENT
-// }
