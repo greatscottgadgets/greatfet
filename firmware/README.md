@@ -37,7 +37,7 @@ cd greatfet_usb
 mkdir build
 cd build
 cmake .. -DBOARD=GREATFET_ONE
-make greatfet_usb
+make
 ```
 
 If building for another board, replace ```GREATFET_ONE``` with the the
