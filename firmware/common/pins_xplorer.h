@@ -15,12 +15,6 @@
 /* NXP populates the RTC crystal, so use of the RTC is allowed. */
 #define BOARD_CAPABILITY_RTC
 
-/* We can detect whether USB1's VBUS is present. */
-#define BOARD_CAPABILITY_USB1_SENSE_VBUS
-
-/* We can provide VBUS to devices on USB1. */
-#define BOARD_CAPABILITY_USB1_PROVIDE_VBUS
-
 /*
  * SCU PinMux
  */
