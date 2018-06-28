@@ -196,8 +196,6 @@ void jtag430_por(){
   jtag430_writemem(0x0120, 0x5A80);   // Diabled Watchdog
 }
 
-
-
 #define ERASE_GLOB 0xA50E
 #define ERASE_ALLMAIN 0xA50C
 #define ERASE_MASS 0xA506
@@ -235,7 +233,6 @@ void jtag430_eraseflash(uint16_t mode, uint16_t adr, uint16_t count, bool info)
   //jtag430_releasecpu();
 }
 
-
 //! Reset the TAP state machine.
 void jtag430_resettap(){
   int i;
@@ -257,7 +254,6 @@ void jtag430_resettap(){
   SETTMS;
   // idle
 
-    
   /* sacred, by spec.
      Sometimes this isn't necessary.  */
   // fuse check
