@@ -92,7 +92,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_TDI (P6_2)  /* GPIO3[ 1] */
 
 
-/* CPLD SGPIO interface */
+/* SGPIO interface */
 #define SCU_PINMUX_SGPIO0   (P0_0)
 #define SCU_PINMUX_SGPIO1   (P0_1)
 #define SCU_PINMUX_SGPIO2   (P1_15)
