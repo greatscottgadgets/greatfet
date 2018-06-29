@@ -117,6 +117,7 @@ void jtag430_writemem(uint16_t adr, uint16_t data){
   SETTCLK;
 }
 
+// This should be a 350 kHz clock +/- 100 kHz
 void jtag430_tclk_flashpulses(uint16_t count)
 {
   int i;
