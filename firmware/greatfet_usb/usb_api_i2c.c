@@ -43,7 +43,6 @@ usb_request_status_t usb_vendor_request_i2c_xfer(
 			i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, NULL, 0,
 							 i2c_rx_buffer, endpoint->setup.index);
 			usb_transfer_schedule_ack(endpoint->in);
-			usb_transfer_schedule_ack(endpoint->out);
 		}
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, i2c_tx_buffer,
