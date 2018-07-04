@@ -42,7 +42,6 @@ set(SRC_M4
 	usb_api_DS18B20.c
 	usb_api_rfhax.c
 	usb_api_msp430.c
-	usb_api_rfhax.c
 	sgpio_isr.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/glitchkit.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
