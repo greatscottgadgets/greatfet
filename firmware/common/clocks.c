@@ -13,7 +13,6 @@
  */
 uint32_t main_clock_source = CGU_SRC_XTAL;
 
-
 /* clock startup for Jellybean with Lemondrop attached
 Configure PLL1 to max speed (204MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1. */
@@ -71,6 +70,34 @@ void cpu_clock_init(void)
 	/* use PLL1 as clock source for BASE_M4_CLK (CPU) */
 	CGU_BASE_M4_CLK = (CGU_BASE_M4_CLK_CLK_SEL(CGU_SRC_PLL1) | CGU_BASE_M4_CLK_AUTOBLOCK(1));
 
+	/* Configure the clock for USB peripherals */
+	// usb_clock_init();
+
+	/* Disable PLL0AUDIO clock at startup */
+	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_CLKEN(1);
+
+	/* Switch peripheral clock over to use PLL1 (204MHz) */
+	CGU_BASE_PERIPH_CLK = CGU_BASE_PERIPH_CLK_AUTOBLOCK(1)
+			| CGU_BASE_PERIPH_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+	/* Switch APB1 clock over to use PLL1 (204MHz) */
+	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_AUTOBLOCK(1)
+			| CGU_BASE_APB1_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+	/* Switch APB3 clock over to use PLL1 (204MHz) */
+	CGU_BASE_APB3_CLK = CGU_BASE_APB3_CLK_AUTOBLOCK(1)
+			| CGU_BASE_APB3_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+	CGU_BASE_SSP0_CLK = CGU_BASE_SSP0_CLK_AUTOBLOCK(1)
+			| CGU_BASE_SSP0_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+	CGU_BASE_SSP1_CLK = CGU_BASE_SSP1_CLK_AUTOBLOCK(1)
+			| CGU_BASE_SSP1_CLK_CLK_SEL(CGU_SRC_PLL1);
+}
+
+/* Configure USB clock to 480 MHz */
+void usb_clock_init(void)
+{
 	/* use XTAL_OSC as clock source for PLL0USB */
 	CGU_PLL0USB_CTRL = CGU_PLL0USB_CTRL_PD(1)
 			| CGU_PLL0USB_CTRL_AUTOBLOCK(1)
@@ -113,27 +140,6 @@ void cpu_clock_init(void)
 	/* use IDIVB as clock source for USB1 */
 	CGU_BASE_USB1_CLK = CGU_BASE_USB1_CLK_AUTOBLOCK(1)
 			| CGU_BASE_USB1_CLK_CLK_SEL(CGU_SRC_IDIVB);
-
-	/* Disable PLL0AUDIO clock at startup */
-	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_CLKEN(1);
-
-	/* Switch peripheral clock over to use PLL1 (204MHz) */
-	CGU_BASE_PERIPH_CLK = CGU_BASE_PERIPH_CLK_AUTOBLOCK(1)
-			| CGU_BASE_PERIPH_CLK_CLK_SEL(CGU_SRC_PLL1);
-
-	/* Switch APB1 clock over to use PLL1 (204MHz) */
-	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_AUTOBLOCK(1)
-			| CGU_BASE_APB1_CLK_CLK_SEL(CGU_SRC_PLL1);
-
-	/* Switch APB3 clock over to use PLL1 (204MHz) */
-	CGU_BASE_APB3_CLK = CGU_BASE_APB3_CLK_AUTOBLOCK(1)
-			| CGU_BASE_APB3_CLK_CLK_SEL(CGU_SRC_PLL1);
-
-	CGU_BASE_SSP0_CLK = CGU_BASE_SSP0_CLK_AUTOBLOCK(1)
-			| CGU_BASE_SSP0_CLK_CLK_SEL(CGU_SRC_PLL1);
-
-	CGU_BASE_SSP1_CLK = CGU_BASE_SSP1_CLK_AUTOBLOCK(1)
-			| CGU_BASE_SSP1_CLK_CLK_SEL(CGU_SRC_PLL1);
 }
 
 /*
@@ -300,8 +306,8 @@ uint8_t pll0audio_config(uint16_t msel)
      * That means we set the N pre-divider and the M multiplier
      * We do not use the P post-divider
     */
-	CGU_PLL0AUDIO_MDIV = mdec(msel);
-	CGU_PLL0AUDIO_NP_DIV = ndec(240) << 12;
+	CGU_PLL0AUDIO_MDIV = CGU_PLL0AUDIO_MDIV_MDEC(mdec(msel));
+	CGU_PLL0AUDIO_NP_DIV = CGU_PLL0AUDIO_NP_DIV_NDEC(ndec(240));
 
 	CGU_PLL0AUDIO_CTRL |= (CGU_PLL0AUDIO_CTRL_PD(1)
 			| CGU_PLL0AUDIO_CTRL_DIRECTI(0)
@@ -317,7 +323,7 @@ uint8_t pll0audio_config(uint16_t msel)
 			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
 
 	/* Enable PLL0AUDIO and blast out CLKOUT */
-	// CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
+	CGU_PLL0AUDIO_CTRL |= CGU_PLL0AUDIO_CTRL_CLKEN(1);
 	return 0;
 }
 
@@ -330,14 +336,101 @@ void pll0audio_on(void)
 void pll0audio_off(void)
 {
     /* Disable PLL0AUDIO */
-	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_CLKEN(1);
-
+	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_CLKEN_MASK;
 }
 
 uint8_t pll0audio_tune(uint16_t msel)
 {
-    if(msel > PLL0_MSEL_MAX)
+    if(msel > PLL0_MSEL_MAX) {
         return 1;
-	CGU_PLL0AUDIO_MDIV = mdec(msel);
+	}
+	CGU_PLL0AUDIO_MDIV = CGU_PLL0AUDIO_MDIV_MDEC(mdec(msel));
     return 0;
+}
+
+/* bandwidth: compute seli from msel */
+uint32_t seli(uint16_t msel)
+{
+	uint32_t tmp;
+	if (msel > 16384) return 1;
+	if (msel > 8192) return 2;
+	if (msel > 2048) return 4;
+	if (msel >= 501) return 8;
+	if (msel >= 60) {
+		tmp=1024/(msel+9);
+		return ( 1024 == ( tmp*(msel+9)) ) == 0 ? tmp*4 : (tmp+1)*4;
+	}
+	return (msel & 0x3c) + 4;
+}
+/* bandwidth: compute selp from msel */
+uint32_t selp(uint16_t msel)
+{
+	if (msel < 60) return (msel>>1) + 1;
+	return 31;
+}
+
+uint8_t pll0usb_config(uint16_t msel) {
+	/* use XTAL_OSC as clock source for PLL0USB */
+	CGU_PLL0USB_CTRL = CGU_PLL0USB_CTRL_PD(1)
+			| CGU_PLL0USB_CTRL_AUTOBLOCK(1)
+			| CGU_PLL0USB_CTRL_CLK_SEL(CGU_SRC_XTAL);
+	while (CGU_PLL0USB_STAT & CGU_PLL0USB_STAT_LOCK_MASK);
+
+	/* configure PLL0USB to produce 433.90MHz clock from 12 MHz XTAL_OSC */
+	/* nsel = 240 - gives us a frequency step of 50 kHz
+     * msel = 8678
+     * Trying to work this out? See the CGU section of the user manual
+     * We're using mode 1c (input pre-divider, direct output)
+     * That means we set the N pre-divider and the M multiplier
+     * We do not use the P post-divider
+    */
+	CGU_PLL0USB_MDIV = CGU_PLL0USB_MDIV_MDEC(mdec(msel))
+			| CGU_PLL0USB_MDIV_SELP(selp(msel))
+			| CGU_PLL0USB_MDIV_SELI(seli(msel));
+	CGU_PLL0USB_NP_DIV = CGU_PLL0USB_NP_DIV_NDEC(ndec(240));
+
+	CGU_PLL0USB_CTRL |= (CGU_PLL0USB_CTRL_PD(1)
+			| CGU_PLL0USB_CTRL_DIRECTI(0)
+			| CGU_PLL0USB_CTRL_DIRECTO(1));
+
+	/* power on PLL0USB and wait until stable */
+	CGU_PLL0USB_CTRL &= ~CGU_PLL0USB_CTRL_PD_MASK;
+	//while (!(CGU_PLL0USB_STAT & CGU_PLL0USB_STAT_LOCK_MASK));
+
+	/* Use PLL0USB for CLKOUT */
+	CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0USB);
+
+	/* Enable PLL0USB and blast out CLKOUT */
+	CGU_PLL0USB_CTRL |= CGU_PLL0USB_CTRL_CLKEN(1);
+	return 0;
+}
+
+void pll0usb_on(void)
+{
+    /* Enable PLL0USB and blast out CLKOUT */
+	CGU_PLL0USB_CTRL |= CGU_PLL0USB_CTRL_CLKEN(1);
+}
+
+void pll0usb_off(void)
+{
+    /* Disable PLL0USB */
+	CGU_PLL0USB_CTRL &= ~CGU_PLL0USB_CTRL_CLKEN_MASK;
+}
+
+void switch_clocks(uint8_t bit)
+{
+	if(bit) {
+		/* Use PLL0AUDIO for CLKOUT */
+		// pll0usb_off();
+		CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0AUDIO);
+		// pll0audio_on();
+	} else {
+		/* Use PLL0USB for CLKOUT */
+		// pll0audio_off();
+		CGU_BASE_OUT_CLK = CGU_BASE_OUT_CLK_AUTOBLOCK(1)
+			| CGU_BASE_OUT_CLK_CLK_SEL(CGU_SRC_PLL0USB);
+		// pll0usb_on();
+	}
 }

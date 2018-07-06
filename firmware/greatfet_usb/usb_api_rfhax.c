@@ -16,9 +16,9 @@
 #define RFHAX_ASK 2
 #define RFHAX_FSK 3
 
-volatile bool rfhax_enabled = false;
+volatile bool rfhax_enabled = true;
 
-static uint8_t rfhax_mode;
+static uint8_t rfhax_mode = RFHAX_FSK;
 uint16_t f1;
 uint16_t f2;
 
@@ -60,30 +60,24 @@ usb_request_status_t usb_vendor_request_rfhax(
 
 void rfhax(void)
 {
+	f1 = 4320;
+	f2 = 4330;
 	bool phase = false;
-	// pll0audio_tune(f1);
+	pll0audio_config(f1);
+	pll0usb_config(f2);
 	while(rfhax_enabled) {
-		if(rfhax_mode==RFHAX_ASK) {
-			led_toggle(LED2);
-			if(phase) {
-				pll0audio_on();
-				phase = false;
-			} else {
-				pll0audio_off();
-				phase = true;
-			}
-		} else if(rfhax_mode==RFHAX_FSK) {
-			led_toggle(LED3);
-			pll0audio_on();
-			if(phase) {
-				pll0audio_tune(f1);
-				phase = false;
-			} else {
-				pll0audio_tune(f2);
-				phase = true;
-			}
+		led_toggle(LED3);
+		// pll0audio_on();
+		if(phase) {
+			// pll0audio_on();
+			// pll0usb_on();
+			switch_clocks(0);
+			phase = false;
 		} else {
-			;//rfhax_enabled = false;
+			// pll0audio_off();
+			// pll0usb_off();
+			switch_clocks(1);
+			phase = true;
 		}
 		delay(10000000);
 	}
