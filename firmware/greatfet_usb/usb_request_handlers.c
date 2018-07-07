@@ -95,7 +95,6 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 
 	// RF hax
 	usb_vendor_request_rfhax,
-
 };
 
 static const uint32_t usb0_vendor_request_handler_count =

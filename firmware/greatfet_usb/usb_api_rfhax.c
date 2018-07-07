@@ -57,28 +57,30 @@ usb_request_status_t usb_vendor_request_rfhax(
 	return USB_REQUEST_STATUS_OK;
 }
 
+uint8_t lock_code[] = {
+1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 
+1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1
+	 };
 
 void rfhax(void)
 {
-	f1 = 4320;
-	f2 = 4330;
-	bool phase = false;
-	pll0audio_config(f1);
+	uint8_t i, code_len = 250;
+	f1 = 315;
+	f2 = 3151;
+	// f1 = 317;
+	// f2 = 3171;
 	pll0usb_config(f2);
+	pll0audio_config(f1);
 	while(rfhax_enabled) {
-		led_toggle(LED3);
-		// pll0audio_on();
-		if(phase) {
-			// pll0audio_on();
-			// pll0usb_on();
-			switch_clocks(0);
-			phase = false;
-		} else {
-			// pll0audio_off();
-			// pll0usb_off();
-			switch_clocks(1);
-			phase = true;
+		pll0audio_on();
+		pll0usb_on();
+		for(i=0; i<code_len; i++) {
+			led_toggle(LED3);
+			switch_clocks(lock_code[i]);
+			delay_us(242);
 		}
-		delay(10000000);
+		pll0usb_off();
+		pll0audio_off();
+		delay_us(40000);
 	}
 }
