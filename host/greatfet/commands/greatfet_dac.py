@@ -7,7 +7,6 @@ from __future__ import print_function
 import argparse
 import errno
 import sys
-import time
 
 import greatfet
 from greatfet import GreatFET
@@ -36,12 +35,10 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    while True:
-        data = device.vendor_request_in(vendor_requests.DS18B20_READ, length=2)
-        # print(data)
-        temp = (data[1] << 8 | data[0]) / 16.0
-        print(time.strftime("%H:%M:%S"), temp)
-        time.sleep(1)
+    # 0 - 1024
+    dac_value = 1024
+    device.vendor_request_out(vendor_requests.DAC_SET, value=dac_value)
+    print("DAC value set to", dac_value)
 
 if __name__ == '__main__':
     main()

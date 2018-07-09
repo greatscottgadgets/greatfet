@@ -76,6 +76,7 @@ requests = (
     'GPIO_RESET',
     'GPIO_READ',
 
+
     'GLITCHKIT_SETUP',
     'GLITCHKIT_PROVIDE_TARGET_CLOCK',
     'GLITCHKIT_SIMPLE_START_EVENT_COUNT',
@@ -95,7 +96,9 @@ requests = (
     'SUPER_HACKY',
 
     'DS18B20_READ',
-    'MSP430_JTAG',
+    #'MSP430_JTAG',
+
+    'DAC_SET',
 )
 
 def _create_module_level_constants():

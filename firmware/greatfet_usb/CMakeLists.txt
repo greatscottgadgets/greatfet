@@ -27,6 +27,7 @@ set(SRC_M4
 	usb_api_spiflash.c
 	usb_api_spi.c
 	usb_api_adc.c
+	usb_api_dac.c
 	usb_api_i2c.c
 	usb_api_gpio.c
 	usb_api_leds.c

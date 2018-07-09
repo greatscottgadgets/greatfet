@@ -7,6 +7,7 @@
 #include "usb_api_board.h"
 #include "usb_api_spiflash.h"
 #include "usb_api_adc.h"
+#include "usb_api_dac.h"
 #include "usb_api_spi.h"
 #include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
@@ -70,6 +71,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_gpio_reset,
 	usb_vendor_request_gpio_read,
 
+	
 	// GlitchKit
 	usb_vendor_request_glitchkit_setup,
 	usb_vendor_request_glitchkit_provide_target_clock,
@@ -90,10 +92,12 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_super_hacky,
 
 	// DS18B20 over 1-Wire bus
-	usb_vendor_request_DS18B20_read
+	usb_vendor_request_DS18B20_read,
 
 	// MSP430 JTAG
 	//usb_vendor_request_msp430_jtag
+
+	usb_vendor_request_dac_set
 
 };
 
