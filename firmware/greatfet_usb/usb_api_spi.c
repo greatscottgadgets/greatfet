@@ -40,9 +40,23 @@ static spiflash_driver_t spi1_target_drv = {
 
 usb_request_status_t usb_vendor_request_spi_init(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
-	if ((stage == USB_TRANSFER_STAGE_SETUP)) {
 
-		spi_bus_start(spi1_target_drv.target, &ssp1_config_spi);
+	static ssp_config_t local_spi_config;
+	ssp_config_t *config;
+
+	if ((stage == USB_TRANSFER_STAGE_SETUP)) {
+		uint8_t scr = endpoint->setup.value_h;
+		uint8_t cpsdvsr = endpoint->setup.value_l;
+
+		config = (ssp_config_t *)&ssp1_config_spi;
+		if ((scr != 0) && (cpsdvsr != 0)) {
+			local_spi_config.data_bits = SSP_DATA_8BITS;
+			local_spi_config.clock_prescale_rate = cpsdvsr;
+			local_spi_config.serial_clock_rate = scr;
+			config = &local_spi_config;
+		}
+
+		spi_bus_start(spi1_target_drv.target, config);
 		spi1_init(spi1_target_drv.target);
 		usb_transfer_schedule_ack(endpoint->in);
 	}

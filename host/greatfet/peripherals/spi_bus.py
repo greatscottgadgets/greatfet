@@ -13,14 +13,23 @@ class SPIBus(GreatFETPeripheral):
         is being used to control the onboard flash.
     """
 
-    def __init__(self, board, name='spi bus', buffer_size=255):
+    def __init__(self, board, name='spi bus', buffer_size=255,
+                 serial_clock_rate=2, clock_prescale_rate=100):
         """
         Initialize a new SPI bus.
+
+        SPI freq is set by serial_clock_rate and clock_prescale_rate.
+        The bit frequency will be:
+            PCLK / (clock_prescale_rate * [serial_clock_rate+1]).
 
         Args:
             board -- The GreatFET board whose SPI bus we want to control.
             name -- The display name for the given SPI bus.
             buffer_size -- The size of the SPI receive buffer on the GreatFET.
+            clock_prescale_rate -- This even value between 2 and 254, by which
+                PCLK is divided to yield the prescaler output clock.
+            serial_clock_rate -- The number of prescaler-output clocks per bit
+                 on the bus, minus one.
         """
 
         # Store a reference to the parent board.
@@ -32,8 +41,10 @@ class SPIBus(GreatFETPeripheral):
         # Create a list that will store all connected devices.
         self.devices = []
 
+        freq = serial_clock_rate << 8 | clock_prescale_rate
+
         # Set up the SPI bus for communications.
-        board.vendor_request_out(vendor_requests.SPI_INIT)
+        board.vendor_request_out(vendor_requests.SPI_INIT, value=freq)
 
 
 
