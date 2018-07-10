@@ -47,7 +47,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_logic_analyzer_stop,
 	usb_vendor_request_reset,
 	usb_vendor_request_adc_init,
-	NULL, // ADC read
+	usb_vendor_request_adc_read, // ADC read
 	NULL, // ADC stream
 	usb_vendor_request_sdir_rx_start,
 	usb_vendor_request_sdir_rx_stop,
