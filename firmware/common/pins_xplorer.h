@@ -99,6 +99,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
 
 /* TODO add other Pins */
+#define SCU_PINMUX_GPIO2_3  (P4_3)  /* GPIO2[3] */
 #define SCU_PINMUX_GPIO3_8  (P7_0)  /* GPIO3[8] */
 #define SCU_PINMUX_GPIO3_9  (P7_1)  /* GPIO3[9] */
 #define SCU_PINMUX_GPIO3_10 (P7_2)  /* GPIO3[10] */
