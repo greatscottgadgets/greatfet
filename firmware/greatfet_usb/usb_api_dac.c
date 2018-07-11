@@ -10,7 +10,7 @@
 #include <stddef.h>
 #include <greatfet_core.h>
 #include <dac.h>
-#include <pins_greatfet.h>
+#include <pins.h>
 
 usb_request_status_t usb_vendor_request_dac_set(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
@@ -22,7 +22,7 @@ usb_request_status_t usb_vendor_request_dac_set(
 		static struct gpio_t dac_pin = GPIO(2, 3);
 		gpio_input(&dac_pin); 
 
-		DAC_CR = DAC_CR_VALUE(endpoint->setup.value);
+		DAC_CR = DAC_CR_VALUE(endpoint->setup.value) && DAC_CR_VALUE_MASK;
 		DAC_CTRL = DAC_CTRL_DMA_ENA(1);
 
 		usb_transfer_schedule_ack(endpoint->in);
