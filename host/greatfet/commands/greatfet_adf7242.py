@@ -39,6 +39,13 @@ def adf7242_read_reg(device, reg_num):
     resp_data = spi_read(device, 0, 4)
     return resp_data[3]
 
+def adf7242_write_reg(device, reg_num, data):
+    data = struct.pack('BBB',
+            0x18 | reg_num >> 8,
+            reg_num & 0xff,
+            data)
+    spi_write(device, data)
+
 def adf7242_temperature(device):
     adf7242_command(device, 0xB6) # RC_MEAS
     adc_val = adf7242_read_reg(device, 0x3AE) & 0x3F
@@ -53,6 +60,9 @@ def main():
     parser = argparse.ArgumentParser(description="Drive ADF7242 via SPI")
     parser.add_argument('-r', '--read-register', dest='read_reg', metavar='<addr>', default=None,
                         type=auto_int, help="Read register")
+    parser.add_argument('-w', '--write-register', dest='write_reg', default=None,
+                        nargs=2, metavar=('<addr>', '<value>'),
+                        type=auto_int, help="Write register")
     parser.add_argument('-t', '--temperature', action='store_true', help='Read temperature')
     parser.add_argument('--reset', action='store_true', help='Reset ADF7242')
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
@@ -82,6 +92,9 @@ def main():
 
     if args.read_reg:
         print('Register value: {:02x}'.format(adf7242_read_reg(device, args.read_reg)))
+
+    if args.write_reg:
+        adf7242_write_reg(device, args.write_reg[0], args.write_reg[1])
 
     if args.temperature:
         temp = adf7242_temperature(device)
