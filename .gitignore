@@ -31,5 +31,8 @@ Thumbs.db
 *.sublime-workspace
 .vscode
 
+# ctags output
+tags
+
 firmware/*/build
 
