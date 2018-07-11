@@ -7,6 +7,9 @@
 
 #include <stdint.h>
 
+void one_wire_init(void);
+void one_wire_delay_us(uint32_t us);
+
 uint8_t one_wire_init_target(void);
 
 uint8_t one_wire_read(void);

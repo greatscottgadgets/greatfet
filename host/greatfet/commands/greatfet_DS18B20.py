@@ -37,7 +37,7 @@ def main():
         sys.exit(errno.ENODEV)
 
     while True:
-        data = device.vendor_request_in(vendor_requests.DS18B20_READ, length=2)
+        data = device.vendor_request_in(vendor_requests.DS18B20_READ, length=2, timeout=2000)
         # print(data)
         temp = (data[1] << 8 | data[0]) / 16.0
         print(time.strftime("%H:%M:%S"), temp)

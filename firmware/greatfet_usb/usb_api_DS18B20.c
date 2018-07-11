@@ -21,14 +21,15 @@ int16_t read_temperature(void)
 {
 	int i;
 	uint8_t data[9];
+    one_wire_init();
 	one_wire_init_target();
     one_wire_write(0xCC); // Skip ROM command
     one_wire_write(0x44); // Read temperature
-	delay(22500000); // 750 ms for 12 bit temperature conversion
+    one_wire_delay_us(750000); // 750 ms for 12 bit temperature conversion
 	one_wire_init_target();
     one_wire_write(0xCC); // Skip ROM command
     one_wire_write(0xBE); // Read scratchpad area
-	delay(1000);
+    one_wire_delay_us(750000);
 	for(i=0; i<9; i++) {
 		// scratchpad is 9 bytes
 		data[i] = one_wire_read();
@@ -40,7 +41,7 @@ int16_t read_temperature(void)
 usb_request_status_t usb_vendor_request_DS18B20_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-	scu_pinmux(SCU_PINMUX_GPIO5_8, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION4);	
+	scu_pinmux(SCU_PINMUX_GPIO5_8, SCU_GPIO_PUP | SCU_CONF_FUNCTION4);
 	int16_t temperature;
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		temperature = read_temperature();
