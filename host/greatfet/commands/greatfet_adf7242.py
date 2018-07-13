@@ -63,6 +63,9 @@ def main():
     parser.add_argument('-w', '--write-register', dest='write_reg', default=None,
                         nargs=2, metavar=('<addr>', '<value>'),
                         type=auto_int, help="Write register")
+    parser.add_argument('-c', '--command', dest='command', default=None,
+                        type=auto_int, metavar='<command>', help="SPI command")
+    parser.add_argument('-S', '--status', action='store_true', help='Get status byte')
     parser.add_argument('-t', '--temperature', action='store_true', help='Read temperature')
     parser.add_argument('--reset', action='store_true', help='Reset ADF7242')
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
@@ -95,6 +98,12 @@ def main():
 
     if args.write_reg:
         adf7242_write_reg(device, args.write_reg[0], args.write_reg[1])
+
+    if args.command:
+        adf7242_command(device, args.command)
+
+    if args.status:
+        print('Status: {:02x}'.format(adf7242_status(device)))
 
     if args.temperature:
         temp = adf7242_temperature(device)
