@@ -49,7 +49,7 @@ usb_request_status_t usb_vendor_request_spi_init(
 		uint8_t cpsdvsr = endpoint->setup.value_l;
 
 		config = (ssp_config_t *)&ssp1_config_spi;
-		if ((scr != 0) && (cpsdvsr != 0)) {
+		if (cpsdvsr != 0) {
 			local_spi_config.data_bits = SSP_DATA_8BITS;
 			local_spi_config.clock_prescale_rate = cpsdvsr;
 			local_spi_config.serial_clock_rate = scr;
