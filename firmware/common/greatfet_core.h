@@ -69,8 +69,6 @@ extern spi_bus_t spi_bus_ssp1;
 
 extern i2c_bus_t i2c0;
 extern i2c_bus_t i2c1;
-extern const i2c_lpc_config_t i2c_config_slow_clock;
-extern const i2c_lpc_config_t i2c_config_fast_clock;
 
 void cpu_clock_init(void);
 void cpu_clock_pll1_low_speed(void);

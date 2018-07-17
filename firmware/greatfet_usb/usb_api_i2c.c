@@ -15,13 +15,7 @@ uint8_t i2c_rx_buffer[255];
 usb_request_status_t usb_vendor_request_i2c_start(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		i2c_lpc_config_t speed;
-		if (endpoint->setup.value != 0) {
-			speed.duty_cycle_count = endpoint->setup.value;
-		} else {
-			speed = i2c_config_fast_clock;
-		}
-		i2c_bus_start(&i2c0, &speed);
+		i2c_bus_start(&i2c0, endpoint->setup.value);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;

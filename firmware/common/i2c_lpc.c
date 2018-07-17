@@ -8,11 +8,11 @@
 
 /* FIXME return i2c0 status from each function */
 
-void i2c_lpc_start(i2c_bus_t* const bus, const void* const _config) {
-	const i2c_lpc_config_t* const config = _config;
+void i2c_lpc_start(i2c_bus_t* const bus, uint16_t _duty_cycle_count) {
+	uint16_t duty_cycle_count = _duty_cycle_count;
 
 	const uint32_t port = (uint32_t)bus->obj;
-	i2c_init(port, config->duty_cycle_count);
+	i2c_init(port, duty_cycle_count);
 }
 
 void i2c_lpc_stop(i2c_bus_t* const bus) {
