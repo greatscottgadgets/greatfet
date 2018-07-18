@@ -13,7 +13,7 @@ class I2CBus(GreatFETPeripheral):
         expanded when the vendor commands are.
     """
 
-    def __init__(self, board, name='i2c bus', buffer_size=255):
+    def __init__(self, board, name='i2c bus', buffer_size=255, duty_cycle_count=255):
         """
             Initialize a new I2C bus.
 
@@ -32,8 +32,11 @@ class I2CBus(GreatFETPeripheral):
         # Create a list that will store all connected devices.
         self.devices = []
 
+        # Store our duty cycle count
+        self.duty_cycle_count = duty_cycle_count
+
         # Set up the I2C bus for communications.
-        board.vendor_request_out(vendor_requests.I2C_START)
+        board.vendor_request_out(vendor_requests.I2C_START, value=duty_cycle_count)
 
 
 
