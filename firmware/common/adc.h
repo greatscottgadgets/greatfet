@@ -126,7 +126,6 @@ extern "C" {
 
 /* BURST: ... */
 #define ADC_CR_BURST_SHIFT (16)
-#define ADC_CR_BURST_MASK (0x1 << ADC_CR_BURST_SHIFT)
 #define ADC_CR_BURST (1 << ADC_CR_BURST_SHIFT)
 
 /* CLKS: ... */
@@ -136,7 +135,6 @@ extern "C" {
 
 /* PDN: ... */
 #define ADC_CR_PDN_SHIFT (21)
-#define ADC_CR_PDN_MASK (0x1 << ADC_CR_PDN_SHIFT)
 #define ADC_CR_PDN (1 << ADC_CR_PDN_SHIFT)
 
 /* START: ... */
@@ -146,7 +144,6 @@ extern "C" {
 
 /* EDGE: ... */
 #define ADC_CR_EDGE_SHIFT (27)
-#define ADC_CR_EDGE_MASK (0x1 << ADC_CR_EDGE_SHIFT)
 #define ADC_CR_EDGE (1 << ADC_CR_EDGE_SHIFT)
 
 /* --- ADCx_GDR values ----------------------------------------------------- */
@@ -163,13 +160,11 @@ extern "C" {
 
 /* OVERRUN: ... */
 #define ADC_GDR_OVERRUN_SHIFT (30)
-#define ADC_GDR_OVERRUN_MASK (0x1 << ADC_GDR_OVERRUN_SHIFT)
-#define ADC_GDR_OVERRUN(x) ((x) << ADC_GDR_OVERRUN_SHIFT)
+#define ADC_GDR_OVERRUN (1 << ADC_GDR_OVERRUN_SHIFT)
 
 /* SHIFT: ... */
 #define ADC_GDR_DONE_SHIFT (31)
-#define ADC_GDR_DONE_MASK (0x1 << ADC_GDR_DONE_SHIFT)
-#define ADC_GDR_DONE(x) ((x) << ADC_GDR_DONE_SHIFT)
+#define ADC_GDR_DONE (1 << ADC_GDR_DONE_SHIFT)
 
 /* --- ADCx_INTEN values --------------------------------------------------- */
 
@@ -180,8 +175,7 @@ extern "C" {
 
 /* ADGINTEN: ... */
 #define ADC_INTEN_ADGINTEN_SHIFT (8)
-#define ADC_INTEN_ADGINTEN_MASK (0x1 << ADC_INTEN_ADGINTEN_SHIFT)
-#define ADC_INTEN_ADGINTEN(x) ((x) << ADC_INTEN_ADGINTEN_SHIFT)
+#define ADC_INTEN_ADGINTEN (1 << ADC_INTEN_ADGINTEN_SHIFT)
 
 /* --- ADCx_DRx values ---------------------------------------------------- */
 
@@ -192,12 +186,10 @@ extern "C" {
 
 /* OVERRUN: ... */
 #define ADC_DR_OVERRUN_SHIFT (30)
-#define ADC_DR_OVERRUN_MASK (0x1 << ADC_DR_OVERRUN_SHIFT)
 #define ADC_DR_OVERRUN (1 << ADC_DR_OVERRUN_SHIFT)
 
 /* DONE: ... */
 #define ADC_DR_DONE_SHIFT (31)
-#define ADC_DR_DONE_MASK (0x1 << ADC_DR_DONE_SHIFT)
 #define ADC_DR_DONE (1 << ADC_DR_DONE_SHIFT)
 
 /* --- ADCx_STAT values --------------------------------------------------- */
@@ -214,8 +206,7 @@ extern "C" {
 
 /* ADINT: ... */
 #define ADC_STAT_ADINT_SHIFT (16)
-#define ADC_STAT_ADINT_MASK (0x1 << ADC_STAT_ADINT_SHIFT)
-#define ADC_STAT_ADINT(x) ((x) << ADC_STAT_ADINT_SHIFT)
+#define ADC_STAT_ADINT (1 << ADC_STAT_ADINT_SHIFT)
 
 typedef enum {
 	ADC0_NUM = 0x0,
