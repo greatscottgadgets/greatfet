@@ -34,30 +34,25 @@ extern "C" {
 
 /* BIAS: ... */
 #define DAC_CR_BIAS_SHIFT (16)
-#define DAC_CR_BIAS_MASK (0x1 << DAC_CR_BIAS_SHIFT)
-#define DAC_CR_BIAS(x) ((x) << DAC_CR_BIAS_SHIFT)
+#define DAC_CR_BIAS (1 << DAC_CR_BIAS_SHIFT)
 
 /* --- DAC_CTRL values ----------------------------------------- */
 
 /* INT_DMA_REQ: ... */
 #define DAC_CTRL_INT_DMA_REQ_SHIFT (0)
-#define DAC_CTRL_INT_DMA_REQ_MASK (0x1 << DAC_CTRL_INT_DMA_REQ_SHIFT)
-#define DAC_CTRL_INT_DMA_REQ(x) ((x) << DAC_CTRL_INT_DMA_REQ_SHIFT)
+#define DAC_CTRL_INT_DMA_REQ (1 << DAC_CTRL_INT_DMA_REQ_SHIFT)
 
 /* DBLBUF_ENA: ... */
 #define DAC_CTRL_DBLBUF_ENA_SHIFT (1)
-#define DAC_CTRL_DBLBUF_ENA_MASK (0x1 << DAC_CTRL_DBLBUF_ENA_SHIFT)
-#define DAC_CTRL_DBLBUF_ENA(x) ((x) << DAC_CTRL_DBLBUF_ENA_SHIFT)
+#define DAC_CTRL_DBLBUF_ENA (1 << DAC_CTRL_DBLBUF_ENA_SHIFT)
 
 /* CNT_ENA: ... */
 #define DAC_CTRL_CNT_ENA_SHIFT (2)
-#define DAC_CTRL_CNT_ENA_MASK (0x1 << DAC_CTRL_CNT_ENA_SHIFT)
-#define DAC_CTRL_CNT_ENA(x) ((x) << DAC_CTRL_CNT_ENA_SHIFT)
+#define DAC_CTRL_CNT_ENA (1 << DAC_CTRL_CNT_ENA_SHIFT)
 
 /* DMA_ENA: ... */
 #define DAC_CTRL_DMA_ENA_SHIFT (3)
-#define DAC_CTRL_DMA_ENA_MASK (0x1 << DAC_CTRL_DMA_ENA_SHIFT)
-#define DAC_CTRL_DMA_ENA(x) ((x) << DAC_CTRL_DMA_ENA_SHIFT)
+#define DAC_CTRL_DMA_ENA (1 << DAC_CTRL_DMA_ENA_SHIFT)
 
 /* --- DAC_CNTVAL values --------------------------------------- */
 
