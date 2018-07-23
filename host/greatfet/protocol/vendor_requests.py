@@ -76,6 +76,7 @@ requests = (
     'GPIO_RESET',
     'GPIO_READ',
 
+
     'GLITCHKIT_SETUP',
     'GLITCHKIT_PROVIDE_TARGET_CLOCK',
     'GLITCHKIT_SIMPLE_START_EVENT_COUNT',
@@ -91,7 +92,13 @@ requests = (
     'USBHOST_START_NONBLOCKING_READ',
     'USBHOST_FINISH_NONBLOCKING_READ',
     'USBHOST_GET_NONBLOCKING_LENGTH',
+    
+    'SUPER_HACKY',
 
+    'DS18B20_READ',
+    #'MSP430_JTAG',
+
+    'DAC_SET',
 )
 
 def _create_module_level_constants():

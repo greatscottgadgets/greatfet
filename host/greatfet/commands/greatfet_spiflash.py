@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This file is part of GreatFET
 #
@@ -9,6 +9,7 @@ import argparse
 import errno
 import sys
 
+import greatfet
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose
@@ -60,12 +61,17 @@ JEDECsizes = {
 
 
 def spi_read(device, command, length):
+    device.vendor_request_out(request=vendor_requests.SPI_WRITE, data=command)
     data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
+    
     #log_function(' '.join(["0x%02x" % d for d in data]))
     return data
 
 def spi_info(device, log_function=log_silent):
     log_function("Reading target device information")
+
+    # data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length)
+
     data = spi_read(device, 0x9F, 4)
     manufacturer, model, capacity = data[1:4]
     device = (manufacturer << 16) | (model << 8) | capacity

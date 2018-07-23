@@ -10,11 +10,7 @@
 
 #include "i2c_bus.h"
 
-typedef struct i2c_lpc_config_t {
-	const uint16_t duty_cycle_count;
-} i2c_lpc_config_t;
-
-void i2c_lpc_start(i2c_bus_t* const bus, const void* const config);
+void i2c_lpc_start(i2c_bus_t* const bus, uint16_t duty_cycle_count);
 void i2c_lpc_stop(i2c_bus_t* const bus);
 void i2c_lpc_transfer(i2c_bus_t* const bus,
 	const uint_fast8_t slave_address,

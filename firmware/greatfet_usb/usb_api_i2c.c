@@ -11,11 +11,17 @@
 
 uint8_t i2c_tx_buffer[255];
 uint8_t i2c_rx_buffer[255];
+uint16_t duty_cycle_count;
 
 usb_request_status_t usb_vendor_request_i2c_start(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		i2c_bus_start(&i2c0, &i2c_config_fast_clock);
+		if (endpoint->setup.value == 0) {
+			duty_cycle_count = 255;
+		} else {
+			duty_cycle_count = endpoint->setup.value;
+		}
+		i2c_bus_start(&i2c0, duty_cycle_count);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
@@ -43,7 +49,6 @@ usb_request_status_t usb_vendor_request_i2c_xfer(
 			i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, NULL, 0,
 							 i2c_rx_buffer, endpoint->setup.index);
 			usb_transfer_schedule_ack(endpoint->in);
-			usb_transfer_schedule_ack(endpoint->out);
 		}
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, i2c_tx_buffer,

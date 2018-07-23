@@ -14,11 +14,13 @@ setup(
     entry_points={
         'console_scripts': [
             'greatfet_adc = greatfet.commands.greatfet_adc:main',
+            'greatfet_adf7242 = greatfet.commands.greatfet_adf7242:main',
             'greatfet_firmware = greatfet.commands.greatfet_firmware:main',
             'greatfet_info = greatfet.commands.greatfet_info:main',
             'greatfet_logic = greatfet.commands.greatfet_logic:main',
             'greatfet_sdir = greatfet.commands.greatfet_sdir:main',
             'greatfet_spiflash = greatfet.commands.greatfet_spiflash:main',
+            'greatfet_DS18B20 = greatfet.commands.greatfet_DS18B20:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!

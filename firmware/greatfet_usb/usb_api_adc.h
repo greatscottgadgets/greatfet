@@ -12,7 +12,7 @@ extern volatile bool adc_mode_enabled;
 
 usb_request_status_t usb_vendor_request_adc_init(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
-usb_request_status_t usb_vendor_request_read_adc(
+usb_request_status_t usb_vendor_request_adc_read(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
 void adc_mode(void);

@@ -26,27 +26,26 @@ usb_request_status_t usb_vendor_request_adc_init(
 	return USB_REQUEST_STATUS_OK;
 }
 
-usb_request_status_t usb_vendor_request_read_adc(
+usb_request_status_t usb_vendor_request_adc_read(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
-	uint8_t pins = 1;
-	uint8_t clkdiv = 45;
+	uint8_t pins = 1; 		// pins start counting from 1, this is pin 0
+	uint8_t clkdiv = 45;	// divide 204MHz clock by 45 to get ~4MHz
 	uint8_t clks = 0x2;
 	uint16_t value;
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_ack(endpoint->in);
-
-		ADC0_CR = ADC_CR_SEL((uint32_t) pins) |
+		ADC0_CR = ADC_CR_SEL((uint32_t) pins) |	
 		ADC_CR_CLKDIV((uint32_t) clkdiv) |
 		ADC_CR_CLKS((uint32_t) clks) |
 		ADC_CR_PDN;
 		ADC0_CR |= ADC_CR_START(1);
 
 		while(!(ADC0_DR0 & ADC_DR_DONE));
-		ADC0_CR |= ADC_CR_START(1);
 		value = (ADC0_DR0>>6) & 0x3ff;
 
 		usb_transfer_schedule_block(endpoint->in, &value, 2, NULL, NULL);
+		
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}
 

@@ -15,6 +15,7 @@
 #include <libopencm3/lpc43xx/rtc.h>
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/ssp.h>
+#include <libopencm3/lpc43xx/timer.h>
 
 #include "gpio_lpc.h"
 
@@ -74,14 +75,6 @@ i2c_bus_t i2c1 = {
 	.transfer = i2c_lpc_transfer,
 };
 
-const i2c_lpc_config_t i2c_config_slow_clock = {
-        .duty_cycle_count = 15,
-};
-
-const i2c_lpc_config_t i2c_config_fast_clock = {
-        .duty_cycle_count = 255,
-};
-
 const ssp_config_t ssp_config_spi = {
 	.data_bits = SSP_DATA_8BITS,
 	.serial_clock_rate = 2,
@@ -112,6 +105,8 @@ spi_bus_t spi_bus_ssp1 = {
 	.transfer_gather = spi_ssp_transfer_gather,
 };
 
+#define DELAY_CLK_SPEED 204000000
+#define DELAY_PRESCALER 0
 void delay(uint32_t duration)
 {
 	uint32_t i;
@@ -120,6 +115,14 @@ void delay(uint32_t duration)
 		__asm__("nop");
 }
 
+/* Wildly inaccurate 
+ * We could do this using a timer
+ */
+void delay_us(uint32_t duration)
+{
+	// Determined experimentally, don't rely on this
+	delay(duration * 30);
+}
 
 
 static void pre_main(void)

@@ -94,10 +94,6 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_SGPIO13  (P4_8)
 #define SCU_PINMUX_SGPIO14  (P4_9)
 #define SCU_PINMUX_SGPIO15  (P4_10)
-#define SCU_PINMUX_GPIO5_3  (P2_3)
-#define SCU_PINMUX_GPIO5_5  (P2_5)
-
-
 
 /* SPI flash */
 #define SCU_SSP0_MISO       (P3_6)
@@ -113,6 +109,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
 
 /* TODO add other Pins */
+#define SCU_PINMUX_GPIO2_3  (P4_3)  /* GPIO2[3] */
 #define SCU_PINMUX_GPIO3_8  (P7_0)  /* GPIO3[8] */
 #define SCU_PINMUX_GPIO3_9  (P7_1)  /* GPIO3[9] */
 #define SCU_PINMUX_GPIO3_10 (P7_2)  /* GPIO3[10] */
@@ -121,6 +118,9 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_GPIO3_13 (P7_5)  /* GPIO3[13] */
 #define SCU_PINMUX_GPIO3_14 (P7_6)  /* GPIO3[14] */
 #define SCU_PINMUX_GPIO3_15 (P7_7)  /* GPIO3[15] */
+#define SCU_PINMUX_GPIO5_3  (P2_3)  /* GPIO5[3] */
+#define SCU_PINMUX_GPIO5_5  (P2_5)  /* GPIO5[5] */
+#define SCU_PINMUX_GPIO5_8  (P3_1)  /* GPIO5[8] */
 
 #define SCU_PINMUX_SD_POW   (P1_5)  /* GPIO1[8] */
 #define SCU_PINMUX_SD_CMD   (P1_6)  /* GPIO1[9] */
