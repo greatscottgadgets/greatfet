@@ -53,6 +53,7 @@ static usb_transfer_t* allocate_transfer(
 
         do {
                 transfer = (void *) __ldrex((uint32_t *) &queue->free_transfers);
+                if (transfer==NULL) break;
                 aborted = __strex((uint32_t) transfer->next, (uint32_t *) &queue->free_transfers);
         } while (aborted);
         transfer->next = NULL;
