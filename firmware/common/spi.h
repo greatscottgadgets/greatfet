@@ -142,6 +142,12 @@ extern "C" {
 #define SPI_TSR_SPIF_SHIFT (7)
 #define SPI_TSR_SPIF (1 << SPI_TSR_SPIF_SHIFT)
 
+/* --- SPI_INT values ------------------------------------------- */
+
+/* SPIF: SPI interrupt flag */
+#define SPI_INT_SPIF_SHIFT (0)
+#define SPI_INT_SPIF (1 << SPI_INT_SPIF_SHIFT)
+
 BEGIN_DECLS
 
 /*****/
