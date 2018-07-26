@@ -128,8 +128,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR0_GC_SHIFT (0)
-#define I2C_ADR0_GC_MASK (0x1 << I2C_ADR0_GC_SHIFT)
-#define I2C_ADR0_GC(x) ((x) << I2C_ADR0_GC_SHIFT)
+#define I2C_ADR0_GC (1 << I2C_ADR0_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR0_ADDRESS_SHIFT (1)
@@ -167,8 +166,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR1_GC_SHIFT (0)
-#define I2C_ADR1_GC_MASK (0x1 << I2C_ADR1_GC_SHIFT)
-#define I2C_ADR1_GC(x) ((x) << I2C_ADR1_GC_SHIFT)
+#define I2C_ADR1_GC (1 << I2C_ADR1_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR1_ADDRESS_SHIFT (1)
@@ -179,8 +177,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR2_GC_SHIFT (0)
-#define I2C_ADR2_GC_MASK (0x1 << I2C_ADR2_GC_SHIFT)
-#define I2C_ADR2_GC(x) ((x) << I2C_ADR2_GC_SHIFT)
+#define I2C_ADR2_GC (1 << I2C_ADR2_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR2_ADDRESS_SHIFT (1)
@@ -191,8 +188,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR3_GC_SHIFT (0)
-#define I2C_ADR3_GC_MASK (0x1 << I2C_ADR3_GC_SHIFT)
-#define I2C_ADR3_GC(x) ((x) << I2C_ADR3_GC_SHIFT)
+#define I2C_ADR3_GC (1 << I2C_ADR3_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR3_ADDRESS_SHIFT (1)
