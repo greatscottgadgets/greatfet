@@ -50,12 +50,6 @@ script:
   - cd ../build-greatfet_one
   - cmake ..
   - make
-    #  - cd ../build-nxp_xplorer
-    #  - cmake -DBOARD=NXP_XPLORER ..
-    #  - make
-  - cd ../build-rad1o_badge
-  - cmake -DBOARD=RAD1O_BADGE ..
-  - make
 
 addons:
   apt:
