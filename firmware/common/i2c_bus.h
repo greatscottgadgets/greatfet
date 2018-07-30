@@ -13,7 +13,7 @@ typedef struct i2c_bus_t i2c_bus_t;
 
 struct i2c_bus_t {
 	void* const obj;
-	void (*start)(i2c_bus_t* const bus, const void* const config);
+	void (*start)(i2c_bus_t* const bus, const uint16_t config);
 	void (*stop)(i2c_bus_t* const bus);
 	void (*transfer)(
 		i2c_bus_t* const bus,
@@ -23,7 +23,7 @@ struct i2c_bus_t {
 	);
 };
 
-void i2c_bus_start(i2c_bus_t* const bus, const void* const config);
+void i2c_bus_start(i2c_bus_t* const bus, const uint16_t config);
 void i2c_bus_stop(i2c_bus_t* const bus);
 void i2c_bus_transfer(
 	i2c_bus_t* const bus,

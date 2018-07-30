@@ -4,7 +4,7 @@
 
 #include "i2c_bus.h"
 
-void i2c_bus_start(i2c_bus_t* const bus, const void* const config) {
+void i2c_bus_start(i2c_bus_t* const bus, const uint16_t config) {
 	bus->start(bus, config);
 }
 
