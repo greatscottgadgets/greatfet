@@ -58,7 +58,7 @@ SET(LDSCRIPT_M4_DFU "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.
 
 SET(LDSCRIPT_M0 "-T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
 
-SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} ${COMMON_FLAGS} -fno-common -MD")
+SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} ${COMMON_FLAGS} -fno-common -MD -fno-builtin-printf")
 SET(LDFLAGS_COMMON "-nostartfiles -Wl,--gc-sections")
 
 if(V STREQUAL "1")
