@@ -3,6 +3,7 @@
  */
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
@@ -26,6 +27,7 @@
 
 #include "usb_bulk_buffer.h"
 
+#include "debug.h"
 
 void usb_set_descriptor_by_serial_number(void)
 {
@@ -105,7 +107,6 @@ int main(void) {
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
 		}
-
 
 		service_glitchkit();
 	}
