@@ -71,7 +71,7 @@ void cpu_clock_init(void)
 	CGU_BASE_M4_CLK = (CGU_BASE_M4_CLK_CLK_SEL(CGU_SRC_PLL1) | CGU_BASE_M4_CLK_AUTOBLOCK(1));
 
 	/* Configure the clock for USB peripherals */
-	// usb_clock_init();
+	usb_clock_init();
 
 	/* Disable PLL0AUDIO clock at startup */
 	CGU_PLL0AUDIO_CTRL &= ~CGU_PLL0AUDIO_CTRL_CLKEN(1);

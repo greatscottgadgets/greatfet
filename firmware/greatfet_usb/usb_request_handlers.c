@@ -21,7 +21,7 @@
 #include "usb_api_glitchkit_usb.h"
 #include "usb_api_DS18B20.h"
 #include "usb_api_rfhax.h"
-#include "usb_api_msp430.h"
+// #include "usb_api_msp430.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spiflash_init,
@@ -95,7 +95,6 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 
 	// RF hax
 	usb_vendor_request_rfhax,
-	usb_vendor_request_rfhax_oc,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =

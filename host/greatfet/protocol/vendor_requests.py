@@ -100,7 +100,6 @@ requests = (
     'DS18B20_READ',
     # Ridiculous Radios
     'RFHAX',
-    'RFHAX_OC',
 )
 
 def _create_module_level_constants():

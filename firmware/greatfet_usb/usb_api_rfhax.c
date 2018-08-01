@@ -18,6 +18,7 @@
 #define RFHAX_CW 1
 #define RFHAX_ASK 2
 #define RFHAX_FSK 3
+#define RFHAX_PSK 4
 
 volatile bool rfhax_enabled = false;
 
@@ -30,6 +31,7 @@ usb_request_status_t usb_vendor_request_rfhax(
 {
 	rfhax_mode = endpoint->setup.index;
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
+				led_on(LED3);
 		f1 = endpoint->setup.value;
 		pll0audio_config(f1);
 		switch(rfhax_mode) {
@@ -51,6 +53,12 @@ usb_request_status_t usb_vendor_request_rfhax(
 				rfhax_enabled = true;
 				f2 = 4319;
 				// usb_transfer_schedule_block(endpoint->out, &f2, 2, NULL, NULL);
+				usb_transfer_schedule_ack(endpoint->in);
+				break;
+			case RFHAX_PSK:
+				led_on(LED3);
+				operacake_init();
+				led_on(LED4);
 				usb_transfer_schedule_ack(endpoint->in);
 				break;
 		}
@@ -86,14 +94,4 @@ void rfhax(void)
 		pll0audio_off();
 		delay_us(40000);
 	}
-}
-
-usb_request_status_t usb_vendor_request_rfhax_oc(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		operacake_init();
-		usb_transfer_schedule_ack(endpoint->in);
-	}
-	return USB_REQUEST_STATUS_OK;
 }

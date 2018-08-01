@@ -24,6 +24,7 @@ def main():
     parser.add_argument('-c', dest='cw', action='store_true', help="CW output")
     parser.add_argument('-a', dest='ask', action='store_true', help="Basic ASK output")
     parser.add_argument('-f', dest='fsk', action='store_true', help="Basic FSK output")
+    parser.add_argument('-p', dest='psk', action='store_true', help="PSK Opera Cake function")
     parser.add_argument('-v', dest='verbose', action='store_true', help="Increase verbosity of logging")
     args = parser.parse_args()
 
@@ -48,6 +49,8 @@ def main():
         device.vendor_request_out(vendor_requests.RFHAX, index=2, value=4339)
     if args.fsk:
         device.vendor_request_out(vendor_requests.RFHAX, index=3, value=4339)
+    if args.psk:
+        device.vendor_request_out(vendor_requests.RFHAX, index=4, value=4339)
 
 if __name__ == '__main__':
     main()
