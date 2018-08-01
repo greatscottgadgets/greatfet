@@ -9,14 +9,17 @@
 #include "usb_endpoint.h"
 #include <greatfet_core.h>
 #include <clocks.h>
-#include "pins.h"
+#include <operacake.h>
+#include <pins.h>
+#include <gpio_lpc.h>
+#include <gpio_dma.h>
 
 #define RFHAX_OFF 0
 #define RFHAX_CW 1
 #define RFHAX_ASK 2
 #define RFHAX_FSK 3
 
-volatile bool rfhax_enabled = true;
+volatile bool rfhax_enabled = false;
 
 static uint8_t rfhax_mode = RFHAX_FSK;
 uint16_t f1;
@@ -83,4 +86,14 @@ void rfhax(void)
 		pll0audio_off();
 		delay_us(40000);
 	}
+}
+
+usb_request_status_t usb_vendor_request_rfhax_oc(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+{
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		operacake_init();
+		usb_transfer_schedule_ack(endpoint->in);
+	}
+	return USB_REQUEST_STATUS_OK;
 }

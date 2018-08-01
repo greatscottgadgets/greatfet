@@ -44,6 +44,7 @@ set(SRC_M4
 	usb_api_msp430.c
 	sgpio_isr.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/glitchkit.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/operacake.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue_host.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"

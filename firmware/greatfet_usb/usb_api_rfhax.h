@@ -14,6 +14,9 @@ extern volatile bool rfhax_enabled;
 usb_request_status_t usb_vendor_request_rfhax(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
+usb_request_status_t usb_vendor_request_rfhax_oc(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
+
 void rfhax(void);
 
 #endif /*__USB_API_RFHAX_H__*/
