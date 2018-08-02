@@ -73,7 +73,7 @@ usb_request_status_t usb_vendor_request_glitchkit_setup(
 
 			case GLITCHKIT_SETUP_SET_TRIGGER_EVENTS:
 				glitchkit_disable_trigger_on(~0);
-				// deliberate fallthrough
+				// intentional fallthrough
 
 			case GLITCHKIT_SETUP_ADD_TRIGGER_EVENTS:
 				glitchkit_enable_trigger_on(value_to_write);
