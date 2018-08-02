@@ -159,7 +159,6 @@ struct ehci_transfer_descriptor {
 	volatile uint32_t _reserved;
 } __attribute__((packed, aligned(64)));
 
-
 // From Table 3-18 in the EHCI Spec, section 3.6
 typedef enum {
 	DESCRIPTOR_ITD   = 0,
@@ -215,12 +214,15 @@ typedef struct {
 	uint32_t current_qtd;
 
 	// Dword 5
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpacked-not-aligned"
 	ehci_transfer_descriptor_t overlay;
 
 	// Any custom data we want, here; the hardware won't
 	// touch past the end of the structure above.
 
 } __attribute__((packed, aligned(64))) ehci_queue_head_t;
+#pragma GCC diagnostic pop
 
 
 
