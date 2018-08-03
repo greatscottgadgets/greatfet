@@ -14,6 +14,10 @@
 #include "usb.h"
 #include "usb_queue.h"
 
+#ifndef nullptr
+ #define nullptr NULL //nullptr is standard in C++11
+#endif
+
 usb_queue_t* endpoint_queues[NUM_USB_CONTROLLERS][12] = {};
 
 #define USB_ENDPOINT_INDEX(endpoint_address) (((endpoint_address & 0xF) * 2) + ((endpoint_address >> 7) & 1))
@@ -34,12 +38,14 @@ void usb_queue_init(
         endpoint_queues[queue->endpoint->device->controller][index] = queue;
 
         usb_transfer_t* t = queue->free_transfers;
-        for (unsigned int i=0; i < queue->pool_size - 1; i++, t++) {
-                t->next = t+1;
-                t->queue = queue;
+        if (t!=nullptr) {
+		for (unsigned int i=0; i < queue->pool_size - 1; i++, t++) {
+		        t->next = t+1;
+		        t->queue = queue;
+		}
+		t->next = nullptr;
+		t->queue = queue;
         }
-        t->next = NULL;
-        t->queue = queue;
 }
 
 /* Allocate a transfer */
@@ -48,27 +54,29 @@ static usb_transfer_t* allocate_transfer(
 ) {
         bool aborted;
         usb_transfer_t* transfer;
-        if (queue->free_transfers == NULL)
-                return NULL;
+        if (queue->free_transfers == nullptr)
+                return nullptr;
 
         do {
                 transfer = (void *) __ldrex((uint32_t *) &queue->free_transfers);
-                if (transfer==NULL) break;
+                if (transfer==nullptr) return nullptr;
                 aborted = __strex((uint32_t) transfer->next, (uint32_t *) &queue->free_transfers);
         } while (aborted);
-        transfer->next = NULL;
+        transfer->next = nullptr;
         return transfer;
 }
 
 /* Place a transfer in the free list */
 static void free_transfer(usb_transfer_t* const transfer)
 {
-        usb_queue_t* const queue = transfer->queue;
-        bool aborted;
-        do {
-                transfer->next = (void *) __ldrex((uint32_t *) &queue->free_transfers);
-                aborted = __strex((uint32_t) transfer, (uint32_t *) &queue->free_transfers);
-        } while (aborted);
+        if (transfer!=nullptr) {
+          usb_queue_t* const queue = transfer->queue;
+          bool aborted;
+          do {
+                  transfer->next = (void *) __ldrex((uint32_t *) &queue->free_transfers);
+                  aborted = __strex((uint32_t) transfer, (uint32_t *) &queue->free_transfers);
+          } while (aborted);
+        }
 }
 
 /* Add a transfer to the end of an endpoint's queue. Returns the old
@@ -78,16 +86,21 @@ static usb_transfer_t* endpoint_queue_transfer(
         usb_transfer_t* const transfer
 ) {
         usb_queue_t* const queue = transfer->queue;
-        transfer->next = NULL;
-        if (queue->active != NULL) {
-            usb_transfer_t* t = queue->active;
-            while (t->next != NULL) t = t->next;
-            t->next = transfer;
-            return t;
-        } else {
-            queue->active = transfer;
-            return NULL;
+        transfer->next = nullptr;
+        if (queue != nullptr) {
+		if (queue->active != nullptr) {
+		    usb_transfer_t* t = queue->active;
+                    if (t!=nullptr) {
+			    while (t->next != nullptr) t = t->next;
+			    t->next = transfer;
+			    return t;
+                    } else return nullptr;
+		} else {
+		    queue->active = transfer;
+		    return nullptr;
+		}
         }
+        return nullptr;
 }
                 
 static void usb_queue_flush_queue(usb_queue_t* const queue)
@@ -95,8 +108,10 @@ static void usb_queue_flush_queue(usb_queue_t* const queue)
         cm_disable_interrupts();
         while (queue->active) {
                 usb_transfer_t* transfer = queue->active;
-                queue->active = transfer->next;
-                free_transfer(transfer);
+                if (transfer!=nullptr) {
+                    queue->active = transfer->next;
+                    free_transfer(transfer);
+                } else break;
         }
         cm_enable_interrupts();
 }
@@ -114,8 +129,9 @@ int usb_transfer_schedule(
         void* const user_data
 ) {
         usb_queue_t* const queue = endpoint_queue(endpoint);
+        if (queue == nullptr) return -1;
         usb_transfer_t* const transfer = allocate_transfer(queue);
-        if (transfer == NULL) return -1;
+        if (transfer == nullptr) return -1;
         usb_transfer_descriptor_t* const td = &transfer->td;
 
 	// Configure the transfer descriptor
@@ -139,7 +155,7 @@ int usb_transfer_schedule(
 
         cm_disable_interrupts();
         usb_transfer_t* tail = endpoint_queue_transfer(transfer);
-        if (tail == NULL) {
+        if (tail == nullptr) {
                 // The queue is currently empty, we need to re-prime
                 usb_endpoint_schedule_wait(queue->endpoint, &transfer->td);
         } else {
@@ -168,17 +184,17 @@ int usb_transfer_schedule_block(
 int usb_transfer_schedule_ack(
 	const usb_endpoint_t* const endpoint
 ) {
-        return usb_transfer_schedule_block(endpoint, 0, 0, NULL, NULL);
+        return usb_transfer_schedule_block(endpoint, 0, 0, NULL, nullptr);
 }
 
 /* Called when an endpoint might have completed a transfer */
 void usb_queue_transfer_complete(usb_endpoint_t* const endpoint)
 {
         usb_queue_t* const queue = endpoint_queue(endpoint);
-        if (queue == NULL) while(1); // Uh oh
+        if (queue == nullptr) while(1); // Uh oh
         usb_transfer_t* transfer = queue->active;
 
-        while (transfer != NULL) {
+        while (transfer != nullptr) {
                 uint8_t status = transfer->td.total_bytes;
 
                 // Check for failures
