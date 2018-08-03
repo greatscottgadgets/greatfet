@@ -325,7 +325,7 @@ void usb_host_reset_device(usb_peripheral_t *host)
  * Handle an error interrupt. Normally, we migth want to use this
  * opportunity to clear out any error'd transfer descriptors.
  */
-void usb_host_handle_error(usb_peripheral_t *host)
+void usb_host_handle_error(usb_peripheral_t* host)
 {
 	//TODO:
 	(void)host;
@@ -355,6 +355,9 @@ static void usb_host_service_per_frame_events(usb_peripheral_t *host)
 		GLITCHKIT_USBHOST_START_IN    |
 		GLITCHKIT_USBHOST_START_SETUP
 	);
+
+	//TODO:
+	(void)host;
 }
 
 

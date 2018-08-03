@@ -96,8 +96,8 @@ void glitchkit_enable(void) {
 	scu_pinmux(scu_pin, SCU_GPIO_NOPULL | scu_func);
 
 	// FIXME: abstract
-	gpio_output(&glitchkit.trigger_gpio);
-	gpio_write(&glitchkit.trigger_gpio, false);
+	gpio_output((gpio_t)&glitchkit.trigger_gpio);
+	gpio_write((gpio_t)&glitchkit.trigger_gpio, false);
 }
 
 
@@ -237,7 +237,7 @@ void glitchkit_trigger() {
 		led_toggle(LED4);
 
 		// Set the GPIO pin high, immediately...
-		gpio_write(&glitchkit.trigger_gpio, true);
+		gpio_write((gpio_t)&glitchkit.trigger_gpio, true);
 
 		//... and then schedule it to turn off later.
 		// FIXME: This should really be on a timer.
@@ -261,7 +261,7 @@ void service_glitchkit() {
 			delay(1000);
 
 			// ... and then de-assert the trigger.
-			gpio_write(&glitchkit.trigger_gpio, false);
+			gpio_write((gpio_t)&glitchkit.trigger_gpio, false);
 			glitchkit.triggered = false;
 		}
 }

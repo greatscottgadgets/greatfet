@@ -152,7 +152,7 @@ usb_request_status_t usb_vendor_request_glitchkit_usb_result_length(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule(endpoint->in, &read_size, sizeof(read_size), NULL, NULL);
+		usb_transfer_schedule(endpoint->in, (void*)&read_size, sizeof(read_size), NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}

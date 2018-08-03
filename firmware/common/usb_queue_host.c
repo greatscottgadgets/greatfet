@@ -361,19 +361,19 @@ ehci_queue_head_t * usb_host_set_up_asynchronous_endpoint_queue(
 	usb_host_disable_asynchronous_schedule(host);
 
 	// Set up the Queue Head object for use...
-	usb_host_initialize_queue_head(qh, device_address, endpoint_number,
+	usb_host_initialize_queue_head((ehci_queue_head_t *)qh, device_address, endpoint_number,
 			endpoint_speed, is_control_endpoint, handle_data_toggle, max_packet_size);
 
 	// If the Queue Head isn't already in use, append it to the endpoint queue.
-	if(!usb_host_endpoint_in_asynch_queue(host, qh)) {
+	if(!usb_host_endpoint_in_asynch_queue(host, (ehci_queue_head_t *)qh)) {
 		qh->horizontal.link = host->async_queue_head.horizontal.link;
-		host->async_queue_head.horizontal.ptr = &qh->horizontal;
+		host->async_queue_head.horizontal.ptr = (void *)&qh->horizontal;
 		host->async_queue_head.horizontal.type = DESCRIPTOR_QH;
 	}
 
 	usb_host_enable_asynchronous_schedule(host);
 
-	return qh;
+	return (ehci_queue_head_t *)qh;
 }
 
 // TODO: code to tear down an asynchronous endpoint!

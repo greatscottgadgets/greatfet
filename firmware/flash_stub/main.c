@@ -77,7 +77,7 @@ void patch_serial_number()
     usb0_descriptor_string_serial_number[position++] = USB_DESCRIPTOR_TYPE_STRING;
 
     // and body
-    c = flash_stub_serial;
+    c = (char*)flash_stub_serial;
     while(*c) {
 
       // Add a character.

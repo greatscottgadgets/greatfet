@@ -331,7 +331,7 @@ usb_request_status_t usb_vendor_request_usbhost_send_on_endpoint(
 			return USB_REQUEST_STATUS_STALL;
 	}
 
-	ehci_queue_head_t *endpoint_queue = get_queue_head_for_endpoint(endpoint_number);
+	ehci_queue_head_t *endpoint_queue = (ehci_queue_head_t *) get_queue_head_for_endpoint(endpoint_number);
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 
@@ -429,7 +429,7 @@ usb_request_status_t usb_vendor_request_usbhost_start_nonblocking_read(
 
 		// FIXME: Grab the endpoint queue for the given endpoint, rather than always
 		// assuming EP0.
-		ehci_queue_head_t *endpoint_queue = get_queue_head_for_endpoint(endpoint_number);
+		ehci_queue_head_t *endpoint_queue = (ehci_queue_head_t *) get_queue_head_for_endpoint(endpoint_number);
 
 		// If we don't have a endpoint queue set up for this endpoint, fail out.
 		if(!endpoint_queue) {

@@ -63,14 +63,14 @@ uint32_t main_clock_source = CGU_SRC_XTAL;
 
 i2c_bus_t i2c0 = {
 	.obj = (void*)I2C0_BASE,
-	.start = i2c_lpc_start,
+	.start = (void*)i2c_lpc_start,
 	.stop = i2c_lpc_stop,
 	.transfer = i2c_lpc_transfer,
 };
 
 i2c_bus_t i2c1 = {
 	.obj = (void*)I2C1_BASE,
-	.start = i2c_lpc_start,
+	.start = (void*)i2c_lpc_start,
 	.stop = i2c_lpc_stop,
 	.transfer = i2c_lpc_transfer,
 };

@@ -27,8 +27,8 @@ usb_queue_head_t* usb_queue_head(
 	const uint_fast8_t endpoint_address,
 	const usb_peripheral_t* const device
 ) {
-	usb_queue_head_t * endpoint_list = device->queue_heads_device;
-	return &endpoint_list[USB_QH_INDEX(endpoint_address)];
+	usb_queue_head_t * endpoint_list = (usb_queue_head_t *)device->queue_heads_device;
+	return (usb_queue_head_t*)&endpoint_list[USB_QH_INDEX(endpoint_address)];
 }
 
 usb_endpoint_t* usb_endpoint_from_address(
