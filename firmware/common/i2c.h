@@ -1,38 +1,5 @@
-/** @defgroup i2c_defines I2C Defines
-
-@brief <b>Defined Constants and Types for the LPC43xx I2C</b>
-
-@ingroup LPC43xx_defines
-
-@version 1.0.0
-
-@author @htmlonly &copy; @endhtmlonly 2012 Michael Ossmann <mike@ossmann.com>
-@author @htmlonly &copy; @endhtmlonly 2013 Benjamin Vernoux <bvernoux@gmail.com>
-@author @htmlonly &copy; @endhtmlonly 2014 Jared Boone <jared@sharebrained.com>
-
-@date 19 December 2013
-
-LGPL License Terms @ref lgpl_license
- */
 /*
- * This file is part of the libopencm3 project.
- *
- * Copyright (C) 2012 Michael Ossmann <mike@ossmann.com>
- * Copyright (C) 2013 Benjamin Vernoux <bvernoux@gmail.com>
- * Copyright (C) 2014 Jared Boone <jared@sharebrained.com>
- *
- * This library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * This file is part of GreatFET
  */
 
 #ifndef LPC43XX_I2C_H
@@ -147,8 +114,8 @@ extern "C" {
 
 /* STATUS: ... */
 #define I2C_STAT_STATUS_SHIFT (3)
-#define I2C_STAT_STATUS_MASK (0xf << I2C_STAT_Status_SHIFT)
-#define I2C_STAT_STATUS(x) ((x) << I2C_STAT_Status_SHIFT)
+#define I2C_STAT_STATUS_MASK (0xf << I2C_STAT_STATUS_SHIFT)
+#define I2C_STAT_STATUS(x) ((x) << I2C_STAT_STATUS_SHIFT)
 
 /* --- I2Cx_DATA values ---------------------------------------------------- */
 
@@ -161,8 +128,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR0_GC_SHIFT (0)
-#define I2C_ADR0_GC_MASK (0x1 << I2C_ADR0_GC_SHIFT)
-#define I2C_ADR0_GC(x) ((x) << I2C_ADR0_GC_SHIFT)
+#define I2C_ADR0_GC (1 << I2C_ADR0_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR0_ADDRESS_SHIFT (1)
@@ -200,8 +166,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR1_GC_SHIFT (0)
-#define I2C_ADR1_GC_MASK (0x1 << I2C_ADR1_GC_SHIFT)
-#define I2C_ADR1_GC(x) ((x) << I2C_ADR1_GC_SHIFT)
+#define I2C_ADR1_GC (1 << I2C_ADR1_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR1_ADDRESS_SHIFT (1)
@@ -212,8 +177,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR2_GC_SHIFT (0)
-#define I2C_ADR2_GC_MASK (0x1 << I2C_ADR2_GC_SHIFT)
-#define I2C_ADR2_GC(x) ((x) << I2C_ADR2_GC_SHIFT)
+#define I2C_ADR2_GC (1 << I2C_ADR2_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR2_ADDRESS_SHIFT (1)
@@ -224,8 +188,7 @@ extern "C" {
 
 /* GC: ... */
 #define I2C_ADR3_GC_SHIFT (0)
-#define I2C_ADR3_GC_MASK (0x1 << I2C_ADR3_GC_SHIFT)
-#define I2C_ADR3_GC(x) ((x) << I2C_ADR3_GC_SHIFT)
+#define I2C_ADR3_GC (1 << I2C_ADR3_GC_SHIFT)
 
 /* ADDRESS: ... */
 #define I2C_ADR3_ADDRESS_SHIFT (1)
