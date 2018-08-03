@@ -21,7 +21,7 @@ usb_request_status_t usb_vendor_request_i2c_start(
 		} else {
 			duty_cycle_count = endpoint->setup.value;
 		}
-		i2c_bus_start(&i2c0, &duty_cycle_count);
+		i2c_bus_start(&i2c0, duty_cycle_count);
 		usb_transfer_schedule_ack(endpoint->in);
 	}
 	return USB_REQUEST_STATUS_OK;
