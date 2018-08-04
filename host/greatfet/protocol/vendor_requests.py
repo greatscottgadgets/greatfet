@@ -99,6 +99,8 @@ requests = (
     #'MSP430_JTAG',
 
     'DAC_SET',
+
+    'OPERACAKE',
 )
 
 def _create_module_level_constants():
