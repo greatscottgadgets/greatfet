@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "i2c_bus.h"
+#include "gpio_lpc.h"
 
 #define OPERACAKE_PA1 0
 #define OPERACAKE_PA2 1

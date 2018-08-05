@@ -5,10 +5,7 @@
 #include "operacake.h"
 
 #include <greatfet_core.h>
-#include <gpio_lpc.h>
-#include <gpio.h>
 #include <pins.h>
-#include <gpio_dma.h>
 #include <libopencm3/lpc43xx/scu.h>
 
 #define OPERACAKE_PIN_OE(x)      (x<<7)
@@ -221,29 +218,3 @@ uint8_t operacake_set_range(uint32_t freq_mhz) {
 	current_range = i;
 	return 0;
 }
-
-#define OPERACAKE_I2C_FOR_GPIO (OPERACAKE_GPIO_ENABLE | OPERACAKE_SAMESIDE \
-								  | OPERACAKE_PORT_A1 | OPERACAKE_PORT_B1 \
-								  | OPERACAKE_EN_LEDS)
-
-
-uint8_t operacake_gpio_init(void) {
-    uint8_t reg;
-
-    uint16_t i2c_speed = 255;
-	i2c_bus_start(&i2c0, &i2c_speed);
-	operacake_write_reg(&i2c0, OPERACAKE_DEFAULT_ADDRESS,
-	                    OPERACAKE_REG_OUTPUT, OPERACAKE_DEFAULT_OUTPUT);
-	operacake_write_reg(&i2c0, OPERACAKE_DEFAULT_ADDRESS, 
-	                    OPERACAKE_REG_CONFIG, OPERACAKE_CONFIG_ALL_OUTPUT);
-	operacake_write_reg(&i2c0, OPERACAKE_DEFAULT_ADDRESS,
-	                    OPERACAKE_REG_OUTPUT, OPERACAKE_I2C_FOR_GPIO);
-	operacake_write_reg(&i2c0, OPERACAKE_DEFAULT_ADDRESS, 
-	                    OPERACAKE_REG_CONFIG, OPERACAKE_CONFIG_GPIO_MODE);
-	reg = operacake_read_reg(&i2c0, OPERACAKE_DEFAULT_ADDRESS, 
-	                         OPERACAKE_REG_CONFIG);
-	i2c_bus_stop(&i2c0);
-    if(reg==OPERACAKE_CONFIG_GPIO_MODE)
-        return 0;
-    return 1;
- }
