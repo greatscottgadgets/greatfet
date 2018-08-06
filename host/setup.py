@@ -22,6 +22,7 @@ setup(
             'greatfet_sdir = greatfet.commands.greatfet_sdir:main',
             'greatfet_spiflash = greatfet.commands.greatfet_spiflash:main',
             'greatfet_DS18B20 = greatfet.commands.greatfet_DS18B20:main',
+            'greatfet_operacake = greatfet.commands.greatfet_operacake:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!

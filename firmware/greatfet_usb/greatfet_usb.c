@@ -17,6 +17,7 @@
 #include "usb_api_adc.h"
 #include "usb_api_heartbeat.h"
 #include "usb_api_greatdancer.h"
+#include "usb_api_operacake.h"
 #include "glitchkit.h"
 
 #include <rom_iap.h>
@@ -105,7 +106,9 @@ int main(void) {
 		if(heartbeat_mode_enabled) {
 			heartbeat_mode();
 		}
-
+		if(operacake_tx_enabled) {
+			operacake_tx_mode();
+		}
 
 		service_glitchkit();
 	}
