@@ -79,8 +79,10 @@ class I2CBus(GreatFETPeripheral):
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
         # Perform the core transfer...
-        self.board.vendor_request_out(vendor_requests.I2C_XFER, value=address,
+        status = self.board.vendor_request_out(vendor_requests.I2C_XFER, value=address,
                 index=receive_length, data=data)
+
+        print("status: ", status)
 
         # If reciept was requested, return the received data.
         if receive_length:
@@ -88,5 +90,7 @@ class I2CBus(GreatFETPeripheral):
                 length=receive_length)
         else:
             data = []
+
+        print("data: ", data)
 
         return data
