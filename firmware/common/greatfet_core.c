@@ -398,8 +398,8 @@ void cpu_clock_pll1_max_speed(void)
 	/* Set PLL1 up to 12MHz * 17 = 204MHz. */
 	pll_reg |= CGU_PLL1_CTRL_CLK_SEL(main_clock_source)
 			| CGU_PLL1_CTRL_PSEL(0)
-			| CGU_PLL1_CTRL_NSEL(0)
-			| CGU_PLL1_CTRL_MSEL(16)
+			| CGU_PLL1_CTRL_NSEL(1)
+			| CGU_PLL1_CTRL_MSEL(32)
 			| CGU_PLL1_CTRL_FBSEL(1)
 			| CGU_PLL1_CTRL_DIRECT(1);
 	CGU_PLL1_CTRL = pll_reg;

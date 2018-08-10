@@ -118,19 +118,15 @@ void operacake_tx_mode(void)
 			*target = beacon_chips[i++];
 			__asm__("nop");
 			__asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// *target = PATH3;
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
-			// __asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
+			__asm__("nop");
 		}
 	}
 }
