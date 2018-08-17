@@ -22,7 +22,7 @@ usb_request_status_t usb_vendor_request_dac_set(
 		static struct gpio_t dac_pin = GPIO(2, 3);
 		gpio_input(&dac_pin); 
 
-		DAC_CR = DAC_CR_VALUE(endpoint->setup.value) && DAC_CR_VALUE_MASK;
+		DAC_CR = DAC_CR_VALUE(endpoint->setup.value) & DAC_CR_VALUE_MASK;
 		DAC_CTRL = DAC_CTRL_DMA_ENA;
 
 		usb_transfer_schedule_ack(endpoint->in);

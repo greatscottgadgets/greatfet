@@ -27,10 +27,10 @@ void glitchkit_gpio_isr(void);
 // TODO: Support a wider counter, if it ever becomes necessary.
 
 /* The actual count of GltichKit events that have occurred. */
-volatile static uint32_t event_count = 0;
+static volatile uint32_t event_count = 0;
 
 /* The count necesssary to cause a GlitchKit trigger. */
-volatile static uint32_t event_count_target = 0;
+static volatile uint32_t event_count_target = 0;
 
 /* Struct describing a pin-state condition necessary for a trigger to be counted. */
 struct pin_condition {
@@ -102,7 +102,7 @@ usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
   // as we want to have half of the conditions allowed to be edge conditions,
   // which we'll set up ISRs for-- and half to be level conditions, which we'll
   // splork into the active_condtions array.
-  volatile static pin_condition_t conditions_to_parse[MAX_PIN_CONDITIONS * 2];
+  static volatile pin_condition_t conditions_to_parse[MAX_PIN_CONDITIONS * 2];
 
   if (stage == USB_TRANSFER_STAGE_SETUP) {
 

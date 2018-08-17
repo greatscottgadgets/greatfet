@@ -25,13 +25,13 @@ void usb_bus_reset(
 
 usb_queue_head_t* usb_queue_head(
 	const uint_fast8_t endpoint_address,
-	const usb_peripheral_t* const device
+	usb_peripheral_t* const device
 );
 
 
 usb_endpoint_t* usb_endpoint_from_address(
 	const uint_fast8_t endpoint_address,
-	const usb_peripheral_t* const device
+	usb_peripheral_t* const device
 );
 
 uint_fast8_t usb_endpoint_address(

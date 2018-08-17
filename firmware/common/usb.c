@@ -25,7 +25,7 @@
 
 usb_queue_head_t* usb_queue_head(
 	const uint_fast8_t endpoint_address,
-	const usb_peripheral_t* const device
+	usb_peripheral_t* const device
 ) {
 	usb_queue_head_t * endpoint_list = device->queue_heads_device;
 	return &endpoint_list[USB_QH_INDEX(endpoint_address)];
@@ -33,7 +33,7 @@ usb_queue_head_t* usb_queue_head(
 
 usb_endpoint_t* usb_endpoint_from_address(
 	const uint_fast8_t endpoint_address,
-	const usb_peripheral_t* const device
+	usb_peripheral_t* const device
 ) {
 	return (usb_endpoint_t*)usb_queue_head(endpoint_address, device)->_reserved_0;
 }
@@ -853,7 +853,7 @@ void usb_endpoint_init(
 
 }
 
-static void usb_check_for_setup_events(const usb_peripheral_t* const device) {
+static void usb_check_for_setup_events(usb_peripheral_t* const device) {
 	const uint32_t endptsetupstat = usb_get_endpoint_setup_status(device);
 	uint32_t endptsetupstat_bit = 0;
 	if( endptsetupstat ) {
@@ -886,7 +886,7 @@ static void usb_check_for_setup_events(const usb_peripheral_t* const device) {
 	}
 }
 
-static void usb_check_for_transfer_events(const usb_peripheral_t* const device) {
+static void usb_check_for_transfer_events(usb_peripheral_t* const device) {
 	const uint32_t endptcomplete = usb_get_endpoint_complete(device);
 	uint32_t endptcomplete_out_bit = 0;
 	uint32_t endptcomplete_in_bit = 0;
