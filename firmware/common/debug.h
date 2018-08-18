@@ -7,7 +7,10 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
+
+#include <greatfet_core.h>
 
 // Possible log levels.
 enum debug_log_level {
@@ -29,6 +32,64 @@ void debug_init(void);
 void debug_puts(char *str);
 void debug_putc(char c);
 
+
+
+/**
+ * @return The total used size in the debug ring.
+ */
+size_t debug_ring_used_space(void);
+
+
+/**
+ * @return The amount of free bytes in the debug ring.
+ */
+size_t debug_ring_free_space(void);
+
+/**
+ * @return True iff the debug ring is full.
+ */
+bool debug_ring_full(void);
+
+
+/**
+ * @return True iff the debug ring is empty.
+ */
+bool debug_ring_empty(void);
+
+
+
+/**
+ * Reads a set of raw bytes from the system's debug ringbuffer.
+ *
+ * @param buffer The buffer to be populated.
+ * @param maximum The maximum length to be populated.
+ */
+unsigned int debug_ring_read(char *buffer, unsigned int maximum, bool clear);
+
+
+/**
+ * Consumes a single line from the debug ring, freeing space without
+ * leaving partial sentences in the ringbuffer.
+ */
+void debug_ring_reclaim_line(void);
+
+
+/**
+ * Writes a string to the system's debug ringbuffer.
+ *
+ * @param str The string to write.
+ * @param length The length of the string to write.
+ */
+void debug_ring_write(const char *const str, unsigned int length);
+
+
+/**
+ * Writes a string to the system's debug ringbuffer.
+ *
+ * @param str The string to write.
+ * @param length The length of the string to write.
+ */
+void debug_ring_write_string(const char *const str);
 
 
 /**
@@ -68,10 +129,15 @@ void pr_warning(char *fmt, ...);
 
 
 /**
+ * Convenience function that prints errors using the INFO loglevel.
+ */
+void pr_info(char *fmt, ...);
+
+
+/**
  * Convenience function that prints errors using the DEBUG loglevel.
  */
 void pr_debug(char *fmt, ...);
-
 
 /**
  * @return true iff there is currently a debugger connected.

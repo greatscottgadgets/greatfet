@@ -82,6 +82,9 @@ void init_usb0(void) {
 
 
 int main(void) {
+	debug_init();
+	debug_ring_write_string("GreatFET started!\n");
+
 	cpu_clock_init();
 	cpu_clock_pll1_max_speed();
 	pin_setup();

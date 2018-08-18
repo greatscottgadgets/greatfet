@@ -93,6 +93,8 @@ macro(DeclareTargets)
 		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_int.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/debug.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/time.c
 	)
 
 	configure_file(

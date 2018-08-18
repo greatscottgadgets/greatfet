@@ -17,7 +17,10 @@
 #include <libopencm3/lpc43xx/ssp.h>
 #include <libopencm3/lpc43xx/timer.h>
 
+#include "time.h"
 #include "gpio_lpc.h"
+
+#include "debug.h"
 
 /* Symbols exported by the linker script(s): */
 extern unsigned _data_loadaddr, _data, _edata, _bss, _ebss, _stack;
@@ -410,6 +413,8 @@ void cpu_clock_pll1_max_speed(void)
 
 void rtc_init(void) {
 #ifdef BOARD_CAPABILITY_RTC
+		pr_info("Board advertises an RTC. Bringing it up...\n");
+
 		/* Enable power to 32 KHz oscillator */
 		CREG_CREG0 &= ~CREG_CREG0_PD32KHZ;
 		/* Release 32 KHz oscillator reset */
@@ -423,10 +428,15 @@ void rtc_init(void) {
 		/* Enable clock */
 		RTC_CCR |= RTC_CCR_CLKEN(1);
 #endif
+
+		/* For now, no matter what, start our "wall clock" timer. */
+		set_up_microsecond_timer();
 }
 
 void pin_setup(void) {
 	int i;
+
+	pr_info("Configuring board pins...\n");
 
 	/* Release CPLD JTAG pins */
 	scu_pinmux(SCU_PINMUX_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);
