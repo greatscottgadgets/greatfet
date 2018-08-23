@@ -42,7 +42,12 @@ def main():
 
     # device.vendor_request_in(vendor_requests.I2C_START, length=1)
     # print("started")
-    # device.vendor_request_out(vendor_requests.I2C_XFER, value=0x40>>1, index=2)
+
+    # using an index > 0 makes it so that a "Setup Read to [A] + ACK" happens
+    # followed by an 'index' number of repeated characters ending with a NAK
+    # status = device.vendor_request_out(vendor_requests.I2C_XFER, value=0x40>>1, data='Hello')
+    # print("status: ", status)
+    
     # print("transferred")
     # 0x40 (write) 0x41 (read)
     # device.vendor_request_in(vendor_requests.I2C_XFER, value=0x41, length=2, index=0)

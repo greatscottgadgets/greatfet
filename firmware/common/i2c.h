@@ -114,7 +114,7 @@ extern "C" {
 
 /* STATUS: ... */
 #define I2C_STAT_STATUS_SHIFT (3)
-#define I2C_STAT_STATUS_MASK (0xf << I2C_STAT_STATUS_SHIFT)
+#define I2C_STAT_STATUS_MASK (0x1f << I2C_STAT_STATUS_SHIFT)
 #define I2C_STAT_STATUS(x) ((x) << I2C_STAT_STATUS_SHIFT)
 
 /* --- I2Cx_DATA values ---------------------------------------------------- */

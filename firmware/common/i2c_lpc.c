@@ -42,7 +42,7 @@ void i2c_lpc_transfer(i2c_bus_t* const bus,
 		for(i=0; i<count_rx; i++) {
 			/* ACK each byte except the last */
 			ack = (i!=count_rx-1);
-			data_rx[i] = i2c_rx_byte(port, ack);
+			// data_rx[i] = i2c_rx_byte(port, ack);
 		}
 	}
 

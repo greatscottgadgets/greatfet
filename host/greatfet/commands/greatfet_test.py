@@ -197,7 +197,7 @@ def read_analog_signal(tester, signal):
 def read_io_expanders(expanders):
     state = []
     for expander in expanders:
-        state.extend(expander.transmit([], 5))
+        state.extend(expander.transmit([], 2))
     #print(state)
     return state
 
@@ -314,6 +314,7 @@ def find_tester():
             sys.exit(errno.ENODEV)
         time.sleep(1)
 
+
     if len(devices) > 1:
         fail('FAIL 20: More than one GreatFET found. Connect only Tester to this host with USB.')
 
@@ -336,12 +337,12 @@ def find_tester():
     return tester
 
 def initialize_jig(tester):
-    u1 = I2CDevice(tester.i2c, 0x25>>1)
+    u1 = I2CDevice(tester.i2c, 0x41>>1)
 
-    # if read_io_expanders([u1]) == [255, 255, 255, 255, 255, 255, 255, 255, 255, 255]:
+    # if read_io_expanders([u1]) == [255, 255, 255, 255, 255]:
     #     fail('FAIL 100: I2C I/O expander U1 not detected. Connect Tester to Narcissus.')
+    #     sys.exit(errno.ENODEV)
     read_io_expanders([u1])
-    sys.exit(errno.ENODEV)
 
     return u1
 
