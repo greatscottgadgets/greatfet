@@ -16,6 +16,7 @@ usb_request_status_t usb_vendor_request_heartbeat_start(
 usb_request_status_t usb_vendor_request_heartbeat_stop(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage);
 
+void heartbeat_init(void);
 void heartbeat_mode(void);
 
 #endif /*__USB_API_HEARTBEAT_H__*/

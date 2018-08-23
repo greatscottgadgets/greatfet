@@ -83,7 +83,9 @@ int main(void) {
 	cpu_clock_init();
 	cpu_clock_pll1_max_speed();
 	pin_setup();
-	rtc_init();
+	if(heartbeat_mode_enabled) {
+		heartbeat_init();
+	}
 
 	init_usb0();
 	init_greatdancer_api();
