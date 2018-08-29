@@ -379,10 +379,11 @@ class GreatFETBoard(object):
             value=value, index=index, timeout=timeout)
 
 
-    def vendor_request_in_string(self, request, length=255, value=0, index=0, timeout=1000):
+    def vendor_request_in_string(self, request, length=255, value=0, index=0, timeout=1000,
+            encoding='utf-8'):
         """Performs a USB control request that expects a respnose from the GreatFET.
 
-        Interprets the result as a UTF-8 encoded string.
+        Interprets the result as an encoded string.
 
         Args:
             request -- The number of the vendor request to be performed. Usually
@@ -391,7 +392,7 @@ class GreatFETBoard(object):
         """
         raw = self._vendor_request(usb.ENDPOINT_IN, request, length_or_data=length,
             value=value, index=index, timeout=timeout)
-        return raw.tostring().decode('utf-8')
+        return raw.tostring().decode(encoding)
 
 
     def vendor_request_out(self, request, value=0, index=0, data=None, timeout=1000):
@@ -404,6 +405,18 @@ class GreatFETBoard(object):
         """
         return self._vendor_request(usb.ENDPOINT_OUT, request, value=value,
             index=index, length_or_data=data, timeout=timeout)
+
+
+    def read_debug_ring(self, max_length=2048, clear=False, encoding='latin1'):
+        """ Requests the GreatFET's debug ring.
+
+        Args:
+            max_length -- The maximum length to respond with. Must be less than 65536.
+            clear -- True iff the dmesg buffer should be cleared after the request.
+        """
+
+        return self.vendor_request_in_string(vendor_requests.READ_DMESG,
+                length=max_length, value= 1 if clear else 0, encoding=encoding)
 
 
     def _populate_leds(self, led_count):
