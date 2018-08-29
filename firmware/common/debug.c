@@ -369,6 +369,31 @@ void pr_emergency(char *fmt, ...)
 
 
 /**
+ * Convenience function that prints errors using the ALERT loglevel.
+ */
+void pr_alert(char *fmt, ...)
+{
+    va_list list;
+
+    va_start(list, fmt);
+    vprintk(LOGLEVEL_ALERT, fmt, list);
+    va_end(list);
+}
+
+
+/**
+ * Convenience function that prints errors using the ERROR loglevel.
+ */
+void pr_critical(char *fmt, ...)
+{
+    va_list list;
+
+    va_start(list, fmt);
+    vprintk(LOGLEVEL_CRITICAL, fmt, list);
+    va_end(list);
+}
+
+/**
  * Convenience function that prints errors using the ERROR loglevel.
  */
 void pr_error(char *fmt, ...)

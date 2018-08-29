@@ -16,7 +16,7 @@
 enum debug_log_level {
 	LOGLEVEL_EMERGENCY,
 	LOGLEVEL_ALERT,
-	LOGLEVEL_CRITITCAL,
+	LOGLEVEL_CRITICAL,
 	LOGLEVEL_ERROR,
 	LOGLEVEL_WARNING,
 	LOGLEVEL_NOTICE,
@@ -114,6 +114,18 @@ void printk(int loglevel, char *fmt, ...);
  * Convenience function that prints errors using the EMEREGENCY loglevel.
  */
 void pr_emergency(char *fmt, ...);
+
+
+/**
+ * Convenience function that prints errors using the ALERT loglevel.
+ */
+void pr_alert(char *fmt, ...);
+
+
+/**
+ * Convenience function that prints errors using the CRITICAL loglevel.
+ */
+void pr_critical(char *fmt, ...);
 
 
 /**
