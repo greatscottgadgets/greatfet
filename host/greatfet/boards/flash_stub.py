@@ -54,8 +54,6 @@ class GreatFETOne(GreatFETBoard):
         finally:
             potential_device.close()
 
-        print(serial_number)
-
         # Accept only GreatFET devices whose board IDs are handled by this
         # class. This is mostly used by subclasses, which should override
         # HANDLED_BOARD_IDS.
