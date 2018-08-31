@@ -38,22 +38,16 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
+    ## scan ##
+    states = []
+    for i in range(128):
+        ### initialize_jig ###
+        i2c_device = I2CDevice(device.i2c, i)
+        ### read_io_expanders ###
+        states.append(i2c_device.transmit([], 1))
+        # print("state: ", states[i])
 
-
-    # device.vendor_request_in(vendor_requests.I2C_START, length=1)
-    # print("started")
-
-    # using an index > 0 makes it so that a "Setup Read to [A] + ACK" happens
-    # followed by an 'index' number of repeated characters ending with a NAK
-    # status = device.vendor_request_out(vendor_requests.I2C_XFER, value=0x40>>1, data='Hello')
-    # print("status: ", status)
-    
-    # print("transferred")
-    # 0x40 (write) 0x41 (read)
-    # device.vendor_request_in(vendor_requests.I2C_XFER, value=0x41, length=2, index=0)
-
-    tester = find_tester()
-    u1 = initialize_jig(tester)    
 
 if __name__ == '__main__':
     main()
+

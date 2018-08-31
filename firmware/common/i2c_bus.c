@@ -12,7 +12,7 @@ void i2c_bus_stop(i2c_bus_t* const bus) {
 	bus->stop(bus);
 }
 
-void i2c_bus_transfer(
+uint8_t i2c_bus_transfer(
 	i2c_bus_t* const bus,
 	const uint_fast8_t slave_address,
 	const uint8_t* const tx, const size_t tx_count,
