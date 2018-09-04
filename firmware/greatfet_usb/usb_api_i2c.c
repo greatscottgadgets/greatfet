@@ -48,7 +48,6 @@ usb_request_status_t usb_vendor_request_i2c_xfer(
 										endpoint->setup.length, NULL, NULL);
 		} else {
 			// We are only reading from the I2C device so do everything here
-			// which is what happens when we call transmit([], 5) in greatfet_test
 			status = i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, NULL, 0,
 							 i2c_rx_buffer, endpoint->setup.index);
 

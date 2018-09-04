@@ -39,13 +39,14 @@ def main():
         sys.exit(errno.ENODEV)
 
     ## scan ##
-    states = []
+    valid_addresses = []
     for i in range(128):
-        ### initialize_jig ###
-        i2c_device = I2CDevice(device.i2c, i)
-        ### read_io_expanders ###
-        states.append(i2c_device.transmit([], 1))
-        # print("state: ", states[i])
+        i2c_device = I2CDevice(device.i2c, i>>1)
+        state = i2c_device.transmit([], 1, True)
+        if state[0] == 0x40:
+            valid_addresses.append(hex(i))
+                        
+    print("working addresses: ", valid_addresses)
 
 
 if __name__ == '__main__':
