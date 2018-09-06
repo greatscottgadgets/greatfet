@@ -13,7 +13,9 @@
 #endif
 
 /* We populate the RTC crystal, so use of the RTC is allowed. */
-#define BOARD_CAPABILITY_RTC
+/* ~ktemkin: temporarily don't advertise the RTC on GreatFET Azalea/One boards,
+ *  until we can figure out the firmware issue that's causing slow oscillator startup */
+// #define BOARD_CAPABILITY_RTC
 
 /* We can detect whether USB1's VBUS is present. */
 #define BOARD_CAPABILITY_USB1_SENSE_VBUS
