@@ -19,8 +19,6 @@ void set_up_microsecond_timer(void)
 	// Set up TIMER3 to count microseconds.
     timer_set_prescaler(TIMER3, 203);
     timer_enable_counter(TIMER3);
-
-	// TODO: phase-lock to the RTC seconds?
 }
 
 /**

@@ -412,8 +412,15 @@ void cpu_clock_pll1_max_speed(void)
 }
 
 void rtc_init(void) {
+
+		uint32_t time_base, elapsed;
+
+		/* For now, no matter what, start our "wall clock" timer. */
+		set_up_microsecond_timer();
+
 #ifdef BOARD_CAPABILITY_RTC
 		pr_info("Board advertises an RTC. Bringing it up...\n");
+		time_base = get_time();
 
 		/* Enable power to 32 KHz oscillator */
 		CREG_CREG0 &= ~CREG_CREG0_PD32KHZ;
@@ -427,10 +434,14 @@ void rtc_init(void) {
 		RTC_CCR &= ~RTC_CCR_CCALEN(1);
 		/* Enable clock */
 		RTC_CCR |= RTC_CCR_CLKEN(1);
+
+		elapsed = get_time_since(time_base);
+		pr_info("RTC bringup complete (took %d mS).", elapsed / 1000);
+
+		// TODO: eventually phase-lock the RTC and microsecond timers?
 #endif
 
-		/* For now, no matter what, start our "wall clock" timer. */
-		set_up_microsecond_timer();
+
 }
 
 void pin_setup(void) {

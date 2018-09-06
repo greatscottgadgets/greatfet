@@ -7,12 +7,8 @@
 #ifndef __GREATFET_TIME_H__
 #define __GREATFET_TIME_H__
 
-#include <greatfet_core.h>
-
 #ifdef __RUNNING_ON_HOST__
     #include_next "time.h"
-#else
-    #include <libopencm3/lpc43xx/timer.h>
 #endif
 
 /**
