@@ -16,11 +16,15 @@
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/ssp.h>
 #include <libopencm3/lpc43xx/timer.h>
+#include <timers.h>
 
 #include "time.h"
 #include "gpio_lpc.h"
 
 #include "debug.h"
+
+#define RTC_BRINGUP_TIMEOUT_US (1024 * 100)
+
 
 /* Symbols exported by the linker script(s): */
 extern unsigned _data_loadaddr, _data, _edata, _bss, _ebss, _stack;
@@ -318,6 +322,11 @@ void cpu_clock_init(void)
 
 	CGU_BASE_SSP1_CLK = CGU_BASE_SSP1_CLK_AUTOBLOCK(1)
 			| CGU_BASE_SSP1_CLK_CLK_SEL(CGU_SRC_PLL1);
+
+
+	/* For now, no matter what, start our "wall clock" timer. */
+	set_up_microsecond_timer();
+
 }
 
 
@@ -411,14 +420,34 @@ void cpu_clock_pll1_max_speed(void)
 
 }
 
-void rtc_init(void) {
+bool validate_32khz_oscillator()
+{
+	uint32_t time_base = get_time();
 
+	// Set the alarm timer to a value to count down from...
+	ALARM_TIMER_PRESET = 1024;
+
+	// ... and verify that it ticks at least once before 2mS pass.
+	while (get_time_since(time_base) < RTC_BRINGUP_TIMEOUT_US) {
+		if (ALARM_TIMER_DOWNCOUNT != ALARM_TIMER_PRESET) {
+
+			// Disable the alarm timer and return success.
+			ALARM_TIMER_PRESET = 0;
+			return true;
+		}
+	}
+
+	// Disable the alarm timer and return success.
+	ALARM_TIMER_PRESET = 0;
+	return false;
+}
+
+
+void rtc_init(void) {
 		uint32_t time_base, elapsed;
 
-		/* For now, no matter what, start our "wall clock" timer. */
-		set_up_microsecond_timer();
-
 #ifdef BOARD_CAPABILITY_RTC
+
 		pr_info("Board advertises an RTC. Bringing it up...\n");
 		time_base = get_time();
 
@@ -427,16 +456,23 @@ void rtc_init(void) {
 		/* Release 32 KHz oscillator reset */
 		CREG_CREG0 &= ~CREG_CREG0_RESET32KHZ;
 		/* Enable 1 KHz output (required per LPC43xx user manual section 37.2) */
-		CREG_CREG0 |= CREG_CREG0_EN1KHZ;
-		/* Release CTC Reset */
-		RTC_CCR &= ~RTC_CCR_CTCRST(1);
-		/* Disable calibration counter */
-		RTC_CCR &= ~RTC_CCR_CCALEN(1);
-		/* Enable clock */
-		RTC_CCR |= RTC_CCR_CLKEN(1);
+		CREG_CREG0 |= CREG_CREG0_EN1KHZ | CREG_CREG0_EN32KHZ;
 
-		elapsed = get_time_since(time_base);
-		pr_info("RTC bringup complete (took %d mS).", elapsed / 1000);
+		/* Ensure we have a working 32kHz oscillator before trying to bring up
+		 * the RTC. */
+		if (validate_32khz_oscillator()) {
+			/* Release CTC Reset */
+			RTC_CCR &= ~RTC_CCR_CTCRST(1);
+			/* Disable calibration counter */
+			RTC_CCR &= ~RTC_CCR_CCALEN(1);
+			/* Enable clock */
+			RTC_CCR |= RTC_CCR_CLKEN(1);
+
+			elapsed = get_time_since(time_base);
+			pr_info("RTC bringup complete (took %d mS).\n", elapsed / 1000);
+		} else {
+			pr_warning("RTC oscillator did not come up in a reasonable time!\n");
+		}
 
 		// TODO: eventually phase-lock the RTC and microsecond timers?
 #endif
