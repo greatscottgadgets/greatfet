@@ -335,7 +335,7 @@ void vprintk(int loglevel, char *fmt, va_list list)
 
     // TODO: support something like Linux's LOGLEVEL_CONTINUE
 
-    printf("[%8" PRIu32 "] ", get_time());
+    printf("[%12" PRIu32 "] ", get_time());
     vprintf(fmt, list);
 }
 
