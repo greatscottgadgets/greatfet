@@ -36,7 +36,11 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    print(device.vendor_request_in(vendor_requests.MSP430_JTAG, length=1))
+    print(device.vendor_request_in(vendor_requests.MSP430_JTAG, value=0, length=2))
+    print(device.vendor_request_in(vendor_requests.MSP430_JTAG, value=1, length=2))
+    print(device.vendor_request_in(vendor_requests.MSP430_JTAG, value=2, length=2, timeout=0))
+    print(device.vendor_request_in(vendor_requests.MSP430_JTAG, value=3, length=2))
+    print(device.vendor_request_in(vendor_requests.MSP430_JTAG, value=4, length=2))
 
 if __name__ == '__main__':
     main()

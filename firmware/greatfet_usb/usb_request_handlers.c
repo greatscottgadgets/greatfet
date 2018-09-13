@@ -90,10 +90,10 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_super_hacky,
 
 	// DS18B20 over 1-Wire bus
-	usb_vendor_request_DS18B20_read
+	usb_vendor_request_DS18B20_read,
 
 	// MSP430 JTAG
-	//usb_vendor_request_msp430_jtag
+	usb_vendor_request_msp430_jtag
 
 };
 
