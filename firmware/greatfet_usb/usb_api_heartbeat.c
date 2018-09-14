@@ -13,6 +13,13 @@
 
 volatile bool heartbeat_mode_enabled = true;
 
+void heartbeat_init(void) {
+	led_on(HEARTBEAT_LED);
+#ifdef BOARD_CAPABILITY_RTC
+	rtc_init();
+#endif
+}
+
 #ifdef BOARD_CAPABILITY_RTC
 
 /* Poll current RTC second and toggle the heartbeat LED if it has changed.

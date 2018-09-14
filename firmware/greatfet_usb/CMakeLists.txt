@@ -41,6 +41,7 @@ set(SRC_M4
 	usb_api_glitchkit_usb.c
 	usb_api_DS18B20.c
 	usb_api_msp430.c
+	usb_api_debug.c
 	sgpio_isr.c
 	"${PATH_GREATFET_FIRMWARE_COMMON}/glitchkit.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/usb_queue.c"
@@ -49,6 +50,7 @@ set(SRC_M4
 	"${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
+	"${PATH_GREATFET_FIRMWARE_COMMON}/printf.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
 	"${PATH_GREATFET_FIRMWARE_COMMON}/one_wire.c"
 )
