@@ -13,17 +13,17 @@ extern "C"
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifndef __RUNNING_ON_HOST__
+
 #include "spi_ssp.h"
 #include "spiflash.h"
 
 #include "i2c_bus.h"
 #include "i2c_lpc.h"
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define CONTAINER_OF(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+#endif
 
+#include "utils.h"
 
 /* hardware identification number */
 #define BOARD_ID_ONE 0
@@ -62,6 +62,8 @@ void delay(uint32_t duration);
 void delay_us(uint32_t duration);
 
 /* TODO: Hide these configurations */
+#ifndef __RUNNING_ON_HOST__
+
 extern const ssp_config_t ssp_config_spi;
 extern spi_bus_t spi_bus_ssp0;
 extern const ssp_config_t ssp1_config_spi;
@@ -69,6 +71,9 @@ extern spi_bus_t spi_bus_ssp1;
 
 extern i2c_bus_t i2c0;
 extern i2c_bus_t i2c1;
+
+#endif
+
 
 void cpu_clock_init(void);
 void cpu_clock_pll1_low_speed(void);

@@ -31,6 +31,13 @@ cd firmware/libopencm3
 make
 ```
 
+Then install the host tools:
+```
+cd greatfet/host
+python setup.py build
+sudo python setup.py install
+```
+
 To build a firmware image for the GreatFET One:
 ```
 cd greatfet_usb
