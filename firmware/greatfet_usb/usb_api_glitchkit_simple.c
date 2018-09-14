@@ -79,7 +79,7 @@ void _gpio_condition_add(pin_condition_t* condition){
     active_condition_level[active_condition_count] = (condition->mode == LEVEL_SENSITIVE_HIGH);
 
     // Copy the condition into our list of active conditions, along with its associated GPIO.
-    memcpy((void*)&active_condition_gpio[active_condition_count], &gpio, sizeof(gpio));
+    memcpy(&active_condition_gpio[active_condition_count], &gpio, sizeof(gpio));
     ++active_condition_count;
 }
 
@@ -98,10 +98,10 @@ void _gpio_condition_add(pin_condition_t* condition){
 usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
     usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
-  // Allow for a command that provides twice the number of MAX_CONDITIONS,
+  // Allow for a comand that provides twice the number of MAX_CONDITIONS,
   // as we want to have half of the conditions allowed to be edge conditions,
   // which we'll set up ISRs for-- and half to be level conditions, which we'll
-  // splork into the active_conditions array.
+  // splork into the active_condtions array.
   static volatile pin_condition_t conditions_to_parse[MAX_PIN_CONDITIONS * 2];
 
   if (stage == USB_TRANSFER_STAGE_SETUP) {
@@ -117,7 +117,7 @@ usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
     }
 
     // Read in the configuration command from the host.
-    usb_transfer_schedule_block(endpoint->out, (pin_condition_t*)conditions_to_parse, endpoint->setup.length, NULL, NULL);
+    usb_transfer_schedule_block(endpoint->out, conditions_to_parse, endpoint->setup.length, NULL, NULL);
 
   } else if(stage == USB_TRANSFER_STAGE_DATA) {
 
@@ -147,7 +147,7 @@ usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
 
     // Set up our conditions...
     for (int i = 0; i < condition_count; ++i) {
-      pin_condition_t *condition = (pin_condition_t*)&conditions_to_parse[i];
+      pin_condition_t *condition = &conditions_to_parse[i];
 
       // If this a _level_ sensitive condition, add it to the condition list.
       // These are evaluated when _any_ of the edge-sensitive conditions occur.
@@ -176,7 +176,7 @@ usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
               GLITCHKIT_INTERRUPT_PRIORITY);
 
           // Mark the current interrupt as used.
-          active_interrupt_mask |= (1 << (active_interrupt_count + 1));
+          active_interrupt_mask |= (1 << active_interrupt_count + 1);
           ++active_interrupt_count;
       }
     }
@@ -235,7 +235,7 @@ static bool _event_criteria_met(void) {
 
     // Iterate over our active conditions.
     for(int i = 0; i < active_condition_count; ++ i) {
-        bool pin_value = !!gpio_read((void*)&active_condition_gpio[i]);
+        bool pin_value = !!gpio_read(&active_condition_gpio[i]);
 
         // If this isn't a match, mark this as a conditon that would fail out,
         // but don't break, to maintain our constant timing.
