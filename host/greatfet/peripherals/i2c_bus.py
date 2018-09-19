@@ -101,8 +101,7 @@ class I2CBus(GreatFETPeripheral):
             Sends empty data over the I2C bus, and recieves ACK/NAK
             in response for valid/invalid addresses.
         """
-
-        ## scan ##
+        
         valid_addresses = []
         for address in range(128):
             # Perform the core transfer...

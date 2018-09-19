@@ -7,16 +7,13 @@ from __future__ import print_function
 import argparse
 import errno
 import sys
-import time
 
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
-from greatfet.protocol import vendor_requests
-
 from greatfet.peripherals.i2c_device import I2CDevice
 from greatfet.peripherals.i2c_bus import I2CBus
-from greatfet_test import *
+
 
 def main():
     # Set up a simple argument parser.
