@@ -37,7 +37,7 @@ class I2CDevice(GreatFETPeripheral):
         self.bus.attach_device(self)
 
 
-    def transmit(self, data, receive_length=0, scan=False):
+    def transmit(self, data, receive_length=0):
         """
             Sends data over the I2C bus, and optionally recieves
             data in response.
@@ -46,7 +46,5 @@ class I2CDevice(GreatFETPeripheral):
                 data -- The data to be sent to the given device.
                 receive_length -- If provided, the I2C controller will attempt
                         to read the provided amount of data, in bytes.
-                scan -- If provided, the status (ACK/NAK) of the given
-                        slave address will be returned, otherwise data is returned
         """
-        return self.bus.transmit(self.address, data, receive_length, scan)
+        return self.bus.transmit(self.address, data, receive_length)

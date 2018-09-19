@@ -55,7 +55,7 @@ class I2CBus(GreatFETPeripheral):
 
 
 
-    def transmit(self, address, data, receive_length=0, scan=False):
+    def transmit(self, address, data, receive_length=0):
         """
             Sends data over the I2C bus, and optionally recieves
             data in response.
@@ -67,8 +67,6 @@ class I2CBus(GreatFETPeripheral):
                 data -- The data to be sent to the given device.
                 receive_length -- If provided, the I2C controller will attempt
                         to read the provided amount of data, in bytes.
-                scan -- If provided, the status (ACK/NAK) of the given
-                        slave address will be returned, otherwise data is returned
         """
 
         if (not isinstance(receive_length, int)) or receive_length < 0:
@@ -95,7 +93,26 @@ class I2CBus(GreatFETPeripheral):
         else:
             data = []
 
-        if scan:
-            return status
-        else:
-            return data
+        return data
+
+
+    def scan(self):
+        """
+            Sends empty data over the I2C bus, and recieves ACK/NAK
+            in response for valid/invalid addresses.
+        """
+
+        ## scan ##
+        valid_addresses = []
+        for address in range(128):
+            # Perform the core transfer...
+            self.board.vendor_request_out(vendor_requests.I2C_XFER, value=address>>1,
+                    index=1, data=[])
+            # Read status (ACK/NAK)
+            status = self.board.vendor_request_in(vendor_requests.I2C_GET_STATUS, 
+                    length=1)
+            if status[0] == 0x40:
+                valid_addresses.append(hex(address))
+
+        return valid_addresses
+
