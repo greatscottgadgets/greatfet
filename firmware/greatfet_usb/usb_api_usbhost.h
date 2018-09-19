@@ -5,8 +5,8 @@
 #ifndef __USB_API_USBHOST_H_
 #define __USB_API_USBHOST_H_
 
-#include <usb_type.h>
-#include <usb_request.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_request.h>
 
 /**
  * Start-of-day setup for the USBHost API.

@@ -8,8 +8,8 @@
 #include "glitchkit.h"
 
 #include <greatfet_core.h>
-#include <usb_type.h>
-#include <usb_request.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_request.h>
 
 // The maximum simultaneous number of pin conditions.
 // This can be upped arbitrarily, but will consume memory for each

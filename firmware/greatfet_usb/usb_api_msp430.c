@@ -3,7 +3,7 @@
  */
 
 #include "usb_api_msp430.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb_queue.h>
 
 #include <stddef.h>
 #include <greatfet_core.h>

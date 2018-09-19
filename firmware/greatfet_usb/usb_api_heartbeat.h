@@ -6,8 +6,8 @@
 #define __USB_API_HEARTBEAT_H__
 
 #include <greatfet_core.h>
-#include <usb_type.h>
-#include <usb_request.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_request.h>
 
 extern volatile bool heartbeat_mode_enabled;
 

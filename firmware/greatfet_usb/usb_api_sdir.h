@@ -5,8 +5,8 @@
 #ifndef __USB_API_SDIR_H__
 #define __USB_API_SDIR_H__
 
-#include <usb_type.h>
-#include <usb_request.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_request.h>
 
 extern volatile bool sdir_rx_enabled;
 extern volatile bool sdir_tx_enabled;

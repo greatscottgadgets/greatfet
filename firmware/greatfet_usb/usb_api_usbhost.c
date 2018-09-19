@@ -12,16 +12,17 @@
 
 #include <greatfet_core.h>
 
-#include "usb.h"
-#include "usb_standard_request.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+
+#include <drivers/usb/lpc43xx/usb_standard_request.h>
 #include "usb_descriptor.h"
 #include "usb_device.h"
 #include "usb_endpoint.h"
-#include "usb_request.h"
-#include "usb_host.h"
-#include "usb_queue_host.h"
-#include "usb_registers.h"
-#include "usb_type.h"
+#include <drivers/usb/lpc43xx/usb_request.h>
+#include <drivers/usb/lpc43xx/usb_host.h>
+#include <drivers/usb/lpc43xx/usb_queue_host.h>
+#include <drivers/usb/lpc43xx/usb_registers.h>
 
 // XXX: temporary
 #include "glitchkit.h"

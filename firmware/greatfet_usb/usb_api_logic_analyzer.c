@@ -7,10 +7,11 @@
 #include "sgpio.h"
 #include "sgpio_isr.h"
 
-#include "usb.h"
-#include "usb_queue.h"
-#include "usb_endpoint.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
+
 #include "usb_bulk_buffer.h"
+#include "usb_endpoint.h"
 
 #include <greatfet_core.h>
 

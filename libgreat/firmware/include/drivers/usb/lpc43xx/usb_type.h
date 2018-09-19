@@ -7,14 +7,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <toolchain.h>
 
 // TODO: move things out of here so we don't super-pollute the namespace
 #include <libopencm3/lpc43xx/usb.h>
-
-// TODO: Move this to some common compiler-tricks location.
-#define ATTR_PACKED __attribute__((packed))
-#define ATTR_ALIGNED(x)	__attribute__ ((aligned(x)))
-#define ATTR_SECTION(x) __attribute__ ((section(x)))
 
 // Define the size of the host resources that should be preallocated.
 #define USB_ASYNC_LIST_SIZE            8
@@ -63,6 +59,12 @@ typedef enum {
 } usb_standard_request_t;
 
 typedef enum {
+	USB_SETUP_REQUEST_RECIPIENT_mask = 0x1F,
+	USB_SETUP_REQUEST_RECIPIENT_DEVICE = 0,
+	USB_SETUP_REQUEST_RECIPIENT_INTERFACE = 1,
+	USB_SETUP_REQUEST_RECIPIENT_ENDPOINT = 2,
+	USB_SETUP_REQUEST_RECIPIENT_OTHER = 3,
+
 	USB_SETUP_REQUEST_TYPE_shift = 5,
 	USB_SETUP_REQUEST_TYPE_mask = 3 << USB_SETUP_REQUEST_TYPE_shift,
 	

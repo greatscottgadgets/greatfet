@@ -5,11 +5,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "usb_standard_request.h"
+#include <drivers/usb/lpc43xx/usb_standard_request.h>
 
-#include "usb.h"
-#include "usb_type.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 
 const uint8_t* usb_endpoint_descriptor(
 	const usb_endpoint_t* const endpoint

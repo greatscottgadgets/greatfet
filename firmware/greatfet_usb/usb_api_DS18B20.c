@@ -3,8 +3,8 @@
  */
 
 #include "usb_api_DS18B20.h"
-#include "usb.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 #include "usb_endpoint.h"
 
 #include <stddef.h>
