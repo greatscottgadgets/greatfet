@@ -210,6 +210,11 @@ Configure PLL1 to max speed (204MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1. */
 void cpu_clock_init(void)
 {
+	uint32_t time_base = 0, elapsed;
+
+	debug_init();
+	pr_info("GreatFET started!\n");
+
 	/* If we've been asked to reset in order to switch to using an external
 	 * clock (e.g. for synchronization with other systems), use the GP_CLKIN
 	 * instead of the XTAL as the main system clock source. */
@@ -219,13 +224,15 @@ void cpu_clock_init(void)
 
 		// And set our main clock source to the extclk.
 		main_clock_source = CGU_SRC_GP_CLKIN;
-
 	}
 
 	// TODO: Figure out a place to do this explicitly?
 	// We're done using the reset reason. Clear it so we don't grab a stale
 	// reason in the future.
 	reset_reason = RESET_REASON_UNKNOWN;
+
+	/* For now, no matter what, start our "wall clock" timer. */
+	set_up_microsecond_timer(12);  // count microseconds from our 12MHz timer
 
 	/* use IRC as clock source for APB1 (including I2C0) */
 	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_CLK_SEL(CGU_SRC_IRC);
@@ -237,17 +244,26 @@ void cpu_clock_init(void)
 
 	/* set xtal oscillator to low frequency mode */
 	if(main_clock_source == CGU_SRC_XTAL) {
-			CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_HF_MASK;
+		pr_info("Bootstrapping the system clock off of the external 12MHz oscillator.\n");
+		time_base = get_time();
 
-			/* power on the oscillator and wait until stable */
-			CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_ENABLE_MASK;
+		CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_HF_MASK;
 
-			/* Wait about 100us after Crystal Power ON */
-			delay(WAIT_CPU_CLOCK_INIT_DELAY);
+		/* power on the oscillator and wait until stable */
+		CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_ENABLE_MASK;
+
+		/* Wait about 100us after Crystal Power ON */
+		delay(WAIT_CPU_CLOCK_INIT_DELAY);
 	}
 
 	/* use XTAL_OSC as clock source for BASE_M4_CLK (CPU) */
 	CGU_BASE_M4_CLK = (CGU_BASE_M4_CLK_CLK_SEL(main_clock_source) | CGU_BASE_M4_CLK_AUTOBLOCK(1));
+
+	/* if we've brought up the XTAL, report the time it took. */
+	if (main_clock_source == CGU_SRC_XTAL) {
+		elapsed = get_time_since(time_base);
+		pr_info("External oscillator bringup complete (took %d uS).\n", elapsed);
+	}
 
 	/* use XTAL_OSC as clock source for APB1 */
 	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_AUTOBLOCK(1)
@@ -323,10 +339,6 @@ void cpu_clock_init(void)
 	CGU_BASE_SSP1_CLK = CGU_BASE_SSP1_CLK_AUTOBLOCK(1)
 			| CGU_BASE_SSP1_CLK_CLK_SEL(CGU_SRC_PLL1);
 
-
-	/* For now, no matter what, start our "wall clock" timer. */
-	set_up_microsecond_timer();
-
 }
 
 
@@ -339,6 +351,10 @@ This function is mainly used to lower power consumption.
 void cpu_clock_pll1_low_speed(void)
 {
 	uint32_t pll_reg;
+    uint32_t time_base, elapsed;
+
+    pr_info("Switching the system clock to PLL1 at 48MHz.\n");
+    time_base = get_time();
 
 	/* Configure PLL1 Clock (48MHz) */
 	/* Integer mode:
@@ -362,8 +378,13 @@ void cpu_clock_pll1_low_speed(void)
 	/* wait until stable */
 	while (!(CGU_PLL1_STAT & CGU_PLL1_STAT_LOCK_MASK));
 
+	set_up_microsecond_timer(48);  // update the wall clock time to track our 48mhz timer
+
 	/* Wait a delay after switch to new frequency with Direct mode */
 	delay(WAIT_CPU_CLOCK_INIT_DELAY);
+
+    elapsed = get_time_since(time_base);
+    pr_info("Clock switch complete (took %d uS).\n", elapsed);
 }
 
 /*
@@ -374,6 +395,10 @@ This function shall be called after cpu_clock_init().
 void cpu_clock_pll1_max_speed(void)
 {
 	uint32_t pll_reg;
+	uint32_t time_base, elapsed;
+
+	pr_info("Switching the system clock to PLL1 at 204MHz.\n");
+	time_base = get_time();
 
 	/* Configure PLL1 to Intermediate Clock (between 90 MHz and 110 MHz) */
 	/* Integer mode:
@@ -418,6 +443,10 @@ void cpu_clock_pll1_max_speed(void)
 	/* wait until stable */
 	while (!(CGU_PLL1_STAT & CGU_PLL1_STAT_LOCK_MASK));
 
+	set_up_microsecond_timer(204);  // update the wall clock time to track our 204mhz main frequency
+
+	elapsed = get_time_since(time_base);
+	pr_info("Clock switch complete (took %d uS).\n", elapsed);
 }
 
 bool validate_32khz_oscillator()
@@ -469,7 +498,7 @@ void rtc_init(void) {
 			RTC_CCR |= RTC_CCR_CLKEN(1);
 
 			elapsed = get_time_since(time_base);
-			pr_info("RTC bringup complete (took %d mS).\n", elapsed / 1000);
+			pr_info("RTC bringup complete (took %d uS).\n", elapsed);
 		} else {
 			pr_warning("RTC oscillator did not come up in a reasonable time!\n");
 		}

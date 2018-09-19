@@ -15,9 +15,9 @@
  * Initialization function for the GreatFET microsecond timer, which is used
  * to track total seconds while the GreatFET is running.
  *
- * Currently must be called while on the faster clock speed.
+ * @param The frequency, in MHz, that the main M4 clock is running at.
  */
-void set_up_microsecond_timer(void);
+void set_up_microsecond_timer(uint32_t m4_clk_mhz);
 
 /**
  * @returns the total number of microseconds since this timer was initialized.
