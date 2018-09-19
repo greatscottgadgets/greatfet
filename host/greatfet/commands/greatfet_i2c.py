@@ -25,7 +25,7 @@ def main():
                         help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
     parser.add_argument('-a', '--address_scan', action='store_true', help="Scan all possible i2c addresses")
-    parser.add_argument('-t', '--transmit', dest='address', type=str, help="Transmit data with the given address")
+    parser.add_argument('-t', '--transmit', nargs=3, metavar=('address', 'data', 'receive_length'), help="Transmit data over the I2C Bus") # dest='address', type=str, help="Transmit data with the given address")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -43,8 +43,8 @@ def main():
 
     if args.address_scan:
         scan(device)
-    if args.address:
-        transmit(device, args.address)
+    if args.transmit:
+        transmit(device, args.transmit)
 
 
 def scan(device):
@@ -52,11 +52,15 @@ def scan(device):
     valid_addresses = i2c_bus.scan()                       
     print("Working address(es): ", valid_addresses)
 
-def transmit(device, address, data=[]):
-    states = []
+
+def transmit(device, transmit_info):
+    received_data = []
+    address = transmit_info[0]
+    data = transmit_info[1]
+    receive_length = int(transmit_info[2])
     i2c_device = I2CDevice(device.i2c, int(address, 16)>>1)
-    # states.append(i2c_device.transmit(data, len(data))) # need to handle len(data) when data=[]
-    print("states: ", states)
+    received_data.append(i2c_device.transmit(data, receive_length))
+    print(received_data)
 
 
 if __name__ == '__main__':
