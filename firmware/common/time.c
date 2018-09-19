@@ -14,10 +14,10 @@
  *
  * Currently must be called while on the faster clock speed.
  */
-void set_up_microsecond_timer(void)
+void set_up_microsecond_timer(uint32_t m4_clk_mhz)
 {
-	// Set up TIMER3 to count microseconds.
-    timer_set_prescaler(TIMER3, 203);
+    // Set up TIMER3 to count microseconds.
+    timer_set_prescaler(TIMER3, m4_clk_mhz - 1);
     timer_enable_counter(TIMER3);
 }
 
