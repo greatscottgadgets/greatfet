@@ -24,7 +24,7 @@ def main():
     parser.add_argument('-z', '--scan', action='store_true', help="Scan all possible i2c addresses")
     parser.add_argument('-a', '--address', nargs=1, type=str, help="Address to transmit data to over the I2C Bus") 
     parser.add_argument('-t', '--transmit', metavar='data', default=[], help="Data to transmit over the I2C Bus")
-    parser.add_argument('-r', '--receive_length', default=1, help="Number of bytes expecting to receive from the I2C Bus") # dest='address', type=str, help="Transmit data with the given address")
+    parser.add_argument('-r', '--receive_length', default=1, help="Number of bytes expecting to receive from the I2C Bus")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -43,7 +43,6 @@ def main():
     if args.scan:
         scan(device)
     if args.address:
-        print("address: ", args.address)
         transmit(device, args.address[0], args.transmit[0], int(args.receive_length[0]))
 
 
@@ -54,11 +53,12 @@ def scan(device):
 
 
 def transmit(device, address, data, receive_length):
-    received_data = []
     i2c_device = I2CDevice(device.i2c, int(address, 16)>>1)
-    received_data.append(i2c_device.transmit(data, receive_length))
-    print(received_data)
-
+    received_data = i2c_device.transmit(data, receive_length)
+    print("received bytes:")
+    for byte in received_data:
+        print(hex(byte), sep='\n')
+        
 
 if __name__ == '__main__':
     main()
