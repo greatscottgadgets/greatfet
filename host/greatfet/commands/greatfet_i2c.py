@@ -48,16 +48,18 @@ def main():
 
 def scan(device):
     i2c_bus = I2CBus(device)
-    valid_addresses = i2c_bus.scan()                       
-    print("Working address(es): ", valid_addresses)
-
+    valid_addresses = i2c_bus.scan()
+    print("Working address(es):")
+    for address in valid_addresses:
+        print(hex(address))
+    
 
 def transmit(device, address, data, receive_length):
     i2c_device = I2CDevice(device.i2c, int(address, 16)>>1)
     received_data = i2c_device.transmit(data, receive_length)
     print("received bytes:")
     for byte in received_data:
-        print(hex(byte), sep='\n')
+        print(hex(byte))
 
 
 if __name__ == '__main__':

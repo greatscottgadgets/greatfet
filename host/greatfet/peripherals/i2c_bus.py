@@ -111,7 +111,7 @@ class I2CBus(GreatFETPeripheral):
             status = self.board.vendor_request_in(vendor_requests.I2C_GET_STATUS, 
                     length=1)
             if status[0] == 0x40:
-                valid_addresses.append(hex(address))
+                valid_addresses.append(address)
 
         return valid_addresses
 
