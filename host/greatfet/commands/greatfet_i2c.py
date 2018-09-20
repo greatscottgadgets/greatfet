@@ -43,7 +43,7 @@ def main():
     if args.scan:
         scan(device)
     if args.address:
-        transmit(device, args.address[0], args.transmit[0], int(args.receive_length[0]))
+        transmit(device, args.address[0], args.transmit, int(args.receive_length))
 
 
 def scan(device):
@@ -58,7 +58,7 @@ def transmit(device, address, data, receive_length):
     print("received bytes:")
     for byte in received_data:
         print(hex(byte), sep='\n')
-        
+
 
 if __name__ == '__main__':
     main()
