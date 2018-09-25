@@ -49,13 +49,6 @@ uint8_t i2c_lpc_transfer(i2c_bus_t* const bus,
 		i2c_tx_start(port);
 		i2c_tx_byte(port, (slave_address << 1) | I2C_READ);
 		status = I2C0_STAT;
-		// This only works here because only the Setup + ACK/NAK has happened so far
-		// anything but 0x40 here is bad 
-		// if (I2C0_STAT == 0x40) {
-		// 	led_on(LED2);
-		// } else {
-		// 	led_on(LED3);
-		// }
 
 		for(i=0; i<count_rx; i++) {
 			/* ACK each byte except the last */

@@ -10,10 +10,10 @@
 #include <i2c_bus.h>
 #include <i2c.h>
 
-uint8_t i2c_tx_buffer[255];
-uint8_t i2c_rx_buffer[255];
-uint16_t duty_cycle_count;
-uint8_t status = 0;
+static uint8_t i2c_tx_buffer[255];
+static uint8_t i2c_rx_buffer[255];
+static uint16_t duty_cycle_count;
+static uint8_t status;
 
 usb_request_status_t usb_vendor_request_i2c_start(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
@@ -77,7 +77,7 @@ usb_request_status_t usb_vendor_request_i2c_get_status(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		usb_transfer_schedule_block(endpoint->in, &status,
-									sizeof(status), NULL, NULL);
+								sizeof(status), NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}

@@ -17,7 +17,7 @@ from greatfet.peripherals.i2c_bus import I2CBus
 
 def main():
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
+    parser = argparse.ArgumentParser(description="Utility for I2C communication via GreatFET")
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
@@ -41,26 +41,27 @@ def main():
         sys.exit(errno.ENODEV)
 
     if args.scan:
-        scan(device)
+        scan(device, log_function)
     if args.address:
-        transmit(device, args.address[0], args.transmit, int(args.receive_length))
+        transmit(device, args.address[0], args.transmit, int(args.receive_length), log_function)
 
 
-def scan(device):
+def scan(device, log_function):
     i2c_bus = I2CBus(device)
     valid_addresses = i2c_bus.scan()
-    print("Working address(es):")
+    log_function("Working address(es):")
     for address in valid_addresses:
-        print(hex(address))
+        log_function(hex(address))
     
 
-def transmit(device, address, data, receive_length):
+def transmit(device, address, data, receive_length, log_function):
     i2c_device = I2CDevice(device.i2c, int(address, 16)>>1)
     received_data = i2c_device.transmit(data, receive_length)
-    print("received bytes:")
+    log_function("received bytes:")
     for byte in received_data:
-        print(hex(byte))
+        log_function(hex(byte))
 
 
 if __name__ == '__main__':
     main()
+    
