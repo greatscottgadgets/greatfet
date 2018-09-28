@@ -5,8 +5,8 @@
 #include "usb_api_heartbeat.h"
 #include <libopencm3/lpc43xx/rtc.h>
 
-#include "usb.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 #include "usb_endpoint.h"
 
 #include "pins.h"

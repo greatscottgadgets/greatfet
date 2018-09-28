@@ -7,8 +7,8 @@
 
 #include <stdint.h>
 
-#include <usb_type.h>
-#include <usb_request.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_request.h>
 
 typedef struct {
 	uint32_t part_id[2];

@@ -26,16 +26,6 @@
 #define RTC_BRINGUP_TIMEOUT_US (1024 * 100)
 
 
-/* Symbols exported by the linker script(s): */
-extern unsigned _data_loadaddr, _data, _edata, _bss, _ebss, _stack;
-typedef void (*funcp_t) (void);
-extern funcp_t __preinit_array_start, __preinit_array_end;
-extern funcp_t __init_array_start, __init_array_end;
-extern funcp_t __fini_array_start, __fini_array_end;
-extern unsigned _etext_ram, _text_ram, _etext_rom;
-
-void main(void);
-
 
 /* TODO: Consolidate ARRAY_SIZE declarations */
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -58,9 +48,9 @@ static struct gpio_t gpio_tck			= GPIO(3,  0);
 static struct gpio_t gpio_tms			= GPIO(3,  4);
 static struct gpio_t gpio_tdi			= GPIO(3,  1);
 
-/* This special variable is preserved across soft resets by a little bit of
- * reset handler magic. It allows us to pass a Reason across resets. */
-volatile uint32_t reset_reason;
+/* Temporary access to libgreat's reset reason */
+extern volatile uint32_t reset_reason;
+
 
 /**
  * The clock source for the main system oscillators.
@@ -130,79 +120,6 @@ void delay_us(uint32_t duration)
 	// Determined experimentally, don't rely on this
 	delay(duration * 30);
 }
-
-
-static void pre_main(void)
-{
-	volatile unsigned *src, *dest;
-
-	/* Copy the code from ROM to Real RAM (if enabled) */
-	if ((&_etext_ram-&_text_ram) > 0) {
-		src = &_etext_rom-(&_etext_ram-&_text_ram);
-		/* Change Shadow memory to ROM (for Debug Purpose in case Boot
-		 * has not set correctly the M4MEMMAP because of debug)
-		 */
-		CREG_M4MEMMAP = (unsigned long)src;
-
-		for (dest = &_text_ram; dest < &_etext_ram; ) {
-			*dest++ = *src++;
-		}
-
-		/* Change Shadow memory to Real RAM */
-		CREG_M4MEMMAP = (unsigned long)&_text_ram;
-
-		/* Continue Execution in RAM */
-	}
-
-	/* Enable access to Floating-Point coprocessor. */
-	SCB_CPACR |= SCB_CPACR_FULL * (SCB_CPACR_CP10 | SCB_CPACR_CP11);
-}
-
-
-/**
- * Startup code for the processor.
- */
-void __attribute__ ((naked)) reset_handler(void)
-{
-	volatile unsigned *src, *dest;
-	funcp_t *fp;
-
-	uint32_t stored_reset_reason = reset_reason;
-
-	for (src = &_data_loadaddr, dest = &_data;
-		dest < &_edata;
-		src++, dest++) {
-		*dest = *src;
-	}
-
-	for (dest = &_bss; dest < &_ebss; ) {
-		*dest++ = 0;
-	}
-
-	/* Constructors. */
-	for (fp = &__preinit_array_start; fp < &__preinit_array_end; fp++) {
-		(*fp)();
-	}
-	for (fp = &__init_array_start; fp < &__init_array_end; fp++) {
-		(*fp)();
-	}
-
-	/* might be provided by platform specific vector.c */
-	pre_main();
-
-	/* Restore our stored reset reason. */
-	reset_reason = stored_reset_reason;
-
-	/* Call the application's entry point. */
-	main();
-
-	/* Destructors. */
-	for (fp = &__fini_array_start; fp < &__fini_array_end; fp++) {
-		(*fp)();
-	}
-
-}
-
 
 
 /* clock startup for Jellybean with Lemondrop attached

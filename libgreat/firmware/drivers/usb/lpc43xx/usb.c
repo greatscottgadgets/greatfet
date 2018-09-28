@@ -5,12 +5,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "usb.h"
-#include "usb_host.h"
-#include "usb_type.h"
-#include "usb_queue.h"
-#include "usb_registers.h"
-#include "usb_standard_request.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_host.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/lpc43xx/usb_registers.h>
+#include <drivers/usb/lpc43xx/usb_standard_request.h>
 #include "greatfet_core.h"
 
 #include <libopencm3/lpc43xx/creg.h>
@@ -158,6 +158,8 @@ static void usb_flush_primed_endpoints(const uint32_t mask,
 	usb_wait_for_endpoint_priming_to_finish(mask, device);
 	usb_flush_endpoints(mask, device);
 	usb_wait_for_endpoint_flushing_to_finish(mask, device);
+
+	// TODO: toggle reclamation of any TDs?
 }
 
 static void usb_flush_all_primed_endpoints(const usb_peripheral_t* const device) {
@@ -452,7 +454,12 @@ void usb_endpoint_stall(
 		USB1_ENDPTCTRL(endpoint_number) |= (USB1_ENDPTCTRL_RXS | USB1_ENDPTCTRL_TXS);
 	}
 	
-	// TODO: Also need to reset data toggle in both directions?
+	// If this is a protocol stall (a stall on a control endpoint),
+	// clear out any allocate TDs.
+	if(endpoint_number == 0) {	
+		usb_endpoint_flush(endpoint->in);
+		usb_endpoint_flush(endpoint->out);
+	}
 }
 
 void usb_controller_run(const usb_peripheral_t* const device) {

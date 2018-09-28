@@ -4,8 +4,8 @@
 
 #include "usb_api_leds.h"
 
-#include "usb.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 #include "usb_endpoint.h"
 
 /* Define a simple function pointer that accepts all LED modification functions. */

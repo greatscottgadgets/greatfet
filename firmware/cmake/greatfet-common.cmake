@@ -11,6 +11,14 @@ SET(PATH_GREATFET_FIRMWARE ${PATH_GREATFET}/firmware)
 SET(PATH_GREATFET_FIRMWARE_COMMON ${PATH_GREATFET_FIRMWARE}/common)
 SET(LIBOPENCM3 ${PATH_GREATFET_FIRMWARE}/libopencm3)
 
+# FIXME: pull these out into libgreat
+SET(PATH_LIBGREAT ${CMAKE_CURRENT_LIST_DIR}/../../libgreat)
+SET(PATH_LIBGREAT_FIRMWARE ${PATH_LIBGREAT}/firmware)
+SET(PATH_LIBGREAT_FIRMWARE_DRIVERS ${PATH_LIBGREAT_FIRMWARE}/drivers)
+
+# FIXME: make this configurable
+SET(LIBGREAT_PLATFORM lpc43xx)
+
 execute_process(
 	COMMAND git log -n 1 --format=%h
 	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -81,9 +89,17 @@ set(BUILD_SHARED_LIBS OFF)
 include_directories("${LIBOPENCM3}/include/")
 include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
+# FIXME: pull out into libgreat, probably?
+include_directories("${PATH_LIBGREAT_FIRMWARE}/include")
+
+
 macro(DeclareTargets)
 	SET(SRC_M4
 		${SRC_M4}
+
+		#fixme: pull into libgreat
+		${PATH_LIBGREAT_FIRMWARE}/platform/lpc43xx/crt0.c
+
 		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash.c

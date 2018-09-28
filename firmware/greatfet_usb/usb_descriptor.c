@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-#include "usb_type.h"
+#include <drivers/usb/lpc43xx/usb_type.h>
 #include "usb_descriptor.h"
 
 #define USB_VENDOR_ID			(0x1D50)

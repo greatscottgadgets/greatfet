@@ -6,9 +6,6 @@
 
 #include <libopencm3/lpc43xx/i2c.h>
 
-// #include "usb_api_spi.h"
-#include "usb_queue.h"
-
 #include <stddef.h>
 #include <greatfet_core.h>
 #include <i2c_bus.h>

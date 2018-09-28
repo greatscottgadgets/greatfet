@@ -13,13 +13,13 @@
 #include <greatfet_core.h>
 #include <string.h>
 
-#include "usb.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 #include "usb_endpoint.h"
 
-#include "usb_host.h"
-#include "usb_queue_host.h"
-#include "usb_registers.h"
+#include <drivers/usb/lpc43xx/usb_host.h>
+#include <drivers/usb/lpc43xx/usb_queue_host.h>
+#include <drivers/usb/lpc43xx/usb_registers.h>
 
 
 static char usb_packet_buffer[512];

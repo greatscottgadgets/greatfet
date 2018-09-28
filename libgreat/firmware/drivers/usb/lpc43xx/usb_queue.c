@@ -11,8 +11,8 @@
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/sync.h>
 
-#include "usb.h"
-#include "usb_queue.h"
+#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 
 usb_queue_t* endpoint_queues[NUM_USB_CONTROLLERS][12] = {};
 

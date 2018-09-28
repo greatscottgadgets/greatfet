@@ -8,8 +8,8 @@
 #include "glitchkit.h"
 
 #include <greatfet_core.h>
-#include <usb_type.h>
-#include <usb_request.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_request.h>
 
 
 usb_request_status_t usb_vendor_request_glitchkit_control_in_start(

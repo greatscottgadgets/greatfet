@@ -1,78 +1,80 @@
 /*
  * This file is part of GreatFET
+ *
+ * Core verb defititions -- these provide solid implementations
+ * of the Core Verbs, as provided by libgreat.
  */
-
-#include "usb_api_board.h"
-
-#include <greatfet_core.h>
-#include <rom_iap.h>
-#include <usb_queue.h>
-#include <libopencm3/lpc43xx/wwdt.h>
 
 #include <stddef.h>
 #include <string.h>
+#include <errno.h>
+
+#include <greatfet_core.h>
+#include <rom_iap.h>
+#include <libopencm3/lpc43xx/wwdt.h>
+
+#include <drivers/comms.h>
+
+#define CLASS_NUMBER_CORE 0
 
 char version_string[] = VERSION_STRING;
 
-usb_request_status_t usb_vendor_request_read_board_id(
-		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+int core_verb_read_board_id(struct command_transaction *trans)
 {
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		endpoint->buffer[0] = BOARD_ID;
-		usb_transfer_schedule_block(endpoint->in, &endpoint->buffer, 1, NULL, NULL);
-		usb_transfer_schedule_ack(endpoint->out);
-	}
-	return USB_REQUEST_STATUS_OK;
+	comms_respond_uint32_t(trans, BOARD_ID);
+	return 0;
 }
 
-usb_request_status_t usb_vendor_request_read_version_string(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	uint8_t length;
 
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		length = (uint8_t)strlen(version_string);
-		usb_transfer_schedule_block(endpoint->in, version_string, length, NULL, NULL);
-		usb_transfer_schedule_ack(endpoint->out);
-	}
-	return USB_REQUEST_STATUS_OK;
+int core_verb_read_version_string(struct command_transaction *trans)
+{
+	comms_respond_string(trans, version_string);
+	return 0;
 }
 
-usb_request_status_t usb_vendor_request_read_partid_serialno(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+
+int core_verb_read_part_id(struct command_transaction *trans)
 {
-	uint8_t length;
-	read_partid_serialno_t read_partid_serialno;
+	void *position;
 	iap_cmd_res_t iap_cmd_res;
 
-	if (stage == USB_TRANSFER_STAGE_SETUP) 
-	{
-		/* Read IAP Part Number Identification */
-		iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_PART_ID_NO;
-		iap_cmd_call(&iap_cmd_res);
-		if(iap_cmd_res.status_res.status_ret != CMD_SUCCESS)
-			return USB_REQUEST_STATUS_STALL;
+	// Don't allow a read if we can't fit a full response.
+	if (trans->data_out_max_length < 8)
+		return EINVAL;
 
-		read_partid_serialno.part_id[0] = iap_cmd_res.status_res.iap_result[0];
-		read_partid_serialno.part_id[1] = iap_cmd_res.status_res.iap_result[1];
-		
-		/* Read IAP Serial Number Identification */
-		iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_SERIAL_NO;
-		iap_cmd_call(&iap_cmd_res);
-		if(iap_cmd_res.status_res.status_ret != CMD_SUCCESS)
-			return USB_REQUEST_STATUS_STALL;
+	// Read the IAP part number...
+	iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_PART_ID_NO;
+	iap_cmd_call(&iap_cmd_res);
 
-		read_partid_serialno.serial_no[0] = iap_cmd_res.status_res.iap_result[0];
-		read_partid_serialno.serial_no[1] = iap_cmd_res.status_res.iap_result[1];
-		read_partid_serialno.serial_no[2] = iap_cmd_res.status_res.iap_result[2];
-		read_partid_serialno.serial_no[3] = iap_cmd_res.status_res.iap_result[3];
-		
-		length = (uint8_t)sizeof(read_partid_serialno_t);
-		usb_transfer_schedule_block(endpoint->in, &read_partid_serialno, length,
-					    NULL, NULL);
-		usb_transfer_schedule_ack(endpoint->out);
-	}
-	return USB_REQUEST_STATUS_OK;
+	// ... and build our response from it.
+	position = comms_start_response(trans);
+	for (int i = 0; i < 2; ++i)
+		comms_response_add_uint32_t(trans, &position, iap_cmd_res.status_res.iap_result[i]);
+
+	// Return whether our data is valid.
+	return iap_cmd_res.status_res.status_ret;
+}
+
+
+int core_verb_read_serial_number(struct command_transaction *trans)
+{
+	void *position;
+	iap_cmd_res_t iap_cmd_res;
+
+	// Don't allow reads if we can't fit a full response.
+	if (trans->data_out_max_length < 16)
+		return EINVAL;
+
+	// Read the board's serial number.
+	iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_SERIAL_NO;
+	iap_cmd_call(&iap_cmd_res);
+
+	// Add in each of the blocks of the serial number.
+	position = comms_start_response(trans);
+	for (int i = 0; i < 4; ++i)
+		comms_response_add_uint32_t(trans, &position, iap_cmd_res.status_res.iap_result[i]);
+
+	return iap_cmd_res.status_res.status_ret;
 }
 
 /**
@@ -81,33 +83,16 @@ usb_request_status_t usb_vendor_request_read_partid_serialno(
  *		value = 0: regular reset
  *		value = 1: switch to an external clock after eset
  */
-usb_request_status_t usb_vendor_request_reset(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+int core_verb_request_reset(struct command_transaction *trans)
 {
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		// reset_mode = true;
-		if(endpoint->setup.value == 1) {
-			reset_reason = RESET_REASON_USE_EXTCLOCK;
-		} else {
-			reset_reason = RESET_REASON_SOFT_RESET;
-		}
-	
-		wwdt_reset(100000);
-		usb_transfer_schedule_ack(endpoint->in);
-	}
-	return USB_REQUEST_STATUS_OK;
-}
+	uint32_t reset_reason_command = comms_argument_parse_as_uint32_t(trans);
 
-/* For educational purposes only */
-usb_request_status_t usb_vendor_request_super_hacky(
-		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
-{
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		uint32_t address = (((uint32_t)endpoint->setup.index << 16UL) | (uint32_t)endpoint->setup.value);
-		char * hack_pointer = (char *)address;
-		usb_transfer_schedule_block(endpoint->in, hack_pointer, endpoint->setup.length, NULL, NULL);
-	} else if (stage == USB_TRANSFER_STAGE_DATA) {
-		usb_transfer_schedule_ack(endpoint->out);
+	if(reset_reason_command == 1) {
+		reset_reason = RESET_REASON_USE_EXTCLOCK;
+	} else {
+		reset_reason = RESET_REASON_SOFT_RESET;
 	}
-	return USB_REQUEST_STATUS_OK;
+
+	wwdt_reset(100000);
+	return 0;
 }
