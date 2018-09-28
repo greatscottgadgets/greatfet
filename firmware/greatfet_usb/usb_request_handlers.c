@@ -44,6 +44,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_i2c_stop,
 	usb_vendor_request_i2c_xfer,
 	usb_vendor_request_i2c_response,
+	usb_vendor_request_i2c_get_status,
 	usb_vendor_request_logic_analyzer_start,
 	usb_vendor_request_logic_analyzer_stop,
 	usb_vendor_request_reset,

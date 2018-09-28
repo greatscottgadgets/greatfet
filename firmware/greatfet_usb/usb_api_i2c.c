@@ -8,10 +8,12 @@
 #include <stddef.h>
 #include <greatfet_core.h>
 #include <i2c_bus.h>
+#include <i2c.h>
 
-uint8_t i2c_tx_buffer[255];
-uint8_t i2c_rx_buffer[255];
-uint16_t duty_cycle_count;
+static uint8_t i2c_tx_buffer[255];
+static uint8_t i2c_rx_buffer[255];
+static uint16_t duty_cycle_count;
+static uint8_t status;
 
 usb_request_status_t usb_vendor_request_i2c_start(
 		usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
@@ -46,8 +48,9 @@ usb_request_status_t usb_vendor_request_i2c_xfer(
 										endpoint->setup.length, NULL, NULL);
 		} else {
 			// We are only reading from the I2C device so do everything here
-			i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, NULL, 0,
+			status = i2c_bus_transfer(&i2c0, endpoint->setup.value & 0xff, NULL, 0,
 							 i2c_rx_buffer, endpoint->setup.index);
+
 			usb_transfer_schedule_ack(endpoint->in);
 		}
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
@@ -64,6 +67,17 @@ usb_request_status_t usb_vendor_request_i2c_response(
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
 		usb_transfer_schedule_block(endpoint->in, i2c_rx_buffer,
 									endpoint->setup.length, NULL, NULL);
+	} else if (stage == USB_TRANSFER_STAGE_DATA) {
+		usb_transfer_schedule_ack(endpoint->out);
+	}
+	return USB_REQUEST_STATUS_OK;
+}
+
+usb_request_status_t usb_vendor_request_i2c_get_status(
+	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage) {
+	if (stage == USB_TRANSFER_STAGE_SETUP) {
+		usb_transfer_schedule_block(endpoint->in, &status,
+								sizeof(status), NULL, NULL);
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}

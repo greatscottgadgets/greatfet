@@ -25,7 +25,7 @@ struct i2c_bus_t {
 
 void i2c_bus_start(i2c_bus_t* const bus, const uint16_t config);
 void i2c_bus_stop(i2c_bus_t* const bus);
-void i2c_bus_transfer(
+uint8_t i2c_bus_transfer(
 	i2c_bus_t* const bus,
 	const uint_fast8_t slave_address,
 	const uint8_t* const tx, const size_t tx_count,
