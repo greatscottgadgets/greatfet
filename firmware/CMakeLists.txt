@@ -11,4 +11,4 @@ project (greatfet_firmware_all)
 
 add_subdirectory(blinky)
 add_subdirectory(greatfet_usb)
-add_subdirectory(flash_stub)
+#add_subdirectory(flash_stub)
