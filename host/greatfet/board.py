@@ -434,7 +434,7 @@ class GreatFETBoard(object):
 
 
     def execute_command(self, class_number, verb, data=None, timeout=1000,
-            encoding=None, max_response_length=4096):
+            encoding=None, max_response_length=4096, usb_timeout=1000):
         """Executes a GreatFET command.
 
         Args:
@@ -456,6 +456,7 @@ class GreatFETBoard(object):
         # host library
         LIBGREAT_REQUEST_NUMBER = 0x65
         LIBGREAT_MAX_COMMAND_SIZE = 4096
+        LIBGREAT_VALUE_EXECUTE = 0
 
         # Build the command header, which identifies the command to be executed.
         prelude = self._build_command_prelude(class_number, verb)
@@ -473,27 +474,57 @@ class GreatFETBoard(object):
 
         # Send the command (including prelude) to the device...
         # TODO: upgrade this to be able to not block?
-        self.device.ctrl_transfer(
-            usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
-            LIBGREAT_REQUEST_NUMBER, 0, 0, to_send, timeout)
+        try:
+            self.device.ctrl_transfer(
+                usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
+                LIBGREAT_REQUEST_NUMBER, LIBGREAT_VALUE_EXECUTE, 0, to_send, timeout)
 
-        # Truncate our maximum, if necessary.
-        if max_response_length > 4096:
-            max_response_length = LIBGREAT_MAX_COMMAND_SIZE
+            # Truncate our maximum, if necessary.
+            if max_response_length > 4096:
+                max_response_length = LIBGREAT_MAX_COMMAND_SIZE
 
-        # ... and read any response the device has prepared for us.
-        # TODO: use our own timeout, rather than the command timeout, to
-        # avoid doubling the overall timeout
-        response = self.device.ctrl_transfer(
-            usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
-            LIBGREAT_REQUEST_NUMBER, 0, 0, max_response_length, timeout)
+            # ... and read any response the device has prepared for us.
+            # TODO: use our own timeout, rather than the command timeout, to
+            # avoid doubling the overall timeout
+            response = self.device.ctrl_transfer(
+                usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
+                LIBGREAT_REQUEST_NUMBER, LIBGREAT_VALUE_EXECUTE, 0, max_response_length, usb_timeout)
 
-        # If we were passed an encoding, attempt to decode the response data.
-        if encoding and response:
-            response = response.tostring().decode(encoding)
+            # If we were passed an encoding, attempt to decode the response data.
+            if encoding and response:
+                response = response.tostring().decode(encoding)
 
-        # Return the device's response.
-        return response
+            # Return the device's response.
+            return response
+
+        except:
+            self.abort_command()
+            raise
+
+
+    def abort_command(self, timeout=1000, retry_delay=1):
+        """ Aborts execution of a current libgreat command. Used for error handling.  """
+
+        # FIXME: these should be moved to a backend module in the libgreat
+        # host library
+        LIBGREAT_REQUEST_NUMBER = 0x65
+        LIBGREAT_VALUE_CANCEL = 0xDEAD
+
+        # Create a quick function to issue the abort request.
+        execute_abort = lambda device : device.ctrl_transfer(
+                usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
+                LIBGREAT_REQUEST_NUMBER, LIBGREAT_VALUE_CANCEL, 0, None, timeout)
+
+        # And try executing the abort progressively, mutiple times.
+        try:
+            execute_abort(self.device)
+        except:
+            if retry_delay:
+                time.sleep(retry_delay)
+                execute_abort(self.device)
+            else:
+                raise
+
 
 
     def read_debug_ring(self, max_length=2048, clear=False, encoding='latin1'):

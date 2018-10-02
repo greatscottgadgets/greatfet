@@ -65,6 +65,7 @@ struct command_transaction {
      */
     void *data_in_position;
     void *data_out_position;
+    uint32_t data_in_remaining;
 };
 
 
@@ -280,5 +281,27 @@ COMMS_DECLARE_ARGUMENT_HANDLER(int32_t);
  * Adds a string to the communications response.
  */
 void *comms_response_add_string(struct command_transaction *trans, char *response);
+
+/**
+ * Reserves a buffer of the provided size in the data output buffer.
+ *
+ * @param trans The associated transaction.
+ * @param size The amount of space to reserve.
+ *
+ * @return A pointer to the buffer that can be used for the relevant response,
+ *      or NULL if the relevant amount of space could not be reserved.
+ */
+void *comms_response_reserve_space(struct command_transaction *trans, uint32_t size);
+
+/**
+ * Grabs a chunk of up to max_length from the argument buffer.
+ *
+ * @param trans The associated transaction.
+ * @param max_length The maximum amount to read.
+ * @param out_length Out argument; accepts the actual amount read.
+ * @return A pointer to a buffer within the transaction that contains the relevant data.
+ */
+void *comms_argument_read_buffer(struct command_transaction *trans,
+        uint32_t max_length, uint32_t *out_length);
 
 #endif
