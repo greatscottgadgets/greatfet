@@ -68,9 +68,9 @@ static usb_request_status_t libgreat_comms_vendor_request_out_handler(
 	// If this is the setup stage of the transaction, schedule the data
 	// read itself.
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		usb_transfer_schedule_block(endpoint->out, usb_data_in_buffer,
+		rc = usb_transfer_schedule_block(endpoint->out, usb_data_in_buffer,
 				endpoint->setup.length, NULL, NULL);
-		return USB_REQUEST_STATUS_OK;
+		return rc ? USB_REQUEST_STATUS_STALL : USB_REQUEST_STATUS_OK;
 	}
 
 	// If we've just completed the data stage, we have data to work with!
@@ -100,7 +100,8 @@ static usb_request_status_t libgreat_comms_vendor_request_out_handler(
 		}
 		// Otherwise, ACK the transcation.
 		else {
-			usb_transfer_schedule_ack(endpoint->in);
+			rc = usb_transfer_schedule_ack(endpoint->in);
+			return rc ? USB_REQUEST_STATUS_STALL : USB_REQUEST_STATUS_OK;
 		}
 	}
 
@@ -111,6 +112,8 @@ static usb_request_status_t libgreat_comms_vendor_request_out_handler(
 static usb_request_status_t libgreat_comms_vendor_request_in_handler(
 	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
 {
+	int rc;
+
 	// If this is the setup stage of the transaction, schedule the data
 	// read itself.
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
@@ -130,15 +133,17 @@ static usb_request_status_t libgreat_comms_vendor_request_in_handler(
 			data_length = sizeof(usb_data_out_buffer);
 		}
 		// Schedule the transfer itself.
-		usb_transfer_schedule_block(endpoint->in, usb_data_out_buffer,
+		rc = usb_transfer_schedule_block(endpoint->in, usb_data_out_buffer,
 				data_length, NULL, NULL);
+		return rc ? USB_REQUEST_STATUS_STALL : USB_REQUEST_STATUS_OK;
 	}
 
 	// If this is the end of the DATA stage, queue an ACK for the status stage.
 	// and mark the transaction as dispatched.
 	if (stage == USB_TRANSFER_STAGE_DATA) {
 		transaction_underway = false;
-		usb_transfer_schedule_ack(endpoint->out);
+		rc = usb_transfer_schedule_ack(endpoint->out);
+		return rc ? USB_REQUEST_STATUS_STALL : USB_REQUEST_STATUS_OK;
 	}
 
 	return USB_REQUEST_STATUS_OK;

@@ -42,7 +42,7 @@
 		} \
 		\
 		++target; \
-        trans->data_in_remaining -= sizeof(type); \
+		trans->data_in_remaining -= sizeof(type); \
 		trans->data_in_position = target; \
 		\
 		return value; \

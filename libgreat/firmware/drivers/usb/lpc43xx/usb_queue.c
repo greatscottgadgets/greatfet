@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
+#include <errno.h>
 
 #include <debug.h>
 
@@ -16,6 +18,9 @@
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
 
+// FIXME abstract:
+#define USB_ALLOC_TIMEOUT_DEFAULT_US (1000000UL)
+
 usb_queue_t* endpoint_queues[NUM_USB_CONTROLLERS][12] = {};
 
 #define USB_ENDPOINT_INDEX(endpoint_address) (((endpoint_address & 0xF) * 2) + ((endpoint_address >> 7) & 1))
@@ -24,7 +29,10 @@ static usb_queue_t* endpoint_queue(
 		const usb_endpoint_t* const endpoint
 ) {
 		uint32_t index = USB_ENDPOINT_INDEX(endpoint->address);
-		if (endpoint_queues[endpoint->device->controller][index] == NULL) while (1);
+		if (endpoint_queues[endpoint->device->controller][index] == NULL) {
+			pr_error("usb error: could not find a Queue for endpoint %d!", endpoint->address);
+			return NULL;
+		}
 		return endpoint_queues[endpoint->device->controller][index];
 }
 
@@ -32,7 +40,10 @@ void usb_queue_init(
 		usb_queue_t* const queue
 ) {
 		uint32_t index = USB_ENDPOINT_INDEX(queue->endpoint->address);
-		if (endpoint_queues[queue->endpoint->device->controller][index] != NULL) while (1);
+		if (endpoint_queues[queue->endpoint->device->controller][index] != NULL) {
+			pr_error("usb error: could not initialize queue for endpoint %d!", queue->endpoint->address);
+			return;
+		}
 		endpoint_queues[queue->endpoint->device->controller][index] = queue;
 
 		usb_transfer_t* t = queue->free_transfers;
@@ -57,6 +68,7 @@ static usb_transfer_t* allocate_transfer(
 				transfer = (void *) __ldrex((uint32_t *) &queue->free_transfers);
 				aborted = __strex((uint32_t) transfer->next, (uint32_t *) &queue->free_transfers);
 		} while (aborted);
+
 		transfer->next = NULL;
 		return transfer;
 }
@@ -100,7 +112,9 @@ int usb_transfer_schedule(
 ) {
 		usb_queue_t* const queue = endpoint_queue(endpoint);
 		usb_transfer_t* const transfer = allocate_transfer(queue);
-		if (transfer == NULL) return -1;
+		if (transfer == NULL)
+			return ENOSPC;
+
 		usb_transfer_descriptor_t* const td = &transfer->td;
 
 	// Configure the transfer descriptor
@@ -133,20 +147,44 @@ int usb_transfer_schedule(
 		cm_enable_interrupts();
 		return 0;
 }
-	
+
+int usb_transfer_schedule_wait(
+	const usb_endpoint_t* const endpoint,
+	void* const data,
+	const uint32_t maximum_length,
+	const transfer_completion_cb completion_cb,
+	void* const user_data,
+	uint32_t timeout
+)
+{
+		uint32_t time_base = get_time();
+		int ret = -1;
+
+		while (ret) {
+
+			// Repeatedly try to schedule a transfer until one succeeds or we time out.
+			ret = usb_transfer_schedule(endpoint,
+					data, maximum_length, completion_cb, user_data);
+
+			// And enforce our timeout.
+			if (get_time_since(time_base) > timeout) {
+				return ETIMEDOUT;
+			}
+		}
+		return 0;
+}
+
+
 int usb_transfer_schedule_block(
 	const usb_endpoint_t* const endpoint,
 	void* const data,
 	const uint32_t maximum_length,
-		const transfer_completion_cb completion_cb,
-		void* const user_data
-) {
-		int ret;
-		do {
-				ret = usb_transfer_schedule(endpoint, data, maximum_length,
-											completion_cb, user_data);
-		} while (ret == -1);
-		return 0;
+	const transfer_completion_cb completion_cb,
+	void* const user_data
+)
+{
+	return usb_transfer_schedule_wait(endpoint, data, maximum_length,
+			completion_cb, user_data, USB_ALLOC_TIMEOUT_DEFAULT_US);
 }
 
 int usb_transfer_schedule_ack(
@@ -161,7 +199,10 @@ int usb_transfer_schedule_ack(
 static void usb_queue_clean_up_transfers(usb_endpoint_t* const endpoint, bool include_active)
 {
 		usb_queue_t* const queue = endpoint_queue(endpoint);
-		if (queue == NULL) while(1); // Uh oh
+		if (queue == NULL) {
+			pr_error("usb error: tried to clean up an endpoint (%d) with no queue!\n", endpoint->address);
+		}
+
 		usb_transfer_t* transfer = queue->active;
 
 		while (transfer != NULL) {
@@ -172,15 +213,15 @@ static void usb_queue_clean_up_transfers(usb_endpoint_t* const endpoint, bool in
 
 				// Check for failures
 				if (status & USB_TD_DTD_TOKEN_STATUS_HALTED) {
-					pr_error("usb error:transaction reports halted status! aborting.");
+					pr_error("usb error:transaction reports halted status! aborting.\n");
 					aborting = true;
 				}
 				if (status & USB_TD_DTD_TOKEN_STATUS_BUFFER_ERROR) {
-					pr_error("usb error:transaction reports buffer error! aborting.");
+					pr_error("usb error:transaction reports buffer error! aborting.\n");
 					aborting = true;
 				}
 				if (status & USB_TD_DTD_TOKEN_STATUS_TRANSACTION_ERROR) {
-					pr_error("usb error:transaction reports transaction error! aborting.");
+					pr_error("usb error:transaction reports transaction error! aborting.\n");
 					aborting = true;
 				}
 
