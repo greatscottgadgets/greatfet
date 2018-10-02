@@ -71,4 +71,8 @@ void usb_queue_transfer_complete(
         usb_endpoint_t* const endpoint
 );
 
+
+void usb_queue_invalidate_transfers(
+        usb_endpoint_t* const endpoint
+);
 #endif//__USB_QUEUE_H__
