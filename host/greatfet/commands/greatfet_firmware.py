@@ -3,7 +3,7 @@
 # This file is part of GreatFET
 #
 """
-    Utility for flashing the onboard SPI flash on GreatFET boards.
+    Utility for flashing firmware on GreatFET boards.
 """
 
 from __future__ import print_function
@@ -145,7 +145,7 @@ def find_greatfet(args):
 def main():
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(
-        description="Utility for flashing the GreatFET's onboard SPI flash")
+        description="Utility for flashing firmware on GreatFET boards")
     parser.add_argument('-a', '--address', metavar='<n>', type=int,
                         help="starting address (default: 0)", default=0)
     parser.add_argument('-l', '--length', metavar='<n>', type=int,

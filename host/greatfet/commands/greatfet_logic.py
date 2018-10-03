@@ -18,7 +18,7 @@ from greatfet.protocol import vendor_requests
 def main():
     logfile = 'log.bin'
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
+    parser = argparse.ArgumentParser(description="Logic analyzer implementation for GreatFET")
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="Write data to file", default=logfile)
