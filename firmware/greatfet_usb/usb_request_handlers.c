@@ -5,7 +5,6 @@
 #include <drivers/usb/lpc43xx/usb_standard_request.h>
 #include <drivers/usb/comms_backend.h>
 
-#include "usb_api_spiflash.h"
 #include "usb_api_adc.h"
 #include "usb_api_dac.h"
 #include "usb_api_spi.h"
@@ -24,11 +23,11 @@
 #include "usb_api_msp430.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
-	usb_vendor_request_spiflash_init,
-	usb_vendor_request_spiflash_write,
-	usb_vendor_request_spiflash_read,
-	usb_vendor_request_spiflash_erase,
-	NULL, // usb_vendor_request_read_board_id,
+	NULL, //usb_vendor_request_spiflash_init,
+	NULL, //usb_vendor_request_spiflash_write,
+	NULL, //usb_vendor_request_spiflash_read,
+	NULL, //usb_vendor_request_spiflash_erase,
+	NULL, //usb_vendor_request_read_board_id,
 	NULL, //usb_vendor_request_read_version_string,
 	NULL, //usb_vendor_request_read_partid_serialno,
 	NULL,

@@ -91,6 +91,7 @@ include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
 # FIXME: pull out into libgreat, probably?
 include_directories("${PATH_LIBGREAT_FIRMWARE}/include")
+AUX_SOURCE_DIRECTORY("${PATH_LIBGREAT_FIRMWARE}/classes" LIBGREAT_API_CLASSES)
 
 
 macro(DeclareTargets)
