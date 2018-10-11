@@ -49,9 +49,9 @@ def main():
 def scan(device, log_function):
     i2c_bus = I2CBus(device)
     valid_addresses = i2c_bus.scan()
-    log_function("Working address(es):")
+    print("Working address(es):")
     for address in valid_addresses:
-        log_function(hex(address))
+        print(hex(address))
     
 
 def transmit(device, address, data, receive_length, log_function):
