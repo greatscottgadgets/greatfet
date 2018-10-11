@@ -131,4 +131,4 @@ static struct comms_verb core_verbs[] = {
 		{ .verb_number = 0x20, .handler = core_verb_request_reset },
 		{} // Sentinel
 };
-COMMS_DEFINE_SIMPLE_CLASS(core_api, CLASS_NUMBER_CORE, "Core API", core_verbs);
+COMMS_DEFINE_SIMPLE_CLASS(core_api, CLASS_NUMBER_CORE, "core", core_verbs);

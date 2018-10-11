@@ -59,6 +59,15 @@ int usb_transfer_schedule_block(
         void* const user_data
 );
 
+int usb_transfer_schedule_wait(
+	const usb_endpoint_t* const endpoint,
+	void* const data,
+	const uint32_t maximum_length,
+	const transfer_completion_cb completion_cb,
+	void* const user_data,
+	uint32_t timeout
+);
+
 int usb_transfer_schedule_ack(
 	const usb_endpoint_t* const endpoint
 );
@@ -71,4 +80,8 @@ void usb_queue_transfer_complete(
         usb_endpoint_t* const endpoint
 );
 
+
+void usb_queue_invalidate_transfers(
+        usb_endpoint_t* const endpoint
+);
 #endif//__USB_QUEUE_H__

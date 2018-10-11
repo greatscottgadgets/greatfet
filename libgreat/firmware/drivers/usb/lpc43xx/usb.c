@@ -257,7 +257,7 @@ void usb_endpoint_disable(
 			USB1_ENDPTCTRL(endpoint_number) &= ~(USB1_ENDPTCTRL_RXE);
 		}
 	}
-        usb_queue_flush_endpoint(endpoint);
+		usb_queue_flush_endpoint(endpoint);
 	usb_endpoint_clear_pending_interrupts(endpoint);
 	usb_endpoint_flush(endpoint);
 }
@@ -271,7 +271,7 @@ void usb_endpoint_prime(
 	qh->next_dtd_pointer = first_td;
 	qh->total_bytes
 		&= ~( USB_TD_DTD_TOKEN_STATUS_ACTIVE
-		    | USB_TD_DTD_TOKEN_STATUS_HALTED
+			| USB_TD_DTD_TOKEN_STATUS_HALTED
 			)
 		;
 	
@@ -455,7 +455,7 @@ void usb_endpoint_stall(
 	}
 	
 	// If this is a protocol stall (a stall on a control endpoint),
-	// clear out any allocate TDs.
+	// clear out any allocated TDs.
 	if(endpoint_number == 0) {	
 		usb_endpoint_flush(endpoint->in);
 		usb_endpoint_flush(endpoint->out);
@@ -542,17 +542,16 @@ uint32_t usb_get_status(const usb_peripheral_t* const device) {
 }
 
 void usb_clear_endpoint_setup_status(const uint32_t endpoint_setup_status,
-											const usb_peripheral_t* const device) {
- 	if( device->controller == 0 ) {
-		USB0_ENDPTSETUPSTAT = endpoint_setup_status;
-	}
-	if( device->controller == 1 ) {
-		USB1_ENDPTSETUPSTAT = endpoint_setup_status;
-	}
+		const usb_peripheral_t* const device) {
+
+	int usb_number = device->controller;
+	// Clear the Setup ready, and wait for the clear to complete.
+	USB_REG(usb_number)->ENDPTSETUPSTAT = endpoint_setup_status;
+	while (USB_REG(usb_number)->ENDPTSETUPSTAT & endpoint_setup_status);
 }
 
 uint32_t usb_get_endpoint_setup_status(const usb_peripheral_t* const device) {
- 	if( device->controller == 0 ) {
+	if( device->controller == 0 ) {
 		return USB0_ENDPTSETUPSTAT;
 	} else {
 		return USB1_ENDPTSETUPSTAT;
@@ -623,13 +622,13 @@ void usb_set_address_deferred(
 	if( device->controller == 0 ) {
 		USB0_DEVICEADDR
 			= USB0_DEVICEADDR_USBADR(address)
-		    | USB0_DEVICEADDR_USBADRA
+			| USB0_DEVICEADDR_USBADRA
 			;
 	}
 	if( device->controller == 1 ) {
 		USB1_DEVICEADDR
 			= USB1_DEVICEADDR_USBADR(address)
-		    | USB1_DEVICEADDR_USBADRA
+			| USB1_DEVICEADDR_USBADRA
 			;
 	}
 }
@@ -794,10 +793,9 @@ void usb_endpoint_init_without_descriptor(
 	usb_queue_head_t* const qh = usb_queue_head(endpoint->address, endpoint->device);
 	qh->capabilities
 		= USB_QH_CAPABILITIES_MULT(0)
-		| USB_QH_CAPABILITIES_ZLT
 		| USB_QH_CAPABILITIES_MPL(max_packet_size)
 		| ((transfer_type == USB_TRANSFER_TYPE_CONTROL) ? USB_QH_CAPABILITIES_IOS : 0)
-		;
+		| ((transfer_type == USB_TRANSFER_TYPE_CONTROL) ? 0 : USB_QH_CAPABILITIES_ZLT);
 	qh->current_dtd_pointer = 0;
 	qh->next_dtd_pointer = USB_TD_NEXT_DTD_POINTER_TERMINATE;
 	qh->total_bytes
@@ -872,21 +870,28 @@ static void usb_check_for_setup_events(usb_peripheral_t* const device) {
 				endptsetupstat_bit = USB1_ENDPTSETUPSTAT_ENDPTSETUPSTAT(1 << i);
 			}
 			if( endptsetupstat & endptsetupstat_bit ) {
-				usb_endpoint_t* const endpoint = 
-					usb_endpoint_from_address(
+				usb_endpoint_t* const endpoint = usb_endpoint_from_address(
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, i),
 						device);
-				if( endpoint && endpoint->setup_complete ) {
-					usb_copy_setup(&endpoint->setup,
-							   usb_queue_head(endpoint->address, endpoint->device)->setup);
-					// TODO: Clean up this duplicated effort by providing
-					// a cleaner way to get the SETUP data.
-					usb_copy_setup(&endpoint->in->setup,
-							   usb_queue_head(endpoint->address, endpoint->device)->setup);
-					usb_clear_endpoint_setup_status(endptsetupstat_bit, device);
+
+				// TODO: Clean up this duplicated effort by providing
+				// a cleaner way to get the SETUP data.
+				usb_copy_setup(&endpoint->setup,
+						   usb_queue_head(endpoint->address, endpoint->device)->setup);
+				usb_copy_setup(&endpoint->in->setup,
+						   usb_queue_head(endpoint->address, endpoint->device)->setup);
+
+				// Mark the setup stage as handled, as we've grabbed its data.
+				// TODO: should this be after we flush the endpoints, too?
+				usb_clear_endpoint_setup_status(endptsetupstat_bit, device);
+
+				// Ensure there are no pending control transfers.
+				usb_endpoint_flush(endpoint->in);
+				usb_endpoint_flush(endpoint->out);
+
+				// If we have a setup_complete callback, call it.
+				if (endpoint && endpoint->setup_complete) {
 					endpoint->setup_complete(endpoint);
-				} else {
-					usb_clear_endpoint_setup_status(endptsetupstat_bit, device);
 				}
 			}
 		}
@@ -907,7 +912,7 @@ static void usb_check_for_transfer_events(usb_peripheral_t* const device) {
 			}
 			if( endptcomplete & endptcomplete_out_bit ) {
 				usb_clear_endpoint_complete(endptcomplete_out_bit, device);
-			 	usb_endpoint_t* const endpoint = 
+				usb_endpoint_t* const endpoint =
 					usb_endpoint_from_address(
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, i),
 						device);
@@ -924,7 +929,7 @@ static void usb_check_for_transfer_events(usb_peripheral_t* const device) {
 			}
 			if( endptcomplete & endptcomplete_in_bit ) {
 				usb_clear_endpoint_complete(endptcomplete_in_bit, device);
-				usb_endpoint_t* const endpoint = 
+				usb_endpoint_t* const endpoint =
 					usb_endpoint_from_address(
 						usb_endpoint_address(USB_TRANSFER_DIRECTION_IN, i),
 						device);
