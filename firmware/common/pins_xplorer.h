@@ -93,6 +93,12 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_FLASH_HOLD      (P3_4) /* GPIO1[14] on P3_4 */
 #define SCU_FLASH_WP        (P3_5) /* GPIO1[15] on P3_5 */
 
+
+/* Pin locations for the onboard SPI flash. */
+static const struct gpio_t gpio_onboard_flash_hold   = GPIO(1, 14);
+static const struct gpio_t gpio_onboard_flash_wp     = GPIO(1, 15);
+static const struct gpio_t gpio_onboard_flash_select = GPIO(5, 11);
+
 #define ONBOARD_FLASH_DEVICE_ID  0x15 /* Expected device_id for S25FL032P */
 #define ONBOARD_FLASH_PAGE_LEN   256U
 #define ONBOARD_FLASH_NUM_PAGES  16384U

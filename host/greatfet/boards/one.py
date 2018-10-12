@@ -8,7 +8,7 @@ from ..peripherals.gpio import GPIO
 from ..peripherals.led import LED
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
-from ..peripherals.spi_flash import SPIFlash
+from ..peripherals.firmware import DeviceFirmwareManager
 
 from ..glitchkit import *
 
@@ -142,7 +142,7 @@ class GreatFETOne(GreatFETBoard):
         # Initialize the fixed peripherals that come on the board.
         # TODO: Use a self.add_peripheral mechanism, so peripherals can
         # be dynamically listed?
-        self.onboard_flash = SPIFlash(self)
+        self.onboard_flash = DeviceFirmwareManager(self)
         self.i2c_busses = [ I2CBus(self, 'I2C0') ]
         self.spi_busses = [ SPIBus(self, 'SPI1') ]
 
