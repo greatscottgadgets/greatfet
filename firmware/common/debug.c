@@ -27,7 +27,7 @@
 
 // FIXME: Don't assume this from Common -- pull this in from e.g. a configuration header file.
 #ifndef CONFIG_DEBUG_BUFFER_SIZE
-#define CONFIG_DEBUG_BUFFER_SIZE 2048
+#define CONFIG_DEBUG_BUFFER_SIZE 4096
 #endif
 
 /* Storage for the debug ringbuffer. */
@@ -38,7 +38,6 @@ static unsigned int debug_write_index;
 // Store the active loglevel.
 // TODO: reduce this, maybe?
 static loglevel_t debug_loglevel = LOGLEVEL_INFO;
-
 
 /**
  * Initializes debugging support.

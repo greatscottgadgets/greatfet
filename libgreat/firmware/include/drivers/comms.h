@@ -14,7 +14,20 @@
 #include <stdint.h>
 
 /**
- * Structure composing the objects for a given
+ * Status flags for communications parsing.
+ */
+enum comms_parse_status {
+    // Everything's okay, thus far.
+    COMMS_PARSE_OKAY = 0,
+
+    // Comms parsing has either insufficient data (in)
+    // or insufficient space (out).
+    COMMS_PARSE_OVERRUN = (1 << 0),
+    COMMS_PARSE_UNDERRUN = (1 << 0),
+};
+
+/**
+ * Structure composing the objects for a given communication.
  */
 struct command_transaction {
 
@@ -66,6 +79,12 @@ struct command_transaction {
     void *data_in_position;
     void *data_out_position;
     uint32_t data_in_remaining;
+
+    /**
+     * Status for argument parsing.
+     */
+    uint32_t data_in_status;
+    uint32_t data_out_status;
 };
 
 
@@ -130,10 +149,24 @@ struct comms_verb {
 	/* The name of the verb; consumed by the host API. */
 	char *name;
 
-	/* The command handler -- must be non-NULL for
-	 * any non-sentinel (termiatnor) verb. */
-	command_handler_function handler;
+    /* The signatures of for the verb. Optional; but very useful
+     * to the host API. See the docuemntation for format information. 
+     * Must be NULL if not provided. */
+    char *in_signature;
+    char *out_signature;
 
+    /* Documentation for the verb. Optional, but again useful to
+     * the host API. Must be NULL if not provided.*/
+    char *doc;
+
+    /* Comma-delimited names of the input/output parametrs for the verb.
+     * Optional, but again useful to the host API. Must be NULL if not provided.*/
+    char *in_param_names;
+    char *out_param_names;
+
+	/* The command handler -- must be non-NULL for
+	 * any non-sentinel (termianator) verb. */
+	command_handler_function handler;
 };
 
 
@@ -150,9 +183,16 @@ struct comms_class {
 
 	/**
 	 * Printable name for the class.
-	 * Used mostly for debug output.
+     * Should be representable as a python identifier.
 	 */
 	char *name;
+
+    /**
+     * Documentation for the class.
+     * Provides a short blurb about the given class equivalent to a
+     * python docstring. Optional, but useful. Must be NULL if not provided.
+     */
+    char *doc;
 
 	/**
 	 * A function that will accept any commands issued to this class.
@@ -244,9 +284,10 @@ bool comms_pipe_ready(struct comms_pipe *pipe);
 	CALL_ON_INIT(defined_name##__auto_initializer)
 
 /* Defines a comms_class_t and registers it for use. */
-#define COMMS_DEFINE_SIMPLE_CLASS(defined_name, number, string, verbs) \
+#define COMMS_DEFINE_SIMPLE_CLASS(defined_name, number, string, verbs, documentation) \
 	struct comms_class defined_name##__object_ = { \
 		.name = string, \
+        .doc = documentation, \
 		.class_number = number, \
 		.command_verbs = verbs, \
 	}; \
@@ -260,27 +301,25 @@ bool comms_pipe_ready(struct comms_pipe *pipe);
 	void *comms_response_add_##type(struct command_transaction *trans, type response)
 #define COMMS_DECLARE_ARGUMENT_HANDLER(type) \
 	type comms_argument_parse_##type(struct command_transaction *trans);
+#define COMMS_DECLARE_HELPERS(type) \
+    COMMS_DECLARE_RESPONSE_HANDLER(type); \
+    COMMS_DECLARE_ARGUMENT_HANDLER(type)
 
 /**
- * Convenience functions -- declared in util.h
+ * Convenience functions -- declared in util.c
  */
-COMMS_DECLARE_RESPONSE_HANDLER(uint8_t);
-COMMS_DECLARE_RESPONSE_HANDLER(uint16_t);
-COMMS_DECLARE_RESPONSE_HANDLER(uint32_t);
-COMMS_DECLARE_RESPONSE_HANDLER(int8_t);
-COMMS_DECLARE_RESPONSE_HANDLER(int16_t);
-COMMS_DECLARE_RESPONSE_HANDLER(int32_t);
-COMMS_DECLARE_ARGUMENT_HANDLER(uint8_t);
-COMMS_DECLARE_ARGUMENT_HANDLER(uint16_t);
-COMMS_DECLARE_ARGUMENT_HANDLER(uint32_t);
-COMMS_DECLARE_ARGUMENT_HANDLER(int8_t);
-COMMS_DECLARE_ARGUMENT_HANDLER(int16_t);
-COMMS_DECLARE_ARGUMENT_HANDLER(int32_t);
+COMMS_DECLARE_HELPERS(uint8_t);
+COMMS_DECLARE_HELPERS(uint16_t);
+COMMS_DECLARE_HELPERS(uint32_t);
+COMMS_DECLARE_HELPERS(int8_t);
+COMMS_DECLARE_HELPERS(int16_t);
+COMMS_DECLARE_HELPERS(int32_t);
+
 
 /**
  * Adds a string to the communications response.
  */
-void *comms_response_add_string(struct command_transaction *trans, char *response);
+void *comms_response_add_string(struct command_transaction *trans, char const *const response);
 
 /**
  * Reserves a buffer of the provided size in the data output buffer.
@@ -303,5 +342,40 @@ void *comms_response_reserve_space(struct command_transaction *trans, uint32_t s
  */
 void *comms_argument_read_buffer(struct command_transaction *trans,
         uint32_t max_length, uint32_t *out_length);
+
+/**
+ * @return the total amount of data remaining, unread, in the given comms buffer
+ */
+static inline uint32_t comms_argument_data_remaining(struct command_transaction *trans)
+{
+    return trans->data_in_remaining;
+}
+
+
+/**
+ * @return True iff argument parsing has completely succesfully thus far.
+ */
+static inline bool comms_argument_parse_okay(struct command_transaction *trans)
+{
+    return !trans->data_in_status;
+}
+
+
+/**
+ * @return True iff argument parsing has completely succesfully thus far.
+ */
+static inline bool comms_transaction_okay(struct command_transaction *trans)
+{
+    return (!trans->data_in_status) && (!trans->data_out_status);
+}
+
+
+/**
+ * @return True iff argument parsing has completely succesfully thus far.
+ */
+static inline void comms_clear_parse_errors(struct command_transaction *trans)
+{
+    trans->data_in_status = COMMS_PARSE_OKAY;
+}
 
 #endif

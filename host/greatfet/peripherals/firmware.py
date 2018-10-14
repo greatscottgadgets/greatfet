@@ -10,14 +10,6 @@ from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
 
 
-# FIXME: abstract these to their own class!
-LIBGREAT_CLASS_FIRMWARE = 0x1
-
-LIBGREAT_FIRMWARE_VERB_INIT       = 0x00
-LIBGREAT_FIRMWARE_VERB_FULL_ERASE = 0x01
-LIBGREAT_FIRMWARE_VERB_WRITE_PAGE = 0x03
-LIBGREAT_FIRMWARE_VERB_READ_PAGE  = 0x04
-
 # TODO: pull into libgreat
 class DeviceFirmwareManager(GreatFETPeripheral):
     """
@@ -31,14 +23,16 @@ class DeviceFirmwareManager(GreatFETPeripheral):
             board -- The GreatFETBoard that will be programming our flash chip.
         """
 
+        if not board.supports_api('firmware'):
+            raise NotImplementedError("The target board does not support the relevant API!")
+
         # Store a reference to the parent board, via which we'll program the
         # the actual SPI flash.
         self.board = board
-        self.class_number = LIBGREAT_CLASS_FIRMWARE
+        self.api = board.apis.firmware
 
-        # Ask the device to perform initialization, and then grab its page size.
-        response = self.board.execute_command(LIBGREAT_CLASS_FIRMWARE, LIBGREAT_FIRMWARE_VERB_INIT)
-        self.page_size, self.maximum_address = struct.unpack("<II", response)
+        # Ask the device to perform initialization, and then grab its extents.
+        self.page_size, self.maximum_address = self.api.initialize()
 
 
     def erase(self):
@@ -47,7 +41,7 @@ class DeviceFirmwareManager(GreatFETPeripheral):
         CAUTION: After running this function, you'll need to use DFU mode to
         load a new GreatFET program onto the board. Be careful!
         """
-        self.board.execute_command(LIBGREAT_CLASS_FIRMWARE, LIBGREAT_FIRMWARE_VERB_FULL_ERASE, timeout=10000)
+        self.api.full_erase(timeout=10000)
 
 
     def write(self, data, address=0, erase_first=False, progress_callback=None):
@@ -195,14 +189,15 @@ class DeviceFirmwareManager(GreatFETPeripheral):
         if (length > self.page_size):
             raise ValueError("Attempting to use page function to write more than a page!")
 
-        # Prefix the the address to our command.
-        address_prefix = address.to_bytes(4, byteorder='little')
-        data_array = address_prefix + data_array
+        # If our data doesn't fill a full page (e.g. this is the last page in a long write),
+        # pad it out to the maximum length.
+        if length < self.page_size:
+            pad_length = self.page_size - length
+            data_array.extend(b"\0" * pad_length)
 
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
-        self.board.execute_command(LIBGREAT_CLASS_FIRMWARE, LIBGREAT_FIRMWARE_VERB_WRITE_PAGE,
-                data=data_array, timeout=30000)
+        self.api.write_page(address, data_array, timeout=30000)
 
 
     def _read_page(self, address, length):
@@ -224,10 +219,6 @@ class DeviceFirmwareManager(GreatFETPeripheral):
         if (length > self.page_size):
             raise ValueError("Attempting to use page function to read more than a page!")
 
-        # Convert the address into the form the target expects.
-        address_raw = address.to_bytes(4, byteorder='little')
-
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
-        return self.board.execute_command(LIBGREAT_CLASS_FIRMWARE, LIBGREAT_FIRMWARE_VERB_READ_PAGE,
-                data=address_raw, timeout=30000)
+        return self.api.read_page(address)

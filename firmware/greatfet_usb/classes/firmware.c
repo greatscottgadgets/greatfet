@@ -78,8 +78,8 @@ int firmware_verb_write_page(struct command_transaction *trans)
     void *data_to_write = comms_argument_read_buffer(trans, -1, &length);
 
     // Ensure we have data.
-    if (!data_to_write) {
-        pr_error("error: recieved invalid firmware write request (no data)!");
+    if (!data_to_write || !comms_transaction_okay(trans)) {
+        pr_error("error: recieved invalid firmware write request (insufficient data)!");
         return EINVAL;
     }
 
@@ -114,7 +114,7 @@ int firmware_verb_read_page(struct command_transaction *trans)
     void *target_buffer = comms_response_reserve_space(trans, spi_flash_drv.page_len);
 
     // Ensure we have a buffer to put our result into.
-    if (!target_buffer) {
+    if (!target_buffer || !comms_transaction_okay(trans)) {
         pr_error("error: firmware: could not find enough space to read a page into\n");
         return EINVAL;
     }

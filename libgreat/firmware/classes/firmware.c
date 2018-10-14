@@ -24,7 +24,9 @@
  * Initializes the firmware update subsystem of the target device.
  * Accepts no arguments.
  *
- * Returns a uint32_t that indicates the device's page size.
+ * Returns:
+ *  - a uint32_t that indicates the device's page size in bytes.
+ *  - a uint32_t that indicates the device's total size, in bytes
  */
 WEAK int firmware_verb_initialize(struct command_transaction *trans)
 {
@@ -85,11 +87,21 @@ WEAK int firmware_verb_read_page(struct command_transaction *trans)
  * Verbs for the firmware API.
  */
 static struct comms_verb firmware_verbs[] = {
-		{ .verb_number = 0x0, .name = "initialize", .handler = firmware_verb_initialize },
-		{ .verb_number = 0x1, .name = "full_erase", .handler = firmware_verb_full_erase },
-		{ .verb_number = 0x2, .name = "page_erase", .handler = firmware_verb_erase_page },
-		{ .verb_number = 0x3, .name = "write_page", .handler = firmware_verb_write_page },
-		{ .verb_number = 0x4, .name = "read_page",  .handler = firmware_verb_read_page },
+		{ .verb_number = 0x0, .name = "initialize", .handler = firmware_verb_initialize,
+            .in_signature = "", .out_signature = "<II", .out_param_names = "page_size, total_size",
+            .doc = "Sets up the board to have its firmware programmed." },
+		{ .verb_number = 0x1, .name = "full_erase", .handler = firmware_verb_full_erase,
+            .in_signature = "", .out_signature	= "", .doc = "Erases the entire firmware flash chip." },
+		{ .verb_number = 0x2, .name = "page_erase", .handler = firmware_verb_erase_page,
+            .in_signature = "<I", .out_signature = "", .in_param_names = "address",
+            .doc = "Erases the page with the provided address on the fw flash." },
+		{ .verb_number = 0x3, .name = "write_page", .handler = firmware_verb_write_page,
+            .in_signature = "<I*X", .out_signature = "", .in_param_names = "address, data",
+            .doc = "Writes the provided data to a single firmware flash page." },
+		{ .verb_number = 0x4, .name = "read_page",	.handler = firmware_verb_read_page,
+            .in_signature = "<I", .out_signature = "<*X", .in_param_names = "address", .out_param_names = "data",
+            .doc = "Returns the contents of the flash page at the given address." },
 		{} // Sentinel
 };
-COMMS_DEFINE_SIMPLE_CLASS(firmware_api, CLASS_NUMBER_FIRMWARE, "firmware", firmware_verbs);
+COMMS_DEFINE_SIMPLE_CLASS(firmware_api, CLASS_NUMBER_FIRMWARE, "firmware", firmware_verbs,
+        "Common API for updating firmware on a libgreat device.");

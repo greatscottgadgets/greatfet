@@ -130,11 +130,11 @@ class GreatFETOne(GreatFETBoard):
     }
 
 
-    def __init__(self, **device_identifiers):
+    def initialize_apis(self):
         """ Initialize a new GreatFET One connection. """
 
         # Set up the core connection.
-        super(GreatFETOne, self).__init__(**device_identifiers)
+        super(GreatFETOne, self).initialize_apis()
 
         # TODO: Abstract the below into a 'pull out standard peripherals'
         # method?
@@ -142,7 +142,12 @@ class GreatFETOne(GreatFETBoard):
         # Initialize the fixed peripherals that come on the board.
         # TODO: Use a self.add_peripheral mechanism, so peripherals can
         # be dynamically listed?
-        self.onboard_flash = DeviceFirmwareManager(self)
+        if self.supports_api('firmware'):
+            self.onboard_flash = DeviceFirmwareManager(self)
+        
+        # XXX disable perpiherals as we develop libgreat
+        return
+        
         self.i2c_busses = [ I2CBus(self, 'I2C0') ]
         self.spi_busses = [ SPIBus(self, 'SPI1') ]
 
