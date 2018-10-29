@@ -8,7 +8,7 @@
 
 #include <drivers/comms.h>
 
-#define CLASS_NUMBER_DEBUG (0x1234)
+#define CLASS_NUMBER_DEBUG (0x10)
 
 
 /**
@@ -30,13 +30,21 @@ static int verb_clear_dmesg(struct command_transaction *trans)
 	return 0;
 }
 
+// TODO: verb for setting the current log level
 
 /**
  * Verbs for the debug API.
  */
 struct comms_verb debug_verbs[] = {
-		{ .verb_number = 0x0, .name = "read_dmesg", .handler = verb_read_dmesg },
-		{ .verb_number = 0x1, .name = "clear_dmesg", .handler = verb_clear_dmesg },
+		{ .verb_number = 0x0, .name = "read_dmesg",  .handler = verb_read_dmesg,
+            .in_signature = "", .out_signature="<4096S", .out_param_names = "log",
+            .doc = "Fetches the content of the device's debug ring (log)."
+        },
+		{ .verb_number = 0x1, .name = "clear_dmesg",  .handler = verb_clear_dmesg,
+            .in_signature = "", .out_signature="<4096S", .out_param_names = "log",
+            .doc = "Fetches and clears content of the device's debug ring (log)."
+        },
 		{} // Sentinel
 };
-COMMS_DEFINE_SIMPLE_CLASS(debug_api, CLASS_NUMBER_DEBUG, "Debug API", debug_verbs);
+COMMS_DEFINE_SIMPLE_CLASS(debug_api, CLASS_NUMBER_DEBUG, "debug", debug_verbs,
+        "API for accessing the device's debug state.");

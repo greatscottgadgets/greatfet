@@ -43,6 +43,9 @@ class GreatFETOne(GreatFETBoard):
         to a more specific GreatFET by e.g. serial number.
         """
 
+        # XXX: disable this class until the flash stub is fixed
+        return False
+
         try:
             potential_device = cls(**device_identifiers)
         except DeviceNotFoundError:

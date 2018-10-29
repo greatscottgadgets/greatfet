@@ -87,6 +87,8 @@ static usb_request_status_t libgreat_comms_vendor_request_out_handler(
 		active_transaction.data_in_position = active_transaction.data_in;
 		active_transaction.data_out_position = active_transaction.data_out;
 		active_transaction.data_in_remaining = active_transaction.data_in_length;
+		active_transaction.data_in_status = COMMS_PARSE_OKAY;
+		active_transaction.data_out_status = COMMS_PARSE_OKAY;
 		transaction_underway = true;
 
 		// Submit the command to the backend for execution.

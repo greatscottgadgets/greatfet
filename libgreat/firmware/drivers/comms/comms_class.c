@@ -66,8 +66,12 @@ struct comms_class *comms_get_class_by_number(uint32_t class_number)
 int comms_backend_submit_command(struct comm_backend_driver *backend, 
 	struct command_transaction *trans)
 {
+	int rc = 0;
+	bool found_handler = false;
+
 	struct comms_verb *verb;
 	struct comms_class *handling_class = comms_get_class_by_number(trans->class_number);
+
 
 	// If we couldn't find a handling class.
 	if (!handling_class) {
@@ -78,8 +82,10 @@ int comms_backend_submit_command(struct comm_backend_driver *backend,
 
 	// If the handling class has a command handler, use it!
 	if (handling_class->command_handler) {
+		found_handler = true;
+
 		pr_debug("dispatching a command via handler function for class %s\n", handling_class->name);
-		return handling_class->command_handler(trans);
+		rc = handling_class->command_handler(trans);
 	}
 
 	// Otherwise, search for a verb handler for the given class.
@@ -95,15 +101,28 @@ int comms_backend_submit_command(struct comm_backend_driver *backend,
 	// with a NULL handler.
 	for (verb = handling_class->command_verbs; verb->handler; ++verb) {
 		if (verb->verb_number == trans->verb) {
+			found_handler = true;
+
 			pr_debug("dispatching command %s:%s()\n", handling_class->name, verb->name);
-			return verb->handler(trans);	
+			rc = verb->handler(trans);
+			break;
 		}
 	}
 
 	// If we couldn't find any handler, abort.
-	pr_warning("warning: backend %s submttied a command class %s with an unhandled verb %d / %x\n",
-			backend->name, handling_class->name, trans->verb, trans->verb);
-	return EINVAL;
+	if (!found_handler) {
+		pr_warning("warning: backend %s submttied a command class %s with an unhandled verb %d / %x\n",
+				backend->name, handling_class->name, trans->verb, trans->verb);
+		return EINVAL;
+	}
+
+	// If we appear to have successfully handled the verb, but an error
+	// occurred, grab its error code.
+	if (!rc && !comms_transaction_okay(trans)) {
+		rc = EBADMSG;
+	}
+
+	return rc;
 }
 
 

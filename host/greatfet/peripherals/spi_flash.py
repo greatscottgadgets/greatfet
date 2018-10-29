@@ -11,10 +11,6 @@ from ..peripheral import GreatFETPeripheral
 
 from .firmware import DeviceFirmwareManager
 
-# FIXME: abstract these to their own class!
-LIBGREAT_CLASS_SPI_FLASH = 0x11
-LIBGREAT_SPI_FLASH_VERB_INIT = 0x00
-
 
 class SPIFlash(DeviceFirmwareManager, GreatFETPeripheral):
     """ Class representing an SPI flash connected to the GreatFET. """
@@ -30,13 +26,10 @@ class SPIFlash(DeviceFirmwareManager, GreatFETPeripheral):
         # Store a reference to the parent board, via which we'll program the
         # the actual SPI flash.
         self.board = board
-        self.class_number = LIBGREAT_CLASS_SPI_FLASH
+        self.api = board.apis.spi_flash
 
         # Store the limitations for this SPI flash.
         self.page_size = page_size
         self.maximum_address = maximum_address
-
-        data = struct.pack("<HHIBBB", page_size, pages, page_size*pages,
-                           chip_select_port, chip_select_pin, device_id)
-        self.board.execute_command(self.class_number, LIBGREAT_SPI_FLASH_VERB_INIT, data=data)
+        self.api.initialize(page_size, pages, page_size * pages, chip_select_port, chip_select_pin, device_id)
 

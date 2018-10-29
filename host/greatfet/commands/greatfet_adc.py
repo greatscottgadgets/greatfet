@@ -18,27 +18,16 @@ from greatfet.utils import log_silent, log_verbose
 def main():
     logfile = 'log.bin'
 #    logfile = '/tmp/fifo'
+    from greatfet.utils import GreatFETArgumentParser
+   
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for experimenting with GreatFET's ADC")
-    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
-                        help="Serial number of device, if multiple devices", default=None)
+    parser = GreatFETArgumentParser(description="Utility for experimenting with GreatFET's ADC")
     parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="Write data to file", default=logfile)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
     parser.add_argument('-a', dest='adc', action='store_true', help="Use internal ADC")
+
     args = parser.parse_args()
-
-    log_function = log_verbose if args.verbose else log_silent
-
-    try:
-        log_function("Trying to find a GreatFET device...")
-        device = GreatFET(serial_number=args.serial)
-        log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
-    except greatfet.errors.DeviceNotFoundError:
-        if args.serial:
-            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
-        else:
-            print("No GreatFET board found!", file=sys.stderr)
-        sys.exit(errno.ENODEV)
+    log_function = parser.get_log_function()
+    device = parser.find_specified_device()
 
     if args.adc:
         device.vendor_request_out(vendor_requests.ADC_INIT)

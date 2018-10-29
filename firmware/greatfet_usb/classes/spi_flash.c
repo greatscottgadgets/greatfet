@@ -13,7 +13,7 @@
 #include <spiflash_target.h>
 #include <gpio_lpc.h>
 
-#define CLASS_NUMBER_SPI_FLASH (0x11)
+#define CLASS_NUMBER_SPI_FLASH (0x101)
 
 /* Active objects referring to each of the GPIO used to talk to the SPI flash. */
 static struct gpio_t gpio_spiflash_hold   = GPIO(1, 14);
@@ -147,12 +147,25 @@ static int spi_flash_verb_read_page(struct command_transaction *trans)
  * Verbs for the firmware API.
  */
 static struct comms_verb spi_flash_verbs[] = {
-		{ .verb_number = 0x0, .name = "initialize", .handler = spi_flash_verb_initialize },
-		{ .verb_number = 0x1, .name = "full_erase", .handler = spi_flash_verb_full_erase },
-        /* TODO: page erase here? */
-		{ .verb_number = 0x3, .name = "write_page", .handler = spi_flash_verb_write_page },
-		{ .verb_number = 0x4, .name = "read_page",  .handler = spi_flash_verb_read_page },
+		{ .verb_number = 0x0, .name = "initialize", .handler = spi_flash_verb_initialize,
+            .in_signature = "<HHIBBB", .out_signature = "",
+            .in_param_names = "page_len, num_pages, num_bytes, gpio_port, gpio_pin, expected_device_id",
+            .doc = "Sets up the board to have its spi_flash programmed." },
+		{ .verb_number = 0x1, .name = "full_erase", .handler = spi_flash_verb_full_erase,
+            .in_signature = "", .out_signature	= "", .doc = "Erases the entire spi_flash flash chip." },
+        /* TODO: implement
+		{ .verb_number = 0x2, .name = "page_erase", .handler = spi_flash_verb_erase_page,
+            .in_signature = "<I", .out_signature = "", .in_param_names = "address",
+            .doc = "Erases the page with the provided address on the fw flash." },
+        */
+		{ .verb_number = 0x3, .name = "write_page", .handler = spi_flash_verb_write_page,
+            .in_signature = "<I*X", .out_signature = "", .in_param_names = "address, data",
+            .doc = "Writes the provided data to a single spi_flash flash page." },
+		{ .verb_number = 0x4, .name = "read_page",	.handler = spi_flash_verb_read_page,
+            .in_signature = "<I", .out_signature = "<*X", .in_param_names = "address", .out_param_names = "data",
+            .doc = "Returns the contents of the flash page at the given address." },
 		{} // Sentinel
 };
-COMMS_DEFINE_SIMPLE_CLASS(spi_flash, CLASS_NUMBER_SPI_FLASH, "spi_flash", spi_flash_verbs);
+COMMS_DEFINE_SIMPLE_CLASS(spi_flash, CLASS_NUMBER_SPI_FLASH, "spi_flash", spi_flash_verbs,
+        "API that allows use of the GreatFET to program a SPI flash.");
 
