@@ -7,7 +7,7 @@ def read(fname):
         return f.read()
 
 setup(
-    name='libgreat',
+    name='pygreat',
     version='0.0', #TODO: Derive this from the main module.
     url='https://greatscottgadgets.com/greatfet/',
     license='BSD',
