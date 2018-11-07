@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdio.h>
 
-/* FIXME: only include this from libgreat */
-/* FIXME: replace me with a better name */
 #include <toolchain.h>
 
 #include <libopencm3/cm3/vector.h>
@@ -36,6 +34,8 @@
 #include "usb_bulk_buffer.h"
 
 #include "debug.h"
+
+#include <drivers/memory/allocator.h>
 
 void usb_set_descriptor_by_serial_number(void)
 {
@@ -89,9 +89,9 @@ void init_usb0(void) {
 }
 
 
-int main(void) {
-	debug_init();
+void initialize_heap_allocator(void);
 
+int main(void) {
 	cpu_clock_init();
 	cpu_clock_pll1_max_speed();
 	pin_setup();

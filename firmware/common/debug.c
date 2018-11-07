@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <toolchain.h>
 
 #include <pins.h>
 #include <time.h>
@@ -28,6 +29,7 @@
 // FIXME: Don't assume this from Common -- pull this in from e.g. a configuration header file.
 #ifndef CONFIG_DEBUG_BUFFER_SIZE
 #define CONFIG_DEBUG_BUFFER_SIZE 4096
+#undef CONFIG_DEBUG_INCLUDE_TRACE
 #endif
 
 /* Storage for the debug ringbuffer. */
@@ -48,6 +50,7 @@ void debug_init(void)
     debug_read_index = 0;
     debug_write_index = 0;
 }
+CALL_ON_PREINIT(debug_init);
 
 
 /**
@@ -441,4 +444,23 @@ void pr_debug(char *fmt, ...)
     va_start(list, fmt);
     vprintk(LOGLEVEL_DEBUG, fmt, list);
     va_end(list);
+}
+
+
+/**
+ * Convenience function that prints errors using the TRACE loglevel.
+ * Normally, calls to pr_trace are optimized out if DEBUG_INCLUDE_TRACE
+ * isn't configured here.
+ */
+void pr_trace(char *fmt, ...)
+{
+    (void)fmt;
+
+	#ifdef CONFIG_DEBUG_INCLUDE_TRACE
+		va_list list;
+
+		va_start(list, fmt);
+		vprintk(LOGLEVEL_TRACE, fmt, list);
+		va_end(list);
+	#endif
 }

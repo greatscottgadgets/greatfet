@@ -19,6 +19,16 @@ set(SRC_M4
     greatfet_usb.c
     usb_request_handlers.c
     usb_bulk_buffer.c
+
+    # heap drivers
+    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator.c"
+    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_malloc.c"
+
+    # optional components that allow malloc/free debugging
+    #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_info.c"
+    #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_integrity.c"
+    #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_poison.c"
+
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_host.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_request.c"

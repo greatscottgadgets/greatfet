@@ -21,7 +21,8 @@ enum debug_log_level {
 	LOGLEVEL_WARNING,
 	LOGLEVEL_NOTICE,
 	LOGLEVEL_INFO,
-	LOGLEVEL_DEBUG
+	LOGLEVEL_DEBUG,
+	LOGLEVEL_TRACE,
 };
 typedef enum debug_log_level loglevel_t;
 
@@ -31,7 +32,6 @@ void debug_init(void);
 /* Log text to the active debug interface, ignoring loglevel. */
 void debug_puts(char *str);
 void debug_putc(char c);
-
 
 
 /**
@@ -150,6 +150,12 @@ void pr_info(char *fmt, ...);
  * Convenience function that prints errors using the DEBUG loglevel.
  */
 void pr_debug(char *fmt, ...);
+
+
+/**
+ * Convenience function that prints errors using the DEBUG loglevel.
+ */
+void pr_trace(char *fmt, ...);
 
 /**
  * @return true iff there is currently a debugger connected.

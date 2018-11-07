@@ -99,8 +99,6 @@ int comms_backend_submit_command(struct comm_backend_driver *backend,
 	// If the handling class has a command handler, use it!
 	if (handling_class->command_handler) {
 		found_handler = true;
-
-		pr_debug("dispatching a command via handler function for class %s\n", handling_class->name);
 		rc = handling_class->command_handler(trans);
 	}
 
@@ -118,8 +116,6 @@ int comms_backend_submit_command(struct comm_backend_driver *backend,
 	for (verb = handling_class->command_verbs; verb->handler; ++verb) {
 		if (verb->verb_number == trans->verb) {
 			found_handler = true;
-
-			pr_debug("dispatching command %s:%s()\n", handling_class->name, verb->name);
 			rc = verb->handler(trans);
 			break;
 		}
