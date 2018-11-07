@@ -6,7 +6,7 @@
 
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
-#include "usb_endpoint.h"
+#include "../usb_endpoint.h"
 
 /* Define a simple function pointer that accepts all LED modification functions. */
 typedef void (*led_func)(led_t);

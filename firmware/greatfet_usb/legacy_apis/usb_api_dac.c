@@ -5,7 +5,7 @@
 #include "usb_api_dac.h"
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
-#include "usb_endpoint.h"
+#include "../usb_endpoint.h"
 
 #include <stddef.h>
 #include <greatfet_core.h>

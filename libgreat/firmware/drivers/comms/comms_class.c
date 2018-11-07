@@ -57,6 +57,22 @@ struct comms_class *comms_get_class_by_number(uint32_t class_number)
 
 
 /**
+ * Returns a string describing the given class, or default_string
+ * if the given class does not exist.
+ */
+const char *comms_get_class_name(uint32_t class_number, const char *default_string)
+{
+	struct comms_class *cls = comms_get_class_by_number(class_number);
+
+	if (!cls || !cls->name) {
+		return default_string;
+	} else {
+		return cls->name;	
+	}
+}
+
+
+/**
  * Submits a command for execution. Used by command backends.
  *
  * @param backend The command backend driver submitting the given command.

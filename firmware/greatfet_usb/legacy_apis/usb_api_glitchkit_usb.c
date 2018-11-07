@@ -15,7 +15,7 @@
 
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
-#include "usb_endpoint.h"
+#include "../usb_endpoint.h"
 
 #include <drivers/usb/lpc43xx/usb_host.h>
 #include <drivers/usb/lpc43xx/usb_queue_host.h>

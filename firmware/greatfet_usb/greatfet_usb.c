@@ -17,11 +17,13 @@
 #include "drivers/usb/lpc43xx/usb.h"
 
 #include "usb_request_handlers.h"
-#include "usb_api_sdir.h"
-#include "usb_api_usbhost.h"
-#include "usb_api_logic_analyzer.h"
-#include "usb_api_adc.h"
-#include "usb_api_greatdancer.h"
+
+// TODO: get rid of these
+#include "legacy_apis/usb_api_sdir.h"
+#include "legacy_apis/usb_api_usbhost.h"
+#include "legacy_apis/usb_api_logic_analyzer.h"
+#include "legacy_apis/usb_api_adc.h"
+#include "legacy_apis/usb_api_greatdancer.h"
 
 #include "classes/heartbeat.h"
 #include "glitchkit.h"

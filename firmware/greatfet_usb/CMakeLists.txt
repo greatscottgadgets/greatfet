@@ -48,21 +48,21 @@ set(SRC_M4
     ${GREATFET_API_CLASSES}
 
     # TODO: get rid of these!
-    usb_api_spi.c
-    usb_api_adc.c
-    usb_api_dac.c
-    usb_api_i2c.c
-    usb_api_gpio.c
-    usb_api_leds.c
-    usb_api_logic_analyzer.c
-    usb_api_sdir.c
-    usb_api_greatdancer.c
-    usb_api_usbhost.c
-    usb_api_glitchkit.c
-    usb_api_glitchkit_simple.c
-    usb_api_glitchkit_usb.c
-    usb_api_DS18B20.c
-    usb_api_msp430.c
+    legacy_apis/usb_api_spi.c
+    legacy_apis/usb_api_adc.c
+    legacy_apis/usb_api_dac.c
+    legacy_apis/usb_api_i2c.c
+    legacy_apis/usb_api_gpio.c
+    legacy_apis/usb_api_leds.c
+    legacy_apis/usb_api_logic_analyzer.c
+    legacy_apis/usb_api_sdir.c
+    legacy_apis/usb_api_greatdancer.c
+    legacy_apis/usb_api_usbhost.c
+    legacy_apis/usb_api_glitchkit.c
+    legacy_apis/usb_api_glitchkit_simple.c
+    legacy_apis/usb_api_glitchkit_usb.c
+    legacy_apis/usb_api_DS18B20.c
+    legacy_apis/usb_api_msp430.c
 )
 
 DeclareTargets()
