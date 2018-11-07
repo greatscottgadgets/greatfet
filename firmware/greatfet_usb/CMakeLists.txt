@@ -29,6 +29,9 @@ set(SRC_M4
     #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_integrity.c"
     #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_poison.c"
 
+    # internal components
+    pin_manager.c
+
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_host.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_request.c"
