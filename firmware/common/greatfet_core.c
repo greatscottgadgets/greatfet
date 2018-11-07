@@ -421,8 +421,9 @@ void rtc_init(void) {
 		}
 
 		// TODO: eventually phase-lock the RTC and microsecond timers?
+#else
+        pr_info("Board does not advertise an RTC. Not bringing up RTC oscillator.");
 #endif
-
 
 }
 

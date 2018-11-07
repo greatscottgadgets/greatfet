@@ -21,8 +21,9 @@
 #include "usb_api_usbhost.h"
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_adc.h"
-#include "usb_api_heartbeat.h"
 #include "usb_api_greatdancer.h"
+
+#include "classes/heartbeat.h"
 #include "glitchkit.h"
 
 #include <rom_iap.h>
@@ -86,16 +87,18 @@ void init_usb0(void) {
 }
 
 
-
 int main(void) {
 	debug_init();
 
 	cpu_clock_init();
 	cpu_clock_pll1_max_speed();
 	pin_setup();
-	if(heartbeat_mode_enabled) {
-		heartbeat_init();
-	}
+	heartbeat_init();
+
+	// For now, don't bring up the RTC, as bring up is slow and we don't
+	// immediately use it. This can be enabled here, but it's likely best to
+	// just bring the RTC up on-demand.
+	/* rtc_init(); */
 
 	init_usb0();
 	init_greatdancer_api();
@@ -114,10 +117,7 @@ int main(void) {
 		if(adc_mode_enabled) {
 			adc_mode();
 		}
-		if(heartbeat_mode_enabled) {
-			heartbeat_mode();
-		}
-
+		service_heartbeat();
 		service_glitchkit();
 	}
 

@@ -11,7 +11,6 @@
 #include "usb_api_i2c.h"
 #include "usb_api_gpio.h"
 #include "usb_api_leds.h"
-#include "usb_api_heartbeat.h"
 #include "usb_api_logic_analyzer.h"
 #include "usb_api_sdir.h"
 #include "usb_api_greatdancer.h"
@@ -66,8 +65,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_greatdancer_start_nonblocking_read,
 	usb_vendor_request_greatdancer_finish_nonblocking_read,
 	usb_vendor_request_greatdancer_get_nonblocking_data_length,
-	usb_vendor_request_heartbeat_start,
-	usb_vendor_request_heartbeat_stop,
+	NULL, //usb_vendor_request_heartbeat_start,
+	NULL, //usb_vendor_request_heartbeat_stop,
 	usb_vendor_request_gpio_reset,
 	usb_vendor_request_gpio_read,
 
