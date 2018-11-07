@@ -413,6 +413,7 @@ class CommsBackend(object):
         bytes_remaining = raw_bytes[num_bytes_consumed:]
         return bytes_consumed, bytes_remaining
 
+
     @classmethod
     def _pack_group(cls, format_string, args):
         """ Handles packing of a group subformat, which groups
@@ -653,11 +654,12 @@ class CommsBackend(object):
             # If we have a repeat specifier, tag this as an array.
             if repeat_count and not will_conglomerate:
                 if repeat_count == "*":
-                    annotation += "[]"
+                    annotations.append(annotation + "[]")
                 else:
-                    annotation += "[{}]".format(repeat_count)
-
-            annotations.append(annotation)
+                    arguments_generated = int(repeat_count)
+                    annotations.extend([annotation] * int(arguments_generated))
+            else:
+                annotations.append(annotation)
 
         return annotations
 
