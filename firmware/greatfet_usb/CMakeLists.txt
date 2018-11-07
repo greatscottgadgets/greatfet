@@ -54,7 +54,6 @@ set(SRC_M4
     usb_api_i2c.c
     usb_api_gpio.c
     usb_api_leds.c
-    usb_api_heartbeat.c
     usb_api_logic_analyzer.c
     usb_api_sdir.c
     usb_api_greatdancer.c
