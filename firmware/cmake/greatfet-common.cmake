@@ -90,6 +90,7 @@ include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
 # FIXME: pull out into libgreat, probably?
 include_directories("${PATH_LIBGREAT_FIRMWARE}/include")
+include_directories("${PATH_LIBGREAT_FIRMWARE}/include/platform/${LIBGREAT_PLATFORM}")
 AUX_SOURCE_DIRECTORY("${PATH_LIBGREAT_FIRMWARE}/classes" LIBGREAT_API_CLASSES)
 
 
@@ -98,7 +99,11 @@ macro(DeclareTargets)
 		${SRC_M4}
 
 		#fixme: pull into libgreat
-		${PATH_LIBGREAT_FIRMWARE}/platform/lpc43xx/crt0.c
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/crt0.c
+
+		# libgreat high-level functions
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/sync.c
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/sync.S
 
 		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
