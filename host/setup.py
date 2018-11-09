@@ -14,6 +14,7 @@ setup(
     entry_points={
         'console_scripts': [
             'greatfet = greatfet.commands.greatfet:main',
+            'gf = greatfet.commands.greatfet:main',
             'greatfet_adc = greatfet.commands.greatfet_adc:main',
             'greatfet_adf7242 = greatfet.commands.greatfet_adf7242:main',
             'greatfet_firmware = greatfet.commands.greatfet_firmware:main',
