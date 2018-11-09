@@ -10,11 +10,6 @@ import errno
 import sys
 import time
 
-
-# XXX debug only, allows out of tree
-import os
-sys.path.remove(os.path.dirname(os.path.realpath(__file__)))
-
 import greatfet
 from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
