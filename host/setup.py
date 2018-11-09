@@ -14,6 +14,7 @@ setup(
     entry_points={
         'console_scripts': [
             'greatfet = greatfet.commands.greatfet:main',
+            'gf = greatfet.commands.greatfet:main',
             'greatfet_adc = greatfet.commands.greatfet_adc:main',
             'greatfet_adf7242 = greatfet.commands.greatfet_adf7242:main',
             'greatfet_firmware = greatfet.commands.greatfet_firmware:main',
@@ -24,6 +25,7 @@ setup(
             'greatfet_DS18B20 = greatfet.commands.greatfet_DS18B20:main',
             'greatfet_i2c = greatfet.commands.greatfet_i2c:main',
             'greatfet_shell = greatfet.commands.greatfet_shell:main',
+            'greatfet_dmesg = greatfet.commands.greatfet_dmesg:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!
