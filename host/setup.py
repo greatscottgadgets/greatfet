@@ -24,6 +24,7 @@ setup(
             'greatfet_DS18B20 = greatfet.commands.greatfet_DS18B20:main',
             'greatfet_i2c = greatfet.commands.greatfet_i2c:main',
             'greatfet_shell = greatfet.commands.greatfet_shell:main',
+            'greatfet_dmesg = greatfet.commands.greatfet_dmesg:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!
