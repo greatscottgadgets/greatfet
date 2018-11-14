@@ -7,6 +7,8 @@ Module containing the general definitions for communicating with
 libgreat devices.
 """
 
+from __future__ import unicode_literals
+
 import re
 import sys
 import types
@@ -14,6 +16,8 @@ import struct
 import inspect
 import itertools
 import collections
+
+from future import utils as future_utils
 
 class CommsBackend(object):
     """
@@ -132,6 +136,9 @@ class CommsBackend(object):
         class_name = self.apis['core'].get_class_name(class_number)
         class_docs = self.apis['core'].get_class_docs(class_number)
 
+        # Ensure that the class name is a string type that can be a class name.
+        # This ensures python2 compatibility.
+        class_name = future_utils.native_str(class_name)
 
         # If we already have an object for the given class,
         # and we're not in overwrite mode, skip enumerating it.
@@ -241,7 +248,7 @@ class CommsBackend(object):
         """ Returns true iff the given format string represents one of
             our extensions to struct.pack.
         """
-        return re.fullmatch(cls._SPECIAL_FIELD_REGEX, format_string)
+        return re.match(cls._SPECIAL_FIELD_REGEX + "$", format_string)
 
 
     @classmethod
@@ -504,9 +511,8 @@ class CommsBackend(object):
 
 
 
-    def execute_command(self, class_number, verb, in_format, out_format, *arguments,
-            timeout=1000, encoding=None, max_response_length=4096, comms_timeout=1000, 
-            name="anonymous"):
+    def execute_command(self, class_number, verb, in_format, out_format,
+            *arguments, **kwargs):
         """Executes a libgreat command.
 
         Args:
@@ -540,6 +546,16 @@ class CommsBackend(object):
         Returns any data recieved in response, parsed according to out_format.
         """
 
+        # Emulate python3 keyword-only arguments.
+        timeout  = kwargs.pop('timeout', 1000)
+        encoding = kwargs.pop('encoding', None)
+        max_response_length = kwargs.pop('max_response_length', 4096)
+        comms_timeout = kwargs.pop('comms_timeout', 1000)
+        name = kwargs.pop('name', "anonymous")
+
+        if kwargs:
+            raise TypeError("Unexpected keyword arguments: {}".format(kwargs.keys()))
+
         # Pack our input arguments into a payload.
         try:
             if callable(in_format):
@@ -552,7 +568,7 @@ class CommsBackend(object):
             # Wrap any exceptions that occur with a more specific method.
             message = "invalid arguments in call to RPC `{}`; innner message: {}; format: {}".format(name, e, in_format)
             outer_exception = type(e)(message)
-            raise outer_exception.with_traceback(sys.exc_info()[2])
+            future_utils.raise_with_traceback(outer_exception, sys.exc_info()[2])
 
         # Execute the command.
         raw_result = self.execute_raw_command(class_number, verb, payload, timeout,
@@ -570,7 +586,7 @@ class CommsBackend(object):
             # Wrap any exceptions that occur with a more specific method.
             message = "unexpected return RPC `{}`; innner message: {}; format: {}".format(name, e, out_format)
             outer_exception = type(e)(message)
-            raise outer_exception.with_traceback(sys.exc_info()[2])
+            future_utils.raise_with_traceback(outer_exception, sys.exc_info()[2])
 
         # If we have an encoding, convert any byte arguments
         # into a string.
@@ -757,19 +773,28 @@ def command_rpc(verb_number, in_format="", out_format="",
         # If successful, y should contian an integer!
     """
 
+    from builtins import str
+
     # Create a partially bound method that's closed over the variables we want to store.
-    def method(self, *arguments, encoding=None, timeout=1000, max_response_length=4096):
+    def method(self, *arguments, **kwargs):
+        encoding = kwargs.pop('encoding', None)
+        timeout  = kwargs.pop('timeout', 1000)
+        max_response_length = kwargs.pop('max_response_length', 4096)
+
         return self.execute_command(verb_number, in_format, out_format, name=name, timeout=timeout,
                 max_response_length=max_response_length, *arguments)
 
     # Apply our known documentation to the given command.
-    method.__name__ = name
+    method.__name__ = future_utils.native_str(name)
     method.__doc__ = doc
 
     # Generate a method signature object, so the python documentation will be correct.
     # (This only helps on modern python, but oh well.)
-    method.__signature__ = _generate_command_rpc_signature(
-            in_format, in_parameter_names, out_format, out_parameter_names)
+    try:
+        method.__signature__ = _generate_command_rpc_signature(
+                in_format, in_parameter_names, out_format, out_parameter_names)
+    except AttributeError:
+        pass
 
     return method
 
@@ -882,8 +907,7 @@ class CommsClass(object):
             raise ArgumentError("This class is implemented improperly -- it must define CLASS_NUMBER! Object: {}".format(self))
 
 
-    def execute_command(self, verb, in_format, out_format, *arguments,
-            timeout=1000, encoding=None, max_response_length=4096, name="anonymous"):
+    def execute_command(self, verb, in_format, out_format, *arguments, **kwargs):
         """Executes a libgreat command.
 
         Args:
@@ -906,8 +930,7 @@ class CommsClass(object):
         Returns any data recieved in response, parsed according to out_format.
         """
         return self.comms_backend.execute_command(self.CLASS_NUMBER, verb, in_format, 
-                out_format, timeout=timeout, encoding=encoding, 
-                max_response_length=max_response_length, name=name, *arguments)
+                out_format, *arguments, **kwargs)
 
 
     def execute_raw_command(self, class_number, verb, data=None, timeout=1000,

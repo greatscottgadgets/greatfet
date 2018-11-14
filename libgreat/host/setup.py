@@ -17,7 +17,7 @@ setup(
     author='Katherine J. Temkin',
     author_email='ktemkin@insomniasec.io',
     tests_require=[''],
-    install_requires=['pyusb'],
+    install_requires=['pyusb', 'future'],
     description='Python library for talking with libGreat devices',
     long_description=read('../README.md'),
     packages=find_packages(),

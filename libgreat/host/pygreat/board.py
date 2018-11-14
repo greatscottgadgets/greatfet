@@ -10,6 +10,7 @@ Module containing the core definitions for a libgreat-driven board.
 import usb
 
 import time
+import future
 import pygreat
 
 # Use the GreatFET comms API, and the standard (core) API.
@@ -352,6 +353,14 @@ class GreatBoard(object):
 
 def _to_hex_string(byte_array):
     """Convert a byte array to a hex string."""
+
+    # Python2 compatibility
+    try:
+        byte_array = future.builtins.bytes(byte_array)
+    except ValueError:
+        byte_array = list(byte_array)
+
     hex_generator = ('{:02x}'.format(x) for x in byte_array)
     return ''.join(hex_generator)
+
 
