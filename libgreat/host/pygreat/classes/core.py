@@ -65,23 +65,23 @@ class CoreAPI(CommsClass):
     get_class_docs = command_rpc(verb_number=0x9, in_format="<I", out_format="<S",
             name= "get_class_docs", out_parameter_names=["docstring"], doc="Fetches for documentation the given class.")
 
-    def get_verb_in_signature(self, class_number : "uint32" , verb_number : "uint32") -> ('signature: string',):
+    def get_verb_in_signature(self, class_number, verb_number):
         """ Fetches the given verb's in-signature. """
         return self.get_verb_descriptor(class_number, verb_number, self.VERB_DESCRIPTOR_IN_SIGNATURE)
 
-    def get_verb_out_signature(self, class_number, verb_number) -> ('signature: string',):
+    def get_verb_out_signature(self, class_number, verb_number):
         """ Fetches the given verb's out-signature. """
         return self.get_verb_descriptor(class_number, verb_number, self.VERB_DESCRIPTOR_OUT_SIGNATURE)
 
-    def get_verb_documentation(self, class_number, verb_number) -> ('documentation: string',):
+    def get_verb_documentation(self, class_number, verb_number):
         """ Fetches the given verb's documentation. """
         return self.get_verb_descriptor(class_number, verb_number, self.VERB_DESCRIPTOR_DOC)
 
-    def get_verb_in_param_names(self, class_number, verb_number) -> ('param_names: string',):
+    def get_verb_in_param_names(self, class_number, verb_number):
         """ Fetches the given verb's in-param names. """
         return self.get_verb_descriptor(class_number, verb_number, self.VERB_DESCRIPTOR_IN_PARAM_NAMES)
 
-    def get_verb_out_param_names(self, class_number, verb_number) -> ('param_names: string',):
+    def get_verb_out_param_names(self, class_number, verb_number):
         """ Fetches the given verb's out-param names. """
         return self.get_verb_descriptor(class_number, verb_number, self.VERB_DESCRIPTOR_OUT_PARAM_NAMES)
 

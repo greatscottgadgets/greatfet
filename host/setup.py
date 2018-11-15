@@ -31,7 +31,7 @@ setup(
     #author='', #TODO: Figure out whose name should go here!
     #author_email='',
     tests_require=[''],
-    install_requires=['pyusb', 'IPython', 'pygreat'],
+    install_requires=['pyusb', 'IPython', 'pygreat', 'future'],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('../README.md'),
     packages=find_packages(),#['greatfet'],
