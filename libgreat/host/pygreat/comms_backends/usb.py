@@ -10,6 +10,7 @@ devices over USB.
 from __future__ import absolute_import
 
 import usb
+import time
 import struct
 
 from ..comms import CommsBackend

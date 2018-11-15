@@ -21,6 +21,10 @@ from .errors import DeviceNotFoundError
 # Total seconds we should wait after a reset before reconnecting.
 RECONNECT_DELAY = 3
 
+# Quirk constant that helps us identify libusb's pipe errors, which bubble
+# up as generic USBErrors with errno 32 on affected platforms.
+# FIXME: remove
+LIBUSB_PIPE_ERROR = 32
 
 class GreatBoard(object):
     """
