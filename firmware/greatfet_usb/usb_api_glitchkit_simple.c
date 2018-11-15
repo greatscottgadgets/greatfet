@@ -176,7 +176,7 @@ usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
               GLITCHKIT_INTERRUPT_PRIORITY);
 
           // Mark the current interrupt as used.
-          active_interrupt_mask |= (1 << active_interrupt_count + 1);
+          active_interrupt_mask |= (1 << (active_interrupt_count + 1));
           ++active_interrupt_count;
       }
     }
