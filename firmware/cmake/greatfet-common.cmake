@@ -65,7 +65,7 @@ endif()
 SET(LDSCRIPT_M4_DFU "-T${MCU_PARTNO}_M4_memory.ld -Tlibgreat_lpc43xx.ld -TLPC43xx_M4_M0_image_from_text.ld")
 SET(LDSCRIPT_M0 "-TLPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
 
-SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} -fno-common -MD -fno-builtin-printf -Wmissing-field-initializers")
+SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers")
 SET(LDFLAGS_COMMON "-nostartfiles -Wl,--gc-sections")
 
 if(V STREQUAL "1")

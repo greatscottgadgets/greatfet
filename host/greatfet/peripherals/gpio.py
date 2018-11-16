@@ -3,7 +3,8 @@
 #
 
 from ..peripheral import GreatFETPeripheral
-from ..protocol import vendor_requests
+
+from warnings import warn
 
 # TODOs:
 #  - XXX: Overhaul the GPIO(Collection) class to be more efficient
@@ -28,6 +29,7 @@ class GPIO(GreatFETPeripheral):
             board -- GreatFET board whose GPIO lines are to be controlled
         """
         self.board = board
+        self.api = self.board.apis.gpio
         self.pin_mappings = {}
 
         self.available_pins = []
@@ -37,11 +39,7 @@ class GPIO(GreatFETPeripheral):
         self.DIRECTION_IN = DIRECTION_IN
         self.DIRECTION_OUT = DIRECTION_OUT
 
-        # XXX it's necessary to reset the state of all GPIO on the GreatFET
-        # here because the firmware currently provides no way to read its
-        # existing configuration; this should be fixed so GPIO state is never
-        # changed unless the user requests to change it.
-        self.reset()
+        # TODO: restore GPIO state from board objects
 
 
     def register_gpio(self, name, pin, used=False):
@@ -137,21 +135,7 @@ class GPIO(GreatFETPeripheral):
         self.mark_pin_as_unused(gpio_pin.name)
 
 
-    def reset(self):
-        """
-        Reset the state of all GPIO lines.  This changes all lines back
-        to the power-on defaults.
-        """
-        self.board.vendor_request_out(vendor_requests.GPIO_RESET)
-
-        # clear mappings of lines (port, pin) to the indexes the firmware uses
-        # in its gpio_in[] and gpio_out[] arrays
-        # {(port, pin): index, (port, pin): index, ...}
-        self._inputs = {}
-        self._outputs = {}
-
-
-    def setup(self, line, direction):
+    def set_up_pin(self, line, direction, initial_value=False):
         """
         Configure a GPIO line for use as an input or output.  This must be
         called before the line can be used by other functions.
@@ -162,29 +146,14 @@ class GPIO(GreatFETPeripheral):
 
         TODO: allow pull-up/pull-down resistors to be configured for inputs
         """
-        if direction == DIRECTION_IN:
-            this_dict, other_dict = self._inputs, self._outputs
-            num_inputs = 1
-        else:
-            this_dict, other_dict = self._outputs, self._inputs
-            num_inputs = 0
-
-        if this_dict.get(line) is None:
-            # register this line if it isn't already registered
-            self.board.vendor_request_out(vendor_requests.GPIO_REGISTER,
-                value=num_inputs, data=line)
-            # save the index that the firmware should have assigned it
-            index = len(this_dict)
-            this_dict[line] = index
-
-        if line in other_dict:
-            # if the line was previously in the other direction, mark that old
-            # registration as unusable.  firmware doesn't support unregistering
-            # so the entry must be kept in the dict to preserve the count.
-            other_dict[line] = None
+        self.api.set_up_pin(line[0], line[1], direction, initial_value)
 
 
-    def output(self, line, state):
+    def setup(self, line, direction):
+        warn("GPIO.setup is deprecated; prefer set_up_pin.", DeprecationWarning)
+        self.set_up_pin(line, direction)
+
+    def set_pin_state(self, line, state):
         """
         Set the state of an output line.  The line must have previously been
         configured as an output using setup().
@@ -193,18 +162,22 @@ class GPIO(GreatFETPeripheral):
             line -- (port, pin); typically a tuple from J1, J2, J7 below
             state -- True sets line high, False sets line low
         """
-        gpio_out_index = self._outputs.get(line)
-        if gpio_out_index is None:
-            raise ValueError("GPIO line %s not set up as output" % repr(line))
 
-        self.board.vendor_request_out(vendor_requests.GPIO_WRITE,
-            data=[gpio_out_index, int(state)])
+        # TODO: validate GPIO direction?
+
+        single_write = (line[0], line[1], state,)
+        self.api.write_pins(single_write)
 
 
-    def input(self, line):
+    def output(self, line, state):
+        warn("GPIO.output is deprecated; prefer set_pin_state.", DeprecationWarning)
+        self.set_pin_state(line, state)
+
+
+    def read_pin_state(self, line):
         """
         Get the state of an input line.  The line must have previously been
-        configured as an output using setup().
+        configured as an input using setup().
 
         Args:
             line -- (port, pin); typically a tuple from J1, J2, J7 below
@@ -213,18 +186,28 @@ class GPIO(GreatFETPeripheral):
             bool -- True if line is high, False if line is low
         """
 
-        # XXX: This is super inefficient. Fixme?
+        values = self.api.read_pins(line)
+        return values[0]
 
-        gpio_in_index = self._inputs.get(line)
-        if gpio_in_index is None:
-            raise ValueError("GPIO line %s not set up as input" % repr(line))
 
-        data = self.board.vendor_request_in(vendor_requests.GPIO_READ,
-            length=255)
+    def get_pin_direction(self, line):
+        """
+        Gets the direction of a GPIO pin.
 
-        byte = gpio_in_index // 8
-        bit = 7 - (gpio_in_index % 8)
-        return data[byte] & (2**bit) != 0
+        Args:
+            line -- (port, pin); typically a tuple from J1, J2, J7 below
+
+        Return:
+            bool -- True if line is an output, False if line is an input
+        """
+
+        directions = self.api.get_pin_directions(line)
+        return directions[0]
+
+
+    def input(self, line):
+        warn("GPIO.input is deprecated; prefer read_pin_state.", DeprecationWarning)
+        return self.read_pin_state(line)
 
 
 class GPIOPin(object):
@@ -249,34 +232,57 @@ class GPIOPin(object):
         self.name = name
         self.port_and_pin = port_and_pin
 
-        # Assume no direction until one is provided.
-        self.direction = None
+        # For convenience:
+        self.DIRECTION_IN = DIRECTION_IN
+        self.DIRECTION_OUT = DIRECTION_OUT
+
+        # Set up the pin for use. Idempotent.
+        self.gpio.set_up_pin(self.port_and_pin, self.get_direction(), self.read())
 
 
-    def set_direction(self, direction):
+    def set_direction(self, direction, initial_value=False):
         """
         Sets the GPIO pin to use a given direction.
         """
-        self.gpio.setup(self.port_and_pin, direction)
-        self.direction = direction
+        self.gpio.set_up_pin(self.port_and_pin, direction, initial_value)
 
 
     def get_direction(self):
         """ Returns the pin's direction; will be eitther gpio.DIRECTION_IN or gpio.DIRECTION_OUT """
-        return self.direction
+        return self.gpio.get_pin_direction(self.port_and_pin)
 
 
-    def read(self, high_value=True, low_value=False):
+    def is_input(self):
+        """ Convenience function that returns True iff the pin is configured as an input. """
+        return (self.get_direction() == self.DIRECTION_IN)
+
+
+    def is_output(self):
+        """ Convenience function that returns True iff the pin is configured as an output. """
+        return (self.get_direction() == self.DIRECTION_IN)
+
+
+    def read(self, high_value=True, low_value=False, check_pin_direction=False):
+        """ Convenience alias for get_state."""
+        return self.get_state(high_value, low_value, check_pin_direction)
+
+
+    def get_state(self, high_value=True, low_value=False, check_pin_direction=False):
         """ Returns the value of a GPIO pin. """
 
-        if self.direction != DIRECTION_IN:
+        if check_pin_direction and not self.is_input():
             raise ValueError("Trying to read from a non-input pin {}! Set up the pin first with set_direction.".format(self.name))
 
-        raw = self.gpio.input(self.port_and_pin)
+        raw = self.gpio.read_pin_state(self.port_and_pin)
         return high_value if raw else low_value
 
 
-    def write(self, high):
+    def write(self, high, check_direction=False):
+        """ Convenience alias for set_state."""
+        self.set_pin_state(high, check_direction)
+
+
+    def set_state(self, high, check_direction=True):
         """ Write a given value to the GPIO port.
 
         Args:
@@ -284,10 +290,10 @@ class GPIOPin(object):
                 to low otherwise.
         """
 
-        if self.direction != DIRECTION_OUT:
+        if check_direction and not self.is_output():
             raise ValueError("Trying to write to a non-output pin {}! Set up the pin first with set_direction.".format(self.name))
 
-        self.gpio.output(self.port_and_pin, high)
+        self.gpio.set_pin_state(self.port_and_pin, high)
 
 
     def get_port(self):

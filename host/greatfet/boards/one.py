@@ -144,6 +144,11 @@ class GreatFETOne(GreatFETBoard):
         # be dynamically listed?
         if self.supports_api('firmware'):
             self.onboard_flash = DeviceFirmwareManager(self)
+
+
+        # Populate the per-board GPIO.
+        if self.supports_api("gpio"):
+            self._populate_gpio()
         
         # XXX disable perpiherals as we develop libgreat
         return
@@ -156,8 +161,6 @@ class GreatFETOne(GreatFETBoard):
         self.i2c = self.i2c_busses[0]
         self.spi = self.spi_busses[0]
 
-        # Populate the per-board GPIO.
-        self._populate_gpio()
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)

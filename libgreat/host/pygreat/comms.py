@@ -595,7 +595,6 @@ class CommsBackend(object):
 
                 # If this is a group, recurse and handle the subformat.
                 if subformat.endswith(')'):
-                    print("unpacking group")
                     results.extend(cls._unpack_group(subformat, bytes_consumed))
 
                 # If this is a string subformat, handle it.
@@ -757,12 +756,50 @@ class CommsBackend(object):
             result = tuple(result)
 
         # Return the result in a format that makes it easily
-        # intepreted as multiple return values. Tuples for multiple values,
-        # raw data for single ones.
-        if len(result) == 1:
+        # intepreted as multiple return values. In most cases, a tuple is returned
+        # when multiple values are possible; and a single value is returned if only
+        # one value is possible.
+        if self._command_results_should_collapse(result, out_format):
             return result[0]
         else:
             return result
+
+
+    @classmethod
+    def _command_results_should_collapse(cls, result, out_format):
+        """ Returns true if the given command result should be collapsed
+            into a single value.
+        """
+
+        non_padding_formats = 0
+
+        # Never collapse non-strings, for now.
+        if not isinstance(out_format, str):
+            return False
+
+        # Split the format string into its components.
+        elements = re.findall(cls._FORMAT_FIELD_REGEX, out_format)
+        for repeat_count, element_type, element_group in elements:
+
+            # Certain formats conglomerate their outputs into a single
+            # argument, and thus have repeat types that don't count.
+            will_conglomerate = element_type in "Xsp"
+
+            # If we have any repeat counts that aren't 1,
+            # on a non-conglomerating element, never collapse this.
+            if repeat_count and (repeat_count != "1") and not will_conglomerate:
+                return False
+
+            if element_type != "x":
+                non_padding_formats += 1
+
+        # If we have more than one format type (discounting padding),
+        # don't collapse.
+        if non_padding_formats != 1:
+            return False
+
+        # Otherwise, collapse if we have exactly a single result.
+        return len(result) == 1
 
 
     def execute_raw_command(self, class_number, verb, data=None, timeout=1000,

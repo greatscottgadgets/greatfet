@@ -179,6 +179,15 @@ int pin_reserve_for_class(uint8_t group, uint8_t pin, uint32_t owning_class)
 	return rc;
 }
 
+/**
+ * Returns true iff the given pin is reserved for the given class,
+ * attempting reservation if possible.
+ */
+bool pin_ensure_reservation(uint8_t group, uint8_t pin, uint32_t active_class)
+{
+    return (pin_reserve_for_class(group, pin, active_class) == 0);
+}
+
 
 /**
  * Releases a reserved pin, restoring its ability to be reserved/used by

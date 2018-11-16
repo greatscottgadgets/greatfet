@@ -39,6 +39,7 @@ set(SRC_M4
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_queue.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_queue_host.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/comms_backend.c"
+    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/gpio/${LIBGREAT_PLATFORM}/gpio.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/comms/comms_class.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/comms/utils.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/gpdma.c"
@@ -65,7 +66,6 @@ set(SRC_M4
     legacy_apis/usb_api_adc.c
     legacy_apis/usb_api_dac.c
     legacy_apis/usb_api_i2c.c
-    legacy_apis/usb_api_gpio.c
     legacy_apis/usb_api_leds.c
     legacy_apis/usb_api_logic_analyzer.c
     legacy_apis/usb_api_sdir.c
