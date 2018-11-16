@@ -196,7 +196,7 @@ int usb_transfer_schedule_ack(
 
 
 /* Called when an endpoint might have completed a transfer */
-static void usb_queue_clean_up_transfers(usb_endpoint_t* const endpoint, bool include_active)
+static void usb_queue_clean_up_transfers(usb_endpoint_t const * endpoint, bool include_active)
 {
 		usb_queue_t* const queue = endpoint_queue(endpoint);
 		if (queue == NULL) {
