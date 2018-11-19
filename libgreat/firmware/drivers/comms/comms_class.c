@@ -8,12 +8,51 @@
 
 #include <debug.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include <drivers/comms.h>
 #include <drivers/comms_backend.h>
 
 /** Head for the comms-class linked list. */
 struct comms_class *class_head = NULL;
+
+
+/**
+ * Determines whether a provided comms class requires verb-number auto-assignments.
+ * A class with every verb with a verb number of zero will have all verbs auto-assigned
+ * sequential numbers. (This doesn't affect classes with only a single verb with number 0).
+ */
+static bool comms_class_requires_verb_assignment(struct comms_class *comms_class)
+{
+	struct comms_verb *verb;
+
+	// Iterate through the array of command verbs.
+	for (verb = comms_class->command_verbs; verb->handler; ++verb) {
+
+		// If this verb has a non-zero number, this isn't a
+		// candidate for auto-assignment.
+		if (verb->verb_number != 0) {
+			return false;
+		}
+	}
+
+	// If every verb has a number of zero, this class needs auto-assignment.
+	return true;
+}
+
+
+static void comms_auto_assign_verb_numbers(struct comms_class *comms_class)
+{
+	struct comms_verb *verb;
+	int next_verb_number = 0;
+
+	// Iterate through the array of command verbs.
+	for (verb = comms_class->command_verbs; verb->handler; ++verb) {
+		verb->verb_number = next_verb_number;
+		++next_verb_number;
+	}
+}
+
 
 
 /**
@@ -29,6 +68,11 @@ void comms_register_class(struct comms_class *comms_class)
 	if (!comms_class) {
 		pr_error("ERROR: tried to register a NULL class");
 		return;
+	}
+
+	// Handle verb-number auto-assignment for any classes that need them.
+	if (comms_class_requires_verb_assignment(comms_class)) {
+		comms_auto_assign_verb_numbers(comms_class);
 	}
 
 	// Link the comms class into our linked list.
@@ -79,7 +123,7 @@ const char *comms_get_class_name(uint32_t class_number, const char *default_stri
  * @param trans An object representing the command to be submitted, and its
  *		response.
  */
-int comms_backend_submit_command(struct comm_backend_driver *backend, 
+int comms_backend_submit_command(struct comm_backend_driver *backend,
 	struct command_transaction *trans)
 {
 	int rc = 0;
