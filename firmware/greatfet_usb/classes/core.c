@@ -14,6 +14,7 @@
 #include <libopencm3/lpc43xx/wwdt.h>
 
 #include <drivers/comms.h>
+#include <debug.h>
 
 #define CLASS_NUMBER_CORE 0
 
@@ -84,8 +85,10 @@ int core_verb_request_reset(struct command_transaction *trans)
 	uint32_t reset_reason_command = comms_argument_parse_uint32_t(trans);
 
 	if(reset_reason_command == 1) {
+		pr_info("Performing soft reset and switching to external clock...\n");
 		reset_reason = RESET_REASON_USE_EXTCLOCK;
 	} else {
+		pr_info("Performing soft reset...\n");
 		reset_reason = RESET_REASON_SOFT_RESET;
 	}
 

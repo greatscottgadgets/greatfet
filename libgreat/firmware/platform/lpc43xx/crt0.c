@@ -13,13 +13,15 @@
 #include <libopencm3/lpc43xx/ssp.h>
 #include <libopencm3/lpc43xx/timer.h>
 
+#include <toolchain.h>
+
 
 /* This special variable is preserved across soft resets by a little bit of
  * reset handler magic. It allows us to pass a Reason across resets. */
 /* FIXME: use sections to do this instead of the below */
 /* FIXME: make this static and provide an accessor, somewhere? */
 /* FIXME: move this out of the crt0 and to its own driver? */
-volatile uint32_t reset_reason;
+volatile uint32_t reset_reason ATTR_SECTION(".bss.persistent");
 
 
 void main(void);
@@ -70,7 +72,8 @@ static void _relocate_to_ram(void)
 	SCB_CPACR |= SCB_CPACR_FULL * (SCB_CPACR_CP10 | SCB_CPACR_CP11);
 }
 
-
+extern unsigned int debug_read_index;
+extern unsigned int debug_write_index;
 
 /**
  * Startup code for the processor and general initialization.
@@ -79,8 +82,6 @@ void __attribute__ ((naked)) reset_handler(void)
 {
 	volatile unsigned *src, *dest;
 	funcp_t *fp;
-
-	uint32_t stored_reset_reason = reset_reason;
 
 	for (src = &_data_loadaddr, dest = &_data;
 		dest < &_edata;
@@ -109,9 +110,6 @@ void __attribute__ ((naked)) reset_handler(void)
 	for (fp = &__init_array_start; fp < &__init_array_end; fp++) {
 		(*fp)();
 	}
-
-	/* Restore our stored reset reason. */
-	reset_reason = stored_reset_reason;
 
 	/* Call the application's entry point. */
 	main();

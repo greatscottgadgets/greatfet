@@ -28,7 +28,7 @@ extern "C"
 /* hardware identification number */
 #define BOARD_ID_ONE 0
 #define BOARD_ID_XPLORER  1
-#define BOARD_ID_RAD1O  2
+#define BOARD_ID_RAD1O	2
 
 #ifdef GREATFET_ONE
 #define BOARD_ID BOARD_ID_ONE
@@ -42,12 +42,16 @@ extern "C"
 #define BOARD_ID BOARD_ID_RAD1O
 #endif
 
+// TODO: move into libgreat
 typedef enum {
 	// Keep these unique, so the RAM is unlikely to settle into these on first
 	// boot.
-	RESET_REASON_UNKNOWN      = 0,
-	RESET_REASON_SOFT_RESET   = 0xAA55AA55,
-	RESET_REASON_USE_EXTCLOCK = 0xAABBCCDD,
+	RESET_REASON_UNKNOWN           = 0xAA55FF00,
+	RESET_REASON_SOFT_RESET	       = 0xAA55FF01,
+	RESET_REASON_FAULT             = 0xAA55FF02,
+	RESET_REASON_USE_EXTCLOCK      = 0xAA55CCDD,
+
+	RESET_DEBUG_LIKELY_VALID_MASK  = 0xAA550000,
 }	reset_reason_t;
 
 /**
