@@ -10,6 +10,7 @@
 #include <drivers/usb/lpc43xx/usb_host.h>
 #include <drivers/usb/lpc43xx/usb_type.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/lpc43xx/usb_queue_host.h>
 #include <drivers/usb/lpc43xx/usb_registers.h>
 #include <drivers/usb/lpc43xx/usb_standard_request.h>
 #include "greatfet_core.h"
