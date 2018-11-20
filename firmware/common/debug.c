@@ -11,10 +11,10 @@
 #include <time.h>
 
 #ifndef __RUNNING_ON_HOST__
-    #include <libopencm3/lpc43xx/scu.h>
-    #include <libopencm3/lpc43xx/uart.h>
-    #include <libopencm3/cm3/memorymap.h>
-    #include <libopencm3/cm3/scs.h>
+	#include <libopencm3/lpc43xx/scu.h>
+	#include <libopencm3/lpc43xx/uart.h>
+	#include <libopencm3/cm3/memorymap.h>
+	#include <libopencm3/cm3/scs.h>
 #endif
 
 #include "debug.h"
@@ -32,23 +32,46 @@
 #undef CONFIG_DEBUG_INCLUDE_TRACE
 #endif
 
+extern volatile uint32_t reset_reason;
+
 /* Storage for the debug ringbuffer. */
-static char debug_ring[CONFIG_DEBUG_BUFFER_SIZE];
-static unsigned int debug_read_index;
-static unsigned int debug_write_index;
+static char debug_ring[CONFIG_DEBUG_BUFFER_SIZE] ATTR_SECTION(".bss.persistent");
+
+unsigned int debug_read_index ATTR_SECTION(".bss.persistent");
+unsigned int debug_write_index ATTR_SECTION(".bss.persistent");
 
 // Store the active loglevel.
 // TODO: reduce this, maybe?
 static loglevel_t debug_loglevel = LOGLEVEL_INFO;
+
+
+/**
+ * Return true iff it's likely our debug ring is intact
+ * from a previous boot; e.g. after a soft reset. This can be
+ * used to keep the debug ring around across soft resets.
+ */
+static bool debug_memory_seems_okay()
+{
+	return
+		(reset_reason & RESET_DEBUG_LIKELY_VALID_MASK) ==
+		RESET_DEBUG_LIKELY_VALID_MASK;
+}
+
 
 /**
  * Initializes debugging support.
  */
 void debug_init(void)
 {
-	// Clear out the debug ring.
-    debug_read_index = 0;
-    debug_write_index = 0;
+	// If it doesn't seem likely our debug ring is intact from a
+	// previous boot, then clear out the debug ring.
+	if (debug_memory_seems_okay()) {
+		debug_ring_write_string("\n");
+	} else {
+		debug_read_index = 0;
+		debug_write_index = 0;
+	}
+
 }
 CALL_ON_PREINIT(debug_init);
 
@@ -200,9 +223,9 @@ void debug_ring_write(const char *const str, unsigned int length)
  */
 void debug_ring_write_string(const char *const str)
 {
-    // Get the length of the string to be committed to the ringbuffer.
+	// Get the length of the string to be committed to the ringbuffer.
 	// This is the length we'll need to copy.
-    unsigned int length = strlen(str);
+	unsigned int length = strlen(str);
 
 	// Write the string with the relevant length.
 	debug_ring_write(str, length);
@@ -230,7 +253,7 @@ bool debugger_is_connected(void)
 #ifndef __RUNNING_ON_HOST__
 	return (SCS_DHCSR & SCS_DHCSR_C_DEBUGEN);
 #else
-    return true;
+	return true;
 #endif
 }
 
@@ -248,10 +271,10 @@ static void semihosting_putc(char c)
 	asm volatile(
 		 "mov  r1, %0\n"
 		 "mov  r0, #" SEMIHOST_SYS_WRITEC "\n"
-		 "bkpt  " SEMIHOST_SWI "\n"
+		 "bkpt	" SEMIHOST_SWI "\n"
 		 : : "r" (&c) : "r0", "r1", "memory");
 #else
-    putchar(c);
+	putchar(c);
 #endif
 }
 
@@ -288,10 +311,10 @@ static void semihosting_puts(char volatile *s)
 	asm volatile(
 		 "mov  r1, %0\n"
 		 "mov  r0, #" SEMIHOST_SYS_WRITE "\n"
-		 "bkpt  " SEMIHOST_SWI "\n"
+		 "bkpt	" SEMIHOST_SWI "\n"
 		 : : "r" (parameters) : "r0", "r1", "memory");
 #else
-    puts((const char *)s);
+	puts((const char *)s);
 #endif
 }
 
@@ -335,10 +358,10 @@ void vprintk(int loglevel, char *fmt, va_list list)
 	if (loglevel > debug_loglevel)
 		return;
 
-    // TODO: support something like Linux's LOGLEVEL_CONTINUE
+	// TODO: support something like Linux's LOGLEVEL_CONTINUE
 
-    printf("[%12" PRIu32 "] ", get_time());
-    vprintf(fmt, list);
+	printf("[%12" PRIu32 "] ", get_time());
+	vprintf(fmt, list);
 }
 
 /**
@@ -349,11 +372,11 @@ void vprintk(int loglevel, char *fmt, va_list list)
  */
 void printk(int loglevel, char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(loglevel, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(loglevel, fmt, list);
+	va_end(list);
 }
 
 
@@ -362,11 +385,11 @@ void printk(int loglevel, char *fmt, ...)
  */
 void pr_emergency(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_EMERGENCY, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_EMERGENCY, fmt, list);
+	va_end(list);
 }
 
 
@@ -375,11 +398,11 @@ void pr_emergency(char *fmt, ...)
  */
 void pr_alert(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_ALERT, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_ALERT, fmt, list);
+	va_end(list);
 }
 
 
@@ -388,11 +411,11 @@ void pr_alert(char *fmt, ...)
  */
 void pr_critical(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_CRITICAL, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_CRITICAL, fmt, list);
+	va_end(list);
 }
 
 /**
@@ -400,11 +423,11 @@ void pr_critical(char *fmt, ...)
  */
 void pr_error(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_ERROR, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_ERROR, fmt, list);
+	va_end(list);
 }
 
 
@@ -413,11 +436,11 @@ void pr_error(char *fmt, ...)
  */
 void pr_warning(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_WARNING, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_WARNING, fmt, list);
+	va_end(list);
 }
 
 
@@ -426,11 +449,11 @@ void pr_warning(char *fmt, ...)
  */
 void pr_info(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_INFO, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_INFO, fmt, list);
+	va_end(list);
 }
 
 
@@ -439,11 +462,11 @@ void pr_info(char *fmt, ...)
  */
 void pr_debug(char *fmt, ...)
 {
-    va_list list;
+	va_list list;
 
-    va_start(list, fmt);
-    vprintk(LOGLEVEL_DEBUG, fmt, list);
-    va_end(list);
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_DEBUG, fmt, list);
+	va_end(list);
 }
 
 
@@ -454,7 +477,7 @@ void pr_debug(char *fmt, ...)
  */
 void pr_trace(char *fmt, ...)
 {
-    (void)fmt;
+	(void)fmt;
 
 	#ifdef CONFIG_DEBUG_INCLUDE_TRACE
 		va_list list;

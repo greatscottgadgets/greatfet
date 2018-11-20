@@ -6,7 +6,7 @@
 Module containing the core definitions for a libgreat-driven board.
 """
 
-# FIXME: remove dependencies 
+# FIXME: remove dependencies
 import usb
 
 import time
@@ -293,6 +293,12 @@ class GreatBoard(object):
         return result
 
 
+    def try_reconnect(self):
+        """ Attempts to re-create a connection to a disconnected GreatFET."""
+        self.__init__(**self.identifiers)
+        self.initialize_apis()
+
+
     def reset(self, reconnect=True, switch_to_external_clock=False):
         """
         Reset the device.
@@ -316,14 +322,14 @@ class GreatBoard(object):
         connected = False
         if reconnect:
             time.sleep(RECONNECT_DELAY)
-            self.__init__(**self.identifiers)
+            self.try_reconnect()
 
             # FIXME: issue a reset to all device peripherals with state, here?
 
 
     def switch_to_external_clock(self):
         """
-        Resets the GreatFET, and starts it up again using an external clock 
+        Resets the GreatFET, and starts it up again using an external clock
         source, rather than the onboard crystal oscillator.
         """
         self.reset(switch_to_external_clock=True)
@@ -362,7 +368,14 @@ class GreatBoard(object):
             max_length -- The maximum length to respond with. Must be less than 65536.
             clear -- True iff the dmesg buffer should be cleared after the request.
         """
-        print(self.read_debug_ring(max_length, clear, encoding))
+
+        try:
+            print(self.read_debug_ring(max_length, clear, encoding))
+        except:
+            # Convenience addition: if we failed to talk, try auto-reconnecting.
+            # This allows for easy debugging after a GreatFET crash.
+            self.try_reconnect()
+            print(self.read_debug_ring(max_length, clear, encoding))
 
 
 def _to_hex_string(byte_array):

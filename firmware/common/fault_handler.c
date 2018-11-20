@@ -5,7 +5,11 @@
 #include <stdint.h>
 #include <debug.h>
 
+#include "greatfet_core.h"
 #include "fault_handler.h"
+#include "wwdt.h"
+
+extern volatile uint32_t reset_reason;
 
 typedef struct
 {
@@ -41,6 +45,21 @@ void mem_manage_handler(void) {
 volatile hard_fault_stack_t* hard_fault_stack_pt;
 
 /**
+ * Trigger an emergency reset, which resets with REASON_FAULT.
+ */
+static void emergency_reset()
+{
+	pr_emergency("Resetting system following fault!\n");
+	pr_emergency("Performing emergency reset...\n");
+	reset_reason = RESET_REASON_FAULT;
+
+	// Perform the actual reset.
+	wwdt_reset(100000);
+	while(1);
+}
+
+
+/**
  * Prints the system's state at a given log level.
  */
 void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
@@ -48,10 +67,18 @@ void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
 	printk(loglevel, "PC: %08x\n", args->pc);
 	printk(loglevel, "LR: %08x\n", args->lr);
 
+	// Other interesting registers to examine:
+	//	CFSR: Configurable Fault Status Register
+	//	HFSR: Hard Fault Status Register
+	//	DFSR: Debug Fault Status Register
+	//	AFSR: Auxiliary Fault Status Register
+	//	MMAR: MemManage Fault Address Register
+	//	BFAR: Bus Fault Address Register
+
 	// TODO insert relevant system state analysis here
 	// TODO insert special registers
 	printk(loglevel, "\n");
-	printk(loglevel, "Current core: unknown\n"); // FIXME: include core number;
+	printk(loglevel, "Current core: unknown\n"); // FIXME: include m4/m0
 	printk(loglevel, "R0: %08x\t\tR1: %08x\n", args->r0, args->r1);
 	printk(loglevel, "R2: %08x\t\tR3: %08x\n", args->r2, args->r3);
 	printk(loglevel, "R12: %08x\t\tPSR: %08x\n", args->r12, args->psr);
@@ -64,63 +91,28 @@ void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
 
 __attribute__((used)) void hard_fault_handler_c(hard_fault_stack_t* state)
 {
-	// args[0-7]: r0, r1, r2, r3, r12, lr, pc, psr
-	// Other interesting registers to examine:
-	//	CFSR: Configurable Fault Status Register
-	//	HFSR: Hard Fault Status Register
-	//	DFSR: Debug Fault Status Register
-	//	AFSR: Auxiliary Fault Status Register
-	//	MMAR: MemManage Fault Address Register
-	//	BFAR: Bus Fault Address Register
-
-	/*
-	if( SCB->HFSR & SCB_HFSR_FORCED ) {
-		if( SCB->CFSR & SCB_CFSR_BFSR_BFARVALID ) {
-			SCB->BFAR;
-			if( SCB->CFSR & CSCB_CFSR_BFSR_PRECISERR ) {
-			}
-		}
-	}
-	*/
-	pr_emergency("FAULT: hard fault detected!");
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: hard fault detected!\n");
 	print_system_state(LOGLEVEL_EMERGENCY, state);
-
-	// TODO: fail into a mode that lets us query debug status via USB?
-	while(1);
+	emergency_reset();
 }
 
 void mem_manage_handler_c(hard_fault_stack_t *state)
 {
-	// args[0-7]: r0, r1, r2, r3, r12, lr, pc, psr
-	// Other interesting registers to examine:
-	//	CFSR: Configurable Fault Status Register
-	//	HFSR: Hard Fault Status Register
-	//	DFSR: Debug Fault Status Register
-	//	AFSR: Auxiliary Fault Status Register
-	//	MMAR: MemManage Fault Address Register
-	//	BFAR: Bus Fault Address Register
-
-	/*
-	if( SCB->HFSR & SCB_HFSR_FORCED ) {
-		if( SCB->CFSR & SCB_CFSR_BFSR_BFARVALID ) {
-			SCB->BFAR;
-			if( SCB->CFSR & CSCB_CFSR_BFSR_PRECISERR ) {
-			}
-		}
-	}
-	*/
-	pr_emergency("FAULT: memory management fault detected!");
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: memory management fault detected!\n");
 	print_system_state(LOGLEVEL_EMERGENCY, state);
-
-	// TODO: fail into a mode that lets us query debug status via USB?
-	while(1);
-
+	emergency_reset();
 }
 
 void bus_fault_handler() {
-	while(1);
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: bus fault detected!\n");
+	emergency_reset();
 }
 
 void usage_fault_handler() {
-	while(1);
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: usage fault detected!\n");
+	emergency_reset();
 }

@@ -109,6 +109,16 @@ SECTIONS
 		_eheap = .;
     } > ram_ahb
 
+    /* persistent BSS */
+    .bss.persistent : {
+		_persistent_bss = .;
+        *(.bss.persistent)
+		*(.bss.persistent*)	/* Read-write, uninitialized data */
+		. = ALIGN(4);
+		_epersistent_bss = .;
+    } > ram_local2
+
+    /* non-persistent BSS */
 	.bss : {
 		_bss = .;
 		*(.bss*)	/* Read-write zero initialized data */
@@ -116,6 +126,7 @@ SECTIONS
 		. = ALIGN(4);
 		_ebss = .;
 	} >ram_local2
+
 
 	/* exception unwind data - required due to libgcc.a issuing /0 exceptions */
 	.ARM.extab : {

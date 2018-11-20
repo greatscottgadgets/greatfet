@@ -15,7 +15,7 @@
 // Initialization import from the UMM library.
 void umm_init(void);
 
-// Allocate the heap here, from the normal BSS.
+// Allocate the heap here.
 uint8_t libgreat_heap[CONFIG_LIBGREAT_HEAP_SIZE] ATTR_ALIGNED(32) ATTR_SECTION(".bss.heap");
 
 /**
