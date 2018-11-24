@@ -8,10 +8,13 @@
 from __future__ import print_function
 
 import sys
+import time
 import errno
 import argparse
 
 from greatfet import GreatFET
+from greatfet.boards.flash_stub import GreatFETFlashStub
+
 from pygreat.errors import DeviceNotFoundError
 
 def log_silent(string, end=None):
@@ -137,9 +140,16 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
         """ Finds a GreatFET matching the relevant arguments."""
 
         # If we're prorgamming via DFU mode, look for a device that sports the DFU stub.
-        # Note that we only support a single DFU-mode device for now.
+        # Note that we only support a single DFU-mode device for now, and thus always
+        # grab the first one.
         if self.supports_dfu and args.dfu:
-            return GreatFET(serial_number=self.DFU_STUB_SERIAL)
+            devices = GreatFET(find_all=True)
+
+            for device in devices:
+                if isinstance(device, GreatFETFlashStub):
+                    return device
+
+            raise DeviceNotFoundError
 
         # If we have an index argument, grab _all_ greatFETs and select by index.
         elif args.index:

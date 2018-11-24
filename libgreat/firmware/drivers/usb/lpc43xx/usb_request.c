@@ -4,9 +4,27 @@
 
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_request.h>
+#include <drivers/usb/lpc43xx/usb_standard_request.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/comms_backend.h>
 
 #include <stdbool.h>
+
+/**
+ *  Default, weak implementations of our USB request handlers.
+ *  These can be overridden by target firmware.
+ *
+ *  TODO: re-architecture this to allow handler _registration_?
+ */
+const WEAK usb_request_handlers_t usb0_request_handlers = {
+	.standard = usb_standard_request,
+	.class = 0, .vendor = libgreat_comms_vendor_request_handler,  .reserved = 0,
+};
+const WEAK usb_request_handlers_t usb1_request_handlers = {
+	.standard = usb_standard_request,
+	.class = 0, .vendor = libgreat_comms_vendor_request_handler, .reserved = 0,
+};
+
 
 static void usb_request(
 	usb_endpoint_t* const endpoint,

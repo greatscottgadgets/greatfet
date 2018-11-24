@@ -20,9 +20,19 @@
 
 char version_string[] = VERSION_STRING;
 
+/**
+ * Method that determines the board's ID.
+ * Overrideable if derivative firmware wants to auto-detect which board it's running on.
+ */
+uint32_t WEAK core_get_board_id()
+{
+	return BOARD_ID;
+}
+
+
 int core_verb_read_board_id(struct command_transaction *trans)
 {
-	comms_response_add_uint32_t(trans, BOARD_ID);
+	comms_response_add_uint32_t(trans, core_get_board_id());
 	return 0;
 }
 

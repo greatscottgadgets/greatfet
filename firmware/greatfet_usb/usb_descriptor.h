@@ -28,3 +28,5 @@ extern uint8_t usb1_descriptor_string_product[];
 extern uint8_t usb1_descriptor_string_serial_number[];
 
 extern uint8_t* usb1_descriptor_strings[];
+
+void usb_set_descriptor_by_serial_number(void);
