@@ -69,7 +69,6 @@ set(SRC_M4
     legacy_apis/usb_api_leds.c
     legacy_apis/usb_api_logic_analyzer.c
     legacy_apis/usb_api_sdir.c
-    legacy_apis/usb_api_greatdancer.c
     legacy_apis/usb_api_usbhost.c
     legacy_apis/usb_api_glitchkit.c
     legacy_apis/usb_api_glitchkit_simple.c

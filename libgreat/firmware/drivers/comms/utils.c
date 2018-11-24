@@ -77,7 +77,8 @@ void *comms_response_add_string(struct command_transaction *trans, char const *c
 
 	// If we can't fit the relevant repsonse, fail out.
 	if (length > length_left) {
-			pr_error("ERROR: command overwrite responding to class %d / verb %d! \n", trans->class_number, trans->verb);
+			pr_error("ERROR: command overrun responding to class %d / verb %d! \n", trans->class_number, trans->verb);
+			trans->data_out_status = COMMS_PARSE_OVERRUN;
 			return out_pointer;
 	}
 
@@ -141,7 +142,8 @@ void *comms_response_reserve_space(struct command_transaction *trans, uint32_t s
 	uint32_t available_length = trans->data_out_max_length - trans->data_out_length;
 
 	if (size > available_length) {
-		pr_error("ERROR: command overwrite responding to class %d / verb %d! \n", trans->class_number, trans->verb); \
+		pr_error("ERROR: command overrun responding to class %d / verb %d! \n", trans->class_number, trans->verb); \
+		trans->data_out_status = COMMS_PARSE_OVERRUN;
 		return NULL;
 	}
 
@@ -150,4 +152,31 @@ void *comms_response_reserve_space(struct command_transaction *trans, uint32_t s
 	trans->data_out_position = end_pointer;
 
 	return start_pointer;
+}
+
+
+/**
+ * Adds a collection of raw bytes to the response.
+ *
+ * @param trans The associated transaction.
+ * @param data Data buffer to be transmitted.
+ * @param length The total amount of data from the buffer to include in the response.
+ *
+ * @return A pointer to the buffer used in the response,
+ *      or NULL if the relevant amount of space could not be reserved.
+ */
+void *comms_response_add_raw(struct command_transaction *trans, void *data, uint32_t length)
+{
+	// Allocate space in the response for the given buffer.
+	void *buffer = comms_response_reserve_space(trans, length);
+
+	// If we weren't able to allocate a buffer, fail out.
+	// Note that comms_response_reserve_space has already handled errors for us.
+	if (!buffer) {
+		return buffer;
+	}
+
+	// Copy the provided data into the reserved buffer.
+	memcpy(buffer, data, length);
+	return buffer;
 }

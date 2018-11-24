@@ -150,7 +150,7 @@ struct comms_verb {
 	char *name;
 
     /* The signatures of for the verb. Optional; but very useful
-     * to the host API. See the docuemntation for format information. 
+     * to the host API. See the docuemntation for format information.
      * Must be NULL if not provided. */
     char *in_signature;
     char *out_signature;
@@ -303,7 +303,7 @@ bool comms_pipe_ready(struct comms_pipe *pipe);
 
 /**
  * Simple functions that help us to parse arguments and respond with data.
- */ 
+ */
 #define COMMS_DECLARE_RESPONSE_HANDLER(type) \
 	void *comms_response_add_##type(struct command_transaction *trans, type response)
 #define COMMS_DECLARE_ARGUMENT_HANDLER(type) \
@@ -338,6 +338,19 @@ void *comms_response_add_string(struct command_transaction *trans, char const *c
  *      or NULL if the relevant amount of space could not be reserved.
  */
 void *comms_response_reserve_space(struct command_transaction *trans, uint32_t size);
+
+
+/**
+ * Adds a collection of raw bytes to the response.
+ *
+ * @param trans The associated transaction.
+ * @param data Data buffer to be transmitted.
+ * @param length The total amount of data from the buffer to include in the response.
+ *
+ * @return A pointer to the buffer used in the response,
+ *      or NULL if the relevant amount of space could not be reserved.
+ */
+void *comms_response_add_raw(struct command_transaction *trans, void *data, uint32_t length);
 
 /**
  * Grabs a chunk of up to max_length from the argument buffer.
