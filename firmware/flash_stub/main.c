@@ -3,98 +3,36 @@
  */
 
 #include <stddef.h>
+#include <stdio.h>
+#include <toolchain.h>
+#include <debug.h>
 
 #include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
-
+#include <drivers/usb/lpc43xx/usb.h>
 #include <greatfet_core.h>
 
-#include "usb.h"
-#include "usb_standard_request.h"
-
-#include <rom_iap.h>
 #include "../greatfet_usb/usb_descriptor.h"
 #include "../greatfet_usb/usb_device.h"
 #include "../greatfet_usb/usb_endpoint.h"
-#include "../greatfet_usb/usb_api_board.h"
-#include "../greatfet_usb/usb_api_spiflash.h"
+#include "../greatfet_usb/usb_bulk_buffer.h"
 
-#include "glitchkit.h"
+const char flash_stub_serial[] = "dfu_flash_stub";
 
-volatile const char flash_stub_serial[] = "dfu_flash_stub";\
-
-/* No USB1 support. */
-const usb_request_handlers_t usb1_request_handlers = {};
+#define BOARD_ID_FLASH_STUB 10000
 
 /**
- * Vendor requests. The stub uses the same request IDs and handlers as the
- * main greatfet_usb, but only supports the requests necessary for 
+ * Return the board ID for a GreatFET one in DFU mode.
+ * Eventually, this should automatically determine the board type
+ * and indicate it here.
  */
-static const usb_request_handler_fn usb0_vendor_request_handler[] = {
-	usb_vendor_request_spiflash_init,
-	usb_vendor_request_spiflash_write,
-	usb_vendor_request_spiflash_read,
-	usb_vendor_request_spiflash_erase,
-	usb_vendor_request_read_board_id,
-	usb_vendor_request_read_version_string,
-	usb_vendor_request_read_partid_serialno,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	usb_vendor_request_reset,
-};
-
-static const uint32_t usb0_vendor_request_handler_count =
-	sizeof(usb0_vendor_request_handler) / sizeof(usb0_vendor_request_handler[0]);
-
-usb_request_status_t usb0_vendor_request(
-	usb_endpoint_t* const endpoint,
-	const usb_transfer_stage_t stage) {
-	usb_request_status_t status = USB_REQUEST_STATUS_STALL;
-
-	if( endpoint->setup.request < usb0_vendor_request_handler_count ) {
-		usb_request_handler_fn handler = usb0_vendor_request_handler[endpoint->setup.request];
-		if( handler ) {
-			status = handler(endpoint, stage);
-		}
-	}
-	return status;
-}
-
-const usb_request_handlers_t usb0_request_handlers = {
-	.standard = usb_standard_request,
-	.class = 0,
-	.vendor = usb0_vendor_request,
-	.reserved = 0,
-};
-
-
-void patch_serial_number()
+uint32_t core_get_board_id()
 {
-    char * c;
-    uint8_t position = 1;
-
-    // USB string descriptor header
-    usb0_descriptor_string_serial_number[position++] = USB_DESCRIPTOR_TYPE_STRING;
-
-    // and body
-    c = flash_stub_serial;
-    while(*c) {
-
-      // Add a character.
-      usb0_descriptor_string_serial_number[position++] = *c;
-      usb0_descriptor_string_serial_number[position++] = 0;
-
-      // Move to the next character.
-      ++c;
-    }
-
-    // Finally, set the length of the string in the header.
-    usb0_descriptor_string_serial_number[0] = position;
-
+	return BOARD_ID_FLASH_STUB;
 }
 
 void init_usb0(void) {
-	patch_serial_number();
+	usb_set_descriptor_by_serial_number();
 	usb_peripheral_reset(&usb_peripherals[0]);
 	usb_device_init(&usb_peripherals[0]);
 
@@ -118,8 +56,10 @@ int main(void) {
 	cpu_clock_init();
 	cpu_clock_pll1_max_speed();
 	pin_setup();
-
 	init_usb0();
+
+	pr_info("Starting in flash stub mode.\n");
+	pr_info("Awaiting firmware programming commands.\n)");
 
 	// Simple heartbeat so we know what's going on.
 	while(true) {

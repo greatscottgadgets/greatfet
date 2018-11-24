@@ -2,10 +2,14 @@
  * This file is part of GreatFET
  */
 
+
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <drivers/usb/lpc43xx/usb_type.h>
 #include "usb_descriptor.h"
+
+#include <rom_iap.h>
 
 #define USB_VENDOR_ID			(0x1D50)
 #define USB0_PRODUCT_ID			(0x60E6)
@@ -311,3 +315,35 @@ uint8_t* usb1_descriptor_strings[] = {
 	usb1_descriptor_string_serial_number,
 	0,		// TERMINATOR
 };
+
+
+void usb_set_descriptor_by_serial_number(void)
+{
+	iap_cmd_res_t iap_cmd_res;
+
+	/* Read IAP Serial Number Identification */
+	iap_cmd_res.cmd_param.command_code = IAP_CMD_READ_SERIAL_NO;
+	iap_cmd_call(&iap_cmd_res);
+
+	if (iap_cmd_res.status_res.status_ret == CMD_SUCCESS) {
+		usb0_descriptor_string_serial_number[0] = USB_DESCRIPTOR_STRING_SERIAL_BUF_LEN;
+		usb0_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
+
+		/* 32 characters of serial number, convert to UTF-16LE */
+		for (size_t i=0; i<USB_DESCRIPTOR_STRING_SERIAL_LEN; i++) {
+			const uint_fast8_t nibble = (iap_cmd_res.status_res.iap_result[i >> 3] >> (28 - (i & 7) * 4)) & 0xf;
+			const char c = (nibble > 9) ? ('a' + nibble - 10) : ('0' + nibble);
+			usb0_descriptor_string_serial_number[2 + i * 2] = c;
+			usb0_descriptor_string_serial_number[3 + i * 2] = 0x00;
+		}
+	} else {
+		usb0_descriptor_string_serial_number[0] = 8;
+		usb0_descriptor_string_serial_number[1] = USB_DESCRIPTOR_TYPE_STRING;
+		usb0_descriptor_string_serial_number[2] = 'G';
+		usb0_descriptor_string_serial_number[3] = 0x00;
+		usb0_descriptor_string_serial_number[4] = 'S';
+		usb0_descriptor_string_serial_number[5] = 0x00;
+		usb0_descriptor_string_serial_number[6] = 'G';
+		usb0_descriptor_string_serial_number[7] = 0x00;
+	}
+}
