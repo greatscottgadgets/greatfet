@@ -71,7 +71,6 @@ int main(void) {
 	/* rtc_init(); */
 
 	init_usb0();
-	init_greatdancer_api();
 	init_usbhost_api();
 
 	while(true) {
