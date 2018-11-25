@@ -8,6 +8,7 @@ libgreat devices.
 """
 
 from __future__ import unicode_literals
+from future import utils as future_utils
 
 import re
 import sys
@@ -17,7 +18,16 @@ import inspect
 import itertools
 import collections
 
-from future import utils as future_utils
+from . import errors
+
+from backports.functools_lru_cache import lru_cache as memoize_with_lru_cache
+
+
+class CommsError(IOError):
+    """ Generic class for libgreat communications errors. """
+
+class CommandFailureError(CommsError):
+    """ Generic class for command failures."""
 
 class CommsBackend(object):
     """
@@ -86,7 +96,7 @@ class CommsBackend(object):
         from pygreat.classes.core import CoreAPI
 
         # Create a dictionary that will store references to our low-level/raw board APIs.
-        self.apis = collections.OrderedDict() 
+        self.apis = collections.OrderedDict()
 
         # Populate our core API, which is always present.
         self.apis['core'] = CoreAPI(self)
@@ -128,7 +138,7 @@ class CommsBackend(object):
                 will be maintained.
 
         Returns:
-            a dynamically-generated class object for the provieded class number, 
+            a dynamically-generated class object for the provieded class number,
             filled with RPC methods
         """
 
@@ -148,7 +158,7 @@ class CommsBackend(object):
 
         # Get a set of RPC verbs for the given class, which will become our
         # class's methods.
-        attrs = self._generate_rpc_verbs_for_class(class_number)
+        attrs = self._generate_rpc_verbs_for_class(class_number, class_name)
 
         # Each comms class needs a CLASS_NUMBER attribute, and should have a
         # CLASS_NAME attribute. We'll add ours.
@@ -180,14 +190,14 @@ class CommsBackend(object):
 
 
 
-    def _generate_rpc_verbs_for_class(self, class_number):
+    def _generate_rpc_verbs_for_class(self, class_number, class_name = "class"):
         """ Uses the Core Introspection API to generate RPCs for each of the verbs
             supported by a given class.
         Args:
             class_number -- The class number to generate RPCs for.
 
         Returns:
-            a dictionary mapping verb names to yet-unbound method objects 
+            a dictionary mapping verb names to yet-unbound method objects
         """
 
         rpcs = {}
@@ -198,7 +208,7 @@ class CommsBackend(object):
 
         # Iterate over each of the verbs and build an RPC for them.
         for verb_number in verb_numbers:
-            
+
             # Fetch the information necessary to build the verb RPC.
             name            = core_api.get_verb_name(class_number, verb_number)
             in_signature    = core_api.get_verb_in_signature(class_number, verb_number)
@@ -223,8 +233,8 @@ class CommsBackend(object):
             in_param_names = self._parse_rpc_param_names_string(in_param_names)
             out_param_names = self._parse_rpc_param_names_string(out_param_names)
 
-            # Build the relevnat RPCs.
-            rpcs[name] = command_rpc(verb_number, in_signature, out_signature, name=name, 
+            # Build the relevant RPCs.
+            rpcs[name] = command_rpc(verb_number, in_signature, out_signature, name=name, class_name=class_name,
                     doc=documentation, in_parameter_names=in_param_names, out_parameter_names=out_param_names)
 
         return rpcs
@@ -377,13 +387,13 @@ class CommsBackend(object):
         if format_string.endswith('X'):
 
             # Parse the format string, extracting the relevant fields.
-            match = re.match(cls._FORMAT_STRING_REGEX, format_string)
+            match = re.match(cls._FORMAT_FIELD_REGEX, format_string)
 
             # If we didn't have a prefix, this is only a byte.
-            if match[0] is None:
+            if match[1] is None:
                 return 1
             else:
-                return int(match[0])
+                return int(match[1])
 
 
         # Sanity check: this string doesn't contain a string.
@@ -496,6 +506,7 @@ class CommsBackend(object):
 
 
     @classmethod
+    @memoize_with_lru_cache(maxsize=128)
     def pack(cls, format_string, *args):
         """ Extended version of struct.pack() for libgreat communciations.
 
@@ -541,20 +552,24 @@ class CommsBackend(object):
                 elif subformat.endswith('S'):
                     result += c_string_arguments('UTF-8', *args_consumed)
                 elif subformat.endswith('X'):
-                    result += args_consumed[0]
+                    result += bytes(args_consumed[0])
                 else:
                     result += int_array_arguments(subformat[-1], *args_consumed)
 
 
             # Otherwise, it's a standard pack format; pack it.
             else:
+                # We always pack/unpack things using standard-sized little endian.
+                if not subformat.startswith('<'):
+                    subformat = '<' + subformat
+
                 result += struct.pack(subformat, *args_consumed)
 
         # Return the composed byte-string.
         return result
 
-
     @classmethod
+    @memoize_with_lru_cache(maxsize=128)
     def unpack(cls, format_string, raw_bytes):
         """ Extended version of struct.unpack() for libgreat communciations.
 
@@ -579,6 +594,11 @@ class CommsBackend(object):
 
         Grouped arguments are especially useful with repeat count 'prefixes'.
         """
+
+        # We always pack/unpack things using standard-sized little endian.
+        # If this wasn't specified, assume it.
+        if not format_string.startswith('<'):
+            format_string = '<' + format_string
 
         # Break the format string into chunks we can handle.
         # These chunks can either be passed into struct.pack or into one
@@ -611,6 +631,10 @@ class CommsBackend(object):
 
             # Otherwise, it's a standard pack format; unpack it.
             else:
+                # We always pack/unpack things using standard-sized little endian.
+                if not subformat.startswith('<'):
+                    subformat = '<' + subformat
+
                 results.extend(struct.unpack(subformat, bytes_consumed))
 
         # Return the generated tuple.
@@ -663,7 +687,6 @@ class CommsBackend(object):
         return annotations
 
 
-
     def execute_command(self, class_number, verb, in_format, out_format,
             *arguments, **kwargs):
         """Executes a libgreat command.
@@ -686,9 +709,11 @@ class CommsBackend(object):
                 decoded in the provided format.
             max_response_length -- If less than 4096, this parameter will
                 cut off the provided response at the given length.
-
             name -- name of the command being executed; for error messages
                 only
+            class_name -- name of the class the command belongs to; for error messages only
+            rephase_errors -- true if we should be allowed to rephrase errors that happen in the backend
+                to add more detail
 
         The formats used by in_format and out_format can be as follows:
             - A format string in the format accepted by struct.pack;
@@ -705,6 +730,11 @@ class CommsBackend(object):
         max_response_length = kwargs.pop('max_response_length', 4096)
         comms_timeout = kwargs.pop('comms_timeout', 1000)
         name = kwargs.pop('name', "anonymous")
+        class_name = kwargs.pop('class_name', None)
+        rephrase_errors = kwargs.pop('rephrase_errors', True)
+
+        # Generate a pretty name, which is used in error messages.
+        pretty_name = "{}.{}".format(class_name, name) if class_name else name
 
         if kwargs:
             raise TypeError("Unexpected keyword arguments: {}".format(kwargs.keys()))
@@ -723,9 +753,18 @@ class CommsBackend(object):
             outer_exception = type(e)(message)
             future_utils.raise_with_traceback(outer_exception, sys.exc_info()[2])
 
+        # If we're not reading a response (e.g. if the output format is empty, or None),
+        # truncate the max_response_length to zero. This allows backends to skip waiting for a response, when they can.
+        if not out_format:
+            max_response_length = 0
+
         # Execute the command.
         raw_result = self.execute_raw_command(class_number, verb, payload, timeout,
-                None, max_response_length, comms_timeout).tostring()
+                None, max_response_length, comms_timeout, pretty_name, rephrase_errors)
+
+        # If a response wasn't possible, we're done!
+        if not max_response_length:
+            return None
 
         # Unpack our response into a tuple of result values.
         try:
@@ -802,8 +841,8 @@ class CommsBackend(object):
         return len(result) == 1
 
 
-    def execute_raw_command(self, class_number, verb, data=None, timeout=1000,
-            encoding=None, max_response_length=4096, comms_timeout=1000):
+    def execute_raw_command(self, class_number, verb, data=None, timeout=1000, encoding=None,
+            max_response_length=4096, comms_timeout=1000, pretty_name="unknown", rephrase_errors=True):
         """Executes a libgreat command.
 
         Args:
@@ -817,10 +856,82 @@ class CommsBackend(object):
                 decoded in the provided format.
             max_response_length -- If less than 4096, this parameter will
                 cut off the provided response at the given length.
+            pretty_name -- String describing the RPC; used for error handling.
+            rephrase_errors -- Allow exceptions to be intercepted and rephrased with more details.
 
         Returns any data recieved in response.
         """
         raise NotImplementedError()
+
+
+    @staticmethod
+    def _strip_dmesg_timestamp(line):
+        """ Removes any timestamp prefix from a dmesg line. """
+
+        # Heuristic: the message starts after a the "] " that ends the
+        # timestamp, and thus two characters after the position of the first ']'.
+        end_of_timestamp = line.find(']') + 2
+        return line[end_of_timestamp:]
+
+
+    def _try_to_generate_error_context(self):
+        """ Attempts to generate a string providing error context. """
+
+        # The device state is a bit tentative, here. We should be able to read
+        # an error using the debug command, if it's available. We'll try, and
+        # just silently fail if anything happens.
+        try:
+
+            # Read the last non-empty line from the device's debug ring.
+            logs = self.apis['debug'].read_dmesg()
+            last_line = logs.strip().split("\n")[-1]
+
+            # Strip the last line of any timestamp.
+            return self._strip_dmesg_timestamp(last_line)
+
+        except:
+            return None
+
+
+    def _exception_for_command_failure(self, error_number=None, pretty_name=None):
+        """ Generates an CommandFailureError for a failed command.
+
+        Arguments:
+            error_number -- The libgreat error number returned during command failure.
+            pretty_name -- The pretty name of the RPC that failed, usually in class.name format.
+        """
+
+        # Generate the description of the exception.
+        if pretty_name:
+            message = "{}:".format(pretty_name)
+        else:
+            message = "rpc:"
+
+        # If possible, try to grab context from the device to make this error richer.
+        error_context = self._try_to_generate_error_context()
+        if error_context:
+
+            # Simple heuristic: if the RPC name is already in the message, don't include it a second time.
+            if pretty_name in error_context:
+                message = error_context
+            else:
+                message += " {}".format(error_context)
+
+        else:
+            message += "failed to execute"
+
+        # If we have a description of the error number, include it.
+        error_string = errors.get_error_name(error_number)
+        if error_string:
+            message += " [{}]".format(error_string)
+        elif error_number:
+            message += " [{}]".format(error_number)
+        else:
+            message += " [unknown error]"
+
+        # Finally, raise the relevant error.
+        return CommandFailureError(message)
+
 
 
 
@@ -835,7 +946,7 @@ class CommsApiCollection(object):
 
 
 def _generate_command_in_signature(in_format, in_names):
-    """ Generates in-signature documentation for a given RPC.  
+    """ Generates in-signature documentation for a given RPC.
     This acts as input to python's built-in documentation engine.
     """
 
@@ -881,8 +992,8 @@ def _generate_command_in_signature(in_format, in_names):
 
 
 def _generate_command_out_signature(out_format, out_names):
-    """ Generates out-signature documentation for a given RPC. 
-    This is used to generate a helpful return annotation e.g. for use as 
+    """ Generates out-signature documentation for a given RPC.
+    This is used to generate a helpful return annotation e.g. for use as
     input to python's documentation engine.
     """
 
@@ -921,7 +1032,7 @@ def _generate_command_out_signature(out_format, out_names):
 
 def _generate_command_rpc_signature(in_format, in_names, out_format, out_names):
     """ Geneates a signature object that describes a generated method call.
-        This allows our generated method to have standard python docs, if we 
+        This allows our generated method to have standard python docs, if we
         want (we do).
     """
 
@@ -933,15 +1044,15 @@ def _generate_command_rpc_signature(in_format, in_names, out_format, out_names):
 
 
 
-def command_rpc(verb_number, in_format="", out_format="", 
-        name="function", doc="undocumented, generated function", in_parameter_names=None, out_parameter_names=None):
-    """ Convenience function that creates an RPC method for a given verb. 
+def command_rpc(verb_number, in_format="", out_format="", name="function", class_name="class",
+        doc="undocumented, generated function", in_parameter_names=None, out_parameter_names=None):
+    """ Convenience function that creates an RPC method for a given verb.
 
     Args:
         verb_number -- The verb number for the RPC to be created.
         in_format -- The format of the arguments accepted.  Defined the same way as CommsBackend.pack.
         out_format -- The format of the return value accepted.  Defined the same way as struct.unpack.
-    
+
     This function can be used to quickly define methods that issue libgreat
     commands, transparently packing and unpacking arguments to handle the RPC.
 
@@ -949,10 +1060,10 @@ def command_rpc(verb_number, in_format="", out_format="",
 
         class ExampleClass(CommsClass):
             read_a_thing = command_rpc(verb_number=1, in_format="<II", out_format="<I")
-    
-    ExampleClass would wind up with a method called ``read_a_thing``, which accepts 
+
+    ExampleClass would wind up with a method called ``read_a_thing``, which accepts
     two arguments and returns a single integer. Arguments will be encoded as two uint32_ts
-    in the command payload, and the response would be intepreted as containing 
+    in the command payload, and the response would be intepreted as containing
     a uint32_t.
 
     Calling this method would look like this::
@@ -971,8 +1082,8 @@ def command_rpc(verb_number, in_format="", out_format="",
         timeout  = kwargs.pop('timeout', 1000)
         max_response_length = kwargs.pop('max_response_length', 4096)
 
-        return self.execute_command(verb_number, in_format, out_format, name=name, timeout=timeout,
-                max_response_length=max_response_length, *arguments)
+        return self.execute_command(verb_number, in_format, out_format, name=name, class_name=class_name,
+                timeout=timeout, max_response_length=max_response_length, *arguments)
 
     # Apply our known documentation to the given command.
     method.__name__ = future_utils.native_str(name)
@@ -1076,6 +1187,8 @@ def int_array_return(raw_bytes, specifier='I'):
     return [parse_bytes(b) for b in break_into_chunks(size, raw_bytes)]
 
 
+
+
 class CommsClass(object):
     """ Class representing an libgreat communications class, which exposes
     a set of functionality to the host. Classes group _verbs_, which act
@@ -1119,12 +1232,12 @@ class CommsClass(object):
 
         Returns any data recieved in response, parsed according to out_format.
         """
-        return self.comms_backend.execute_command(self.CLASS_NUMBER, verb, in_format, 
+        return self.comms_backend.execute_command(self.CLASS_NUMBER, verb, in_format,
                 out_format, *arguments, **kwargs)
 
 
-    def execute_raw_command(self, class_number, verb, data=None, timeout=1000,
-            encoding=None, max_response_length=4096, comms_timeout=1000):
+    def execute_raw_command(self, class_number, verb, data=None, timeout=1000, encoding=None,
+            max_response_length=4096, comms_timeout=1000, pretty_name="unknown", rephrase_errors=True):
         """Executes a libgreat command.
 
         Args:
@@ -1138,11 +1251,13 @@ class CommsClass(object):
                 decoded in the provided format.
             max_response_length -- If less than 4096, this parameter will
                 cut off the provided response at the given length.
+            pretty_name -- String describing the RPC; used for error handling.
+            rephrase_errors -- Allow exceptions to be intercepted and rephrased with more details.
 
         Returns any data recieved in response.
         """
-        return self.execute_raw_command(self.CLASS_NUMBER, verb, data, timeout, 
-                encoding, max_response_length, comms_timeout)
+        return self.execute_raw_command(self.CLASS_NUMBER, verb, data, timeout,
+                encoding, max_response_length, comms_timeout, pretty_name, rephrase_errors)
 
 
 class GeneratedCommsClass(CommsClass):

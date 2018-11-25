@@ -111,9 +111,11 @@ const char *comms_get_class_name(uint32_t class_number, const char *default_stri
 	if (!cls || !cls->name) {
 		return default_string;
 	} else {
-		return cls->name;	
+		return cls->name;
 	}
 }
+
+
 
 
 /**
@@ -135,28 +137,23 @@ int comms_backend_submit_command(struct comm_backend_driver *backend,
 
 	// If we couldn't find a handling class.
 	if (!handling_class) {
-		pr_warning("warning: backend %s submitted a command for an unknown class %d (%x)\n",
+		pr_warning("comms: backend %s submitted a command for an unknown class %d (%x)\n",
 				backend->name, trans->class_number, trans->class_number);
 		return EINVAL;
 	}
 
-	// If the handling class has a command handler, use it!
-	if (handling_class->command_handler) {
-		found_handler = true;
-		rc = handling_class->command_handler(trans);
-	}
-
-	// Otherwise, search for a verb handler for the given class.
-	if (!handling_class->command_verbs) {
+	// If we neither have a verb list or a command handler, something's wrong!
+	// Error out.
+	if (!handling_class->command_verbs && !handling_class->command_handler) {
 		pr_warning(
-				"WARNING: backend %s submttied a command for class %d, which has neither\n"
+				"comms: backend %s submttied a command for class %d, which has neither\n"
 				"a command handler nor verb handlers!\n",
 				backend->name, handling_class->name);
 		return EINVAL;
 	}
 
-	// Iterate through the array of command verbs until we find a verb
-	// with a NULL handler.
+	// Iterate through the array of command verbs until we find a verb that handles
+	// our command.
 	for (verb = handling_class->command_verbs; verb->handler; ++verb) {
 		if (verb->verb_number == trans->verb) {
 			found_handler = true;
@@ -165,9 +162,16 @@ int comms_backend_submit_command(struct comm_backend_driver *backend,
 		}
 	}
 
+	// If we haven't found a handler, but we have a class command handler, delegate
+	// back to the overall class handler.
+	if (!found_handler && handling_class->command_handler) {
+		found_handler = true;
+		rc = handling_class->command_handler(trans);
+	}
+
 	// If we couldn't find any handler, abort.
 	if (!found_handler) {
-		pr_warning("warning: backend %s submttied a command class %s with an unhandled verb %d / %x\n",
+		pr_warning("comms: backend %s submttied a command class %s with an unhandled verb %d / %x\n",
 				backend->name, handling_class->name, trans->verb, trans->verb);
 		return EINVAL;
 	}
@@ -210,4 +214,39 @@ struct comms_verb *comms_get_object_for_verb(uint32_t class_number, uint32_t ver
 
 	// If we couldn't find the relevant verb, return NULL.
 	return NULL;
+}
+
+
+/**
+ *  Returns a pretty name for the function that will handle the given class/verb pair.
+ *
+ *  @param class_number The number of the relevant class.
+ *  @param verb_number The number of the relevant verb.
+ *  @param class_handler_string The string to be returned if the class command handler is used.
+ *  @param default_string The string to be returned if we can't find a name, or the handler is anonymous.
+ *
+ *  @return The name of the object's handler, or one of the provided defaults.
+ */
+const char *comms_get_handler_name(uint32_t class_number, uint32_t verb_number,
+		const char *class_handler_string, const char *default_string)
+{
+	struct comms_verb *verb = comms_get_object_for_verb(class_number, verb_number);
+	struct comms_class *handling_class = comms_get_class_by_number(class_number);
+
+	// If we found a verb object, use its name, or the default if it has none.
+	if (verb) {
+		if (verb->name) {
+			return verb->name;
+		} else {
+			return default_string;
+		}
+	}
+
+	// Otherwise, we may have a class with handler.
+	if (handling_class->command_handler) {
+		return class_handler_string;
+	}
+
+	// If we couldn't find the relevant verb, return the default.
+	return default_string;
 }
