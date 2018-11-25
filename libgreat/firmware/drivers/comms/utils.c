@@ -22,7 +22,7 @@
 		type *target = trans->data_out_position; \
 		\
 		if ((trans->data_out_max_length - trans->data_out_length) < sizeof(type)) {\
-			pr_error("ERROR: command overwrite handling class %d / verb %d! \n", trans->class_number, trans->verb); \
+			pr_comms_error(trans, "not enough space to include %s response\n", #type); \
 			trans->data_out_status |= COMMS_PARSE_OVERRUN; \
 			return trans->data_out_position; \
 		} \
@@ -42,7 +42,8 @@
 		type value = *target; \
 		\
 		if (sizeof(type) > trans->data_in_remaining) { \
-			pr_error("ERROR: command overread handling class %d / verb %d! \n", trans->class_number, trans->verb); \
+			pr_comms_error(trans, "not enough data provided to read %s response (%d byte(s) left)\n", #type, \
+					trans->data_in_remaining); \
 			trans->data_in_status |= COMMS_PARSE_UNDERRUN; \
 			return (type)0; \
 		} \
@@ -77,7 +78,7 @@ void *comms_response_add_string(struct command_transaction *trans, char const *c
 
 	// If we can't fit the relevant repsonse, fail out.
 	if (length > length_left) {
-			pr_error("ERROR: command overrun responding to class %d / verb %d! \n", trans->class_number, trans->verb);
+			pr_comms_error(trans, "not enough space to add target string!\n");
 			trans->data_out_status = COMMS_PARSE_OVERRUN;
 			return out_pointer;
 	}
@@ -113,8 +114,9 @@ void *comms_argument_read_buffer(struct command_transaction *trans,
 	uint32_t length = trans->data_in_remaining;
 
 	// If our maximum length is less than the data available, truncate.
-	if (max_length < length)
+	if (max_length < length) {
 		length = max_length;
+	}
 
 	// Advance within the buffer accordingly.
 	end_pointer += length;
@@ -142,7 +144,7 @@ void *comms_response_reserve_space(struct command_transaction *trans, uint32_t s
 	uint32_t available_length = trans->data_out_max_length - trans->data_out_length;
 
 	if (size > available_length) {
-		pr_error("ERROR: command overrun responding to class %d / verb %d! \n", trans->class_number, trans->verb); \
+		pr_comms_error(trans, "not enough space to reserve %d requested bytes\n", size);
 		trans->data_out_status = COMMS_PARSE_OVERRUN;
 		return NULL;
 	}

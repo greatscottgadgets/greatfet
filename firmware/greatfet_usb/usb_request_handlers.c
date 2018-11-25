@@ -15,7 +15,6 @@
 #include "legacy_apis/usb_api_leds.h"
 #include "legacy_apis/usb_api_logic_analyzer.h"
 #include "legacy_apis/usb_api_sdir.h"
-#include "legacy_apis/usb_api_greatdancer.h"
 #include "legacy_apis/usb_api_usbhost.h"
 #include "legacy_apis/usb_api_glitchkit.h"
 #include "legacy_apis/usb_api_glitchkit_simple.h"
@@ -72,7 +71,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_gpio_reset,
 	NULL, //usb_vendor_request_gpio_read,
 
-	
+
 	// GlitchKit
 	usb_vendor_request_glitchkit_setup,
 	usb_vendor_request_glitchkit_provide_target_clock,
@@ -117,10 +116,6 @@ static bool _is_libgreat_command(usb_setup_t *setup_packet)
 
 	// If this isn't to an endpoint, it's not to us.
 	if (request_recipient != USB_SETUP_REQUEST_RECIPIENT_ENDPOINT)
-		return false;
-
-	// If this request isn't to endpoint zero, it's not for us.
-	if (setup_packet->index != 0)
 		return false;
 
 	// If this isn't our request number, it's not to us.

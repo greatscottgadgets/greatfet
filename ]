@@ -20,8 +20,6 @@ import collections
 
 from . import errors
 
-from backports.functools_lru_cache import lru_cache as memoize_with_lru_cache
-
 
 class CommsError(IOError):
     """ Generic class for libgreat communications errors. """
@@ -438,6 +436,7 @@ class CommsBackend(object):
         if repeat_count:
 
             result = b""
+            print("packing {} groups of {}:".format(len(args), format_string))
 
             # If we're not repeating infinitely, validate our count.
             if repeat_count != '*':
@@ -506,7 +505,6 @@ class CommsBackend(object):
 
 
     @classmethod
-    @memoize_with_lru_cache(maxsize=128)
     def pack(cls, format_string, *args):
         """ Extended version of struct.pack() for libgreat communciations.
 
@@ -559,17 +557,13 @@ class CommsBackend(object):
 
             # Otherwise, it's a standard pack format; pack it.
             else:
-                # We always pack/unpack things using standard-sized little endian.
-                if not subformat.startswith('<'):
-                    subformat = '<' + subformat
-
                 result += struct.pack(subformat, *args_consumed)
 
         # Return the composed byte-string.
         return result
 
+
     @classmethod
-    @memoize_with_lru_cache(maxsize=128)
     def unpack(cls, format_string, raw_bytes):
         """ Extended version of struct.unpack() for libgreat communciations.
 
@@ -594,11 +588,6 @@ class CommsBackend(object):
 
         Grouped arguments are especially useful with repeat count 'prefixes'.
         """
-
-        # We always pack/unpack things using standard-sized little endian.
-        # If this wasn't specified, assume it.
-        if not format_string.startswith('<'):
-            format_string = '<' + format_string
 
         # Break the format string into chunks we can handle.
         # These chunks can either be passed into struct.pack or into one
@@ -631,10 +620,6 @@ class CommsBackend(object):
 
             # Otherwise, it's a standard pack format; unpack it.
             else:
-                # We always pack/unpack things using standard-sized little endian.
-                if not subformat.startswith('<'):
-                    subformat = '<' + subformat
-
                 results.extend(struct.unpack(subformat, bytes_consumed))
 
         # Return the generated tuple.
@@ -685,6 +670,7 @@ class CommsBackend(object):
                 annotations.append(annotation)
 
         return annotations
+
 
 
     def execute_command(self, class_number, verb, in_format, out_format,
@@ -753,18 +739,9 @@ class CommsBackend(object):
             outer_exception = type(e)(message)
             future_utils.raise_with_traceback(outer_exception, sys.exc_info()[2])
 
-        # If we're not reading a response (e.g. if the output format is empty, or None),
-        # truncate the max_response_length to zero. This allows backends to skip waiting for a response, when they can.
-        if not out_format:
-            max_response_length = 0
-
         # Execute the command.
         raw_result = self.execute_raw_command(class_number, verb, payload, timeout,
-                None, max_response_length, comms_timeout, pretty_name, rephrase_errors)
-
-        # If a response wasn't possible, we're done!
-        if not max_response_length:
-            return None
+                None, max_response_length, comms_timeout, pretty_name, rephrase_errors).tostring()
 
         # Unpack our response into a tuple of result values.
         try:

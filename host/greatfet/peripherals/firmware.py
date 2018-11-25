@@ -197,7 +197,7 @@ class DeviceFirmwareManager(GreatFETPeripheral):
 
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
-        self.api.write_page(address, data_array, timeout=30000)
+        self.api.write_page(address, bytes(data_array), timeout=30000)
 
 
     def _read_page(self, address, length):

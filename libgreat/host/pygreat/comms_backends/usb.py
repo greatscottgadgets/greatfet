@@ -8,12 +8,13 @@ devices over USB.
 """
 
 from __future__ import absolute_import
+from future import utils as future_utils
 
 import usb
 import time
 import struct
 
-from ..comms import CommsBackend
+from ..comms import CommsBackend, CommandFailureError
 from ..errors import DeviceNotFoundError
 
 
@@ -31,8 +32,7 @@ class USBCommsBackend(CommsBackend):
     """ The request number for issuing vendor-request encapsulated libgreat commands. """
     LIBGREAT_REQUEST_NUMBER = 0x65
 
-
-    """ 
+    """
     Constant value provided to libgreat vendor requests to indicate that the command
     should execute normally.
     """
@@ -43,6 +43,25 @@ class USBCommsBackend(CommsBackend):
     command should be cancelled.
     """
     LIBGREAT_VALUE_CANCEL = 0xDEAD
+
+    """
+    Constant size of errors returned by libgreat commands on failure.
+    """
+    LIBGREAT_ERRNO_SIZE = 4
+
+
+    """
+    A flag passed to command execution that indicates we exepect no response, and don't need to wait
+    for anything more than the initial ACK.
+    """
+    LIBGREAT_FLAG_SKIP_RESPONSE = (1 << 0)
+
+
+    """
+    A flag passed to command execution that indicates that the host should re-use all of the in-arguments
+    from a previous iteration. See execute_raw_command for documentation.
+    """
+    LIBGREAT_FLAG_REPEAT_LAST = (1 << 1)
 
 
     # TODO: handle providing board "URIs", like "usb;serial_number=0x123",
@@ -76,6 +95,9 @@ class USBCommsBackend(CommsBackend):
         # For now, supported boards provide a single configuration, so we
         # can accept the first configuration provided.
         self.device.set_configuration()
+
+        # Start off with no knowledge of the device's state.
+        self._last_command_arguments = None
 
         # Run the parent initialization.
         super(USBCommsBackend, self).__init__(**device_identifiers)
@@ -157,8 +179,29 @@ class USBCommsBackend(CommsBackend):
         return self.device.serial_number
 
 
-    def execute_raw_command(self, class_number, verb, data=None, timeout=1000,
-            encoding=None, max_response_length=4096, comms_timeout=1000):
+    def _check_for_repeat(self, class_number, verb, data):
+        """ Check to see if the class_number, verb, and data are the same as the immediately
+            preceeding call to this function. This is used to detemrine when we can perform a repeat-optimization,
+            which is documented in execute_raw_command.
+        """
+
+        # Compile the in-arguments into a simple container.
+        data_set = (class_number, verb, data,)
+
+        # If this data set matches our most recent arguments,
+        # we can use our repeat optimization!
+        if data_set == self._last_command_arguments:
+            return True
+
+        # Otherwise, mark the data to be used and report that we can't.
+        else:
+            self._last_command_arguments = data_set
+            return False
+
+
+
+    def execute_raw_command(self, class_number, verb, data=None, timeout=1000, encoding=None,
+           max_response_length=4096, comms_timeout=1000, pretty_name="unknown", rephrase_errors=True):
         """Executes a libgreat command.
 
         Args:
@@ -172,6 +215,11 @@ class USBCommsBackend(CommsBackend):
                 decoded in the provided format.
             max_response_length -- If less than 4096, this parameter will
                 cut off the provided response at the given length.
+            comms_timeout -- Maximum execution time for communications that do
+                not directly execute the command.
+            pretty_name -- String describing the RPC; used for error handling.
+            rephrase_errors -- Allow exceptions to be intercepted and rephrased with more details.
+
 
         Returns any data recieved in response.
         """
@@ -181,7 +229,7 @@ class USBCommsBackend(CommsBackend):
 
         # If we have data, build it into our request.
         if data:
-            to_send = prelude + bytearray(data)
+            to_send = prelude + bytes(data)
 
             if len(to_send) > self.LIBGREAT_MAX_COMMAND_SIZE:
                 raise ArgumentError("Command payload is too long!")
@@ -190,58 +238,95 @@ class USBCommsBackend(CommsBackend):
         else:
             to_send = prelude
 
-        # Send the command (including prelude) to the device...
+        # If our max response is zero, never bother reading a response.
+        skip_reading_response = (max_response_length == 0)
+
+        # To save on the overall number of command transactions, the backend provides an optimization
+        # that allows us to skip the "send" phase if the class, verb, and data are the same as the immediately
+        # preceeding call. Check to see if we can use that optimization.
+        use_repeat_optimization = self._check_for_repeat(class_number, verb, data)
+
         # TODO: upgrade this to be able to not block?
         try:
-            self.device.ctrl_transfer(
-                usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
-                self.LIBGREAT_REQUEST_NUMBER, self.LIBGREAT_VALUE_EXECUTE, 0, to_send, timeout)
+            # If we're not using the repeat-optimization, send the in-arguments to the device.
+            if not use_repeat_optimization:
+
+                # Set the FLAG_SKIP_RESPONSE flag if we don't expect a response back from the device.
+                flags = self.LIBGREAT_FLAG_SKIP_RESPONSE if skip_reading_response else 0
+
+                self.device.ctrl_transfer(
+                    usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
+                    self.LIBGREAT_REQUEST_NUMBER, self.LIBGREAT_VALUE_EXECUTE, flags, to_send, timeout)
+
+                # If we're skipping reading a response, return immediately.
+                if skip_reading_response:
+                    return None
+
+
+            # Set the FLAG_REPEAT_LAST if we're using our repeat-last optimization.
+            flags = self.LIBGREAT_FLAG_REPEAT_LAST if use_repeat_optimization else 0
 
             # Truncate our maximum, if necessary.
             if max_response_length > 4096:
                 max_response_length = self.LIBGREAT_MAX_COMMAND_SIZE
 
             # ... and read any response the device has prepared for us.
-            # TODO: use our own timeout, rather than the command timeout, to
-            # avoid doubling the overall timeout
             response = self.device.ctrl_transfer(
                 usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
-                self.LIBGREAT_REQUEST_NUMBER, self.LIBGREAT_VALUE_EXECUTE, 0, max_response_length, comms_timeout)
+                self.LIBGREAT_REQUEST_NUMBER, self.LIBGREAT_VALUE_EXECUTE, flags, max_response_length, comms_timeout)
 
             # If we were passed an encoding, attempt to decode the response data.
             if encoding and response:
                 response = response.tostring().decode(encoding)
 
             # Return the device's response.
-            return response
+            return response.tostring()
 
-        except:
-            self.abort_command()
-            raise
+        except Exception as e:
 
+            # Abort the command, and grab the last error number, if possible.
+            error_number = self.abort_command()
 
-    def abort_command(self, timeout=1000, retry_delay=1):
-        """ Aborts execution of a current libgreat command. Used for error handling.  """
+            # If we got a pipe error, this indicates the device issued a realerror,
+            # and we should convert this into a failed command error.
+            is_signaled_error = \
+              isinstance(e, usb.core.USBError) and (e.errno == LIBUSB_PIPE_ERROR)
 
-        # FIXME: these should be moved to a backend module in the libgreat
-        # host library
-        LIBGREAT_REQUEST_NUMBER = 0x65
-
-        # Create a quick function to issue the abort request.
-        execute_abort = lambda device : device.ctrl_transfer(
-                usb.ENDPOINT_OUT | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
-                self.LIBGREAT_REQUEST_NUMBER, self.LIBGREAT_VALUE_CANCEL, 0, None, timeout)
-
-        # And try executing the abort progressively, mutiple times.
-        try:
-            execute_abort(self.device)
-        except:
-            if retry_delay:
-                time.sleep(retry_delay)
-                execute_abort(self.device)
+            # If this was an error raised on the device side, covert it to a CommandFailureError.
+            if is_signaled_error and rephrase_errors:
+                future_utils.raise_from(self._exception_for_command_failure(error_number, pretty_name), None)
             else:
                 raise
 
+
+    def abort_command(self, timeout=1000, retry_delay=1):
+        """ Aborts execution of a current libgreat command. Used for error handling.
+
+        Returns:
+            the last error code returned by a command; only meaningful if
+        """
+
+        # Invalidate any existing knowledge of the device's state.
+        self._last_command_arguments = None
+
+        # Create a quick function to issue the abort request.
+        execute_abort = lambda device : device.ctrl_transfer(
+                usb.ENDPOINT_IN | usb.TYPE_VENDOR | usb.RECIP_ENDPOINT,
+                self.LIBGREAT_REQUEST_NUMBER, self.LIBGREAT_VALUE_CANCEL, 0,
+                self.LIBGREAT_ERRNO_SIZE, timeout)
+
+        # And try executing the abort progressively, mutiple times.
+        try:
+            result = execute_abort(self.device)
+        except:
+            if retry_delay:
+                time.sleep(retry_delay)
+                result = execute_abort(self.device)
+            else:
+                raise
+
+        # Parse the value returned from the request, which may be an error code.
+        return struct.unpack("<I", result)[0]
 
     def close(self):
         """

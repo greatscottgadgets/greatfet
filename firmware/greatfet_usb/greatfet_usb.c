@@ -21,7 +21,6 @@
 #include "legacy_apis/usb_api_usbhost.h"
 #include "legacy_apis/usb_api_logic_analyzer.h"
 #include "legacy_apis/usb_api_adc.h"
-#include "legacy_apis/usb_api_greatdancer.h"
 
 #include "classes/heartbeat.h"
 #include "glitchkit.h"
