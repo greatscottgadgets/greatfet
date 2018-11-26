@@ -160,7 +160,7 @@ extern "C" {
 
 #define I2C_MMCTRL_MM_ENA    (1 << 0) /* Monitor mode enable */
 #define I2C_MMCTRL_ENA_SCL   (1 << 1) /* SCL output enable */
-#define I2C_MMCTRL_MATCH_ALL (1 << 2) /* Select interrupt register match
+#define I2C_MMCTRL_MATCH_ALL (1 << 2) /* Select interrupt register match */
 
 /* --- I2Cx_ADR1 values ---------------------------------------------------- */
 
