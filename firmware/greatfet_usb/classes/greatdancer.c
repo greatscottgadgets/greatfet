@@ -148,7 +148,7 @@ static void set_up_greatdancer_device(uint16_t max_packet_size) {
 	}
 
 	// And initialize the endpoint.
-	usb_endpoint_init_without_descriptor(ep0_in,	max_packet_size, USB_TRANSFER_TYPE_CONTROL);
+	usb_endpoint_init_without_descriptor(ep0_in,  max_packet_size, USB_TRANSFER_TYPE_CONTROL);
 	usb_endpoint_init_without_descriptor(ep0_out, max_packet_size, USB_TRANSFER_TYPE_CONTROL);
 }
 
@@ -511,7 +511,7 @@ static int greatdancer_verb_send_on_endpoint(struct command_transaction *trans)
 	memcpy(&endpoint_buffer[endpoint_number], data_to_send, length_to_send);
 
 	// And request that the USB controller send it.
-	usb_transfer_schedule_block(target_endpoint, &endpoint_buffer[endpoint_number], length_to_send, NULL, NULL);
+	usb_transfer_schedule(target_endpoint, &endpoint_buffer[endpoint_number], length_to_send, NULL, NULL);
 	return 0;
 }
 
