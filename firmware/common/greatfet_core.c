@@ -112,13 +112,11 @@ void delay(uint32_t duration)
 		__asm__("nop");
 }
 
-/* Wildly inaccurate 
- * We could do this using a timer
- */
+/** Less widly inaccurate than ever before! */
 void delay_us(uint32_t duration)
 {
-	// Determined experimentally, don't rely on this
-	delay(duration * 30);
+	uint32_t time_base = get_time();
+	while(get_time_since(time_base) < duration);
 }
 
 
