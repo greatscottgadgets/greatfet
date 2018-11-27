@@ -12,7 +12,7 @@ include(../cmake/greatfet-common.cmake)
 # Automatically include all GreatFET API classes.
 # This enables us to simply add a file to the 'classes' directory to add a new
 # communications API class.
-AUX_SOURCE_DIRECTORY(classes GREATFET_API_CLASSES) 
+AUX_SOURCE_DIRECTORY(classes GREATFET_API_CLASSES)
 AUX_SOURCE_DIRECTORY("${LIBGREAT_FIRMWARE_COMMON}/classes" LIBGREAT_API_CLASSES)
 
 set(SRC_M4
@@ -54,7 +54,6 @@ set(SRC_M4
     "${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
-    "${PATH_GREATFET_FIRMWARE_COMMON}/printf.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/one_wire.c"
 
