@@ -40,7 +40,6 @@ set(SRC_M4
     # simple drivers used
     "${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
-    "${PATH_GREATFET_FIRMWARE_COMMON}/printf.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
 )
