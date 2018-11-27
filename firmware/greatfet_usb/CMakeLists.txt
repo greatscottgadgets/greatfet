@@ -19,6 +19,19 @@ set(SRC_M4
     greatfet_usb.c
     usb_request_handlers.c
     usb_bulk_buffer.c
+
+    # heap drivers
+    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator.c"
+    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_malloc.c"
+
+    # optional components that allow malloc/free debugging
+    #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_info.c"
+    #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_integrity.c"
+    #"${PATH_LIBGREAT_FIRMWARE_DRIVERS}/memory/allocator/umm_poison.c"
+
+    # internal components
+    pin_manager.c
+
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_host.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_request.c"
@@ -26,6 +39,7 @@ set(SRC_M4
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_queue.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_queue_host.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/comms_backend.c"
+    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/gpio/${LIBGREAT_PLATFORM}/gpio.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/comms/comms_class.c"
     "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/comms/utils.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/gpdma.c"
@@ -48,21 +62,20 @@ set(SRC_M4
     ${GREATFET_API_CLASSES}
 
     # TODO: get rid of these!
-    usb_api_spi.c
-    usb_api_adc.c
-    usb_api_dac.c
-    usb_api_i2c.c
-    usb_api_gpio.c
-    usb_api_leds.c
-    usb_api_logic_analyzer.c
-    usb_api_sdir.c
-    usb_api_greatdancer.c
-    usb_api_usbhost.c
-    usb_api_glitchkit.c
-    usb_api_glitchkit_simple.c
-    usb_api_glitchkit_usb.c
-    usb_api_DS18B20.c
-    usb_api_msp430.c
+    legacy_apis/usb_api_spi.c
+    legacy_apis/usb_api_adc.c
+    legacy_apis/usb_api_dac.c
+    legacy_apis/usb_api_i2c.c
+    legacy_apis/usb_api_leds.c
+    legacy_apis/usb_api_logic_analyzer.c
+    legacy_apis/usb_api_sdir.c
+    legacy_apis/usb_api_greatdancer.c
+    legacy_apis/usb_api_usbhost.c
+    legacy_apis/usb_api_glitchkit.c
+    legacy_apis/usb_api_glitchkit_simple.c
+    legacy_apis/usb_api_glitchkit_usb.c
+    legacy_apis/usb_api_DS18B20.c
+    legacy_apis/usb_api_msp430.c
 )
 
 DeclareTargets()

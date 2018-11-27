@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdio.h>
 
-/* FIXME: only include this from libgreat */
-/* FIXME: replace me with a better name */
 #include <toolchain.h>
 
 #include <libopencm3/cm3/vector.h>
@@ -17,11 +15,13 @@
 #include "drivers/usb/lpc43xx/usb.h"
 
 #include "usb_request_handlers.h"
-#include "usb_api_sdir.h"
-#include "usb_api_usbhost.h"
-#include "usb_api_logic_analyzer.h"
-#include "usb_api_adc.h"
-#include "usb_api_greatdancer.h"
+
+// TODO: get rid of these
+#include "legacy_apis/usb_api_sdir.h"
+#include "legacy_apis/usb_api_usbhost.h"
+#include "legacy_apis/usb_api_logic_analyzer.h"
+#include "legacy_apis/usb_api_adc.h"
+#include "legacy_apis/usb_api_greatdancer.h"
 
 #include "classes/heartbeat.h"
 #include "glitchkit.h"
@@ -34,6 +34,8 @@
 #include "usb_bulk_buffer.h"
 
 #include "debug.h"
+
+#include <drivers/memory/allocator.h>
 
 void usb_set_descriptor_by_serial_number(void)
 {
@@ -87,9 +89,9 @@ void init_usb0(void) {
 }
 
 
-int main(void) {
-	debug_init();
+void initialize_heap_allocator(void);
 
+int main(void) {
 	cpu_clock_init();
 	cpu_clock_pll1_max_speed();
 	pin_setup();

@@ -10,7 +10,6 @@ Module containing the core definitions for a libgreat-driven board.
 import usb
 
 import time
-import future
 import pygreat
 
 # Use the GreatFET comms API, and the standard (core) API.
@@ -355,16 +354,19 @@ class GreatBoard(object):
         return command(max_response_length=max_length, encoding=encoding)
 
 
+    def dmesg(self, max_length=4096, clear=False, encoding='latin1'):
+        """ Prints the GreatFET's debug ring. Convenience function.
+        To grab the debug ring's contents without printing, see read_debug_ring().
+
+        Args:
+            max_length -- The maximum length to respond with. Must be less than 65536.
+            clear -- True iff the dmesg buffer should be cleared after the request.
+        """
+        print(self.read_debug_ring(max_length, clear, encoding))
+
+
 def _to_hex_string(byte_array):
     """Convert a byte array to a hex string."""
-
-    # Python2 compatibility
-    try:
-        byte_array = future.builtins.bytes(byte_array)
-    except ValueError:
-        byte_array = list(byte_array)
-
     hex_generator = ('{:02x}'.format(x) for x in byte_array)
     return ''.join(hex_generator)
-
 

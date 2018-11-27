@@ -37,11 +37,11 @@ static int verb_clear_dmesg(struct command_transaction *trans)
  */
 struct comms_verb debug_verbs[] = {
 		{ .verb_number = 0x0, .name = "read_dmesg",  .handler = verb_read_dmesg,
-            .in_signature = "", .out_signature="<4096S", .out_param_names = "log",
+            .in_signature = "", .out_signature="<S", .out_param_names = "log",
             .doc = "Fetches the content of the device's debug ring (log)."
         },
 		{ .verb_number = 0x1, .name = "clear_dmesg",  .handler = verb_clear_dmesg,
-            .in_signature = "", .out_signature="<4096S", .out_param_names = "log",
+            .in_signature = "", .out_signature="<S", .out_param_names = "log",
             .doc = "Fetches and clears content of the device's debug ring (log)."
         },
 		{} // Sentinel

@@ -5,12 +5,12 @@
 #include "usb_api_sdir.h"
 
 #include "sgpio.h"
-#include "sgpio_isr.h"
+#include "../sgpio_isr.h"
 
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
-#include "usb_endpoint.h"
-#include "usb_bulk_buffer.h"
+#include "../usb_endpoint.h"
+#include "../usb_bulk_buffer.h"
 
 #include <greatfet_core.h>
 #include <gpio_lpc.h>

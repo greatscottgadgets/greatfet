@@ -243,6 +243,13 @@ void comms_register_class(struct comms_class *comms_class);
 
 
 /**
+ * Returns a string describing the given class, or default_string
+ * if the given class does not exist.
+ */
+const char *comms_get_class_name(uint32_t class_number, const char *default_string);
+
+
+/**
  * Registers a pipe to be provided for a given class, which allows
  * bulk bidirectional communications.
  *

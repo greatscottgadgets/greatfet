@@ -57,16 +57,15 @@ endif(NOT DEFINED SRC_M0)
 SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -D'VERSION_STRING=\"git-${VERSION}\"'")
 
 if(BUILD_OUTPUT_TYPE STREQUAL "L0ADABLE")
-	SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory_l0adable.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_l0adable.ld")
+	SET(LDSCRIPT_M4 "-T${MCU_PARTNO}_M4_memory_l0adable.ld -TLPC43xx_l0adable.ld")
 else()
-	SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx_rom_to_ram.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+	SET(LDSCRIPT_M4 "-T${MCU_PARTNO}_M4_memory.ld -Tlibgreat_lpc43xx_rom_to_ram.ld -TLPC43xx_M4_M0_image_from_text.ld")
 endif()
 
-SET(LDSCRIPT_M4_DFU "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+SET(LDSCRIPT_M4_DFU "-T${MCU_PARTNO}_M4_memory.ld -Tlibgreat_lpc43xx.ld -TLPC43xx_M4_M0_image_from_text.ld")
+SET(LDSCRIPT_M0 "-TLPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
 
-SET(LDSCRIPT_M0 "-T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
-
-SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} -fno-common -MD -fno-builtin-printf -Wmissing-field-initializers")
+SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers")
 SET(LDFLAGS_COMMON "-nostartfiles -Wl,--gc-sections")
 
 if(V STREQUAL "1")
@@ -91,6 +90,7 @@ include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
 # FIXME: pull out into libgreat, probably?
 include_directories("${PATH_LIBGREAT_FIRMWARE}/include")
+include_directories("${PATH_LIBGREAT_FIRMWARE}/include/platform/${LIBGREAT_PLATFORM}")
 AUX_SOURCE_DIRECTORY("${PATH_LIBGREAT_FIRMWARE}/classes" LIBGREAT_API_CLASSES)
 
 
@@ -99,7 +99,11 @@ macro(DeclareTargets)
 		${SRC_M4}
 
 		#fixme: pull into libgreat
-		${PATH_LIBGREAT_FIRMWARE}/platform/lpc43xx/crt0.c
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/crt0.c
+
+		# libgreat high-level functions
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/sync.c
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/sync.S
 
 		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
@@ -123,6 +127,7 @@ macro(DeclareTargets)
 		"${PATH_GREATFET_FIRMWARE_COMMON}"
 		"${LIBOPENCM3}/lib"
 		"${LIBOPENCM3}/lib/lpc43xx"
+		"${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/linker"
 		"${CMAKE_INSTALL_PREFIX}/lib/armv7e-m/fpu"
 	)
 

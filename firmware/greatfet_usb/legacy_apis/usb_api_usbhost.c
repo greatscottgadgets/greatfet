@@ -16,9 +16,9 @@
 #include <drivers/usb/lpc43xx/usb_type.h>
 
 #include <drivers/usb/lpc43xx/usb_standard_request.h>
-#include "usb_descriptor.h"
-#include "usb_device.h"
-#include "usb_endpoint.h"
+#include "../usb_descriptor.h"
+#include "../usb_device.h"
+#include "../usb_endpoint.h"
 #include <drivers/usb/lpc43xx/usb_request.h>
 #include <drivers/usb/lpc43xx/usb_host.h>
 #include <drivers/usb/lpc43xx/usb_queue_host.h>

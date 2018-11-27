@@ -15,7 +15,7 @@
 
 #include <drivers/usb/lpc43xx/usb.h>
 #include <drivers/usb/lpc43xx/usb_queue.h>
-#include "usb_endpoint.h"
+#include "../usb_endpoint.h"
 
 #include <libopencm3/lpc43xx/cgu.h>
 

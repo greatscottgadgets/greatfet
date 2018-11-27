@@ -29,10 +29,10 @@ class CommsBackend(object):
     LIBGREAT_MAX_COMMAND_SIZE = 4096
 
     """ Regular expression that identifies special fields for .pack and .unpack. """
-    _SPECIAL_FIELD_REGEX = r"((?:[\d*]*[SX])|(?:\*\w))"
+    _SPECIAL_FIELD_REGEX = r"((?:[\d*]*[SX])|(?:\*\w)|(?:[\d*]*\([cbB?hHiIlLqQfdspPSX]+\)))"
 
     """ Regular expression that splits the parts of a .pack / .unpack format expression. """
-    _FORMAT_FIELD_REGEX = r"([\d*]*)([cbB?hHiIlLqQfdspPSX])"
+    _FORMAT_FIELD_REGEX = r"([\d*]*)(?:([cbB?hHiIlLqQfdspPSX])|(?:\(([cbB?hHiIlLqQfdspPSX]+)\)))"
 
     """ Dictionary that describes nice names for each of the format fields. """
     _FORMAT_FIELD_ANNOTATION = {
@@ -263,7 +263,7 @@ class CommsBackend(object):
         elements = re.findall(cls._FORMAT_FIELD_REGEX, format_string)
 
         # Iterate over each of the matches, and update the count accordingly.
-        for repeat_count, element_type in elements:
+        for repeat_count, element_type, element_group in elements:
 
             # Special case: if this is an string or as-is specifier,
             # it should only consume a single argument no matter how many
@@ -304,6 +304,46 @@ class CommsBackend(object):
 
 
     @classmethod
+    def _get_bytes_consumed_by_group_format(cls, format_string, raw_bytes):
+        """ Returns the number of bytes consumed by a given grouped
+            format string. Accepts format strings that do not begin with '*'.
+
+            Intended for use by _get_bytes_consumed_by_format.
+        """
+
+        total_bytes_consumed = 0
+
+        # Break the group specifier into its components.
+        element_matches = re.match(cls._FORMAT_FIELD_REGEX, format_string)
+        repeat_count, element_type, element_group = element_matches.groups()
+
+        # Figure out the number of times this subformat will repeat.
+        if repeat_count is None:
+            repeat_count = 1
+        else:
+            repeat_count = int(repeat_count)
+
+
+        # Figure out how many bytes each subgroup will take.
+        # Note that we can't simply request the length once and then
+        # multiply out, as some format strings are dependent on the
+        # data they're parsing.
+        for _ in range(repeat_count):
+
+            # Get the bytes consumed by this individual, non-group subformat.
+            bytes_consumed = cls._get_bytes_consumed_by_format(element_group, raw_bytes)
+
+            # And advance by the relevant number of bytes to repeat properly.
+            raw_string = raw_string[bytes_consumed:]
+            total_bytes_consumed += bytes_consumed
+
+        return total_bytes_consumed
+
+
+
+
+
+    @classmethod
     def _get_bytes_consumed_by_format(cls, format_string, raw_bytes):
         """ Returns the number of bytes consumed by a given
             format string.
@@ -313,6 +353,11 @@ class CommsBackend(object):
         # we take all of the remaining bytes.
         if format_string.startswith('*'):
             return len(raw_bytes)
+
+        # Special case: if the format string represents a group,
+        # we'll need to handle it recursively.
+        if format_string.endswith(')'):
+            return self._get_bytes_consumed_by_group_format(format_string, raw_bytes)
 
         # Special case: if the format string represents a string,
         # it'll take up to the first NULL.
@@ -370,6 +415,87 @@ class CommsBackend(object):
 
 
     @classmethod
+    def _pack_group(cls, format_string, args):
+        """ Handles packing of a group subformat, which groups
+            a pack string using parenthesis.
+        """
+
+        # Break the group specifier into its components.
+        element_matches = re.match(cls._FORMAT_FIELD_REGEX, format_string)
+        repeat_count, element_type, element_group = element_matches.groups()
+
+        # If we have a repeat count, repeat this the appropriate number of times.
+        if repeat_count:
+
+            result = b""
+
+            # If we're not repeating infinitely, validate our count.
+            if repeat_count != '*':
+                if int(repeat_count) != len(args):
+                    raise ValueError("Unexpected number of repeated-groups provided!")
+
+            # For each tuple of arguments in our arg-tuple,
+            # repeat the parse.
+            for arguments in args:
+                result += cls.pack(element_group, *arguments)
+
+            return result
+
+        # Otherwise, this is just a single group; consume its arguments.
+        else:
+            return cls.pack(element_group, *args)
+
+
+    @classmethod
+    def _unpack_group(cls, format_string, raw_bytes):
+        """ Handles packing of a group subformat, which groups
+            a pack string using parenthesis.
+        """
+
+        import math
+
+        # Break the group specifier into its components.
+        element_matches = re.match(cls._FORMAT_FIELD_REGEX, format_string)
+        repeat_count, element_type, element_group = element_matches.groups()
+
+        # If we have a repeat count, repeat this the appropriate number of times.
+        if repeat_count:
+
+            result = []
+
+            # If we're not repeating infinitely, parse is as an integer and
+            # validate our count.
+            if repeat_count != '*':
+                repeat_count = int(repeat_count)
+                if repeat_count != len(args):
+                    raise ValueError("Unexpected number of repeated-groups provided!")
+            # Otherwise, use a repeat_count of infinity.
+            else:
+                repeat_count = math.inf
+
+            # While we have bytes left to parse, and we haven't consumed all
+            # of our repeats, unpack each chunk of bytes.
+            while raw_bytes and repeat_count:
+
+                # Split off the bytes for the relevant subgroup.
+                bytes_consumed, raw_bytes = \
+                        cls._split_off_bytes_for_format(element_group, raw_bytes)
+
+                # Parse the subgroup, and add it to our resultant list.
+                result.append(cls.unpack(element_group, bytes_consumed))
+
+                # And decrement our total repeat count.
+                repeat_count -= 1
+
+
+            return result
+
+        # Otherwise, this is just a single group; consume its arguments.
+        else:
+            return cls.pack(element_group, *args)
+
+
+    @classmethod
     def pack(cls, format_string, *args):
         """ Extended version of struct.pack() for libgreat communciations.
 
@@ -381,11 +507,18 @@ class CommsBackend(object):
                  repeat specifier, each of the bytes will be squished
                  together into a single string.
 
-        Additionally, the following additional prefixes are supported:
+        Adds the following additional prefixes:
 
             * -- acts likes a repeat prefix, but consumes all remaining arguments
                  as though they were the given type; so the format "*B" would
-                 pack a all arguments into uint8_ts
+                 pack all remaining arguments into uint8_ts
+
+        Also accepts grouped arguments, which are grouped by parentheses,
+        and accept indexable collections, like tuples. So, for example:
+
+            (BH) -- would accept a tuple of a uint8 and a uint16
+
+        Grouped arguments are especially useful with repeat count 'prefixes'.
         """
 
         # Break the format string into chunks we can handle.
@@ -401,8 +534,11 @@ class CommsBackend(object):
             # If this is one of our special formats, handle it.
             if cls._is_special_format(subformat):
 
+                # If this is a group, recurse and handle the subformat.
+                if subformat.endswith(')'):
+                    result += cls._pack_group(subformat, args_consumed)
                 # If this is a string subformat, handle it.
-                if subformat.endswith('S'):
+                elif subformat.endswith('S'):
                     result += c_string_arguments('UTF-8', *args_consumed)
                 elif subformat.endswith('X'):
                     result += args_consumed[0]
@@ -430,11 +566,18 @@ class CommsBackend(object):
                  repeat specifier, each of the bytes will be squished
                  together into a single string.
 
-        Additionally, the following additional prefixes are supported:
+        Adds the following additional prefixes:
 
             * -- acts likes a repeat prefix, but consumes all remaining arguments
                  as though they were the given type; so the format "*B" would
-                 pack a all arguments into uint8_ts
+                 unpack all remaining bytes into uint8's
+
+        Also accepts grouped arguments, which are grouped by parentheses,
+        and unpack into tuples. So, for example:
+
+            (BH) -- would parse three bytes into a tuple of a uint8 and a uint16
+
+        Grouped arguments are especially useful with repeat count 'prefixes'.
         """
 
         # Break the format string into chunks we can handle.
@@ -450,8 +593,12 @@ class CommsBackend(object):
             # If this is one of our special formats, handle it.
             if cls._is_special_format(subformat):
 
+                # If this is a group, recurse and handle the subformat.
+                if subformat.endswith(')'):
+                    results.extend(cls._unpack_group(subformat, bytes_consumed))
+
                 # If this is a string subformat, handle it.
-                if subformat.endswith('S'):
+                elif subformat.endswith('S'):
                     results.extend(c_string_return(bytes_consumed, 'UTF-8'))
 
                 # If this is an as-is subformat, handle it.
@@ -488,24 +635,30 @@ class CommsBackend(object):
         elements = re.findall(cls._FORMAT_FIELD_REGEX, format_string)
 
         # Iterate over each of the matches.
-        for repeat_count, element_type in elements:
+        for repeat_count, element_type, element_group in elements:
 
             # Special case: if this is an string or as-is specifier,
             # it should only represent a single argument no matter how many
             # are grabbed.
             will_conglomerate = element_type in "Xsp"
 
-            # Get the type of argument to add.
-            annotation = cls._FORMAT_FIELD_ANNOTATION[element_type]
+            # If this is a group element, recurse.
+            if element_group:
+                subannotations = cls.argument_annotations_for_format(element_group)
+                annotation = "(" + ', '.join(subannotations)  + ")"
+            else:
+                # Get the type of argument to add.
+                annotation = cls._FORMAT_FIELD_ANNOTATION[element_type]
 
             # If we have a repeat specifier, tag this as an array.
             if repeat_count and not will_conglomerate:
                 if repeat_count == "*":
-                    annotation += "[]"
+                    annotations.append(annotation + "[]")
                 else:
-                    annotation += "[{}]".format(repeat_count)
-
-            annotations.append(annotation)
+                    arguments_generated = int(repeat_count)
+                    annotations.extend([annotation] * int(arguments_generated))
+            else:
+                annotations.append(annotation)
 
         return annotations
 
@@ -603,12 +756,50 @@ class CommsBackend(object):
             result = tuple(result)
 
         # Return the result in a format that makes it easily
-        # intepreted as multiple return values. Tuples for multiple values,
-        # raw data for single ones.
-        if len(result) == 1:
+        # intepreted as multiple return values. In most cases, a tuple is returned
+        # when multiple values are possible; and a single value is returned if only
+        # one value is possible.
+        if self._command_results_should_collapse(result, out_format):
             return result[0]
         else:
             return result
+
+
+    @classmethod
+    def _command_results_should_collapse(cls, result, out_format):
+        """ Returns true if the given command result should be collapsed
+            into a single value.
+        """
+
+        non_padding_formats = 0
+
+        # Never collapse non-strings, for now.
+        if not isinstance(out_format, str):
+            return False
+
+        # Split the format string into its components.
+        elements = re.findall(cls._FORMAT_FIELD_REGEX, out_format)
+        for repeat_count, element_type, element_group in elements:
+
+            # Certain formats conglomerate their outputs into a single
+            # argument, and thus have repeat types that don't count.
+            will_conglomerate = element_type in "Xsp"
+
+            # If we have any repeat counts that aren't 1,
+            # on a non-conglomerating element, never collapse this.
+            if repeat_count and (repeat_count != "1") and not will_conglomerate:
+                return False
+
+            if element_type != "x":
+                non_padding_formats += 1
+
+        # If we have more than one format type (discounting padding),
+        # don't collapse.
+        if non_padding_formats != 1:
+            return False
+
+        # Otherwise, collapse if we have exactly a single result.
+        return len(result) == 1
 
 
     def execute_raw_command(self, class_number, verb, data=None, timeout=1000,
@@ -682,7 +873,6 @@ def _generate_command_in_signature(in_format, in_names):
         # and prefix its name with a "*".
         if annotation.endswith('[]'):
             kind = inspect.Parameter.VAR_POSITIONAL
-            name = "*" + name
 
         # Generate the given parameter object.
         params.append(inspect.Parameter(name, kind, annotation=annotation))

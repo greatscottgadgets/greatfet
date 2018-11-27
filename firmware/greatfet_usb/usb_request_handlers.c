@@ -2,24 +2,26 @@
  * This file is part of GreatFET
  */
 
+// LEGACY SUPPORT APIS
+// These should be gotten rid of!
+
 #include <drivers/usb/lpc43xx/usb_standard_request.h>
 #include <drivers/usb/comms_backend.h>
 
-#include "usb_api_adc.h"
-#include "usb_api_dac.h"
-#include "usb_api_spi.h"
-#include "usb_api_i2c.h"
-#include "usb_api_gpio.h"
-#include "usb_api_leds.h"
-#include "usb_api_logic_analyzer.h"
-#include "usb_api_sdir.h"
-#include "usb_api_greatdancer.h"
-#include "usb_api_usbhost.h"
-#include "usb_api_glitchkit.h"
-#include "usb_api_glitchkit_simple.h"
-#include "usb_api_glitchkit_usb.h"
-#include "usb_api_DS18B20.h"
-#include "usb_api_msp430.h"
+#include "legacy_apis/usb_api_adc.h"
+#include "legacy_apis/usb_api_dac.h"
+#include "legacy_apis/usb_api_spi.h"
+#include "legacy_apis/usb_api_i2c.h"
+#include "legacy_apis/usb_api_leds.h"
+#include "legacy_apis/usb_api_logic_analyzer.h"
+#include "legacy_apis/usb_api_sdir.h"
+#include "legacy_apis/usb_api_greatdancer.h"
+#include "legacy_apis/usb_api_usbhost.h"
+#include "legacy_apis/usb_api_glitchkit.h"
+#include "legacy_apis/usb_api_glitchkit_simple.h"
+#include "legacy_apis/usb_api_glitchkit_usb.h"
+#include "legacy_apis/usb_api_DS18B20.h"
+#include "legacy_apis/usb_api_msp430.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_spiflash_init,
@@ -31,8 +33,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_read_partid_serialno,
 	NULL,
 	usb_vendor_request_set_leds,
-	usb_vendor_request_gpio_register,
-	usb_vendor_request_gpio_write,
+	NULL, //usb_vendor_request_gpio_register,
+	NULL, //usb_vendor_request_gpio_write,
 	usb_vendor_request_spi_init,
 	usb_vendor_request_spi_write,
 	usb_vendor_request_spi_read,
@@ -67,8 +69,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_greatdancer_get_nonblocking_data_length,
 	NULL, //usb_vendor_request_heartbeat_start,
 	NULL, //usb_vendor_request_heartbeat_stop,
-	usb_vendor_request_gpio_reset,
-	usb_vendor_request_gpio_read,
+	NULL, //usb_vendor_request_gpio_reset,
+	NULL, //usb_vendor_request_gpio_read,
 
 	
 	// GlitchKit

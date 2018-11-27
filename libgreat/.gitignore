@@ -34,8 +34,5 @@ Thumbs.db
 # ctags output
 tags
 
-firmware/build
 firmware/*/build
-libgreat/host/build/
-libgreat/host/dist/
-*.egg-info
+
