@@ -39,12 +39,12 @@ before_install:
 
 script:
   - pushd libgreat/host/
-  - python setup.py build
-  - sudo python setup.py install
+  - python3 setup.py build
+  - sudo python3 setup.py install
   - popd
   - pushd host/
-  - python setup.py build
-  - sudo python setup.py install
+  - python3 setup.py build
+  - sudo python3 setup.py install
   - popd
   - cd ..
   - greatfet_info
