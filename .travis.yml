@@ -38,10 +38,19 @@ before_install:
   - pip install PyYAML
 
 script:
-  - cd host
-  - python setup.py build
+  # - cd host
+  # - python setup.py build
     #  - python setup.py --prefix=. install
+  - pushd libgreat/host/
+  - python setup.py build
+  - sudo python setup.py install
+  - popd
+  - pushd host/
+  - python setup.py build
+  - sudo python setup.py install
+  - popd
   - cd ..
+  - greatfet_info
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
   - mkdir firmware/build-rad1o_badge
