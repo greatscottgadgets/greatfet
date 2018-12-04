@@ -38,9 +38,6 @@ before_install:
   - pip install PyYAML
 
 script:
-  # - cd host
-  # - python setup.py build
-    #  - python setup.py --prefix=. install
   - pushd libgreat/host/
   - python setup.py build
   - sudo python setup.py install
