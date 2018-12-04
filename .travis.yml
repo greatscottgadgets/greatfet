@@ -38,7 +38,7 @@ before_install:
   - pip install PyYAML
 
 script:
-  - pip install --upgrade pip
+  - sudo pip install --upgrade pip
   - pushd libgreat/host/
   - python3 setup.py build
   - sudo python3 setup.py install
