@@ -40,11 +40,11 @@ before_install:
 script:
   - pushd libgreat/host/
   - python3 setup.py build
-  - python3 setup.py install
+  - sudo python3 setup.py install
   - popd
   - pushd host/
   - python3 setup.py build
-  - python3 setup.py install
+  - sudo python3 setup.py install
   - popd
   - cd ..
   - greatfet_info
@@ -69,3 +69,4 @@ addons:
       - python-usb
       - dfu-util
       - python3-setuptools
+      
