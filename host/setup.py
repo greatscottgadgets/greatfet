@@ -7,10 +7,10 @@ def read(fname):
     with open(filename, 'r') as f:
         return f.read()
 
-install_req = ['ipython']
-if sys.version_info[0] < 3 and 'bdist_wheel' not in sys.argv:
-    install_req.remove('ipython')
-    install_req.append('ipython<6')
+install_req = ['ipython6']
+# if sys.version_info[0] < 3 and 'bdist_wheel' not in sys.argv:
+#     install_req.remove('ipython')
+#     install_req.append('ipython<6')
 
 setup(
     name='GreatFET',
