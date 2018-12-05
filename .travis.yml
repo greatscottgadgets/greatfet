@@ -56,3 +56,4 @@ addons:
     packages:
       - python-usb
       - dfu-util
+      - python3-setuptools
