@@ -1,16 +1,28 @@
-language: python
+language: c
 
 cache: apt
 
+sudo: false
 dist: xenial
 
 os:
   - linux
   - osx
 
-# python:
-#   - "2.7"
-#   - "3.6"
+compiler:
+  - gcc
+  - clang
+
+matrix:
+  exclude:
+    - os: linux
+    - os: osx
+  include:
+    - os: linux
+      compiler: gcc
+    - os: osx
+      osx_image: xcode7.3
+      compiler: clang
 
 before_script:
   - export CFLAGS="-Wall -Wextra"
@@ -26,16 +38,15 @@ before_install:
   - pip install PyYAML
 
 script:
-  - python3 -V
   - pushd libgreat/host/
   - python3 setup.py build
-  - python3 setup.py install
+  - sudo python3 setup.py install
   - popd
   - pushd host/
   - python3 setup.py build
-  - python3 setup.py install
-  - export PYTHONPATH=$PYTHONPATH:/home/travis/.local/lib/python3.5/site-packages
+  - sudo python3 setup.py install
   - popd
+  - cd ..
   - greatfet_info
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
@@ -50,7 +61,7 @@ script:
   - make
   - cd ../build-rad1o_badge
   - cmake -DBOARD=RAD1O_BADGE ..
-  # - make
+  - make
 
 addons:
   apt:
