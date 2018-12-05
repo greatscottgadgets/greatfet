@@ -28,6 +28,7 @@ before_install:
 script:
   - cd /usr/lib/python3.5/
   - ls
+  - python3 -m site --user-site
   - python3 -V
   - pushd libgreat/host/
   - python3 setup.py build
