@@ -2,7 +2,6 @@ language: c
 
 cache: apt
 
-sudo: false
 dist: xenial
 
 os:
@@ -46,7 +45,6 @@ script:
   - python3 setup.py build
   - sudo python3 setup.py install
   - popd
-  - cd ..
   - greatfet_info
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
