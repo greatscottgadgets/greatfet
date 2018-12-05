@@ -6,6 +6,11 @@ def read(fname):
     with open(filename, 'r') as f:
         return f.read()
 
+install_req = ['ipython']
+if sys.version_info[0] < 3 and 'bdist_wheel' not in sys.argv:
+    install_req.remove('ipython')
+    install_req.append('ipython<6')
+
 setup(
     name='GreatFET',
     version='0.0', #TODO: Derive this from the main module.
@@ -31,7 +36,7 @@ setup(
     #author='', #TODO: Figure out whose name should go here!
     #author_email='',
     tests_require=[''],
-    install_requires=['pyusb', 'IPython', 'pygreat', 'future'],
+    install_requires=['pyusb', install_req, 'pygreat', 'future'],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('../README.md'),
     packages=find_packages(),#['greatfet'],
