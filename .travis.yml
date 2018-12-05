@@ -60,7 +60,7 @@ script:
   - make
   - cd ../build-rad1o_badge
   - cmake -DBOARD=RAD1O_BADGE ..
-  - make
+  # - make
 
 addons:
   apt:
