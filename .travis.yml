@@ -46,7 +46,7 @@ script:
   - python3 setup.py build
   - sudo python3 setup.py install
   - popd
-  - greatfet_info
+  # - greatfet_info
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
   - mkdir firmware/build-rad1o_badge
