@@ -26,6 +26,8 @@ before_install:
   - pip install PyYAML
 
 script:
+  - cd /usr
+  - ls
   - python3 -V
   - pushd libgreat/host/
   - python3 setup.py build
