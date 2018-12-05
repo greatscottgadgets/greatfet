@@ -38,8 +38,6 @@ before_install:
   - pip install PyYAML
 
 script:
-  - sudo apt-get update
-  - sudo apt-get install python3.6
   - pushd libgreat/host/
   - python3 setup.py build
   - sudo python3 setup.py install
@@ -71,3 +69,4 @@ addons:
       - python-usb
       - dfu-util
       - python3-setuptools
+      - python3.6
