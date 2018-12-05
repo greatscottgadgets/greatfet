@@ -26,17 +26,15 @@ before_install:
   - pip install PyYAML
 
 script:
-  - cd /usr/lib/python3.5/
-  - ls
-  - python3 -m site --user-site
   - python3 -V
   - pushd libgreat/host/
   - python3 setup.py build
-  - sudo python3 setup.py install
+  - python3 setup.py install
   - popd
   - pushd host/
   - python3 setup.py build
-  - sudo python3 setup.py install
+  - python3 setup.py install
+  - export PYTHONPATH=$PYTHONPATH:/home/travis/.local/lib/python3.5/site-packages
   - popd
   - greatfet_info
   - mkdir firmware/build-greatfet_one
