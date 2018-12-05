@@ -8,9 +8,9 @@ os:
   - linux
   - osx
 
-python:
-  - "2.7"
-  - "3.6"
+# python:
+#   - "2.7"
+#   - "3.6"
 
 before_script:
   - export CFLAGS="-Wall -Wextra"
@@ -26,14 +26,14 @@ before_install:
   - pip install PyYAML
 
 script:
-  - python -V
+  - python3 -V
   - pushd libgreat/host/
-  - python setup.py build
-  - sudo python setup.py install
+  - python3 setup.py build
+  - sudo python3 setup.py install
   - popd
   - pushd host/
-  - python setup.py build
-  - sudo python setup.py install
+  - python3 setup.py build
+  - sudo python3 setup.py install
   - popd
   - greatfet_info
   - mkdir firmware/build-greatfet_one
@@ -49,11 +49,10 @@ script:
   - make
   - cd ../build-rad1o_badge
   - cmake -DBOARD=RAD1O_BADGE ..
-  - make
+  # - make
 
 addons:
   apt:
     packages:
       - python-usb
       - dfu-util
-      - python3-setuptools
