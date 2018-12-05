@@ -69,4 +69,3 @@ addons:
       - python-usb
       - dfu-util
       - python3-setuptools
-      - python3.6
