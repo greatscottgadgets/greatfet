@@ -34,11 +34,11 @@ before_install:
 script:
   - pushd libgreat/host/
   - python setup.py build
-  - python setup.py install
+  - sudo python setup.py install
   - popd
   - pushd host/
   - python setup.py build
-  - python setup.py install
+  - sudo python setup.py install
   - popd
   # - greatfet_info
   - mkdir firmware/build-greatfet_one
