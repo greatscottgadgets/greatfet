@@ -8,6 +8,9 @@ os:
   - linux
   - osx
 
+python:
+  - "3.6"
+
 before_script:
   - export CFLAGS="-Wall -Wextra"
 #  - export CFLAGS="-Wall -Wextra -Werror"
