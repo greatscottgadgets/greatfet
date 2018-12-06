@@ -15,8 +15,8 @@ os:
 #   - "3.6"
 
 env:
-  - TRAVIS_PYTHON_VERSION="2.7"
-  - TRAVIS_PYTHON_VERSION="3.6"
+  - PYTHON="2.7"
+  - PYTHON="3.6"
 
 before_script:
   - export CFLAGS="-Wall -Wextra"
