@@ -27,11 +27,11 @@ before_install:
 script:
   - pushd libgreat/host/
   - python3 setup.py build
-  - sudo python3 setup.py install
+  - python3 setup.py install
   - popd
   - pushd host/
   - python3 setup.py build
-  - sudo python3 setup.py install
+  - python3 setup.py install
   - popd
   # - greatfet_info
   - mkdir firmware/build-greatfet_one
