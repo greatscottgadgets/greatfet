@@ -27,12 +27,12 @@ before_install:
 
 script:
   - pushd libgreat/host/
-  - python3 setup.py build
-  - python3 setup.py install
+  - python setup.py build
+  - python setup.py install
   - popd
   - pushd host/
-  - python3 setup.py build
-  - python3 setup.py install
+  - python setup.py build
+  - python setup.py install
   - popd
   # - greatfet_info
   - mkdir firmware/build-greatfet_one
@@ -55,4 +55,4 @@ addons:
     packages:
       - python-usb
       - dfu-util
-      - python3-setuptools
+      - python-setuptools
