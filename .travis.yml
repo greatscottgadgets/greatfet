@@ -90,4 +90,4 @@ deploy:
   repo: greatscottgadgets/nightly-builds
   local-dir: $ARTEFACT_BASE
   on:
-    branch: travis_artefacts
+    branch: gravesjake_travis
