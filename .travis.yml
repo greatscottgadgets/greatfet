@@ -1,37 +1,50 @@
 language: c
 
-cache: apt
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      cache: apt
+      dist: xenial
+      python:
+        - "2.7"
+        - "3.6"
 
-dist: xenial
-
-os:
-  - linux
-  - osx
-
-# osx_image: xcode8.3
-
-# python:
-#   - "2.7"
-#   - "3.6"
+    - os: osx
+      osx_image: xcode8.3
 
 env:
-  - PYTHON="2.7"
-  - PYTHON="3.6"
+  global:
+    - BUILD_NAME="GreatFET-$TRAVIS_OS_NAME-`date --iso-8601`-$TRAVIS_COMMIT"
+    - ARTEFACT_BASE=$TRAVIS_BUILD_DIR/artefacts/
+    - ARTEFACT_PATH=$ARTEFACT_BASE/$BUILD_NAME
+
+addons:
+  apt:
+    packages:
+      - python-usb
+      - python-setuptools
+      - dfu-util
+      - gcc-arm-none-eabi
+      - libnewlib-arm-none-eabi
+      - libstdc++-arm-none-eabi-newlib
+      - python-yaml
+
+  homebrew:
+    taps: PX4/homebrew-px4
+    packages:
+       - gcc-arm-none-eabi
+       - dfu-util
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install PyYAML; fi
 
 before_script:
   - export CFLAGS="-Wall -Wextra"
 #  - export CFLAGS="-Wall -Wextra -Werror"
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew tap PX4/homebrew-px4; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc-arm-none-eabi dfu-util; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -O gcc-arm-none-eabi.tar.bz2 https://developer.arm.com/-/media/Files/downloads/gnu-rm/6-2017q2/gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar xf gcc-arm-none-eabi.tar.bz2; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PATH:$PWD/gcc-arm-none-eabi-6-2017-q2-update/bin; fi
-  # For virtualenv(?) reasons we can't apt-get install python-yaml
-  - pip install PyYAML
-
 script:
+  # Host code
   - python -V
   - pushd libgreat/host/
   - python setup.py build
@@ -42,6 +55,7 @@ script:
   - sudo python setup.py install
   - popd
   # - greatfet_info
+  # Firmware
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
   - mkdir firmware/build-rad1o_badge
@@ -56,10 +70,3 @@ script:
   - cd ../build-rad1o_badge
   - cmake -DBOARD=RAD1O_BADGE ..
   # - make
-
-addons:
-  apt:
-    packages:
-      - python-usb
-      - dfu-util
-      - python-setuptools
