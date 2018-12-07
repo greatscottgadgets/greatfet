@@ -11,6 +11,12 @@ build_script:
   - git submodule init
   - git submodule update
   - cd c:\projects\greatfet\libgreat\host\
+  - C:\Python27-x64\python.exe setup.py build
+  - C:\Python27-x64\python.exe setup.py install
+  - cd ..\..\host\
+  - C:\Python27-x64\python.exe setup.py build
+  - C:\Python27-x64\python.exe setup.py install
+  - cd c:\projects\greatfet\libgreat\host\
   - C:\Python37-x64\python.exe setup.py build
   - C:\Python37-x64\python.exe setup.py install
   - cd ..\..\host\
