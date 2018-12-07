@@ -1,14 +1,14 @@
-
+language: python
 
 matrix:
   include:
     - os: linux
-      language: python
-      compiler: gcc
       cache: apt
       dist: xenial
 
     - os: osx
+      # "Python builds are not available on the macOS environment."
+      # So we tell Travis it's C and run python commands
       language: c
 
 python:
@@ -30,7 +30,7 @@ addons:
       - gcc-arm-none-eabi
       - libnewlib-arm-none-eabi
       - libstdc++-arm-none-eabi-newlib
-      - python-yaml
+      # - python-yaml
 
   homebrew:
     taps: PX4/homebrew-px4
@@ -39,7 +39,7 @@ addons:
        - dfu-util
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install PyYAML; fi
+  - pip install PyYAML
 
 before_script:
   - export CFLAGS="-Wall -Wextra"
