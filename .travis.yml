@@ -59,6 +59,7 @@ script:
   - popd
   # - greatfet_info
   # Firmware
+  - mkdir -p $ARTEFACT_PATH/firmware-bin
   - mkdir firmware/build-greatfet_one
   - mkdir firmware/build-nxp_xplorer
   - mkdir firmware/build-rad1o_badge
@@ -67,9 +68,26 @@ script:
   - cd ../build-greatfet_one
   - cmake ..
   - make
+  - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/greatfet_usb.bin
+  - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/greatfet_usb.dfu
   - cd ../build-nxp_xplorer
   - cmake -DBOARD=NXP_XPLORER ..
   - make
+  - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.bin
+  - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.dfu
   - cd ../build-rad1o_badge
   - cmake -DBOARD=RAD1O_BADGE ..
   # - make
+  # - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/rad1o_usb.bin
+  # - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/rad1o_usb.dfu
+
+deploy:
+  provider: pages
+  verbose: true
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  repo: greatscottgadgets/nightly-builds
+  local-dir: $ARTEFACT_BASE
+  on:
+    branch: travis_artefacts
