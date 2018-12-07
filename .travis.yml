@@ -5,11 +5,11 @@ matrix:
     - os: linux
       cache: apt
       dist: xenial
-      pythin: "2.7"
+      python: "2.7"
     - os: linux
       cache: apt
       dist: xenial
-      pythin: "3.6"
+      python: "3.6"
 
     - os: osx
       # "Python builds are not available on the macOS environment."
