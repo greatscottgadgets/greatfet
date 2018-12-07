@@ -5,15 +5,16 @@ matrix:
     - os: linux
       cache: apt
       dist: xenial
+      pythin: "2.7"
+    - os: linux
+      cache: apt
+      dist: xenial
+      pythin: "3.6"
 
     - os: osx
       # "Python builds are not available on the macOS environment."
       # So we tell Travis it's C and run python commands
       language: c
-
-python:
-  - "2.7"
-  - "3.6"
 
 env:
   global:
