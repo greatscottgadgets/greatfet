@@ -18,7 +18,7 @@ matrix:
 
 env:
   global:
-    - BUILD_NAME="GreatFET-$TRAVIS_OS_NAME-`date --iso-8601`-$TRAVIS_COMMIT"
+    - BUILD_NAME="GreatFET-`date --iso-8601`-$TRAVIS_OS_NAME-$TRAVIS_COMMIT"
     - ARTEFACT_BASE=$TRAVIS_BUILD_DIR/artefacts/
     - ARTEFACT_PATH=$ARTEFACT_BASE/$BUILD_NAME
 
