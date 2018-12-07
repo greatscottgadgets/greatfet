@@ -1,8 +1,9 @@
-language: c
+
 
 matrix:
   include:
     - os: linux
+      language: python
       compiler: gcc
       cache: apt
       dist: xenial
@@ -11,6 +12,7 @@ matrix:
         - "3.6"
 
     - os: osx
+      language: c
       osx_image: xcode8.3
 
 env:
