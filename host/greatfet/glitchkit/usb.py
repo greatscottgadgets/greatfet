@@ -107,7 +107,7 @@ class GlitchKitUSB(GlitchKitModule):
         setup_packet = self.build_setup_request(True, request_type, recipient, request, value, index, length)
 
         # ... start the request...
-        self.board.vendor_request_out(vendor_requests.GLITCHKIT_USB_CONTROL_IN_START, data=setup_packet)
+        self.board.comms._vendor_request_out(vendor_requests.GLITCHKIT_USB_CONTROL_IN_START, data=setup_packet)
 
         # ... wait for a response...
         length_read = self.READ_INCOMPLETE
@@ -117,7 +117,7 @@ class GlitchKitUSB(GlitchKitModule):
                 if(callable(ui_event_call)):
                     ui_event_call()
 
-                raw = self.board.vendor_request_in(vendor_requests.GLITCHKIT_USB_RESULT_LENGTH, length=4, timeout=timeout)
+                raw = self.board.comms._vendor_request_in(vendor_requests.GLITCHKIT_USB_RESULT_LENGTH, length=4, timeout=timeout)
                 length_read = self._decode_reg(raw)
             except usb.core.USBError as e:
                 if e.errno in [LIBUSB_TIMEOUT, LIBUSB_IO_ERROR]:
@@ -130,7 +130,7 @@ class GlitchKitUSB(GlitchKitModule):
             return b''
 
         #... and then read the response back.
-        data = self.board.vendor_request_in(vendor_requests.GLITCHKIT_USB_READ_RESULT, length=length_read)
+        data = self.board.comms._vendor_request_in(vendor_requests.GLITCHKIT_USB_READ_RESULT, length=length_read)
         return data
 
 

@@ -30,7 +30,7 @@ def main():
     device = parser.find_specified_device()
 
     while True:
-        data = device.vendor_request_in(vendor_requests.DS18B20_READ, length=2, timeout=2000)
+        data = device.comms._vendor_request_in(vendor_requests.DS18B20_READ, length=2, timeout=2000)
         # temperature data is 16 bit signed
         temp = struct.unpack('<h', data)[0]
         if args.s20:

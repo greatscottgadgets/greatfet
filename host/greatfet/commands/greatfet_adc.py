@@ -30,24 +30,24 @@ def main():
     device = parser.find_specified_device()
 
     if args.adc:
-        device.vendor_request_out(vendor_requests.ADC_INIT)
+        device.comms._vendor_request_out(vendor_requests.ADC_INIT)
     else:
-        device.vendor_request_out(vendor_requests.SDIR_RX_START)
+        device.comms._vendor_request_out(vendor_requests.SDIR_RX_START)
 
     time.sleep(1)
-    print(device.device)
+    print(device.comms.device)
 
     with open(args.filename, 'wb') as f:
         try:
             while True:
-                d = device.device.read(0x81, 0x4000, 1000)
+                d = device.comms.device.read(0x81, 0x4000, 1000)
                 # print(d)
                 f.write(d)
         except KeyboardInterrupt:
             pass
 
     if not args.adc:
-        device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
+        device.comms._vendor_request_out(vendor_requests.SDIR_RX_STOP)
 
 
 if __name__ == '__main__':

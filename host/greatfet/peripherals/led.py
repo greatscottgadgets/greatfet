@@ -35,7 +35,7 @@ class LED(GreatFETPeripheral):
         request_type -- The type of request to be issued. Should be one of the 
                 LED_REQUEST_xxx properties of this class.
         """
-        self.board.vendor_request_out(vendor_requests.SET_LEDS, index=request_type, value=self.led_number)
+        self.board.comms._vendor_request_out(vendor_requests.SET_LEDS, index=request_type, value=self.led_number)
 
 
     def set(self, on=True):

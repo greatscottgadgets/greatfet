@@ -86,7 +86,7 @@ class I2CBus(GreatFETPeripheral):
                 index=receive_length, data=data)
 
         # Read status (ACK/NAK)
-        status = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS, 
+        status = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS,
                 length=receive_length)
 
         # If reciept was requested, return the received data.
@@ -111,7 +111,7 @@ class I2CBus(GreatFETPeripheral):
             self.board.comms._vendor_request_out(vendor_requests.I2C_XFER, value=address >> 1,
                     index=1, data=[])
             # Read status (ACK/NAK)
-            stat_array = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS, 
+            stat_array = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS,
                     length=1)
             status = stat_array[0]
             if status in I2CBus.VALID_STATES:
