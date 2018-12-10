@@ -151,7 +151,7 @@ class GreatFETOne(GreatFETBoard):
             self._populate_gpio()
         
         # XXX disable perpiherals as we develop libgreat
-        return
+        # return
         
         self.i2c_busses = [ I2CBus(self, 'I2C0') ]
         self.spi_busses = [ SPIBus(self, 'SPI1') ]
