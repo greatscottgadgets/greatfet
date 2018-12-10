@@ -116,7 +116,7 @@ class GlitchKitCollection(object):
             # Little endian: last bytes first. :)
             data_to_send.append(byte)
 
-        self.board.vendor_request_out(vendor_requests.GLITCHKIT_SETUP, index=index, data=data_to_send)
+        self.board.comms._vendor_request_out(vendor_requests.GLITCHKIT_SETUP, index=index, data=data_to_send)
 
 
     def provide_target_clock(self, *events):
@@ -137,7 +137,7 @@ class GlitchKitCollection(object):
         index = flags >> 16
         value = flags & 0xFFFF
 
-        self.board.vendor_request_out(vendor_requests.GLITCHKIT_PROVIDE_TARGET_CLOCK, index=index, value=value)
+        self.board.comms._vendor_request_out(vendor_requests.GLITCHKIT_PROVIDE_TARGET_CLOCK, index=index, value=value)
 
 
 

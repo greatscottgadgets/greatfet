@@ -44,22 +44,22 @@ def main():
         sys.exit(errno.ENODEV)
 
     if args.receive:
-        device.vendor_request_out(vendor_requests.SDIR_RX_START)
+        device.comms._vendor_request_out(vendor_requests.SDIR_RX_START)
         time.sleep(1)
         with open(args.filename, 'wb') as f:
             try:
                 while True:
-                    d = device.device.read(0x81, 0x4000, 1000)
+                    d = device.comms.device.read(0x81, 0x4000, 1000)
                     # print(d)
                     f.write(d)
             except KeyboardInterrupt:
                 pass
-        device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
+        device.comms._vendor_request_out(vendor_requests.SDIR_RX_STOP)
 
     else:
         index = args.samplerate & 0xFFFF
         value = (args.samplerate >> 16) & 0xFFFF
-        device.vendor_request_out(vendor_requests.SDIR_TX_START, value=value, index=index)
+        device.comms._vendor_request_out(vendor_requests.SDIR_TX_START, value=value, index=index)
         time.sleep(1)
         with open(args.filename, 'rb') as f:
             try:
@@ -74,10 +74,10 @@ def main():
                         if len(data) == 0:
                             data = f.read(0x4000)
                     # print(data[:10])
-                    device.device.write(0x02, data)
+                    device.comms.device.write(0x02, data)
             except KeyboardInterrupt:
                 pass
-        device.vendor_request_out(vendor_requests.SDIR_TX_STOP)
+        device.comms._vendor_request_out(vendor_requests.SDIR_TX_STOP)
 
 
 if __name__ == '__main__':

@@ -61,8 +61,8 @@ JEDECsizes = {
 
 
 def spi_read(device, command, length):
-    device.vendor_request_out(request=vendor_requests.SPI_WRITE, data=command)
-    data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
+    device.comms._vendor_request_out(request=vendor_requests.SPI_WRITE, data=command)
+    data = device.comms._vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
     
     #log_function(' '.join(["0x%02x" % d for d in data]))
     return data
@@ -70,7 +70,7 @@ def spi_read(device, command, length):
 def spi_info(device, log_function=log_silent):
     log_function("Reading target device information")
 
-    # data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length)
+    # data = device.comms._vendor_request_in(request=vendor_requests.SPI_READ, length=length)
 
     data = spi_read(device, 0x9F, 4)
     manufacturer, model, capacity = data[1:4]
@@ -96,19 +96,19 @@ def dump_flash(device, address=None, length=None, filename="flash.bin", log_func
                 log_function("Reading 0x{:06x}".format(address))
             value = (address>>16) & 0xFFFF
             index = address & 0xFFFF
-            data = device.vendor_request_in(vendor_requests.SPI_DUMP_FLASH,
+            data = device.comms._vendor_request_in(vendor_requests.SPI_DUMP_FLASH,
                                             length=block_length, index=index, value=value)
             file.write(data)
             address += 256
 
 def i2c_xfer(device, log_function):
     log_function("Starting I2C")
-    device.vendor_request_out(vendor_requests.I2C_START)
+    device.comms._vendor_request_out(vendor_requests.I2C_START)
     log_function("I2C started, writing byte")
     # value = slave address, index = response length"
-    device.vendor_request_out(vendor_requests.I2C_XFER, value=0x41, index=3, data=[0xF8])
+    device.comms._vendor_request_out(vendor_requests.I2C_XFER, value=0x41, index=3, data=[0xF8])
     log_function("Fetching response")
-    data = device.vendor_request_in(vendor_requests.I2C_RESPONSE, length=3)
+    data = device.comms._vendor_request_in(vendor_requests.I2C_RESPONSE, length=3)
     log_function(data)
 
 def main():
@@ -147,7 +147,7 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    device.vendor_request_out(vendor_requests.SPI_INIT)
+    device.comms._vendor_request_out(vendor_requests.SPI_INIT)
 
     if args.info:
         spi_info(device, log_function=log_verbose)

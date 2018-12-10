@@ -37,7 +37,7 @@ def main():
 
     # 0 - 1024
     dac_value = 1024
-    device.vendor_request_out(vendor_requests.DAC_SET, value=dac_value)
+    device.comms._vendor_request_out(vendor_requests.DAC_SET, value=dac_value)
     print("DAC value set to", dac_value)
 
 if __name__ == '__main__':

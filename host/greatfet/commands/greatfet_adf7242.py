@@ -17,10 +17,10 @@ from greatfet.utils import log_silent, log_verbose
 from greatfet.protocol import vendor_requests
 
 def spi_write(device, data):
-    device.vendor_request_out(request=vendor_requests.SPI_WRITE, data=data)
+    device.comms._vendor_request_out(request=vendor_requests.SPI_WRITE, data=data)
 
 def spi_read(device, command, length):
-    data = device.vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
+    data = device.comms._vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
     return data
 
 def adf7242_command(device, command):
@@ -88,7 +88,7 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    device.vendor_request_out(vendor_requests.SPI_INIT)
+    device.comms._vendor_request_out(vendor_requests.SPI_INIT)
 
     if args.reset:
         adf7242_command(device, 0xC7)
