@@ -279,7 +279,7 @@ class GPIOPin(object):
 
     def write(self, high, check_direction=False):
         """ Convenience alias for set_state."""
-        self.set_pin_state(high, check_direction)
+        self.set_state(high, check_direction)
 
 
     def set_state(self, high, check_direction=True):
