@@ -22,6 +22,7 @@ setup(
             'greatfet = greatfet.commands.gf:main',
             'gf = greatfet.commands.gf:main',
             'greatfet_adc = greatfet.commands.greatfet_adc:main',
+            'greatfet_dac = greatfet.commands.greatfet_dac:main',
             'greatfet_adf7242 = greatfet.commands.greatfet_adf7242:main',
             'greatfet_firmware = greatfet.commands.greatfet_firmware:main',
             'greatfet_fw = greatfet.commands.greatfet_firmware:main',

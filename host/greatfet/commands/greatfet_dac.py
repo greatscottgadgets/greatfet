@@ -4,22 +4,20 @@
 
 from __future__ import print_function
 
-import argparse
 import errno
 import sys
 
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
-from greatfet.protocol import vendor_requests
 
 
 def main():
+    from greatfet.utils import GreatFETArgumentParser
+
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for experimenting with GreatFET's DAC")
-    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
-                        help="Serial number of device, if multiple devices", default=None)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser = GreatFETArgumentParser(description="Utility for experimenting with GreatFET's DAC")
+    parser.add_argument('-S', '--set', nargs=1, type=int, help="DAC value to set on ADC0_0 (0-1023)") 
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -35,9 +33,12 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    # 0 - 1024
-    dac_value = 1024
-    device.comms._vendor_request_out(vendor_requests.DAC_SET, value=dac_value)
+    if args.set:
+        set(device, args.set[0])
+
+
+def set(device, dac_value):
+    device.apis.dac.set(dac_value)
     print("DAC value set to", dac_value)
 
 if __name__ == '__main__':
