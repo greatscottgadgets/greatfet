@@ -16,9 +16,7 @@
 #include "legacy_apis/usb_api_logic_analyzer.h"
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
-#include "legacy_apis/usb_api_glitchkit.h"
 #include "legacy_apis/usb_api_glitchkit_simple.h"
-#include "legacy_apis/usb_api_glitchkit_usb.h"
 #include "legacy_apis/usb_api_DS18B20.h"
 #include "legacy_apis/usb_api_msp430.h"
 
@@ -73,12 +71,12 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 
 
 	// GlitchKit
-	usb_vendor_request_glitchkit_setup,
-	usb_vendor_request_glitchkit_provide_target_clock,
+	NULL, //usb_vendor_request_glitchkit_setup,
+	NULL, //usb_vendor_request_glitchkit_provide_target_clock,
 	usb_vendor_request_glitchkit_simple_enable_trigger, // Simple triggers
-	usb_vendor_request_glitchkit_control_in_start,
-	usb_vendor_request_glitchkit_usb_result_length,
-	usb_vendor_request_glitchkit_usb_read_result,
+	NULL, //usb_vendor_request_glitchkit_control_in_start,
+	NULL, //usb_vendor_request_glitchkit_usb_result_length,
+	NULL, //usb_vendor_request_glitchkit_usb_read_result,
 
 	// USB Host
 	usb_vendor_request_usbhost_connect,

@@ -95,13 +95,15 @@ void usb_host_free_transfer(ehci_transfer_t *to_free);
  * low-level access if e.g. Host APIs require.
  *
  * @param host The host this endpoint queue is associated with.
+ * @param qh If provided, the endpoint QH object to set up. If NULL, one will be
+ *		automatically allocated and returned.
  * @param device_address The address of the downstream device.
  * @param endpoint_number The endpoint number of the endpoint being configurd,
  *		_not_ including the direction bit.
  * @param endpoint_speed The speed of the endpoint. Should match the speed of
  *		the attached device.
  * @param is_control_endpoint True iff the endpoint is a control endpoint.
- * @param handle_data_toggle If set, the endpoint should handle data toggling 
+ * @param handle_data_toggle If set, the endpoint should handle data toggling
  *		automatically; otherwise, it will use the values specified when calling
  *		usb_host_transfer_schedule.
  * @param max_packet_size The maximum packet size transmissable on the endpoint;
@@ -143,6 +145,32 @@ int usb_host_transfer_schedule(
 	const host_transfer_completion_cb completion_cb,
 	void* const user_data
 );
+
+
+/**
+ * Executes a USB transfer on the hosts's asynchronous queue.
+ * This will execute as soon as the hardware can. This variant blocks until the transaction is complete.
+ *
+ * FIXME: Possibly use an endpoint abstaction rather than passing around QHs?
+ * @param qh The queue head to schedule the given transfer on.
+ * @param pid_code The PID code to use for the given transfer. Sets direction.
+ * @param data A pointer to the data buffer to be transmitted from or recieved into,
+ *      per the PID code provided.
+ * @param data_toggle The Data Toggle bit for USB. This should be 0/1, but is ignored
+ *      if the endpoint is set up to control data toggling.
+ * @param maximum_length The length of the data to be transmitted _or_ the maximum length
+ *      to be recieved.
+ * @param timeout The number of microseconds to allow for the given transaction, or 0 for unlimited.
+ *		Note that a timeout will not automatically cancel the relevant transfer; you must do this yourself.
+ * @param out_transferred Out argument. If non-null, receives the total amount of data transferred
+ *		upon a successful transaction.
+ *
+ * @return 0 on success, or an error code on failure. Likely codes include EPIPE (stalled), EIO (USB error), or
+ *		ETIMEDOUT (timeout).
+ */
+int usb_host_transfer(usb_peripheral_t *host, ehci_queue_head_t *qh, const usb_token_t pid_code,
+	const int data_toggle, void* const data, const uint32_t maximum_length, uint32_t timeout, uint32_t
+	*out_transferred);
 
 
 /**

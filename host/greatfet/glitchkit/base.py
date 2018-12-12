@@ -10,11 +10,6 @@ class GlitchKitCollection(object):
     and methods for the highest-level configuration.
     """
 
-    # Setup commands.
-    SETUP_COMMAND_SET_SYNCHRONIZATION = 0
-    SETUP_COMMAND_SET_TRIGGER         = 1
-    SETUP_COMMAND_ADD_TRIGGER         = 2
-
     # Clock sources constants.
     CLOCK_SOURCE_32K       = 0x00
     CLOCK_SOURCE_IRC       = 0x01
@@ -40,8 +35,9 @@ class GlitchKitCollection(object):
             board -- The board for which the GlitchKit module can be populated.
         """
 
-        # Store a reference to the board itself.
+        # Store a reference to the board itself, and to the local API we use.
         self.board = board
+        self.api = board.apis.glitchkit
 
         for cls in GlitchKitModule.__subclasses__():
             if cls.supports_board(board):
@@ -66,7 +62,7 @@ class GlitchKitCollection(object):
             events -- One or more comma-separated events to use. _All_ of the events
                       must occur before any active modules will activate.
         """
-        self._issue_set_event_command(self.SETUP_COMMAND_SET_SYNCHRONIZATION, *events)
+        self._issue_set_event_command(self.api.set_synchronization_events, *events)
 
 
     def trigger_on_events(self, *events):
@@ -77,7 +73,7 @@ class GlitchKitCollection(object):
             events -- One or more comma-separated events to use. _Any_ of the events
                       will issue a trigger.
         """
-        self._issue_set_event_command(self.SETUP_COMMAND_SET_TRIGGER, *events)
+        self._issue_set_event_command(self.api.set_trigger_events, *events)
 
 
     def add_trigger_events(self, *events):
@@ -89,37 +85,31 @@ class GlitchKitCollection(object):
             events -- One or more comma-separated events to use. _Any_ of the events
                       will issue a trigger.
         """
-        self._issue_set_event_command(self.SETUP_COMMAND_ADD_TRIGGER, *events)
+        self._issue_set_event_command(self.api.add_trigger_events, *events)
 
 
 
-    def _issue_set_event_command(self, index, *events):
+    def _issue_set_event_command(self, api_function, *events):
         """
         Issues a GlitchKit SETUP command.
 
         Arguments:
+            api_function -- The API function to call with the provided events.
             events -- One or more comma-separated events to use. _All_ of the events
                       must occur before any active modules will activate.
         """
         flags = 0
-        data_to_send = []
 
-        # Compute the flags to be sent, and then convert them into a set of bytes.
+        # Compute the event flags to be sent.
         for event in events:
             flags |= event
 
-        # This could just be .to_bytes, if it weren't for you, python2!
-        for _ in range(4):
-            byte = flags & 0xFF
-            flags = flags >> 8
-
-            # Little endian: last bytes first. :)
-            data_to_send.append(byte)
-
-        self.board.comms._vendor_request_out(vendor_requests.GLITCHKIT_SETUP, index=index, data=data_to_send)
+        # Call the target API function.
+        api_function(flags)
 
 
-    def provide_target_clock(self, *events):
+
+    def provide_target_clock(self, clock_source=CLOCK_SOURCE_GP_CLKIN, *events):
         """
         Configure the GreatFET to provide the target clock.
         Currently only supports output to CLK0 (J1_P11); may support more in the future.
@@ -134,11 +124,7 @@ class GlitchKitCollection(object):
         for event in events:
             flags |= event
 
-        index = flags >> 16
-        value = flags & 0xFFFF
-
-        self.board.comms._vendor_request_out(vendor_requests.GLITCHKIT_PROVIDE_TARGET_CLOCK, index=index, value=value)
-
+        self.api.provide_target_clock(clock_source, flags)
 
 
 

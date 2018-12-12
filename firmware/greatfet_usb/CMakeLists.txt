@@ -13,6 +13,7 @@ include(../cmake/greatfet-common.cmake)
 # This enables us to simply add a file to the 'classes' directory to add a new
 # communications API class.
 AUX_SOURCE_DIRECTORY(classes GREATFET_API_CLASSES)
+AUX_SOURCE_DIRECTORY(classes/glitchkit GREATFET_GLITCHKIT_API_CLASSES)
 AUX_SOURCE_DIRECTORY("${LIBGREAT_FIRMWARE_COMMON}/classes" LIBGREAT_API_CLASSES)
 
 set(SRC_M4
@@ -59,6 +60,7 @@ set(SRC_M4
 
     ${LIBGREAT_API_CLASSES}
     ${GREATFET_API_CLASSES}
+    ${GREATFET_GLITCHKIT_API_CLASSES}
 
     # TODO: get rid of these!
     legacy_apis/usb_api_spi.c
@@ -69,9 +71,7 @@ set(SRC_M4
     legacy_apis/usb_api_logic_analyzer.c
     legacy_apis/usb_api_sdir.c
     legacy_apis/usb_api_usbhost.c
-    legacy_apis/usb_api_glitchkit.c
     legacy_apis/usb_api_glitchkit_simple.c
-    legacy_apis/usb_api_glitchkit_usb.c
     legacy_apis/usb_api_DS18B20.c
     legacy_apis/usb_api_msp430.c
 )

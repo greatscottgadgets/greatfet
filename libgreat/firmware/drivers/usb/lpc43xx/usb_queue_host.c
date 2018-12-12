@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <time.h>
+#include <errno.h>
 
 
 #include <drivers/usb/lpc43xx/usb.h>
@@ -19,6 +21,16 @@
 
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/sync.h>
+
+/**
+ *  Internal data structure describing the state of an blocking transfer.
+ */
+struct usb_host_blocking_transfer_state {
+	volatile bool in_progress;
+	volatile unsigned int transferred;
+	volatile bool stalled;
+	volatile bool error;
+};
 
 // Storage pools for re-usable USB objects.
 static ehci_link_t queue_head_freelist;
@@ -60,11 +72,12 @@ void usb_host_initialize_storage_pools(void)
 	for(int i = 0; i < USB_HOST_MAX_TRANSFER_DESCRIPTORS - 1; ++i) {
 		transfer_pool[i].horizontal.ptr = &(transfer_pool[i+1].horizontal);
 	}
-	
+
 	// ... terminating at the end of the list.
 	queue_head_pool[USB_HOST_MAX_QUEUE_HEADS - 1].horizontal.ptr = TERMINATING_LINK;
 	transfer_pool[USB_HOST_MAX_QUEUE_HEADS - 1].horizontal.ptr = TERMINATING_LINK;
 }
+CALL_ON_INIT(usb_host_initialize_storage_pools);
 
 
 
@@ -233,6 +246,8 @@ static void usb_host_initialize_queue_head(ehci_queue_head_t *qh,
 		uint8_t device_address, uint8_t endpoint_number, usb_speed_t endpoint_speed,
 		bool is_control_endpoint, bool handle_data_toggle, uint16_t max_packet_size)
 {
+
+
 	// Set up the parameters for the queue head.
 	// See the documentation in docs, and the EHCI specification section 3.6.
 	qh->device_address = device_address;
@@ -332,13 +347,15 @@ bool usb_host_endpoint_in_asynch_queue(usb_peripheral_t *host, ehci_queue_head_t
  * low-level access if e.g. Host APIs require.
  *
  * @param host The host this endpoint queue is associated with.
+ * @param qh If provided, the endpoint QH object to set up. If NULL, one will be
+ *		automatically allocated and returned.
  * @param device_address The address of the downstream device.
  * @param endpoint_number The endpoint number of the endpoint being configurd,
  *		_not_ including the direction bit.
  * @param endpoint_speed The speed of the endpoint. Should match the speed of
  *		the attached device.
  * @param is_control_endpoint True iff the endpoint is a control endpoint.
- * @param handle_data_toggle If set, the endpoint should handle data toggling 
+ * @param handle_data_toggle If set, the endpoint should handle data toggling
  *		automatically; otherwise, it will use the values specified when calling
  *		usb_host_transfer_schedule.
  * @param max_packet_size The maximum packet size transmissable on the endpoint;
@@ -408,7 +425,7 @@ int usb_host_transfer_schedule(
 	usb_peripheral_t *host,
 	ehci_queue_head_t *qh,
 	const usb_token_t pid_code,
-  const int data_toggle,
+	const int data_toggle,
 
 	void* const data,
 	const uint32_t maximum_length,
@@ -432,16 +449,19 @@ int usb_host_transfer_schedule(
 	ehci_transfer_descriptor_t* const td = &transfer->td;
 
 	// Populate it with the meta-data used to configure the hardware...
-	td->next_dtd_pointer					 = (ehci_transfer_descriptor_t *)TERMINATING_LINK;
+	td->next_dtd_pointer           = (ehci_transfer_descriptor_t *)TERMINATING_LINK;
 	td->alternate_next_dtd_pointer = (ehci_transfer_descriptor_t *)TERMINATING_LINK;
-	td->total_bytes								 = maximum_length;
-	td->active										 = 1;
-	td->pid_code									 = pid_code;
-	td->data_toggle								 = data_toggle;
+	td->total_bytes				   = maximum_length;
+	td->active					   = 1;
+	td->pid_code				   = pid_code;
+	td->data_toggle				   = data_toggle;
+
+	// TODO: potentially allow other numbers of retries?
+	td->error_counter              = 3;
 
 	// Request an interrupt on complete. This allows us to clean things up and
 	// execute the completion callback.
-	td->int_on_complete						 = 1;
+	td->int_on_complete			   = 1;
 
 	// ... and provide the addresses the DMA controller will use to access the
 	// data source or target.
@@ -479,6 +499,86 @@ int usb_host_transfer_schedule(
 }
 
 
+/**
+ *  Callback function executed once the core transaction completes.
+ *  Used to capture details regarding the full GlitchKit transaction.
+ */
+static void usb_host_handle_blocking_transfer_complete(void *const user_data,
+		unsigned int transferred, bool stalled, bool error)
+{
+	volatile struct usb_host_blocking_transfer_state *state = user_data;
+
+	state->in_progress = false;
+	state->transferred = transferred;
+	state->stalled = stalled;
+	state->error = error;
+}
+
+
+/**
+ * Executes a USB transfer on the hosts's asynchronous queue.
+ * This will execute as soon as the hardware can. This variant blocks until the transaction is complete.
+ *
+ * FIXME: Possibly use an endpoint abstaction rather than passing around QHs?
+ * @param qh The queue head to schedule the given transfer on.
+ * @param pid_code The PID code to use for the given transfer. Sets direction.
+ * @param data A pointer to the data buffer to be transmitted from or recieved into,
+ *      per the PID code provided.
+ * @param data_toggle The Data Toggle bit for USB. This should be 0/1, but is ignored
+ *      if the endpoint is set up to control data toggling.
+ * @param maximum_length The length of the data to be transmitted _or_ the maximum length
+ *      to be recieved.
+ * @param timeout The number of microseconds to allow for the given transaction, or 0 for unlimited.
+ *		Note that a timeout will not automatically cancel the relevant transfer; you must do this yourself.
+ * @param out_transferred Out argument. If non-null, receives the total amount of data transferred
+ *		upon a successful transaction.
+ *
+ * @return 0 on success, or an error code on failure. Likely codes include EPIPE (stalled), EIO (USB error), or
+ *		ETIMEDOUT (timeout).
+ */
+int usb_host_transfer(usb_peripheral_t *host, ehci_queue_head_t *qh, const usb_token_t pid_code,
+	const int data_toggle, void* const data, const uint32_t maximum_length, uint32_t timeout, uint32_t *out_transferred)
+{
+	volatile static struct usb_host_blocking_transfer_state transfer_state;
+
+	int rc;
+	uint32_t time_base = get_time();
+
+	// Call the non-blocking variant of our function with a call-back that captures state.
+	// TODO: possibly encode the timeout into the USB transaction?
+	transfer_state.in_progress = true;
+	rc = usb_host_transfer_schedule(host, qh, pid_code, data_toggle, data, maximum_length,
+			usb_host_handle_blocking_transfer_complete, &transfer_state);
+
+	// If we failed to schedule the transfer, indicate so.
+	if (rc) {
+		return rc;
+	}
+
+	// Loop until we complete or an error occurs.
+	while (transfer_state.in_progress) {
+		// If the timeout is set, and we've exceeded the timeout, abort with ETIMEDOUT.
+		if (timeout && (get_time_since(time_base) > timeout)) {
+			return ETIMEDOUT;
+		}
+	}
+
+	// If we've made it here, the transfer has completed. First, try to set the transferred out arguement.
+	if (out_transferred) {
+		*out_transferred = transfer_state.transferred;
+	}
+
+	// Return an error code if the transaction errored out.
+	if (transfer_state.stalled) {
+		return EPIPE;
+	}
+	if (transfer_state.error) {
+		return EIO;
+	}
+
+	// If we got here, everything went well!
+	return 0;
+}
 
 /**
  *
@@ -532,7 +632,7 @@ void usb_host_handle_asynchronous_transfer_complete(usb_peripheral_t *host)
 			// ... and free the transfer.
 			usb_host_free_transfer(transfer);
 		}
-		
+
 		// Otherwise, continue iterating.
 		else {
 			previous = link;

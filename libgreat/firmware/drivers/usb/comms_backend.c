@@ -37,8 +37,8 @@ static struct command_transaction active_transaction;
 static bool transaction_underway = false;
 
 // FIXME: abstract the maximum size, here
-uint8_t usb_data_in_buffer[4096] ;
-uint8_t usb_data_out_buffer[4096];
+uint8_t usb_data_in_buffer[4096] ATTR_ALIGNED(4);
+uint8_t usb_data_out_buffer[4096] ATTR_ALIGNED(4);
 
 /** Clears our position in the current transaction. */
 static void libgreat_clear_position_in_active_transaction(void)

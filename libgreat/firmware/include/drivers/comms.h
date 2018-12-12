@@ -392,6 +392,16 @@ void *comms_response_reserve_space(struct command_transaction *trans, uint32_t s
  */
 void *comms_response_add_raw(struct command_transaction *trans, void *data, uint32_t length);
 
+
+/**
+ * @return the total amount of space remaining for response arguments
+ */
+static inline uint32_t comms_response_space_available(struct command_transaction *trans)
+{
+	return (trans->data_out_max_length - trans->data_out_length);
+}
+
+
 /**
  * Grabs a chunk of up to max_length from the argument buffer.
  *
