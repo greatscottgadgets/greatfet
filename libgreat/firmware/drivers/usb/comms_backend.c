@@ -93,7 +93,6 @@ static usb_request_status_t libgreat_comms_vendor_request_out_handler(
 	// If this is the setup stage of the transaction, schedule the data
 	// read itself.
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		pr_info("flags are %d\n", endpoint->setup.index);
 		rc = usb_transfer_schedule_block(endpoint->out, usb_data_in_buffer,
 				endpoint->setup.length, NULL, NULL);
 		return rc ? USB_REQUEST_STATUS_STALL : USB_REQUEST_STATUS_OK;
