@@ -25,7 +25,7 @@ class GreatFETOne(GreatFETBoard):
     SUPPORTED_LEDS = 4
 
     # All of the GPIO mappings accessible from the GreatFET headers.
-    # TODO: 
+    # TODO:
     GPIO_MAPPINGS = {
         #"J1_P1"   : GND,
         #"J2_P2"   : VCC,
@@ -149,10 +149,10 @@ class GreatFETOne(GreatFETBoard):
         # Populate the per-board GPIO.
         if self.supports_api("gpio"):
             self._populate_gpio()
-        
+
         # XXX disable perpiherals as we develop libgreat
         # return
-        
+
         self.i2c_busses = [ I2CBus(self, 'I2C0') ]
         self.spi_busses = [ SPIBus(self, 'SPI1') ]
 
@@ -161,11 +161,11 @@ class GreatFETOne(GreatFETBoard):
         self.i2c = self.i2c_busses[0]
         self.spi = self.spi_busses[0]
 
-
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)
 
-        # Implement any GlitchKit modules we support.
-        self.glitchkit = GlitchKitCollection(self)
+        # Add any GlitchKit modules we support.
+        if self.supports_api("glitchkit"):
+            self.glitchkit = GlitchKitCollection(self)
 
 

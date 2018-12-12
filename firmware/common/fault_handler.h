@@ -24,7 +24,14 @@ struct armv7m_scb_t {
 	volatile uint32_t SHPR2;
 	volatile uint32_t SHPR3;
 	volatile uint32_t SHCSR;
-	volatile uint32_t CFSR;
+	union {
+		volatile uint32_t CFSR;
+		struct {
+			uint16_t UFSR;
+			uint8_t BFSR;
+			uint8_t MMFSR;
+		} __attribute__((packed));
+	};
 	volatile uint32_t HFSR;
 	volatile uint32_t DFSR;
 	volatile uint32_t MMFAR;
@@ -52,5 +59,40 @@ static armv7m_scb_t* const SCB = (armv7m_scb_t*)SCB_BASE;
 #define SCB_HFSR_DEBUGEVT (1 << 31)
 #define SCB_HFSR_FORCED (1 << 30)
 #define SCB_HFSR_VECTTBL (1 << 1)
+
+
+#define SCB_SHCSR_MEMFAULTENA (1 << 0)
+#define SCB_SHCSR_BUSFAULTENA (1 << 1)
+#define SCB_SHCSR_MEMFAULTPENDED (1 << 13)
+#define SCB_SHCSR_BUSFAULTPENDED (1 << 14)
+
+#define SCB_MMFSR_IACCVIOL (1 << 0)
+#define SCB_MMFSR_DACCVIOL (1 << 1)
+#define SCB_MMFSR_MUNSTKERR (1 << 3)
+#define SCB_MMFSR_MSTKERR (1 << 4)
+#define SCB_MMFSR_MLSPERR (1 << 5)
+#define SCB_MMFSR_MMARVALID (1 << 7)
+#define SCB_MMFSR_FAULT_MASK ( \
+	SCB_MMFSR_IACCVIOL | \
+	SCB_MMFSR_DACCVIOL | \
+	SCB_MMFSR_MUNSTKERR | \
+	SCB_MMFSR_MSTKERR | \
+	SCB_MMFSR_MLSPERR \
+	)
+
+#define SCB_BFSR_LSPERR (1 << 5)
+#define SCB_BFSR_STKERR (1 << 4)
+#define SCB_BFSR_UNSTKERR (1 << 3)
+#define SCB_BFSR_IMPRECISERR (1 << 2)
+#define SCB_BFSR_PRECISERR (1 << 1)
+#define SCB_BFSR_IBUSERR (1 << 0)
+
+#define SCB_BFSR_FAULT_MASK ( \
+		SCB_BFSR_LSPERR | \
+		SCB_BFSR_STKERR | \
+		SCB_BFSR_UNSTKERR | \
+		SCB_BFSR_IBUSERR \
+	)
+
 
 #endif//__FAULT_HANDLER__

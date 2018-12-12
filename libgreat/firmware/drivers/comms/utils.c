@@ -123,7 +123,9 @@ void *comms_argument_read_buffer(struct command_transaction *trans,
 	trans->data_in_remaining -= length;
 	trans->data_in_position = end_pointer;
 
-	*out_length = length;
+	if (out_length) {
+		*out_length = length;
+	}
 	return start_pointer;
 }
 

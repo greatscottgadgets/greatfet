@@ -37,8 +37,8 @@ static struct command_transaction active_transaction;
 static bool transaction_underway = false;
 
 // FIXME: abstract the maximum size, here
-uint8_t usb_data_in_buffer[4096] ;
-uint8_t usb_data_out_buffer[4096];
+uint8_t usb_data_in_buffer[4096] ATTR_ALIGNED(4);
+uint8_t usb_data_out_buffer[4096] ATTR_ALIGNED(4);
 
 /** Clears our position in the current transaction. */
 static void libgreat_clear_position_in_active_transaction(void)
@@ -93,7 +93,6 @@ static usb_request_status_t libgreat_comms_vendor_request_out_handler(
 	// If this is the setup stage of the transaction, schedule the data
 	// read itself.
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		pr_info("flags are %d\n", endpoint->setup.index);
 		rc = usb_transfer_schedule_block(endpoint->out, usb_data_in_buffer,
 				endpoint->setup.length, NULL, NULL);
 		return rc ? USB_REQUEST_STATUS_STALL : USB_REQUEST_STATUS_OK;

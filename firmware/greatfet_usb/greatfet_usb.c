@@ -70,7 +70,6 @@ int main(void) {
 	/* rtc_init(); */
 
 	init_usb0();
-	init_usbhost_api();
 
 	while(true) {
 		if(logic_analyzer_enabled) {

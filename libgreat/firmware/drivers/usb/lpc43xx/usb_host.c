@@ -58,7 +58,7 @@ int usb_provide_vbus(usb_peripheral_t *host)
 
 		// Disable the load switch, to ensure we're not already providing VBUS.
 		gpio_clear(&gpio_usb1_en);
-		
+
 		// TODO: Do we need to delay, here?
 
 		// If we can sense VBUS and we're not trying to drive it,
@@ -323,13 +323,13 @@ void usb_host_reset_device(usb_peripheral_t *host)
 
 
 /**
- * Handle an error interrupt. Normally, we migth want to use this
- * opportunity to clear out any error'd transfer descriptors.
+ * Handle an error interrupt, which indicates something went wrong while
+ * executing a transaction on the host queue.
  */
 void usb_host_handle_error(usb_peripheral_t *host)
 {
-	//TODO:
-	(void)host;
+	// Check the host queue, and retire any transactions that have errored out.
+	usb_host_handle_asynchronous_transfer_complete(host);
 }
 
 
