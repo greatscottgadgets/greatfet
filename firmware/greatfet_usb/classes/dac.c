@@ -14,11 +14,7 @@
 
 int dac_verb_set(struct command_transaction *trans)
 {
-	// set J2_P5 up as a DAC pin
-	scu_pinmux(SCU_PINMUX_GPIO2_3, SCU_GPIO_FAST | SCU_GPIO_PUP | SCU_CONF_FUNCTION0);
-	static struct gpio_t dac_pin = GPIO(2, 3);
-	gpio_input(&dac_pin); 
-
+	// Defaults to ADC0_0 (J2_P5 on GreatFET One)
 	uint16_t value = comms_argument_parse_uint16_t(trans);
 	DAC_CR = DAC_CR_VALUE(value) & DAC_CR_VALUE_MASK;
 	DAC_CTRL = DAC_CTRL_DMA_ENA;
@@ -33,7 +29,7 @@ static struct comms_verb _verbs[] = {
 		{ .name = "set", .handler = dac_verb_set,
             .in_signature = "<I", .out_signature = "",
             .in_param_names = "value",
-            .doc = "Sets the DAC" },
+            .doc = "Sets the DAC value on ADC0_0 (0-1023)" },
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(dac, CLASS_NUMBER_SELF, "dac", _verbs,
