@@ -113,9 +113,9 @@ if __name__ == '__main__':
         sys.exit(errno.ENODEV)
 
     if args.adc:
-        device.vendor_request_out(vendor_requests.ADC_INIT)
+        device.comms._vendor_request_out(vendor_requests.ADC_INIT)
     else:
-        device.vendor_request_out(vendor_requests.SDIR_RX_START)
+        device.comms._vendor_request_out(vendor_requests.SDIR_RX_START)
 
     background = 0
     try:
@@ -143,6 +143,6 @@ if __name__ == '__main__':
         pass
 
     if not args.adc:
-        device.vendor_request_out(vendor_requests.SDIR_RX_STOP)
+        device.comms._vendor_request_out(vendor_requests.SDIR_RX_STOP)
 
     teardown_display(screen)

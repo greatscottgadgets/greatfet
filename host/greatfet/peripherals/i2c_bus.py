@@ -13,7 +13,10 @@ class I2CBus(GreatFETPeripheral):
         expanded when the vendor commands are.
     """
 
-    def __init__(self, board, name='i2c bus', buffer_size=255):
+    # Master Transmitter/Receiver mode should return 0x18/0x40 respectively
+    VALID_STATES = [0x18, 0x40]
+
+    def __init__(self, board, name='i2c bus', buffer_size=255, duty_cycle_count=255):
         """
             Initialize a new I2C bus.
 
@@ -32,8 +35,11 @@ class I2CBus(GreatFETPeripheral):
         # Create a list that will store all connected devices.
         self.devices = []
 
+        # Store our duty cycle count
+        self.duty_cycle_count = duty_cycle_count
+
         # Set up the I2C bus for communications.
-        board.vendor_request_out(vendor_requests.I2C_START)
+        board.comms._vendor_request_out(vendor_requests.I2C_START, value=duty_cycle_count)
 
 
 
@@ -76,14 +82,40 @@ class I2CBus(GreatFETPeripheral):
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
         # Perform the core transfer...
-        self.board.vendor_request_out(vendor_requests.I2C_XFER, value=address,
+        self.board.comms._vendor_request_out(vendor_requests.I2C_XFER, value=address,
                 index=receive_length, data=data)
+
+        # Read status (ACK/NAK)
+        status = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS,
+                length=receive_length)
 
         # If reciept was requested, return the received data.
         if receive_length:
-            data = self.board.vendor_request_in(vendor_requests.I2C_RESPONSE,
+            data = self.board.comms._vendor_request_in(vendor_requests.I2C_RESPONSE,
                 length=receive_length)
         else:
             data = []
 
         return data
+
+
+    def scan(self):
+        """
+            Sends empty data over the I2C bus, and recieves ACK/NAK
+            in response for valid/invalid addresses.
+        """
+        
+        valid_addresses = []
+        for address in range(128):
+            # Perform the core transfer...
+            self.board.comms._vendor_request_out(vendor_requests.I2C_XFER, value=address >> 1,
+                    index=1, data=[])
+            # Read status (ACK/NAK)
+            stat_array = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS,
+                    length=1)
+            status = stat_array[0]
+            if status in I2CBus.VALID_STATES:
+                valid_addresses.append(address)
+
+        return valid_addresses
+

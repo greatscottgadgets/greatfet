@@ -74,7 +74,7 @@ class GlitchKitSimple(GlitchKitModule):
         count_low  = count & 0xFFFF
 
         # Finally, issue the raw request that should generate the relevant count.
-        self.board.vendor_request_out(vendor_requests.GLITCHKIT_SIMPLE_START_EVENT_COUNT,
+        self.board.comms._vendor_request_out(vendor_requests.GLITCHKIT_SIMPLE_START_EVENT_COUNT,
                 value=count_high, index=count_low, data=packet, timeout=3000)
 
 

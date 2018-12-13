@@ -8,7 +8,7 @@ from ..peripherals.gpio import GPIO
 from ..peripherals.led import LED
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
-from ..peripherals.spi_flash import SPIFlash
+from ..peripherals.firmware import DeviceFirmwareManager
 
 from ..glitchkit import *
 
@@ -25,7 +25,7 @@ class GreatFETOne(GreatFETBoard):
     SUPPORTED_LEDS = 4
 
     # All of the GPIO mappings accessible from the GreatFET headers.
-    # TODO: 
+    # TODO:
     GPIO_MAPPINGS = {
         #"J1_P1"   : GND,
         #"J2_P2"   : VCC,
@@ -130,11 +130,11 @@ class GreatFETOne(GreatFETBoard):
     }
 
 
-    def __init__(self, **device_identifiers):
+    def initialize_apis(self):
         """ Initialize a new GreatFET One connection. """
 
         # Set up the core connection.
-        super(GreatFETOne, self).__init__(**device_identifiers)
+        super(GreatFETOne, self).initialize_apis()
 
         # TODO: Abstract the below into a 'pull out standard peripherals'
         # method?
@@ -142,7 +142,17 @@ class GreatFETOne(GreatFETBoard):
         # Initialize the fixed peripherals that come on the board.
         # TODO: Use a self.add_peripheral mechanism, so peripherals can
         # be dynamically listed?
-        self.onboard_flash = SPIFlash(self)
+        if self.supports_api('firmware'):
+            self.onboard_flash = DeviceFirmwareManager(self)
+
+
+        # Populate the per-board GPIO.
+        if self.supports_api("gpio"):
+            self._populate_gpio()
+
+        # XXX disable perpiherals as we develop libgreat
+        # return
+
         self.i2c_busses = [ I2CBus(self, 'I2C0') ]
         self.spi_busses = [ SPIBus(self, 'SPI1') ]
 
@@ -151,13 +161,11 @@ class GreatFETOne(GreatFETBoard):
         self.i2c = self.i2c_busses[0]
         self.spi = self.spi_busses[0]
 
-        # Populate the per-board GPIO.
-        self._populate_gpio()
-
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)
 
-        # Implement any GlitchKit modules we support.
-        self.glitchkit = GlitchKitCollection(self)
+        # Add any GlitchKit modules we support.
+        if self.supports_api("glitchkit"):
+            self.glitchkit = GlitchKitCollection(self)
 
 

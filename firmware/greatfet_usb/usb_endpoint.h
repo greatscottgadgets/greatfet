@@ -5,8 +5,8 @@
 #ifndef __USB_ENDPOINT_H__
 #define __USB_ENDPOINT_H__
 
-#include <usb_type.h>
-#include <usb_queue.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/lpc43xx/usb_queue.h>
 
 extern usb_endpoint_t usb0_endpoint_control_out;
 extern USB_DECLARE_QUEUE(usb0_endpoint_control_out);

@@ -40,6 +40,7 @@ requests = (
     'I2C_STOP',
     'I2C_XFER',
     'I2C_RESPONSE',
+    'I2C_GET_STATUS',
 
     'LOGIC_ANALYZER_START',
     'LOGIC_ANALYZER_STOP',
@@ -99,6 +100,8 @@ requests = (
     #'MSP430_JTAG',
 
     'DAC_SET',
+
+    'READ_DMESG'
 )
 
 def _create_module_level_constants():

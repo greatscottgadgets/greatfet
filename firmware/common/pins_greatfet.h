@@ -123,6 +123,10 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define ONBOARD_FLASH_NUM_PAGES  8192U
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
 
+/* Pin locations for the onboard SPI flash. */
+static const struct gpio_t gpio_onboard_flash_hold   = GPIO(1, 14);
+static const struct gpio_t gpio_onboard_flash_wp     = GPIO(1, 15);
+static const struct gpio_t gpio_onboard_flash_select = GPIO(5, 11);
 
 /* TODO add other Pins */
 #define SCU_PINMUX_GPIO0_10 (P1_3)  /* GPIO0[10] */

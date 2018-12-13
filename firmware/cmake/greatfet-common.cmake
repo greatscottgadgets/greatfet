@@ -11,6 +11,14 @@ SET(PATH_GREATFET_FIRMWARE ${PATH_GREATFET}/firmware)
 SET(PATH_GREATFET_FIRMWARE_COMMON ${PATH_GREATFET_FIRMWARE}/common)
 SET(LIBOPENCM3 ${PATH_GREATFET_FIRMWARE}/libopencm3)
 
+# FIXME: pull these out into libgreat
+SET(PATH_LIBGREAT ${CMAKE_CURRENT_LIST_DIR}/../../libgreat)
+SET(PATH_LIBGREAT_FIRMWARE ${PATH_LIBGREAT}/firmware)
+SET(PATH_LIBGREAT_FIRMWARE_DRIVERS ${PATH_LIBGREAT_FIRMWARE}/drivers)
+
+# FIXME: make this configurable
+SET(LIBGREAT_PLATFORM lpc43xx)
+
 execute_process(
 	COMMAND git log -n 1 --format=%h
 	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -49,16 +57,15 @@ endif(NOT DEFINED SRC_M0)
 SET(GREATFET_OPTS "-D${BOARD} -DLPC43XX -D${MCU_PARTNO} -D'VERSION_STRING=\"git-${VERSION}\"'")
 
 if(BUILD_OUTPUT_TYPE STREQUAL "L0ADABLE")
-	SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory_l0adable.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_l0adable.ld")
+	SET(LDSCRIPT_M4 "-T${MCU_PARTNO}_M4_memory_l0adable.ld -TLPC43xx_l0adable.ld")
 else()
-	SET(LDSCRIPT_M4 "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx_rom_to_ram.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+	SET(LDSCRIPT_M4 "-T${MCU_PARTNO}_M4_memory.ld -Tlibgreat_lpc43xx_rom_to_ram.ld -TLPC43xx_M4_M0_image_from_text.ld")
 endif()
 
-SET(LDSCRIPT_M4_DFU "-T${PATH_GREATFET_FIRMWARE_COMMON}/${MCU_PARTNO}_M4_memory.ld -Tlibopencm3_lpc43xx.ld -T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M4_M0_image_from_text.ld")
+SET(LDSCRIPT_M4_DFU "-T${MCU_PARTNO}_M4_memory.ld -Tlibgreat_lpc43xx.ld -TLPC43xx_M4_M0_image_from_text.ld")
+SET(LDSCRIPT_M0 "-TLPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
 
-SET(LDSCRIPT_M0 "-T${PATH_GREATFET_FIRMWARE_COMMON}/LPC43xx_M0_memory.ld -Tlibopencm3_lpc43xx_m0.ld")
-
-SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} ${COMMON_FLAGS} -fno-common -MD")
+SET(CFLAGS_COMMON "-Os -g3 -Wall -Wextra ${GREATFET_OPTS} -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers")
 SET(LDFLAGS_COMMON "-nostartfiles -Wl,--gc-sections")
 
 if(V STREQUAL "1")
@@ -68,7 +75,7 @@ endif()
 SET(CPUFLAGS_M0 "-mthumb -mcpu=cortex-m0 -mfloat-abi=soft")
 SET(CFLAGS_M0 "-std=gnu99 ${CFLAGS_COMMON} ${CPUFLAGS_M0} -DLPC43XX_M0")
 SET(CXXFLAGS_M0 "-std=gnu++0x ${CFLAGS_COMMON} ${CPUFLAGS_M0} -DLPC43XX_M0")
-SET(LDFLAGS_M0 "${LDFLAGS_COMMON} ${CPUFLAGS_M0} ${LDSCRIPT_M0} -Xlinker -Map=m0.map --specs=nano.specs")
+SET(LDFLAGS_M0 "${LDFLAGS_COMMON} ${CPUFLAGS_M0} ${LDSCRIPT_M0} -Xlinker -Map=m0.map")
 
 SET(CPUFLAGS_M4 "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16")
 SET(CFLAGS_M4 "-std=gnu99 ${CFLAGS_COMMON} ${CPUFLAGS_M4} -DLPC43XX_M4")
@@ -81,9 +88,23 @@ set(BUILD_SHARED_LIBS OFF)
 include_directories("${LIBOPENCM3}/include/")
 include_directories("${PATH_GREATFET_FIRMWARE_COMMON}")
 
+# FIXME: pull out into libgreat, probably?
+include_directories("${PATH_LIBGREAT_FIRMWARE}/include")
+include_directories("${PATH_LIBGREAT_FIRMWARE}/include/platform/${LIBGREAT_PLATFORM}")
+AUX_SOURCE_DIRECTORY("${PATH_LIBGREAT_FIRMWARE}/classes" LIBGREAT_API_CLASSES)
+
+
 macro(DeclareTargets)
 	SET(SRC_M4
 		${SRC_M4}
+
+		#fixme: pull into libgreat
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/crt0.c
+
+		# libgreat high-level functions
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/sync.c
+		${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/sync.S
+
 		${PATH_GREATFET_FIRMWARE_COMMON}/greatfet_core.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash_target.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/spiflash.c
@@ -93,6 +114,9 @@ macro(DeclareTargets)
 		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/gpio_int.c
 		${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/debug.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/printf.c
+		${PATH_GREATFET_FIRMWARE_COMMON}/time.c
 	)
 
 	configure_file(
@@ -104,6 +128,7 @@ macro(DeclareTargets)
 		"${PATH_GREATFET_FIRMWARE_COMMON}"
 		"${LIBOPENCM3}/lib"
 		"${LIBOPENCM3}/lib/lpc43xx"
+		"${PATH_LIBGREAT_FIRMWARE}/platform/${LIBGREAT_PLATFORM}/linker"
 		"${CMAKE_INSTALL_PREFIX}/lib/armv7e-m/fpu"
 	)
 
@@ -184,7 +209,7 @@ macro(DeclareTargets)
 	add_custom_target(
 		${PROJECT_NAME}-flash
 		DEPENDS ${PROJECT_NAME}.bin
-		COMMAND greatfet_firmware -Rw ${PROJECT_NAME}.bin
+		COMMAND greatfet_firmware -v -Rw ${PROJECT_NAME}.bin
 	)
 
 	add_custom_target(

@@ -4,7 +4,7 @@
 
 #include "usb_device.h"
 
-#include <usb_type.h>
+#include <drivers/usb/lpc43xx/usb_type.h>
 
 #include "usb_descriptor.h"
 

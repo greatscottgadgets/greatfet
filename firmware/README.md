@@ -31,6 +31,13 @@ cd firmware/libopencm3
 make
 ```
 
+Then install the host tools:
+```
+cd greatfet/host
+python setup.py build
+sudo python setup.py install
+```
+
 To build a firmware image for the GreatFET One:
 ```
 cd greatfet_usb
@@ -95,7 +102,7 @@ Each of the currently supproted boards provides an accessible DFU bootloader:
    it on or while pressing and releasing the RESET button.
  * To start the LPC Xplorer in DFU mode, adjust the J4 switches so SW1-4
    are OFF, ON, OFF, and ON respectively, and then press the reset button. To
-   resume loading from flash, restore them to so SW1-4 are ON, OFF, OFF, OFF.
+   resume loading from flash, restore them to so SW1-4 are OFF, ON, ON, ON.
 
 Once the GreatFET is in DFU mode, run the following command from your firmware
 build tree:

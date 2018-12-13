@@ -58,7 +58,13 @@ class GlitchKitUSB(GlitchKitModule):
 
         # Store a reference to the parent board.
         self.board = board
+        self.api = board.apis.glitchkit_usb
 
+
+    @staticmethod
+    def supports_board(board):
+        """ Determines if this GreatFET supports GlitchKit via USB. """
+        return board.supports_api("glitchkit_usb")
 
     @staticmethod
     def _decode_reg(reg):
@@ -104,35 +110,8 @@ class GlitchKitUSB(GlitchKitModule):
     def capture_control_in(self, request_type=0, recipient=0, request=0, value=0, index=0, length=0, timeout=30, ui_event_call=False):
 
         # Build a setup packet...
-        setup_packet = self.build_setup_request(True, request_type, recipient, request, value, index, length)
+        setup_packet = bytes(self.build_setup_request(True, request_type, recipient, request, value, index, length))
 
-        # ... start the request...
-        self.board.vendor_request_out(vendor_requests.GLITCHKIT_USB_CONTROL_IN_START, data=setup_packet)
-
-        # ... wait for a response...
-        length_read = self.READ_INCOMPLETE
-        while length_read == self.READ_INCOMPLETE:
-            try:
-                time.sleep(self.PRE_RESPONSE_DELAY)
-                if(callable(ui_event_call)):
-                    ui_event_call()
-
-                raw = self.board.vendor_request_in(vendor_requests.GLITCHKIT_USB_RESULT_LENGTH, length=4, timeout=timeout)
-                length_read = self._decode_reg(raw)
-            except usb.core.USBError as e:
-                if e.errno in [LIBUSB_TIMEOUT, LIBUSB_IO_ERROR]:
-                    pass
-                else:
-                    raise e
-
-        # If we didn't read anything, don't bother querying the GreatFET; we know the result is an empty string.
-        if length_read == 0:
-            return b''
-
-        #... and then read the response back.
-        data = self.board.vendor_request_in(vendor_requests.GLITCHKIT_USB_READ_RESULT, length=length_read)
-        return data
-
-
-
+        # ... and issue the request.
+        return self.api.control_in(setup_packet, timeout=timeout * 1024)
 

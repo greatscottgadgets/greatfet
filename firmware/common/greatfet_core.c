@@ -16,18 +16,15 @@
 #include <libopencm3/lpc43xx/scu.h>
 #include <libopencm3/lpc43xx/ssp.h>
 #include <libopencm3/lpc43xx/timer.h>
+#include <timers.h>
 
+#include "time.h"
 #include "gpio_lpc.h"
 
-/* Symbols exported by the linker script(s): */
-extern unsigned _data_loadaddr, _data, _edata, _bss, _ebss, _stack;
-typedef void (*funcp_t) (void);
-extern funcp_t __preinit_array_start, __preinit_array_end;
-extern funcp_t __init_array_start, __init_array_end;
-extern funcp_t __fini_array_start, __fini_array_end;
-extern unsigned _etext_ram, _text_ram, _etext_rom;
+#include "debug.h"
 
-void main(void);
+#define RTC_BRINGUP_TIMEOUT_US (1024 * 100)
+
 
 
 /* TODO: Consolidate ARRAY_SIZE declarations */
@@ -51,9 +48,9 @@ static struct gpio_t gpio_tck			= GPIO(3,  0);
 static struct gpio_t gpio_tms			= GPIO(3,  4);
 static struct gpio_t gpio_tdi			= GPIO(3,  1);
 
-/* This special variable is preserved across soft resets by a little bit of
- * reset handler magic. It allows us to pass a Reason across resets. */
-volatile uint32_t reset_reason;
+/* Temporary access to libgreat's reset reason */
+extern volatile uint32_t reset_reason;
+
 
 /**
  * The clock source for the main system oscillators.
@@ -73,14 +70,6 @@ i2c_bus_t i2c1 = {
 	.start = i2c_lpc_start,
 	.stop = i2c_lpc_stop,
 	.transfer = i2c_lpc_transfer,
-};
-
-const i2c_lpc_config_t i2c_config_slow_clock = {
-        .duty_cycle_count = 15,
-};
-
-const i2c_lpc_config_t i2c_config_fast_clock = {
-        .duty_cycle_count = 255,
 };
 
 const ssp_config_t ssp_config_spi = {
@@ -123,87 +112,12 @@ void delay(uint32_t duration)
 		__asm__("nop");
 }
 
-/* Wildly inaccurate 
- * We could do this using a timer
- */
+/** Less widly inaccurate than ever before! */
 void delay_us(uint32_t duration)
 {
-	// Determined experimentally, don't rely on this
-	delay(duration * 30);
+	uint32_t time_base = get_time();
+	while(get_time_since(time_base) < duration);
 }
-
-
-static void pre_main(void)
-{
-	volatile unsigned *src, *dest;
-
-	/* Copy the code from ROM to Real RAM (if enabled) */
-	if ((&_etext_ram-&_text_ram) > 0) {
-		src = &_etext_rom-(&_etext_ram-&_text_ram);
-		/* Change Shadow memory to ROM (for Debug Purpose in case Boot
-		 * has not set correctly the M4MEMMAP because of debug)
-		 */
-		CREG_M4MEMMAP = (unsigned long)src;
-
-		for (dest = &_text_ram; dest < &_etext_ram; ) {
-			*dest++ = *src++;
-		}
-
-		/* Change Shadow memory to Real RAM */
-		CREG_M4MEMMAP = (unsigned long)&_text_ram;
-
-		/* Continue Execution in RAM */
-	}
-
-	/* Enable access to Floating-Point coprocessor. */
-	SCB_CPACR |= SCB_CPACR_FULL * (SCB_CPACR_CP10 | SCB_CPACR_CP11);
-}
-
-
-/**
- * Startup code for the processor.
- */
-void __attribute__ ((naked)) reset_handler(void)
-{
-	volatile unsigned *src, *dest;
-	funcp_t *fp;
-
-	uint32_t stored_reset_reason = reset_reason;
-
-	for (src = &_data_loadaddr, dest = &_data;
-		dest < &_edata;
-		src++, dest++) {
-		*dest = *src;
-	}
-
-	for (dest = &_bss; dest < &_ebss; ) {
-		*dest++ = 0;
-	}
-
-	/* Constructors. */
-	for (fp = &__preinit_array_start; fp < &__preinit_array_end; fp++) {
-		(*fp)();
-	}
-	for (fp = &__init_array_start; fp < &__init_array_end; fp++) {
-		(*fp)();
-	}
-
-	/* might be provided by platform specific vector.c */
-	pre_main();
-
-	/* Restore our stored reset reason. */
-	reset_reason = stored_reset_reason;
-
-	/* Call the application's entry point. */
-	main();
-
-	/* Destructors. */
-	for (fp = &__fini_array_start; fp < &__fini_array_end; fp++) {
-		(*fp)();
-	}
-
-}
-
 
 
 /* clock startup for Jellybean with Lemondrop attached
@@ -211,6 +125,11 @@ Configure PLL1 to max speed (204MHz).
 Note: PLL1 clock is used by M4/M0 core, Peripheral, APB1. */
 void cpu_clock_init(void)
 {
+	uint32_t time_base = 0, elapsed;
+
+	debug_init();
+	pr_info("GreatFET started!\n");
+
 	/* If we've been asked to reset in order to switch to using an external
 	 * clock (e.g. for synchronization with other systems), use the GP_CLKIN
 	 * instead of the XTAL as the main system clock source. */
@@ -220,13 +139,15 @@ void cpu_clock_init(void)
 
 		// And set our main clock source to the extclk.
 		main_clock_source = CGU_SRC_GP_CLKIN;
-
 	}
 
 	// TODO: Figure out a place to do this explicitly?
 	// We're done using the reset reason. Clear it so we don't grab a stale
 	// reason in the future.
 	reset_reason = RESET_REASON_UNKNOWN;
+
+	/* For now, no matter what, start our "wall clock" timer. */
+	set_up_microsecond_timer(12);  // count microseconds from our 12MHz timer
 
 	/* use IRC as clock source for APB1 (including I2C0) */
 	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_CLK_SEL(CGU_SRC_IRC);
@@ -238,17 +159,26 @@ void cpu_clock_init(void)
 
 	/* set xtal oscillator to low frequency mode */
 	if(main_clock_source == CGU_SRC_XTAL) {
-			CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_HF_MASK;
+		pr_info("Bootstrapping the system clock off of the external 12MHz oscillator.\n");
+		time_base = get_time();
 
-			/* power on the oscillator and wait until stable */
-			CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_ENABLE_MASK;
+		CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_HF_MASK;
 
-			/* Wait about 100us after Crystal Power ON */
-			delay(WAIT_CPU_CLOCK_INIT_DELAY);
+		/* power on the oscillator and wait until stable */
+		CGU_XTAL_OSC_CTRL &= ~CGU_XTAL_OSC_CTRL_ENABLE_MASK;
+
+		/* Wait about 100us after Crystal Power ON */
+		delay(WAIT_CPU_CLOCK_INIT_DELAY);
 	}
 
 	/* use XTAL_OSC as clock source for BASE_M4_CLK (CPU) */
 	CGU_BASE_M4_CLK = (CGU_BASE_M4_CLK_CLK_SEL(main_clock_source) | CGU_BASE_M4_CLK_AUTOBLOCK(1));
+
+	/* if we've brought up the XTAL, report the time it took. */
+	if (main_clock_source == CGU_SRC_XTAL) {
+		elapsed = get_time_since(time_base);
+		pr_info("External oscillator bringup complete (took %d uS).\n", elapsed);
+	}
 
 	/* use XTAL_OSC as clock source for APB1 */
 	CGU_BASE_APB1_CLK = CGU_BASE_APB1_CLK_AUTOBLOCK(1)
@@ -323,6 +253,7 @@ void cpu_clock_init(void)
 
 	CGU_BASE_SSP1_CLK = CGU_BASE_SSP1_CLK_AUTOBLOCK(1)
 			| CGU_BASE_SSP1_CLK_CLK_SEL(CGU_SRC_PLL1);
+
 }
 
 
@@ -335,6 +266,10 @@ This function is mainly used to lower power consumption.
 void cpu_clock_pll1_low_speed(void)
 {
 	uint32_t pll_reg;
+    uint32_t time_base, elapsed;
+
+    pr_info("Switching the system clock to PLL1 at 48MHz.\n");
+    time_base = get_time();
 
 	/* Configure PLL1 Clock (48MHz) */
 	/* Integer mode:
@@ -358,8 +293,13 @@ void cpu_clock_pll1_low_speed(void)
 	/* wait until stable */
 	while (!(CGU_PLL1_STAT & CGU_PLL1_STAT_LOCK_MASK));
 
+	set_up_microsecond_timer(48);  // update the wall clock time to track our 48mhz timer
+
 	/* Wait a delay after switch to new frequency with Direct mode */
 	delay(WAIT_CPU_CLOCK_INIT_DELAY);
+
+    elapsed = get_time_since(time_base);
+    pr_info("Clock switch complete (took %d uS).\n", elapsed);
 }
 
 /*
@@ -370,6 +310,10 @@ This function shall be called after cpu_clock_init().
 void cpu_clock_pll1_max_speed(void)
 {
 	uint32_t pll_reg;
+	uint32_t time_base, elapsed;
+
+	pr_info("Switching the system clock to PLL1 at 204MHz.\n");
+	time_base = get_time();
 
 	/* Configure PLL1 to Intermediate Clock (between 90 MHz and 110 MHz) */
 	/* Integer mode:
@@ -414,27 +358,77 @@ void cpu_clock_pll1_max_speed(void)
 	/* wait until stable */
 	while (!(CGU_PLL1_STAT & CGU_PLL1_STAT_LOCK_MASK));
 
+	set_up_microsecond_timer(204);  // update the wall clock time to track our 204mhz main frequency
+
+	elapsed = get_time_since(time_base);
+	pr_info("Clock switch complete (took %d uS).\n", elapsed);
 }
 
+bool validate_32khz_oscillator()
+{
+	uint32_t time_base = get_time();
+
+	// Set the alarm timer to a value to count down from...
+	ALARM_TIMER_PRESET = 1024;
+
+	// ... and verify that it ticks at least once before 2mS pass.
+	while (get_time_since(time_base) < RTC_BRINGUP_TIMEOUT_US) {
+		if (ALARM_TIMER_DOWNCOUNT != ALARM_TIMER_PRESET) {
+
+			// Disable the alarm timer and return success.
+			ALARM_TIMER_PRESET = 0;
+			return true;
+		}
+	}
+
+	// Disable the alarm timer and return success.
+	ALARM_TIMER_PRESET = 0;
+	return false;
+}
+
+
 void rtc_init(void) {
+		uint32_t time_base, elapsed;
+
 #ifdef BOARD_CAPABILITY_RTC
+
+		pr_info("Board advertises an RTC. Bringing it up...\n");
+		time_base = get_time();
+
 		/* Enable power to 32 KHz oscillator */
 		CREG_CREG0 &= ~CREG_CREG0_PD32KHZ;
 		/* Release 32 KHz oscillator reset */
 		CREG_CREG0 &= ~CREG_CREG0_RESET32KHZ;
 		/* Enable 1 KHz output (required per LPC43xx user manual section 37.2) */
-		CREG_CREG0 |= CREG_CREG0_EN1KHZ;
-		/* Release CTC Reset */
-		RTC_CCR &= ~RTC_CCR_CTCRST(1);
-		/* Disable calibration counter */
-		RTC_CCR &= ~RTC_CCR_CCALEN(1);
-		/* Enable clock */
-		RTC_CCR |= RTC_CCR_CLKEN(1);
+		CREG_CREG0 |= CREG_CREG0_EN1KHZ | CREG_CREG0_EN32KHZ;
+
+		/* Ensure we have a working 32kHz oscillator before trying to bring up
+		 * the RTC. */
+		if (validate_32khz_oscillator()) {
+			/* Release CTC Reset */
+			RTC_CCR &= ~RTC_CCR_CTCRST(1);
+			/* Disable calibration counter */
+			RTC_CCR &= ~RTC_CCR_CCALEN(1);
+			/* Enable clock */
+			RTC_CCR |= RTC_CCR_CLKEN(1);
+
+			elapsed = get_time_since(time_base);
+			pr_info("RTC bringup complete (took %d uS).\n", elapsed);
+		} else {
+			pr_warning("RTC oscillator did not come up in a reasonable time!\n");
+		}
+
+		// TODO: eventually phase-lock the RTC and microsecond timers?
+#else
+        pr_info("Board does not advertise an RTC. Not bringing up RTC oscillator.");
 #endif
+
 }
 
 void pin_setup(void) {
 	int i;
+
+	pr_info("Configuring board pins...\n");
 
 	/* Release CPLD JTAG pins */
 	scu_pinmux(SCU_PINMUX_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);

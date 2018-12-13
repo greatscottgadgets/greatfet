@@ -3,8 +3,14 @@
  */
 
 #include <stdint.h>
+#include <debug.h>
+#include <toolchain.h>
 
+#include "greatfet_core.h"
 #include "fault_handler.h"
+#include "wwdt.h"
+
+extern volatile uint32_t reset_reason;
 
 typedef struct
 {
@@ -27,14 +33,60 @@ void hard_fault_handler(void) {
 	__asm__("B hard_fault_handler_c");
 }
 
+// FIXME: deduplicate
+__attribute__((naked))
+void mem_manage_handler(void) {
+	__asm__("TST LR, #4");
+	__asm__("ITE EQ");
+	__asm__("MRSEQ R0, MSP");
+	__asm__("MRSNE R0, PSP");
+	__asm__("B mem_manage_handler_c");
+}
+__attribute__((naked))
+void bus_fault_handler(void) {
+	__asm__("TST LR, #4");
+	__asm__("ITE EQ");
+	__asm__("MRSEQ R0, MSP");
+	__asm__("MRSNE R0, PSP");
+	__asm__("B bus_fault_handler_c");
+}
+
 volatile hard_fault_stack_t* hard_fault_stack_pt;
 
-__attribute__((used)) void hard_fault_handler_c(uint32_t* args) 
+/**
+ * Configure the system to use ancillary faults.
+ */
+static void set_up_fault_handlers()
 {
-	/* hard_fault_stack_pt contains registers saved before the hard fault */
-	hard_fault_stack_pt = (hard_fault_stack_t*)args;
-	
-	// args[0-7]: r0, r1, r2, r3, r12, lr, pc, psr
+	// Enable bus and memory-management faults.
+	//SCB->SHCSR |= SCH_SHCSR_MEMFAULTENA | SCH_SHCSR_BUSFAULTENA;
+}
+CALL_ON_PREINIT(set_up_fault_handlers);
+
+
+/**
+ * Trigger an emergency reset, which resets with REASON_FAULT.
+ */
+static void emergency_reset()
+{
+	pr_emergency("Resetting system following fault!\n");
+	pr_emergency("Performing emergency reset...\n");
+	reset_reason = RESET_REASON_FAULT;
+
+	// Perform the actual reset.
+	wwdt_reset(100000);
+	while(1);
+}
+
+
+/**
+ * Prints the system's state at a given log level.
+ */
+void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
+{
+	printk(loglevel, "PC: %08x\n", args->pc);
+	printk(loglevel, "LR: %08x\n", args->lr);
+
 	// Other interesting registers to examine:
 	//	CFSR: Configurable Fault Status Register
 	//	HFSR: Hard Fault Status Register
@@ -42,27 +94,89 @@ __attribute__((used)) void hard_fault_handler_c(uint32_t* args)
 	//	AFSR: Auxiliary Fault Status Register
 	//	MMAR: MemManage Fault Address Register
 	//	BFAR: Bus Fault Address Register
-	
-	/*
-	if( SCB->HFSR & SCB_HFSR_FORCED ) {	
-		if( SCB->CFSR & SCB_CFSR_BFSR_BFARVALID ) {
-			SCB->BFAR;
-			if( SCB->CFSR & CSCB_CFSR_BFSR_PRECISERR ) {
-			}
+
+	// TODO insert relevant system state analysis here
+	// TODO insert special registers
+	printk(loglevel, "\n");
+	printk(loglevel, "Current core: Cortex-M4\n"); // FIXME detect this; right now we're harcoding because we only use the M4
+	printk(loglevel, "R0: %08x\t\tR1: %08x\n", args->r0, args->r1);
+	printk(loglevel, "R2: %08x\t\tR3: %08x\n", args->r2, args->r3);
+	printk(loglevel, "R12: %08x\t\tPSR: %08x\n", args->r12, args->psr);
+
+	// TODO: print stack
+
+	// Fin.
+	printk(loglevel, "\n");
+}
+
+
+void mem_manage_handler_c(hard_fault_stack_t *state)
+{
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: memory management fault detected!\n");
+	pr_emergency("    MMFSR: %02x\t MMFAR: %08x\n", SCB->MMFSR, SCB->MMFAR);
+	pr_emergency("    is instruction access violation: %s\n", (SCB->MMFSR & SCB_MMFSR_IACCVIOL) ? "yes" : "no");
+	pr_emergency("    is data access violation: %s\n", (SCB->MMFSR & SCB_MMFSR_DACCVIOL) ? "yes" : "no");
+	pr_emergency("    stacking fault: %s\n", (SCB->MMFSR & SCB_MMFSR_MSTKERR) ? "yes" : "no");
+	pr_emergency("    unstacking fault: %s\n", (SCB->MMFSR & SCB_MMFSR_MUNSTKERR) ? "yes" : "no");
+
+	if (SCB->MMFSR & SCB_MMFSR_MMARVALID) {
+		pr_emergency("Faulting address: 0x%08x (accessed as data)\n", SCB->MMFAR);
+	} else {
+		if (SCB->MMFSR & SCB_MMFSR_IACCVIOL) {
+			pr_emergency("Faulting address: 0x%08x (accessed as instruction)\n", state->pc);
+		} else {
+			pr_emergency("Faulting address not known (MMFAR invalid).\n");
 		}
 	}
-	*/
-	while(1);
+
+	pr_emergency("\n");
+	print_system_state(LOGLEVEL_EMERGENCY, state);
+	emergency_reset();
 }
 
-void mem_manage_handler() {
-	while(1);
-}
-
-void bus_fault_handler() {
-	while(1);
+void bus_fault_handler_c(hard_fault_stack_t *state) {
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: bus fault detected!\n");
+	print_system_state(LOGLEVEL_EMERGENCY, state);
+	emergency_reset();
 }
 
 void usage_fault_handler() {
-	while(1);
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: usage fault detected!\n");
+	emergency_reset();
+}
+
+
+__attribute__((used)) void hard_fault_handler_c(hard_fault_stack_t* state)
+{
+	// Announce the fault.
+	pr_emergency("\n\n");
+	pr_emergency("FAULT: hard fault detected!\n");
+	pr_emergency("HFSR: %08x\tSHCSR: %08x\n", SCB->HFSR, SCB->SHCSR);
+	pr_emergency("    on vector table read: %s\n", (SCB->HFSR & SCB_HFSR_VECTTBL) ? "yes" : "no");
+
+	// If this is a forced exception, we likely got here from another fault handler.
+	if (SCB->HFSR & SCB_HFSR_FORCED) {
+		pr_emergency("\n");
+		pr_emergency("FORCED exception! Looking for inner fault...\n");
+		pr_emergency("    MMFSR: %02x\tBFSR: %02x\tUFSR: %04x\n", SCB->MMFSR, SCB->BFSR, SCB->UFSR);
+
+		if (SCB->MMFSR & SCB_MMFSR_FAULT_MASK) {
+			pr_emergency("Exception has an inner MM fault. Handling accordingly.\n");
+			mem_manage_handler_c(state);
+		}
+		if (SCB->BFSR & SCB_BFSR_FAULT_MASK) {
+			pr_emergency("Exception has an inner bus fault. Handling accordingly.\n");
+			bus_fault_handler_c(state);
+		}
+		pr_emergency("    ... couldn't figure out what kind of fault this is. Continuing.\n");
+		pr_emergency("\n");
+	} else {
+		pr_emergency("  not a forced exception\n\n");
+	}
+
+	print_system_state(LOGLEVEL_EMERGENCY, state);
+	emergency_reset();
 }

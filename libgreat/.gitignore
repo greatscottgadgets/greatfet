@@ -1,0 +1,38 @@
+# Compiled output
+*.bin
+*.d
+*.elf
+*.hex
+*.srec
+*.dfu
+host/build/
+
+# CMakeInternals
+CMakeFiles
+CMakeCache.txt
+
+# Compiled python files
+__pycache__/
+*.py[cod]
+*$py.class
+host/GreatFET.egg-info
+host/dist
+
+# Operating system spew
+.DS_Store
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor junk
+*.swp
+*.sublime-project
+*.sublime-workspace
+.vscode
+
+# ctags output
+tags
+
+firmware/*/build
+
