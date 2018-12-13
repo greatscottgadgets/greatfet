@@ -3,7 +3,6 @@
 #
 
 from ..board import GreatFETBoard
-from ..errors import DeviceNotFoundError
 
 from ..peripherals.firmware import DeviceFirmwareManager
 

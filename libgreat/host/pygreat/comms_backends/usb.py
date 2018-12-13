@@ -14,7 +14,7 @@ import usb
 import time
 import struct
 
-from ..comms import CommsBackend, CommandFailureError
+from ..comms import CommsBackend
 from ..errors import DeviceNotFoundError
 
 

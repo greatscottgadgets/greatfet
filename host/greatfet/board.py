@@ -6,12 +6,6 @@
 Module containing the core definitions for a GreatFET board.
 """
 
-import usb
-import time
-import pygreat
-
-from .protocol import vendor_requests
-from .errors import DeviceNotFoundError
 from .peripherals.led import LED
 from .peripherals.gpio import GPIO
 

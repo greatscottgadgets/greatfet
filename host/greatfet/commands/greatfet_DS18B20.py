@@ -8,13 +8,9 @@
 
 from __future__ import print_function
 
-import errno
 import struct
-import sys
 import time
 
-import greatfet
-from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 
 

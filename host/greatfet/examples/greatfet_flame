@@ -9,11 +9,8 @@ import argparse
 import curses
 import errno
 import sys
-import time
-from itertools import groupby
 
 import greatfet
-import usb  # for errno
 from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
 from greatfet.utils import log_silent, log_verbose

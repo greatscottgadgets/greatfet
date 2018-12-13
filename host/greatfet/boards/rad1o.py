@@ -6,7 +6,6 @@ from ..board import GreatFETBoard
 from ..peripherals.gpio import GPIO
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
-from ..peripherals.spi_flash import SPIFlash
 
 
 class Rad1oBadge(GreatFETBoard):

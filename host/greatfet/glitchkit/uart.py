@@ -3,7 +3,6 @@
 #
 
 from .base import GlitchKitModule
-from ..protocol import vendor_requests
 
 class GlitchKitUART(GlitchKitModule):
     """

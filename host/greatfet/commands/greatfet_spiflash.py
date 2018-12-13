@@ -9,7 +9,6 @@ import argparse
 import errno
 import sys
 
-import greatfet
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, log_verbose

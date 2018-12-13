@@ -4,14 +4,7 @@
 
 from __future__ import print_function
 
-import inspect
-import errno
-import sys
-
-from greatfet import GreatFET
-
 from greatfet.utils import GreatFETArgumentParser
-from pygreat.errors import DeviceNotFoundError
 
 import IPython
 
