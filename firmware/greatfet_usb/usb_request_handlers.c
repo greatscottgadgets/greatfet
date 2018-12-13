@@ -17,7 +17,6 @@
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
 #include "legacy_apis/usb_api_glitchkit_simple.h"
-#include "legacy_apis/usb_api_DS18B20.h"
 #include "legacy_apis/usb_api_msp430.h"
 
 static const usb_request_handler_fn usb0_vendor_request_handler[] = {
@@ -90,7 +89,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	//usb_vendor_request_super_hacky,
 
 	// DS18B20 over 1-Wire bus
-	usb_vendor_request_DS18B20_read,
+	NULL, // usb_vendor_request_DS18B20_read,
 
 	// MSP430 JTAG
 	//usb_vendor_request_msp430_jtag
