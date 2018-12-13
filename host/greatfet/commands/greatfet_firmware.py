@@ -10,16 +10,14 @@ from __future__ import print_function
 
 import os
 import sys
-import time
 import errno
-import argparse
 import subprocess
 
 import usb
 
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
-from greatfet.utils import log_silent, log_verbose, GreatFETArgumentParser
+from greatfet.utils import log_silent, GreatFETArgumentParser
 
 # The serial number expected from the DFU flash stub.
 DFU_STUB_NAME  = 'flash_stub.dfu'

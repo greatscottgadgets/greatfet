@@ -10,7 +10,6 @@ Module containing the core definitions for a libgreat-driven board.
 import usb
 
 import time
-import pygreat
 
 # Use the GreatFET comms API, and the standard (core) API.
 from pygreat.comms import CommsBackend

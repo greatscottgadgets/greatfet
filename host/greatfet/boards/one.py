@@ -4,8 +4,6 @@
 
 from ..board import GreatFETBoard
 
-from ..peripherals.gpio import GPIO
-from ..peripherals.led import LED
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager

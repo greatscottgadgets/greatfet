@@ -2,11 +2,6 @@
 # This file is part of GreatFET
 #
 
-import array
-import struct
-
-from .. import errors
-from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
 
 from .firmware import DeviceFirmwareManager

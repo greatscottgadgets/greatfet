@@ -12,10 +12,8 @@ from future import utils as future_utils
 
 import re
 import sys
-import types
 import struct
 import inspect
-import itertools
 import collections
 
 from . import errors
@@ -1074,7 +1072,6 @@ def command_rpc(verb_number, in_format="", out_format="", name="function", class
         # If successful, y should contian an integer!
     """
 
-    from builtins import str
 
     # Create a partially bound method that's closed over the variables we want to store.
     def method(self, *arguments, **kwargs):

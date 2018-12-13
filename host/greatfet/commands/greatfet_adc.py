@@ -4,15 +4,9 @@
 
 from __future__ import print_function
 
-import argparse
-import errno
-import sys
 import time
 
-import greatfet
-from greatfet import GreatFET
 from greatfet.protocol import vendor_requests
-from greatfet.utils import log_silent, log_verbose
 
 
 def main():

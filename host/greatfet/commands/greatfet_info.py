@@ -10,7 +10,6 @@ import errno
 import sys
 
 from greatfet import GreatFET
-from greatfet.errors import DeviceNotFoundError
 
 from pygreat.comms import GeneratedCommsClass
 

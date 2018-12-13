@@ -3,7 +3,6 @@
 # This file is part of libgreat
 #
 
-from .. import comms
 from ..comms import CommsClass, command_rpc
 
 
