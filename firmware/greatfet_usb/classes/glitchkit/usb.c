@@ -20,30 +20,63 @@
 
 #define CLASS_NUMBER_SELF (0x107)
 
+/**
+ * Persistent configuration flags.
+ */
+static bool continue_despite_errors = false, disable_vbus_afterwards = false;
 
 /**
- *  Callback function executed once the core transaction completes.
- *  Used to capture details regarding the full GlitchKit transaction.
+ * Print USB error messages for the host.
  */
-static void mark_glitchkit_read_complete(void *const user_data,
-		unsigned int transferred, bool stalled, bool error)
+static void print_usb_rc(int rc)
 {
-	volatile struct command_transaction *trans = (struct command_transaction *)user_data;
-
-	// Store the amount actually transferred and complete the transaction.
-	trans->data_out_length = transferred;
-
-	// TODO: handle errors/stalls
-	(void)stalled;
-	(void)error;
+	switch(rc) {
+		case EPIPE:
+			pr_warning("USB request to target: target device stalled request.\n");
+			break;
+		case EIO:
+			pr_warning("USB request to target: communications error; likely device did not respond.\n");
+			break;
+		case ETIMEDOUT:
+			pr_warning("USB request to target: timed out issuing request.\n");
+			break;
+	}
 }
 
+/**
+ * Should be called after a request. Shuts down VBUS after the request iff the
+ * module has been configured to do so using configure_requests.
+ *
+ * WARNING: not timing balanced; only should be called from after the trigger point
+ * or after a sure failure
+ */
+static void shut_down_vbus_if_requested()
+{
+	if(disable_vbus_afterwards) {
+		usb_stop_providing_vbus(&usb_peripherals[1]);
+	}
+}
+
+static int glitchkit_usb_verb_configure_requests(struct command_transaction *trans)
+{
+	bool continue_despite = comms_argument_parse_bool(trans);
+	bool powerdown_after = comms_argument_parse_bool(trans);
+
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+	// Store configuration for future requests.
+	continue_despite_errors = continue_despite;
+	disable_vbus_afterwards = powerdown_after;
+	return 0;
+}
 
 
 static int glitchkit_usb_verb_control_in(struct command_transaction *trans)
 {
 	static volatile ehci_queue_head_t active_qh;
-	int rc;
+	int rc, final_rc = 0;
 
 	uint32_t ep_speed_bits;
 	uint32_t ep_speed, max_packet_size_for_usb_speed;
@@ -76,13 +109,18 @@ static int glitchkit_usb_verb_control_in(struct command_transaction *trans)
 	// where interrupts can be issued.
 	usb_run(&usb_peripherals[1]);
 
-	// Repeatedly reset the device until it shows up.
-	// TODO: Do we need to do this? Are our delays just off?
-	while (!(USB_REG(1)->PORTSC1 & USB0_PORTSC1_H_CCS)) {
-		// Reset the device...
-		delay_us(100 * 1000);
-		usb_host_reset_device(&usb_peripherals[1]);
-		delay_us(100 * 1000);
+	// Reset the device...
+	delay_us(100 * 1000);
+	usb_host_reset_device(&usb_peripherals[1]);
+	delay_us(100 * 1000);
+
+	// Validate that the device is present, and error out if it isn't.
+	if(!(USB_REG(1)->PORTSC1 & USB0_PORTSC1_H_CCS) && !continue_despite_errors) {
+		pr_warning("USB request to target: no target device (device's USB pull-ups not detected).\n");
+		return ENODEV;
+	} else {
+		// TODO: balance this case?
+		pr_warning("USB request to target: no target device (device's USB pull-ups not detected).\n");
 	}
 
 	// Determine the way the endpoint should talk to the device...
@@ -113,7 +151,11 @@ static int glitchkit_usb_verb_control_in(struct command_transaction *trans)
 			0,
 			NULL
 		);
-	if (rc) {
+	if (rc && continue_despite_errors) {
+		final_rc = rc;
+	} else if (rc) {
+		print_usb_rc(rc);
+		shut_down_vbus_if_requested();
 		return rc;
 	}
 
@@ -129,7 +171,11 @@ static int glitchkit_usb_verb_control_in(struct command_transaction *trans)
 			0,
 			&response_length
 		);
-	if (rc) {
+	if (rc && continue_despite_errors) {
+		final_rc = rc;
+	} else if (rc) {
+		print_usb_rc(rc);
+		shut_down_vbus_if_requested();
 		return rc;
 	}
 	trans->data_out_length = response_length;
@@ -145,14 +191,25 @@ static int glitchkit_usb_verb_control_in(struct command_transaction *trans)
 			0,
 			NULL
 		);
-	if (rc) {
+	if (rc && continue_despite_errors) {
+		final_rc = rc;
+	} else if (rc) {
+		print_usb_rc(rc);
+		shut_down_vbus_if_requested();
 		return rc;
 	}
-	return 0;
+
+	shut_down_vbus_if_requested();
+	return final_rc;
 }
 
 
 static struct comms_verb _verbs[] = {
+
+	/* General configuration. */
+	{  .name = "configure_requests", .handler = glitchkit_usb_verb_configure_requests, .in_signature = "<??",
+	   .out_signature = "", .in_param_names = "continue_despite_errors, disable_vbus_after",
+	   .doc = "Configures future requests. Optional; defaults are somewhat sane." },
 
 	/* Control requests. */
 	{  .name = "control_in", .handler = glitchkit_usb_verb_control_in, .in_signature = "<*X",
