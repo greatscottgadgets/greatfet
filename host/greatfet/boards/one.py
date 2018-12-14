@@ -116,7 +116,7 @@ class GreatFETOne(GreatFETBoard):
         "J7_P7"    : (1, 12),
         "J7_P8"    : (1, 13),
         #"J7_P9"   : RTC_ALARM,
-        #"J7_P10"  : GND,
+        #"J7_P10"  : RTCX1,
         #"J7_P11"  : RESET,
         #"J7_P12"  : VBAT,
         "J7_P13"   : (1, 11),
