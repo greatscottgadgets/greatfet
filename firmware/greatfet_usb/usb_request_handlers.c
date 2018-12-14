@@ -9,7 +9,6 @@
 #include <drivers/usb/comms_backend.h>
 
 #include "legacy_apis/usb_api_adc.h"
-#include "legacy_apis/usb_api_dac.h"
 #include "legacy_apis/usb_api_spi.h"
 #include "legacy_apis/usb_api_i2c.h"
 #include "legacy_apis/usb_api_leds.h"
@@ -69,7 +68,6 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_gpio_reset,
 	NULL, //usb_vendor_request_gpio_read,
 
-
 	// GlitchKit
 	NULL, //usb_vendor_request_glitchkit_setup,
 	NULL, //usb_vendor_request_glitchkit_provide_target_clock,
@@ -87,16 +85,11 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_usbhost_start_nonblocking_read,
 	usb_vendor_request_usbhost_finish_nonblocking_read,
 	usb_vendor_request_usbhost_get_nonblocking_data_length,
-	//usb_vendor_request_super_hacky,
 
 	// DS18B20 over 1-Wire bus
 	usb_vendor_request_DS18B20_read,
 
-	// MSP430 JTAG
-	//usb_vendor_request_msp430_jtag
-
-	usb_vendor_request_dac_set,
-	//usb_vendor_request_read_dmesg
+	NULL, //usb_vendor_request_dac_set,
 };
 
 static const uint32_t usb0_vendor_request_handler_count =
