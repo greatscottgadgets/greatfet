@@ -33,7 +33,7 @@ class CoreAPI(CommsClass):
             name="read_version_string", out_parameter_names=["version"], doc="Fetches the board's version.")
 
     # RPC that reads the part ID
-    read_part_id = command_rpc(verb_number=0x2, out_format="<8s", name="read_part_id", out_parameter_names=["part_id"])
+    read_part_id = command_rpc(verb_number=0x2, out_format="<2I", name="read_part_id", out_parameter_names=["part_id"])
     read_part_id.__doc__ = \
         """Fetches the part ID used on the board.
         
