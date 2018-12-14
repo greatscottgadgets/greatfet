@@ -66,14 +66,23 @@ class GlitchKitUSB(GlitchKitModule):
         """ Determines if this GreatFET supports GlitchKit via USB. """
         return board.supports_api("glitchkit_usb")
 
-    @staticmethod
-    def _decode_reg(reg):
-        status_hex = codecs.encode(reg[::-1], 'hex')
-        return int(status_hex, 16)
+
+    def configure_future_requests(self, continue_despite_errors, disable_vbus_afterwards):
+        """ Configure future requests made by this GlitchKit module.
+
+        Arguments:
+            continue_despite_errors -- True iff stimuli should continue even
+                if errors occur.
+            disable_vbus_afterwards -- If set, VBUS will be disconnected after
+                a given USB request.
+        """
+        self.api.configure_requests(continue_despite_errors, disable_vbus_afterwards)
 
 
     @staticmethod
     def _split(value):
+        # TODO: get rid of this
+
         value_high  = value >> 8
         value_low = value & 0xFF
         return [value_low, value_high]
@@ -82,12 +91,13 @@ class GlitchKitUSB(GlitchKitModule):
     @staticmethod
     def build_request_type(is_in, type, recipient):
 
+        # TODO: FIXME: clean up consts
         request_type = 0
 
         if is_in:
             request_type |= (1 << 7)
 
-        request_type |= (type << 5 )
+        request_type |= (type << 5)
         request_type |= (recipient)
 
         return request_type
@@ -100,6 +110,7 @@ class GlitchKitUSB(GlitchKitModule):
         #       uint16_t index;
         #       uint16_t length;
 
+        # TODO: replace me with a call to struct.pack?
         setup_request = [self.build_request_type(is_in, request_type, recipient), request]
         setup_request.extend(self._split(value))
         setup_request.extend(self._split(index))
