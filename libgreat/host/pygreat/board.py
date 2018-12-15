@@ -8,7 +8,6 @@ Module containing the core definitions for a libgreat-driven board.
 
 # FIXME: remove dependencies
 import usb
-import future.builtins
 import time
 import pygreat
 
