@@ -76,6 +76,11 @@ class USBCommsBackend(CommsBackend):
         to a more specific board by serial number.
         """
 
+        # Zero pad serial numbers to 32 characters to match those
+        # provided by the USB descriptors
+        if 'serial_number' in device_identifiers and len(device_identifiers['serial_number']) < 32:
+            device_identifiers['serial_number'] = device_identifiers['serial_number'].zfill(32)
+
         # Connect to the first available device.
         try:
             self.device = usb.core.find(**device_identifiers)
