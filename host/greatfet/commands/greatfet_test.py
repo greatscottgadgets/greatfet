@@ -10,6 +10,7 @@ import time
 import argparse
 import subprocess
 from distutils.util import strtobool
+import threading
 
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
@@ -19,6 +20,7 @@ from greatfet.peripherals.gpio import GPIO
 from greatfet.peripherals.led import LED
 from greatfet.protocol import vendor_requests
 import greatfet_firmware
+import facedancer
 
 # left side is EUT pin
 # right side is what it is connected to on Narcissus/Tester
@@ -151,15 +153,28 @@ other_pins = {
 
 # how analog signals are connected to the multiplexer (U4)
 analog_signals = {
-    "VBUS_BYPASS" : 0, # 50% voltage divider
-    "USB0_VBUS"   : 1, # 50% voltage divider
-    "USB1_VBUS"   : 2, # 50% voltage divider
-    "EUT_VCC"     : 3, # 50% voltage divider
-    "EUT_5V"      : 4, # 50% voltage divider
+    "VBUS_BYPASS" : 0,
+    "USB0_VBUS"   : 1,
+    "USB1_VBUS"   : 2,
+    "EUT_VCC"     : 3,
+    "EUT_5V"      : 4,
     "EUT_ADC0_2"  : 5,
     "EUT_ADC0_0"  : 6,
     "EUT_ADC0_5"  : 7
 }
+
+voltage_divider = {
+    "VBUS_BYPASS" : 2,
+    "USB0_VBUS"   : 2,
+    "USB1_VBUS"   : 2,
+    "EUT_VCC"     : 2,
+    "EUT_5V"      : 2,
+    "EUT_ADC0_2"  : 1,
+    "EUT_ADC0_0"  : 1,
+    "EUT_ADC0_5"  : 1
+}
+
+tester = None
 
 eut_pins = {}
 tester_pins = {}
@@ -173,6 +188,11 @@ def ask_user(question):
             print('Please respond with \'y\' or \'n\'.')
 
 def fail(message):
+    if tester:
+        try:
+            tester.reset(reconnect=False)
+        except:
+            pass
     print(message, file=sys.stderr)
     sys.exit()
 
@@ -189,9 +209,10 @@ def select_analog_signal(tester, signal):
     tester_pins[other_pins["U4_S2"]].write((analog_signals[signal] >> 2) & 0x1)
     tester_pins[other_pins["U4_E"]].write(0)
 
-def read_analog_signal(tester, signal):
+def read_analog_voltage(tester, signal):
     select_analog_signal(tester, signal)
-    return read_adc(tester)
+    voltage = read_adc(tester) * 3.3 * voltage_divider[signal] / 1024
+    return voltage
 
 def read_io_expanders(expanders):
     state = []
@@ -279,25 +300,28 @@ def test_leds(eut):
     if not ask_user("Is LED1 blinking?"):
         fail('FAIL 1210: User reported LED1 failure. Check LED1, R1, and U1 pin 134.')
 
-def test_usb1(tester, u1):
-    tester_pins[other_pins["USB1_EN"]].set_direction(tester.gpio.DIRECTION_OUT)
-    tester_pins[other_pins["USB1_EN"]].write(1)
-    time.sleep(10)
-    #FIXME analog
-    if not read_io_expander_pin(u1, 0, 5):
-        fail('FAIL 1300: USB1_VBUS voltage not detected. Check U5, R16, R21, R22, R23, R24, C10, C11.')
-    tester_pins[other_pins["USB1_EN"]].write(0)
-    if read_io_expander_pin(u1, 0, 5):
-        fail('FAIL 1310: USB1_VBUS voltage detected. Unplug USB cable from USB1. Check U5, R16, R21, R22.')
-
-    print('Connect USB cable between EUT USB1 and Tester USB1.')
-    timeout = time.time() + 30
-    while(not read_io_expander_pin(u1, 0, 5)):
-        if time.time() >= timeout:
-            fail("FAIL 1320: Timeout while waiting for USB1 cable. Check J4, R21.")
-        pass
-    print('Detected USB1 cable.')
-    tester_pins[other_pins["USB1_EN"]].set_direction(tester.gpio.DIRECTION_IN)
+def test_usb1(tester, eut):
+    fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=tester)
+    fd = facedancer.USBDevice.USBDevice(fdapp)
+    fd.connect()
+    fd_thread=threading.Thread(target=fd.run)
+    fd_thread.start()
+    try:
+        descriptor = eut.glitchkit.usb.capture_control_in(
+                request= eut.glitchkit.usb.GET_DESCRIPTOR,
+                value  = eut.glitchkit.usb.GET_DEVICE_DESCRIPTOR,
+                length = 18
+            )
+    except:
+        fd.stop()
+        fd_thread.join()
+        fd.disconnect()
+        fail('FAIL 1300: USB1 error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+    if descriptor != b'\x12\x01\x00\x02\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00':
+        fail('FAIL 1310: USB descriptor error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+    fd.stop()
+    fd_thread.join()
+    fd.disconnect()
 
 def find_tester():
     devices = []
@@ -352,19 +376,23 @@ def test_reset_button(tester):
         if not check_gpio_pin(tester, other_pins['RESET_J7_P11']):
             # debounce
             time.sleep(0.1)
-            if not check_gpio_pin(tester, other_pins['RESET_J7_P11']):
+            if (not check_gpio_pin(tester, other_pins['RESET_J7_P11'])) and (read_analog_voltage(tester, "EUT_VCC") > 3.2):
                 print('Detected RESET button.')
+                tester_pins[other_pins["RESET_J7_P11"]].write(0)
+                tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
                 return
     fail("FAIL 600: Timeout while waiting for RESET button. Check SW2.")
+    tester_pins[other_pins["RESET_J7_P11"]].write(0)
+    tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
 
-def test_dfu_button(expander):
+def test_dfu_button(tester, expander):
     print('Press DFU button (SW1) on EUT.')
     timeout = time.time() + 30
     while time.time() < timeout:
         if read_io_expander_pin(expander, 3, 5):
             # debounce
             time.sleep(0.1)
-            if read_io_expander_pin(expander, 3, 5):
+            if read_io_expander_pin(expander, 3, 5) and (read_analog_voltage(tester, "EUT_VCC") > 3.2):
                 print('Detected DFU button.')
                 return
     fail("FAIL 610: Timeout while waiting for DFU button. Check SW1.")
@@ -372,7 +400,9 @@ def test_dfu_button(expander):
 def flash_firmware(args, tester):
     tester_pins[other_pins["5V_EN"]].write(0)
     tester_serial = tester.serial_number()
+    print('Connect USB cable between EUT USB1 and Tester USB1.')
     print('Connect EUT to this host with USB cable (J3/USB0) while pressing DFU button (SW1).')
+    tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_IN)
     timeout = time.time() + 30
     while True:
         try:
@@ -465,40 +495,43 @@ def main():
 
     eut_detected = False
     while True:
-        if read_analog_signal(tester, "EUT_VCC") > 25:
+        if read_analog_voltage(tester, "EUT_VCC") > 0.2:
             eut_detected = True
         # debounce
         time.sleep(0.5)
         if eut_detected:
-            if read_analog_signal(tester, "EUT_VCC") > 25:
+            if read_analog_voltage(tester, "EUT_VCC") > 0.2:
                 break
 
     print('Detected EUT.')
 
-    if read_analog_signal(tester, "USB0_VBUS") > 650:
+    if read_analog_voltage(tester, "USB0_VBUS") > 4.0:
         fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
-    if read_analog_signal(tester, "USB1_VBUS") > 650:
+    if read_analog_voltage(tester, "USB1_VBUS") > 4.0:
         fail('FAIL 160: USB1 cable detected. Unplug USB cable from EUT J4/USB1.')
-    if read_analog_signal(tester, "EUT_VCC") > 400:
+    if read_analog_voltage(tester, "EUT_VCC") > 2.5:
         fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
 
     for signal in analog_signals.keys():
-        print(signal, read_analog_signal(tester, signal))
+        print(signal, read_analog_voltage(tester, signal))
     print()
 
     tester_pins[other_pins["5V_EN"]].write(1)
     time.sleep(0.5)
 
     for signal in analog_signals.keys():
-        print(signal, read_analog_signal(tester, signal))
+        print(signal, read_analog_voltage(tester, signal))
     print()
 
-    if read_analog_signal(tester, "EUT_5V") < 650:
+    if read_analog_voltage(tester, "EUT_5V") < 4.0:
         tester_pins[other_pins["5V_EN"]].write(0)
         fail('FAIL 170: EUT_5V too low. Check for shorts across C3 and C4.')
-    if read_analog_signal(tester, "EUT_VCC") < 400:
+    if read_analog_voltage(tester, "EUT_VCC") < 0.6:
         tester_pins[other_pins["5V_EN"]].write(0)
         fail('FAIL 180: EUT_VCC power not detected. Check U3.')
+    if read_analog_voltage(tester, "EUT_VCC") < 3.2:
+        tester_pins[other_pins["5V_EN"]].write(0)
+        fail('FAIL 190: EUT_VCC voltage too low. Check U3. Check for shorts across C3 and C4 and decoupling capacitors.')
 
     # FIXME do this later
     #if read_analog_signal(tester, "USB1_VBUS") <= 100:
@@ -581,13 +614,21 @@ def main():
         fail('FAIL 500: USB1_EN voltage detected. Check R16.')
 
     test_reset_button(tester)
-    test_dfu_button(u2)
+    test_dfu_button(tester, u2)
     eut = flash_firmware(args, tester)
     setup_eut_pins(eut)
     test_gpio(eut, tester, u1, u2)
     test_leds(eut)
-    #test_usb1(tester, u1)
+    test_usb1(tester, eut)
+
+    diode_drop = read_analog_voltage(tester, "VBUS_BYPASS") - read_analog_voltage(tester, "EUT_5V")
+    print("D5 voltage drop: %.2f V" % diode_drop)
+    if diode_drop > 0.275:
+        fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
+
     print('PASS')
+    eut.reset(reconnect=False)
+    tester.reset(reconnect=False)
 
 if __name__ == '__main__':
     main()
