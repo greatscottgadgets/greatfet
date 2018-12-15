@@ -122,7 +122,7 @@ gpio_pins = {
     "J7_P14"   : (2, 1, 3),
     "J7_P15"   : (2, 1, 2),
     "J7_P16"   : (2, 1, 1),
-    #"J7_P17"   : (2, 1, 0), FIXME workaround for Narcissus assembly error
+    "J7_P17"   : (2, 1, 0),
     "J7_P18"   : (2, 0, 7),
     #"J7_P19"  : (2, 0, 6) GND on EUT
     #"J7_P20"  : (2, 0, 5) VCC on EUT
