@@ -381,7 +381,7 @@ def test_reset_button(tester):
                 tester_pins[other_pins["RESET_J7_P11"]].write(0)
                 tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
                 return
-    fail("FAIL 600: Timeout while waiting for RESET button. Check SW2.")
+    fail('FAIL 600: Timeout while waiting for RESET button. Check SW2.')
     tester_pins[other_pins["RESET_J7_P11"]].write(0)
     tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
 
@@ -395,7 +395,7 @@ def test_dfu_button(tester, expander):
             if read_io_expander_pin(expander, 3, 5) and (read_analog_voltage(tester, "EUT_VCC") > 3.2):
                 print('Detected DFU button.')
                 return
-    fail("FAIL 610: Timeout while waiting for DFU button. Check SW1.")
+    fail('FAIL 610: Timeout while waiting for DFU button. Check SW1.')
 
 def flash_firmware(args, tester):
     tester_pins[other_pins["5V_EN"]].write(0)
@@ -411,7 +411,7 @@ def flash_firmware(args, tester):
             break
         except DeviceNotFoundError:
             if time.time() >= timeout:
-                print("FAIL 1100: EUT in DFU mode not found.", file=sys.stderr)
+                print('FAIL 1100: EUT in DFU mode not found.', file=sys.stderr)
                 sys.exit(errno.ENODEV)
         except IOError:
             print('DFU IOError', file=sys.stderr)
@@ -421,7 +421,7 @@ def flash_firmware(args, tester):
     timeout = time.time() + 10
     while len(devices) < 2:
         if time.time() >= timeout:
-            print("FAIL 1110: EUT running from RAM not found.", file=sys.stderr)
+            print('FAIL 1110: EUT running from RAM not found.', file=sys.stderr)
             sys.exit(errno.ENODEV)
         if not devices:
             print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
@@ -444,7 +444,7 @@ def flash_firmware(args, tester):
     timeout = time.time() + 10
     while len(devices) < 2:
         if time.time() >= timeout:
-            print("FAIL 1130: EUT running from flash not found.", file=sys.stderr)
+            print('FAIL 1130: EUT running from flash not found.', file=sys.stderr)
             sys.exit(errno.ENODEV)
         if not devices:
             print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
