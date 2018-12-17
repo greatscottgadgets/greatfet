@@ -22,613 +22,619 @@ from greatfet.protocol import vendor_requests
 import greatfet_firmware
 import facedancer
 
-# left side is EUT pin
-# right side is what it is connected to on Narcissus/Tester
-# (x, y, z) designates io expander (x), port (y), and pin (z)
-gpio_pins = {
-    #"J1_P1"   : GND
-    #"J1_P2"   : EUT_VCC connected to ADC
-    "J1_P3"    : (1, 4, 7),
-    "J1_P4"    : "J2_P24",
-    "J1_P5"    : (1, 4, 6),
-    "J1_P6"    : "J2_P22",
-    "J1_P7"    : "J1_P7",
-    "J1_P8"    : (1, 4, 5),
-    "J1_P9"    : (1, 4, 4),
-    "J1_P10"   : (1, 4, 3),
-    #"J2_P11"  : CLK0
-    "J1_P12"   : (1, 4, 2),
-    "J1_P13"   : (1, 4, 1),
-    "J1_P14"   : (1, 4, 0),
-    "J1_P15"   : (1, 3, 7),
-    "J1_P16"   : (1, 3, 6),
-    "J1_P17"   : (1, 3, 5),
-    "J1_P18"   : (1, 3, 4),
-    "J1_P19"   : (1, 3, 3),
-    "J1_P20"   : (1, 3, 2),
-    "J1_P21"   : (1, 3, 1),
-    "J1_P22"   : (1, 3, 0),
-    "J1_P23"   : (1, 2, 7),
-    "J1_P24"   : (1, 2, 6),
-    "J1_P25"   : (1, 2, 5),
-    "J1_P26"   : (1, 2, 4),
-    "J1_P27"   : (1, 2, 3),
-    "J1_P28"   : (1, 2, 2),
-    "J1_P29"   : (1, 2, 1),
-    "J1_P30"   : (1, 2, 0),
-    "J1_P31"   : (1, 1, 7),
-    "J1_P32"   : (1, 1, 6),
-    "J1_P33"   : (1, 1, 5),
-    "J1_P34"   : (1, 1, 4),
-    "J1_P35"   : (1, 1, 3),
-    # P36"     : P4_7 I2S0_TX_SCK/I2S1_TX_SCK
-    "J1_P37"   : "J1_P37",
-    # P38"     : P1_19 SSP1_SCK
-    "J1_P39"   : "J1_P39",
-    "J1_P40"   : "J1_P40",
-    # J2_P1"   : (2, 2, 4) GND on EUT
-    # J2_P2"   : EUT_5V connected to ADC
-    "J2_P3"    : (2, 2, 6),
-    "J2_P4"    : (2, 2, 5),
-    #"J2_P5"   : EUT_ADC0_0 connected to ADC
-    "J2_P6"    : (2, 2, 7),
-    "J2_P7"    : (2, 3, 1),
-    "J2_P8"    : (2, 3, 0),
-    "J2_P9"    : (2, 3, 3),
-    "J2_P10"   : (2, 3, 2),
-    #"J2_P11"  : P6_0 I2S1_TX_SCK
-    #"J2_P12"  : P4_7 I2S1_RX_SCK
-    "J2_P13"   : (2, 3, 5), #DFU
-    "J2_P14"   : (2, 3, 4),
-    "J2_P15"   : (2, 3, 7),
-    "J2_P16"   : (2, 3, 6),
-    #"J2_P17"  : (2, 4, 1) WAKEUP0 on EUT
-    "J2_P18"   : (2, 4, 0),
-    "J2_P19"   : (2, 4, 3),
-    "J2_P20"   : (2, 4, 2),
-    #"J2_P21"  : PF_4 SSP1_SCK
-    "J2_P22"   : "J1_P6",
-    "J2_P23"   : (2, 4, 4),
-    "J2_P24"   : "J1_P4",
-    "J2_P25"   : (2, 4, 5),
-    #"J2_P26"  : P3_0 SSP0_SCK
-    "J2_P27"   : (2, 4, 6),
-    "J2_P28"   : "J2_P23",
-    "J2_P29"   : (2, 4, 7),
-    "J2_P30"   : "J2_P38",
-    "J2_P31"   : (2, 0, 0),
-    #"J2_P32"  : P3_3 SSP0_SCK
-    "J2_P33"   : (2, 0, 2),
-    "J2_P34"   : (2, 0, 1),
-    "J2_P35"   : (2, 0, 4),
-    "J2_P36"   : (2, 0, 3),
-    "J2_P37"   : "J2_P25",
-    "J2_P38"   : "J2_P30",
-    #"J2_P39"  : "J2_P20" I2C0_SDA on EUT
-    #"J2_P40"  : "J2_P19" I2C0_SDL on EUT
-    #"J7_P1"   : (1, 0, 1) GND on EUT
-    "J7_P2"    : (1, 0, 0),
-    "J7_P3"    : (2, 2, 3),
-    #"J7_P4"   : EUT_ADC0_5 connected to ADC
-    #"J7_P5"   : EUT_ADC0_2 connected to ADC
-    "J7_P6"    : (2, 2, 2),
-    "J7_P7"    : (2, 2, 1),
-    "J7_P8"    : (2, 2, 0),
-    #"J7_P9"   : (2, 1, 7) RTC_ALARM on EUT
-    #"J7_P10"  : (2, 1, 6) RTCX1 on EUT
-    #"J7_P11"  : "J1_P31" RESET on EUT
-    #"J7_P12"  : (2, 1, 5) VBAT on EUT
-    "J7_P13"   : (2, 1, 4),
-    "J7_P14"   : (2, 1, 3),
-    "J7_P15"   : (2, 1, 2),
-    "J7_P16"   : (2, 1, 1),
-    "J7_P17"   : (2, 1, 0),
-    "J7_P18"   : (2, 0, 7),
-    #"J7_P19"  : (2, 0, 6) GND on EUT
-    #"J7_P20"  : (2, 0, 5) VCC on EUT
-}
+class Narcissus:
+    # left side is EUT pin
+    # right side is what it is connected to on Narcissus/Tester
+    # (x, y, z) designates io expander (x), port (y), and pin (z)
+    gpio_pins = {
+        #"J1_P1"   : GND
+        #"J1_P2"   : EUT_VCC connected to ADC
+        "J1_P3"    : (1, 4, 7),
+        "J1_P4"    : "J2_P24",
+        "J1_P5"    : (1, 4, 6),
+        "J1_P6"    : "J2_P22",
+        "J1_P7"    : "J1_P7",
+        "J1_P8"    : (1, 4, 5),
+        "J1_P9"    : (1, 4, 4),
+        "J1_P10"   : (1, 4, 3),
+        #"J2_P11"  : CLK0
+        "J1_P12"   : (1, 4, 2),
+        "J1_P13"   : (1, 4, 1),
+        "J1_P14"   : (1, 4, 0),
+        "J1_P15"   : (1, 3, 7),
+        "J1_P16"   : (1, 3, 6),
+        "J1_P17"   : (1, 3, 5),
+        "J1_P18"   : (1, 3, 4),
+        "J1_P19"   : (1, 3, 3),
+        "J1_P20"   : (1, 3, 2),
+        "J1_P21"   : (1, 3, 1),
+        "J1_P22"   : (1, 3, 0),
+        "J1_P23"   : (1, 2, 7),
+        "J1_P24"   : (1, 2, 6),
+        "J1_P25"   : (1, 2, 5),
+        "J1_P26"   : (1, 2, 4),
+        "J1_P27"   : (1, 2, 3),
+        "J1_P28"   : (1, 2, 2),
+        "J1_P29"   : (1, 2, 1),
+        "J1_P30"   : (1, 2, 0),
+        "J1_P31"   : (1, 1, 7),
+        "J1_P32"   : (1, 1, 6),
+        "J1_P33"   : (1, 1, 5),
+        "J1_P34"   : (1, 1, 4),
+        "J1_P35"   : (1, 1, 3),
+        # P36"     : P4_7 I2S0_TX_SCK/I2S1_TX_SCK
+        "J1_P37"   : "J1_P37",
+        # P38"     : P1_19 SSP1_SCK
+        "J1_P39"   : "J1_P39",
+        "J1_P40"   : "J1_P40",
+        # J2_P1"   : (2, 2, 4) GND on EUT
+        # J2_P2"   : EUT_5V connected to ADC
+        "J2_P3"    : (2, 2, 6),
+        "J2_P4"    : (2, 2, 5),
+        #"J2_P5"   : EUT_ADC0_0 connected to ADC
+        "J2_P6"    : (2, 2, 7),
+        "J2_P7"    : (2, 3, 1),
+        "J2_P8"    : (2, 3, 0),
+        "J2_P9"    : (2, 3, 3),
+        "J2_P10"   : (2, 3, 2),
+        #"J2_P11"  : P6_0 I2S1_TX_SCK
+        #"J2_P12"  : P4_7 I2S1_RX_SCK
+        "J2_P13"   : (2, 3, 5), #DFU
+        "J2_P14"   : (2, 3, 4),
+        "J2_P15"   : (2, 3, 7),
+        "J2_P16"   : (2, 3, 6),
+        #"J2_P17"  : (2, 4, 1) WAKEUP0 on EUT
+        "J2_P18"   : (2, 4, 0),
+        "J2_P19"   : (2, 4, 3),
+        "J2_P20"   : (2, 4, 2),
+        #"J2_P21"  : PF_4 SSP1_SCK
+        "J2_P22"   : "J1_P6",
+        "J2_P23"   : (2, 4, 4),
+        "J2_P24"   : "J1_P4",
+        "J2_P25"   : (2, 4, 5),
+        #"J2_P26"  : P3_0 SSP0_SCK
+        "J2_P27"   : (2, 4, 6),
+        "J2_P28"   : "J2_P23",
+        "J2_P29"   : (2, 4, 7),
+        "J2_P30"   : "J2_P38",
+        "J2_P31"   : (2, 0, 0),
+        #"J2_P32"  : P3_3 SSP0_SCK
+        "J2_P33"   : (2, 0, 2),
+        "J2_P34"   : (2, 0, 1),
+        "J2_P35"   : (2, 0, 4),
+        "J2_P36"   : (2, 0, 3),
+        "J2_P37"   : "J2_P25",
+        "J2_P38"   : "J2_P30",
+        #"J2_P39"  : "J2_P20" I2C0_SDA on EUT
+        #"J2_P40"  : "J2_P19" I2C0_SDL on EUT
+        #"J7_P1"   : (1, 0, 1) GND on EUT
+        "J7_P2"    : (1, 0, 0),
+        "J7_P3"    : (2, 2, 3),
+        #"J7_P4"   : EUT_ADC0_5 connected to ADC
+        #"J7_P5"   : EUT_ADC0_2 connected to ADC
+        "J7_P6"    : (2, 2, 2),
+        "J7_P7"    : (2, 2, 1),
+        "J7_P8"    : (2, 2, 0),
+        #"J7_P9"   : (2, 1, 7) RTC_ALARM on EUT
+        #"J7_P10"  : (2, 1, 6) RTCX1 on EUT
+        #"J7_P11"  : "J1_P31" RESET on EUT
+        #"J7_P12"  : (2, 1, 5) VBAT on EUT
+        "J7_P13"   : (2, 1, 4),
+        "J7_P14"   : (2, 1, 3),
+        "J7_P15"   : (2, 1, 2),
+        "J7_P16"   : (2, 1, 1),
+        "J7_P17"   : (2, 1, 0),
+        "J7_P18"   : (2, 0, 7),
+        #"J7_P19"  : (2, 0, 6) GND on EUT
+        #"J7_P20"  : (2, 0, 5) VCC on EUT
+    }
 
-other_pins = {
-    "GND_J2_P1"       : (2, 2, 4), #GND
-    "WAKEUP0_J2_P17"  : (2, 4, 1),
-    "I2C0_SDA_J2_P39" : "J2_P20",
-    "I2C0_SDL_J2_P40" : "J2_P19",
-    "GND_J7_P1"       : (1, 0, 1), #GND
-    "RTC_ALARM_J7_P9" : (2, 1, 7),
-    "RTCX1_J7_P10"    : (2, 1, 6), #GND
-    "RESET_J7_P11"    : "J1_P31",
-    "VBAT_J7_P12"     : (2, 1, 5),
-    "GND_J7_P19"      : (2, 0, 6), #GND
-    "VCC_J7_P20"      : (2, 0, 5), #VCC
-    "USB1_EN"         : "J1_P35",
-    "TDO"             : "J1_P25",
-    "TCK"             : "J1_P27",
-    "DBGEN"           : "J1_P21",
-    "U4_S0"           : "J2_P7",
-    "U4_S1"           : "J2_P4",
-    "U4_S2"           : "J2_P3",
-    "U4_E"            : "J2_P6",
-    "5V_EN"           : "J2_P8"
-}
+    other_pins = {
+        "GND_J2_P1"       : (2, 2, 4), #GND
+        "WAKEUP0_J2_P17"  : (2, 4, 1),
+        "I2C0_SDA_J2_P39" : "J2_P20",
+        "I2C0_SDL_J2_P40" : "J2_P19",
+        "GND_J7_P1"       : (1, 0, 1), #GND
+        "RTC_ALARM_J7_P9" : (2, 1, 7),
+        "RTCX1_J7_P10"    : (2, 1, 6), #GND
+        "RESET_J7_P11"    : "J1_P31",
+        "VBAT_J7_P12"     : (2, 1, 5),
+        "GND_J7_P19"      : (2, 0, 6), #GND
+        "VCC_J7_P20"      : (2, 0, 5), #VCC
+        "USB1_EN"         : "J1_P35",
+        "TDO"             : "J1_P25",
+        "TCK"             : "J1_P27",
+        "DBGEN"           : "J1_P21",
+        "U4_S0"           : "J2_P7",
+        "U4_S1"           : "J2_P4",
+        "U4_S2"           : "J2_P3",
+        "U4_E"            : "J2_P6",
+        "5V_EN"           : "J2_P8"
+    }
 
-# how analog signals are connected to the multiplexer (U4)
-analog_signals = {
-    "VBUS_BYPASS" : 0,
-    "USB0_VBUS"   : 1,
-    "USB1_VBUS"   : 2,
-    "EUT_VCC"     : 3,
-    "EUT_5V"      : 4,
-    "EUT_ADC0_2"  : 5,
-    "EUT_ADC0_0"  : 6,
-    "EUT_ADC0_5"  : 7
-}
+    # how analog signals are connected to the multiplexer (U4)
+    analog_signals = {
+        "VBUS_BYPASS" : 0,
+        "USB0_VBUS"   : 1,
+        "USB1_VBUS"   : 2,
+        "EUT_VCC"     : 3,
+        "EUT_5V"      : 4,
+        "EUT_ADC0_2"  : 5,
+        "EUT_ADC0_0"  : 6,
+        "EUT_ADC0_5"  : 7
+    }
 
-voltage_divider = {
-    "VBUS_BYPASS" : 2,
-    "USB0_VBUS"   : 2,
-    "USB1_VBUS"   : 2,
-    "EUT_VCC"     : 2,
-    "EUT_5V"      : 2,
-    "EUT_ADC0_2"  : 1,
-    "EUT_ADC0_0"  : 1,
-    "EUT_ADC0_5"  : 1
-}
+    voltage_divider = {
+        "VBUS_BYPASS" : 2,
+        "USB0_VBUS"   : 2,
+        "USB1_VBUS"   : 2,
+        "EUT_VCC"     : 2,
+        "EUT_5V"      : 2,
+        "EUT_ADC0_2"  : 1,
+        "EUT_ADC0_0"  : 1,
+        "EUT_ADC0_5"  : 1
+    }
 
-tester = None
+    # tester is the GreatFET One for which the Narcissus is a neighbor
+    tester = None
 
-eut_pins = {}
-tester_pins = {}
+    # eut (equipment under test) is the GreatFET One being tested
+    eut = None
 
-def ask_user(question):
-    print('%s [y/n]' % question)
-    while True:
+    # I2C I/O expanders on Narcissus
+    u1 = None
+    u2 = None
+
+    eut_pins = {}
+    tester_pins = {}
+
+    def ask_user(self, question):
+        print('%s [y/n]' % question)
+        while True:
+            try:
+                return strtobool(input())
+            except ValueError:
+                print('Please respond with \'y\' or \'n\'.')
+
+    def fail(self, message):
+        if self.tester:
+            try:
+                self.tester.reset(reconnect=False)
+            except:
+                pass
+        print(message, file=sys.stderr)
+        sys.exit()
+
+    def read_adc(self, device):
+        data = device.comms._vendor_request_in(vendor_requests.ADC_READ, length=2)
+        result = (data[1] << 8) | data[0]
+        return result
+
+    # configure analog multiplexer
+    def select_analog_signal(self, signal):
+        self.tester_pins[self.other_pins["U4_E"]].write(1)
+        self.tester_pins[self.other_pins["U4_S0"]].write(self.analog_signals[signal] & 0x1)
+        self.tester_pins[self.other_pins["U4_S1"]].write((self.analog_signals[signal] >> 1) & 0x1)
+        self.tester_pins[self.other_pins["U4_S2"]].write((self.analog_signals[signal] >> 2) & 0x1)
+        self.tester_pins[self.other_pins["U4_E"]].write(0)
+
+    def read_analog_voltage(self, signal):
+        self.select_analog_signal(signal)
+        voltage = self.read_adc(self.tester) * 3.3 * self.voltage_divider[signal] / 1024
+        return voltage
+
+    def read_io_expanders(self, expanders):
+        state = []
+        for expander in expanders:
+            state.extend(expander.transmit([], 5))
+        return state
+
+    def read_io_expander_pin(self, expander, port, pin):
+        return (self.read_io_expanders([expander])[port] >> pin) & 1
+
+    def check_gpio_pin(self, name):
+        self.tester_pins[name].set_direction(self.tester.gpio.DIRECTION_IN)
+        return self.tester_pins[name].read()
+
+    def setup_eut_pins(self):
+        for eut_pin_name in list(self.gpio_pins):
+            self.eut_pins[eut_pin_name] = self.eut.gpio.get_pin(eut_pin_name)
+
+    def setup_tester_pins(self):
+        for eut_pin_name in list(self.gpio_pins):
+            if not isinstance(self.gpio_pins[eut_pin_name], tuple):
+                self.tester_pins[self.gpio_pins[eut_pin_name]] = self.tester.gpio.get_pin(self.gpio_pins[eut_pin_name])
+        for signal in list(self.other_pins):
+            if not isinstance(self.other_pins[signal], tuple):
+                self.tester_pins[self.other_pins[signal]] = self.tester.gpio.get_pin(self.other_pins[signal])
+
+    def check_all_gpio_pins(self):
+        pins = {}
+        expander_state = self.read_io_expanders([self.u1, self.u2])
+        for eut_pin_name in list(self.gpio_pins):
+            if isinstance(self.gpio_pins[eut_pin_name], tuple):
+                (expander, port, pin) = self.gpio_pins[eut_pin_name]
+                port += (expander - 1) * 5
+                pins[eut_pin_name] = (1 == (expander_state[port] >> pin) & 1)
+            #FIXME why does this fail?
+            #else:
+                #pins[eut_pin_name] = self.check_gpio_pin(gpio_pins[eut_pin_name])
+        return pins
+
+    def test_gpio(self):
+        # set all GPIO pins output high on EUT
+        for pin_name in list(self.gpio_pins):
+            self.eut_pins[pin_name].set_direction(self.eut.gpio.DIRECTION_OUT)
+            self.eut_pins[pin_name].write(1)
+        pin_failure = False
+        for pin_name, state in self.check_all_gpio_pins().items():
+            if not state:
+                print('Detected no voltage on pin %s.' % pin_name, file=sys.stderr)
+                #FIXME print corresponding U1 pin
+                pin_failure = True
+        if pin_failure:
+                self.fail('FAIL 1140: Detected no voltage on GPIO pin when all pins were driven high. See pins listed above.')
+
+        # set all GPIO pins output low on EUT
+        for pin_name in list(self.gpio_pins):
+            self.eut_pins[pin_name].write(0)
+        for pin_name, state in self.check_all_gpio_pins().items():
+            if state:
+                print('Detected voltage on pin %s.' % pin_name, file=sys.stderr)
+                #FIXME print corresponding U1 pin
+                pin_failure = True
+        if pin_failure:
+                self.fail('FAIL 1150: Detected voltage on GPIO pin when all pins were driven low. See pins listed above.')
+
+        # test GPIO pins one at a time
+        for test_pin in list(self.gpio_pins):
+            self.eut_pins[test_pin].write(1)
+            for pin_name, state in self.check_all_gpio_pins().items():
+                if (pin_name != test_pin) and state:
+                    print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin), file=sys.stderr)
+                    #FIXME print corresponding U1 pins
+                    pin_failure = True
+                if (pin_name == test_pin) and not state:
+                    print('Detected no voltage on pin %s when driven high.' % test_pin, file=sys.stderr)
+                    #FIXME print corresponding U1 pin
+                    pin_failure = True
+            self.eut_pins[test_pin].write(0)
+        if pin_failure:
+                self.fail('FAIL 1160: Test of individual GPIO pins failed. See pins listed above.')
+
+    def test_leds(self):
+        for led in range(1, 4):
+            LED(self.eut, led+1).set()
+        if not self.ask_user("Are LED2, LED3, and LED4 illuminated?"):
+            self.fail('FAIL 1200: User reported LED failure. Check LED2, LED3, LED4, R2, R3, R4, and U1 pins 3, 132, and 133.')
+        for led in range(1, 4):
+            LED(self.eut, led+1).clear()
+        if not self.ask_user("Is LED1 blinking?"):
+            self.fail('FAIL 1210: User reported LED1 failure. Check LED1, R1, and U1 pin 134.')
+
+    def test_usb1(self):
+        fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=self.tester)
+        fd = facedancer.USBDevice.USBDevice(fdapp)
+        fd.connect()
+        fd_thread=threading.Thread(target=fd.run)
+        fd_thread.start()
         try:
-            return strtobool(input())
-        except ValueError:
-            print('Please respond with \'y\' or \'n\'.')
-
-def fail(message):
-    if tester:
-        try:
-            tester.reset(reconnect=False)
+            descriptor = self.eut.glitchkit.usb.capture_control_in(
+                    request= self.eut.glitchkit.usb.GET_DESCRIPTOR,
+                    value  = self.eut.glitchkit.usb.GET_DEVICE_DESCRIPTOR,
+                    length = 18
+                )
         except:
-            pass
-    print(message, file=sys.stderr)
-    sys.exit()
-
-def read_adc(device):
-    data = device.comms._vendor_request_in(vendor_requests.ADC_READ, length=2)
-    result = (data[1] << 8) | data[0]
-    return result
-
-# configure analog multiplexer
-def select_analog_signal(tester, signal):
-    tester_pins[other_pins["U4_E"]].write(1)
-    tester_pins[other_pins["U4_S0"]].write(analog_signals[signal] & 0x1)
-    tester_pins[other_pins["U4_S1"]].write((analog_signals[signal] >> 1) & 0x1)
-    tester_pins[other_pins["U4_S2"]].write((analog_signals[signal] >> 2) & 0x1)
-    tester_pins[other_pins["U4_E"]].write(0)
-
-def read_analog_voltage(tester, signal):
-    select_analog_signal(tester, signal)
-    voltage = read_adc(tester) * 3.3 * voltage_divider[signal] / 1024
-    return voltage
-
-def read_io_expanders(expanders):
-    state = []
-    for expander in expanders:
-        state.extend(expander.transmit([], 5))
-    #print(state)
-    return state
-
-def read_io_expander_pin(expander, port, pin):
-    return (read_io_expanders([expander])[port] >> pin) & 1
-
-def check_gpio_pin(tester, name):
-    tester_pins[name].set_direction(tester.gpio.DIRECTION_IN)
-    return tester_pins[name].read()
-
-def setup_eut_pins(eut):
-    for eut_pin_name in list(gpio_pins):
-        eut_pins[eut_pin_name] = eut.gpio.get_pin(eut_pin_name)
-
-def setup_tester_pins(tester):
-    for eut_pin_name in list(gpio_pins):
-        if not isinstance(gpio_pins[eut_pin_name], tuple):
-            tester_pins[gpio_pins[eut_pin_name]] = tester.gpio.get_pin(gpio_pins[eut_pin_name])
-    for signal in list(other_pins):
-        if not isinstance(other_pins[signal], tuple):
-            tester_pins[other_pins[signal]] = tester.gpio.get_pin(other_pins[signal])
-
-def check_all_gpio_pins(tester, expander1, expander2):
-    pins = {}
-    expander_state = read_io_expanders([expander1, expander2])
-    for eut_pin_name in list(gpio_pins):
-        if isinstance(gpio_pins[eut_pin_name], tuple):
-            (expander, port, pin) = gpio_pins[eut_pin_name]
-            port += (expander - 1) * 5
-            pins[eut_pin_name] = (1 == (expander_state[port] >> pin) & 1)
-        #FIXME why does this fail?
-        #else:
-            #pins[eut_pin_name] = check_gpio_pin(tester, gpio_pins[eut_pin_name])
-    return pins
-
-def test_gpio(eut, tester, expander1, expander2):
-    # set all GPIO pins output high on EUT
-    for pin_name in list(gpio_pins):
-        eut_pins[pin_name].set_direction(eut.gpio.DIRECTION_OUT)
-        eut_pins[pin_name].write(1)
-    pin_failure = False
-    for pin_name, state in check_all_gpio_pins(tester, expander1, expander2).items():
-        if not state:
-            print('Detected no voltage on pin %s.' % pin_name, file=sys.stderr)
-            pin_failure = True
-    if pin_failure:
-            fail('FAIL 1140: Detected no voltage on GPIO pin when all pins were driven high. See pins listed above.')
-
-    # set all GPIO pins output low on EUT
-    for pin_name in list(gpio_pins):
-        eut_pins[pin_name].write(0)
-    for pin_name, state in check_all_gpio_pins(tester, expander1, expander2).items():
-        if state:
-            print('Detected voltage on pin %s.' % pin_name, file=sys.stderr)
-            pin_failure = True
-    if pin_failure:
-            fail('FAIL 1150: Detected voltage on GPIO pin when all pins were driven low. See pins listed above.')
-
-    # test GPIO pins one at a time
-    for test_pin in list(gpio_pins):
-        eut_pins[test_pin].write(1)
-        for pin_name, state in check_all_gpio_pins(tester, expander1, expander2).items():
-            if (pin_name != test_pin) and state:
-                print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin), file=sys.stderr)
-                pin_failure = True
-            if (pin_name == test_pin) and not state:
-                print('Detected no voltage on pin %s when driven high.' % test_pin, file=sys.stderr)
-                pin_failure = True
-        eut_pins[test_pin].write(0)
-    if pin_failure:
-            fail('FAIL 1160: Test of individual GPIO pins failed. See pins listed above.')
-
-def test_leds(eut):
-    for led in range(1, 4):
-        LED(eut, led+1).set()
-    if not ask_user("Are LED2, LED3, and LED4 illuminated?"):
-        fail('FAIL 1200: User reported LED failure. Check LED2, LED3, LED4, R2, R3, R4, and U1 pins 3, 132, and 133.')
-    for led in range(1, 4):
-        LED(eut, led+1).clear()
-    if not ask_user("Is LED1 blinking?"):
-        fail('FAIL 1210: User reported LED1 failure. Check LED1, R1, and U1 pin 134.')
-
-def test_usb1(tester, eut):
-    fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=tester)
-    fd = facedancer.USBDevice.USBDevice(fdapp)
-    fd.connect()
-    fd_thread=threading.Thread(target=fd.run)
-    fd_thread.start()
-    try:
-        descriptor = eut.glitchkit.usb.capture_control_in(
-                request= eut.glitchkit.usb.GET_DESCRIPTOR,
-                value  = eut.glitchkit.usb.GET_DEVICE_DESCRIPTOR,
-                length = 18
-            )
-    except:
+            fd.stop()
+            fd_thread.join()
+            fd.disconnect()
+            self.fail('FAIL 1300: USB1 error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+        if descriptor != b'\x12\x01\x00\x02\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00':
+            self.fail('FAIL 1310: USB descriptor error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
         fd.stop()
         fd_thread.join()
         fd.disconnect()
-        fail('FAIL 1300: USB1 error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
-    if descriptor != b'\x12\x01\x00\x02\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00':
-        fail('FAIL 1310: USB descriptor error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
-    fd.stop()
-    fd_thread.join()
-    fd.disconnect()
 
-def find_tester():
-    devices = []
-    timeout = time.time() + 30
-    while len(devices) < 1:
-        try:
-            devices = GreatFET(find_all=True)
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            pass
-        if time.time() >= timeout:
-            print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
-            sys.exit(errno.ENODEV)
-        time.sleep(1)
-
-    if len(devices) > 1:
-        fail('FAIL 20: More than one GreatFET found. Connect only Tester to this host with USB.')
-
-    # Print the Tester's information...
-    tester = devices[0]
-    print("Found Tester {}.".format(tester.board_name()))
-    print("  Board ID: {}".format(tester.board_id()))
-    print("  Firmware version: {}".format(tester.firmware_version()))
-    print("  Part ID: {}".format(tester.part_id()))
-    print("  Serial number: {}".format(tester.serial_number()))
-    print(" ")
-
-    setup_tester_pins(tester)
-    tester_pins[other_pins["U4_E"]].write(1)
-    tester_pins[other_pins["U4_E"]].set_direction(tester.gpio.DIRECTION_OUT)
-    tester_pins[other_pins["U4_S0"]].set_direction(tester.gpio.DIRECTION_OUT)
-    tester_pins[other_pins["U4_S1"]].set_direction(tester.gpio.DIRECTION_OUT)
-    tester_pins[other_pins["U4_S2"]].set_direction(tester.gpio.DIRECTION_OUT)
-    return tester
-
-def initialize_jig(tester):
-    u1 = I2CDevice(tester.i2c, 0x4c>>1)
-    u2 = I2CDevice(tester.i2c, 0x4e>>1)
-
-    if read_io_expanders([u1]) == [255, 255, 255, 255, 255]:
-        fail('FAIL 100: I2C I/O expander U1 not detected. Connect Tester to Narcissus.')
-        sys.exit(errno.ENODEV)
-    if read_io_expanders([u2]) == [255, 255, 255, 255, 255]:
-        fail('FAIL 110: I2C I/O expander U2 not detected. Connect Tester to Narcissus.')
-        sys.exit(errno.ENODEV)
-    return u1, u2
-
-def test_reset_button(tester):
-    print('Press RESET button (SW2) on EUT.')
-    timeout = time.time() + 30
-    while time.time() < timeout:
-        if not check_gpio_pin(tester, other_pins['RESET_J7_P11']):
-            # debounce
-            time.sleep(0.1)
-            if (not check_gpio_pin(tester, other_pins['RESET_J7_P11'])) and (read_analog_voltage(tester, "EUT_VCC") > 3.2):
-                print('Detected RESET button.')
-                tester_pins[other_pins["RESET_J7_P11"]].write(0)
-                tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
-                return
-    fail('FAIL 600: Timeout while waiting for RESET button. Check SW2.')
-    tester_pins[other_pins["RESET_J7_P11"]].write(0)
-    tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
-
-def test_dfu_button(tester, expander):
-    print('Press DFU button (SW1) on EUT.')
-    timeout = time.time() + 30
-    while time.time() < timeout:
-        if read_io_expander_pin(expander, 3, 5):
-            # debounce
-            time.sleep(0.1)
-            if read_io_expander_pin(expander, 3, 5) and (read_analog_voltage(tester, "EUT_VCC") > 3.2):
-                print('Detected DFU button.')
-                return
-    fail('FAIL 610: Timeout while waiting for DFU button. Check SW1.')
-
-def flash_firmware(args, tester):
-    tester_pins[other_pins["5V_EN"]].write(0)
-    tester_serial = tester.serial_number()
-    print('Connect USB cable between EUT USB1 and Tester USB1.')
-    print('Connect EUT to this host with USB cable (J3/USB0) while pressing DFU button (SW1).')
-    tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_IN)
-    timeout = time.time() + 30
-    while True:
-        try:
-            greatfet_firmware.load_dfu_stub(args)
-            time.sleep(1)
-            break
-        except DeviceNotFoundError:
+    def find_tester(self):
+        devices = []
+        timeout = time.time() + 30
+        while len(devices) < 1:
+            try:
+                devices = GreatFET(find_all=True)
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+                pass
             if time.time() >= timeout:
-                print('FAIL 1100: EUT in DFU mode not found.', file=sys.stderr)
+                print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
                 sys.exit(errno.ENODEV)
-        except IOError:
-            print('DFU IOError', file=sys.stderr)
-            pass
+            time.sleep(1)
 
-    devices = GreatFET(find_all=True)
-    timeout = time.time() + 10
-    while len(devices) < 2:
-        if time.time() >= timeout:
-            print('FAIL 1110: EUT running from RAM not found.', file=sys.stderr)
+        if len(devices) > 1:
+            self.fail('FAIL 20: More than one GreatFET found. Connect only Tester to this host with USB.')
+
+        # Print the Tester's information...
+        self.tester = devices[0]
+        print("Found Tester {}.".format(self.tester.board_name()))
+        print("  Board ID: {}".format(self.tester.board_id()))
+        print("  Firmware version: {}".format(self.tester.firmware_version()))
+        print("  Part ID: {}".format(self.tester.part_id()))
+        print("  Serial number: {}".format(self.tester.serial_number()))
+        print(" ")
+
+        self.setup_tester_pins()
+        self.tester_pins[self.other_pins["U4_E"]].write(1)
+        self.tester_pins[self.other_pins["U4_E"]].set_direction(self.tester.gpio.DIRECTION_OUT)
+        self.tester_pins[self.other_pins["U4_S0"]].set_direction(self.tester.gpio.DIRECTION_OUT)
+        self.tester_pins[self.other_pins["U4_S1"]].set_direction(self.tester.gpio.DIRECTION_OUT)
+        self.tester_pins[self.other_pins["U4_S2"]].set_direction(self.tester.gpio.DIRECTION_OUT)
+
+    def initialize_jig(self):
+        self.u1 = I2CDevice(self.tester.i2c, 0x4c>>1)
+        self.u2 = I2CDevice(self.tester.i2c, 0x4e>>1)
+
+        if self.read_io_expanders([self.u1]) == [255, 255, 255, 255, 255]:
+            self.fail('FAIL 100: I2C I/O expander U1 not detected. Connect Tester to Narcissus.')
             sys.exit(errno.ENODEV)
-        if not devices:
-            print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+        if self.read_io_expanders([self.u2]) == [255, 255, 255, 255, 255]:
+            self.fail('FAIL 110: I2C I/O expander U2 not detected. Connect Tester to Narcissus.')
             sys.exit(errno.ENODEV)
-        time.sleep(1)
-        devices = GreatFET(find_all=True)
-    for device in devices:
-        if device.serial_number() != tester_serial:
-            eut = device
 
-    print('Writing data to SPI flash.')
-    greatfet_firmware.spi_flash_write(eut, args.write, args.address, log_verbose)
-    print('Write complete.')
-    print('Resetting EUT')
-    eut.reset(reconnect=False)
-    print("Reset complete!")
-    time.sleep(1)
+    def test_reset_button(self):
+        print('Press RESET button (SW2) on EUT.')
+        timeout = time.time() + 30
+        while time.time() < timeout:
+            if not self.check_gpio_pin(self.other_pins['RESET_J7_P11']):
+                # debounce
+                time.sleep(0.1)
+                if (not self.check_gpio_pin(self.other_pins['RESET_J7_P11'])) and (self.read_analog_voltage("EUT_VCC") > 3.2):
+                    print('Detected RESET button.')
+                    self.tester_pins[self.other_pins["RESET_J7_P11"]].write(0)
+                    self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_OUT)
+                    return
+        self.fail('FAIL 600: Timeout while waiting for RESET button. Check SW2.')
+        self.tester_pins[self.other_pins["RESET_J7_P11"]].write(0)
+        self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
-    devices = GreatFET(find_all=True)
-    timeout = time.time() + 10
-    while len(devices) < 2:
-        if time.time() >= timeout:
-            print('FAIL 1130: EUT running from flash not found.', file=sys.stderr)
-            sys.exit(errno.ENODEV)
-        if not devices:
-            print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
-            sys.exit(errno.ENODEV)
-        time.sleep(1)
-        devices = GreatFET(find_all=True)
-    for device in devices:
-        if device.serial_number() != tester_serial:
-            eut = device
+    def test_dfu_button(self):
+        print('Press DFU button (SW1) on EUT.')
+        timeout = time.time() + 30
+        while time.time() < timeout:
+            if self.read_io_expander_pin(self.u2, 3, 5):
+                # debounce
+                time.sleep(0.1)
+                if self.read_io_expander_pin(self.u2, 3, 5) and (self.read_analog_voltage("EUT_VCC") > 3.2):
+                    print('Detected DFU button.')
+                    return
+        self.fail('FAIL 610: Timeout while waiting for DFU button. Check SW1.')
 
-    # Print the EUT's information...
-    print("Found EUT {}.".format(eut.board_name()))
-    print("  Board ID: {}".format(eut.board_id()))
-    print("  Firmware version: {}".format(eut.firmware_version()))
-    print("  Part ID: {}".format(eut.part_id()))
-    print("  Serial number: {}".format(eut.serial_number()))
-    print(" ")
-
-    return eut
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Utility for testing GreatFET One")
-    parser.add_argument('-a', '--address', metavar='<n>', type=int,
-                        help="starting address (default: 0)", default=0)
-    parser.add_argument('-w', '--write', dest='write', metavar='<filename>', type=str,
-                        help="Write data from file", default='/tmp/greatfet_usb.bin')
-    parser.add_argument('--dfu-stub', dest='dfu_stub', metavar='<stub.dfu>', type=str,
-                        help="The stub to use for DFU programming. If not provided, the utility will attempt to automtaically find one.",
-                        default='/tmp/greatfet_usb.dfu')
-    args = parser.parse_args()
-
-    print("git-" + subprocess.getoutput('git log -n 1 --format=%hk'))
-
-    eut = None
-
-    tester = find_tester()
-
-    u1, u2 = initialize_jig(tester)
-
-    tester_pins[other_pins["RESET_J7_P11"]].write(0)
-    tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
-
-    tester_pins[other_pins["5V_EN"]].write(0)
-    tester_pins[other_pins["5V_EN"]].set_direction(tester.gpio.DIRECTION_OUT)
-
-    print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
-
-    eut_detected = False
-    while True:
-        if read_analog_voltage(tester, "EUT_VCC") > 0.2:
-            eut_detected = True
-        # debounce
-        time.sleep(0.5)
-        if eut_detected:
-            if read_analog_voltage(tester, "EUT_VCC") > 0.2:
+    def flash_firmware(self, args):
+        self.tester_pins[self.other_pins["5V_EN"]].write(0)
+        tester_serial = self.tester.serial_number()
+        print('Connect USB cable between EUT USB1 and Tester USB1.')
+        print('Connect EUT to this host with USB cable (J3/USB0) while pressing DFU button (SW1).')
+        self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_IN)
+        timeout = time.time() + 30
+        while True:
+            try:
+                greatfet_firmware.load_dfu_stub(args)
+                time.sleep(1)
                 break
+            except DeviceNotFoundError:
+                if time.time() >= timeout:
+                    print('FAIL 1100: EUT in DFU mode not found.', file=sys.stderr)
+                    sys.exit(errno.ENODEV)
+            except IOError:
+                print('DFU IOError', file=sys.stderr)
+                pass
 
-    print('Detected EUT.')
+        devices = GreatFET(find_all=True)
+        timeout = time.time() + 10
+        while len(devices) < 2:
+            if time.time() >= timeout:
+                print('FAIL 1110: EUT running from RAM not found.', file=sys.stderr)
+                sys.exit(errno.ENODEV)
+            if not devices:
+                print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+                sys.exit(errno.ENODEV)
+            time.sleep(1)
+            devices = GreatFET(find_all=True)
+        for device in devices:
+            if device.serial_number() != tester_serial:
+                eut = device
 
-    if read_analog_voltage(tester, "USB0_VBUS") > 4.0:
-        fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
-    if read_analog_voltage(tester, "USB1_VBUS") > 4.0:
-        fail('FAIL 160: USB1 cable detected. Unplug USB cable from EUT J4/USB1.')
-    if read_analog_voltage(tester, "EUT_VCC") > 2.5:
-        fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
+        # Print the EUT's information...
+        print("Found EUT {}.".format(eut.board_name()))
+        print("  Board ID: {}".format(eut.board_id()))
+        print("  Firmware version: {}".format(eut.firmware_version()))
+        print("  Part ID: {}".format(eut.part_id()))
+        print("  Serial number: {}".format(eut.serial_number()))
+        print(" ")
 
-    for signal in analog_signals.keys():
-        print(signal, read_analog_voltage(tester, signal))
-    print()
+        print('Writing data to SPI flash.')
+        greatfet_firmware.spi_flash_write(eut, args.write, args.address, log_verbose)
+        print('Write complete.')
+        print('Resetting EUT.')
+        eut.reset(reconnect=False)
+        print("Reset complete.")
+        time.sleep(1)
 
-    tester_pins[other_pins["5V_EN"]].write(1)
-    time.sleep(0.5)
+        devices = GreatFET(find_all=True)
+        timeout = time.time() + 10
+        while len(devices) < 2:
+            if time.time() >= timeout:
+                print('FAIL 1130: EUT running from flash not found.', file=sys.stderr)
+                sys.exit(errno.ENODEV)
+            if not devices:
+                print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+                sys.exit(errno.ENODEV)
+            time.sleep(1)
+            devices = GreatFET(find_all=True)
+        for device in devices:
+            if device.serial_number() != tester_serial:
+                self.eut = device
 
-    for signal in analog_signals.keys():
-        print(signal, read_analog_voltage(tester, signal))
-    print()
+    def main(self):
+        parser = argparse.ArgumentParser(
+            description="Utility for testing GreatFET One")
+        parser.add_argument('-a', '--address', metavar='<n>', type=int,
+                            help="starting address (default: 0)", default=0)
+        parser.add_argument('-w', '--write', dest='write', metavar='<filename>', type=str,
+                            help="Write data from file", default='/tmp/greatfet_usb.bin')
+        parser.add_argument('--dfu-stub', dest='dfu_stub', metavar='<stub.dfu>', type=str,
+                            help="The stub to use for DFU programming. If not provided, the utility will attempt to automtaically find one.",
+                            default='/tmp/greatfet_usb.dfu')
+        args = parser.parse_args()
 
-    if read_analog_voltage(tester, "EUT_5V") < 4.0:
-        tester_pins[other_pins["5V_EN"]].write(0)
-        fail('FAIL 170: EUT_5V too low. Check for shorts across C3 and C4.')
-    if read_analog_voltage(tester, "EUT_VCC") < 0.6:
-        tester_pins[other_pins["5V_EN"]].write(0)
-        fail('FAIL 180: EUT_VCC power not detected. Check U3.')
-    if read_analog_voltage(tester, "EUT_VCC") < 3.2:
-        tester_pins[other_pins["5V_EN"]].write(0)
-        fail('FAIL 190: EUT_VCC voltage too low. Check U3. Check for shorts across C3 and C4 and decoupling capacitors.')
+        print("git-" + subprocess.getoutput('git log -n 1 --format=%hk'))
 
-    # FIXME do this later
-    #if read_analog_signal(tester, "USB1_VBUS") <= 100:
-        #fail('FAIL XXX: USB1_VBUS not detected. Check connection of EUT to Narcissus. Check U5, C11.')
+        self.find_tester()
 
-    #if read_analog_signal(tester, "USB0_VBUS") < 100:
-        #tester_pins[other_pins["5V_EN"]].write(0)
-        #fail('FAIL 175: USB0_VBUS not detected. Check connection of EUT to Narcissus. Check D5, FB1, R25.')
-    #if read_analog_signal(tester, "VBUS_BYPASS") < 100:
-        #tester_pins[other_pins["5V_EN"]].write(0)
-        #fail('FAIL 180: VBUS_BYPASS not detected. Check connection of EUT to Narcissus. Check D5, FB1, R25.')
+        self.initialize_jig()
 
-    # check that all GND pins are low
-    if read_io_expander_pin(u2, 2, 4):
-        fail('FAIL 200: GND_J2_P1 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 1. Check J2 pin 1.')
-    if read_io_expander_pin(u1, 0, 1):
-        fail('FAIL 210: GND_J7_P1 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 1.')
-    if read_io_expander_pin(u2, 0, 6):
-        fail('FAIL 230: GND_J7_P19 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 19.')
+        self.tester_pins[self.other_pins["RESET_J7_P11"]].write(0)
+        self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
-    # check that all signals with pull-down resistors are low
-    if read_io_expander_pin(u1, 0, 5):
-        fail('FAIL 250: USB1_SENSE voltage detected. Check connection of EUT to Narcissus. Check U5, R16, R21, R22.')
-    if read_io_expander_pin(u1, 4, 2):
-        fail('FAIL 260: J1_P12 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 12, R8.')
-    if read_io_expander_pin(u2, 2, 2):
-        fail('FAIL 270: J7_P6 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 6, R7.')
-    if read_io_expander_pin(u2, 3, 5):
-        fail('FAIL 280: J2_P13 voltage detected. Check connection of EUT to Narcissus. Check J2 pin 13, R6.')
-    if check_gpio_pin(tester, 'J1_P35'):
-        fail('FAIL 290: USB1_EN voltage detected. Check R16.')
+        self.tester_pins[self.other_pins["5V_EN"]].write(0)
+        self.tester_pins[self.other_pins["5V_EN"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
-    if not read_io_expander_pin(u2, 0, 5): #VCC_J7_P20
-        fail('FAIL 310: EUT target power not detected. Check J1 pin 2, J7 pin 20, U3, C3, C4.')
-    #FIXME check EUT_VCC, EUT_5V, USB0_VBUS, VBUS_BYPASS, USB1_VBUS with ADC
+        print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
 
-    # check that all signals with pull-up resistors are high
-    #if not check_gpio_pin(tester, 'J1_P31'):
-        #fail('FAIL 320: RESET voltage not detected. Check J7 pin 11, R5, SW2, U1 pin 128.')
-    if not read_io_expander_pin(u1, 4, 3):
-        fail('FAIL 330: P1_1 voltage not detected. Check J1 pin 10, R26.')
-    if not read_io_expander_pin(u2, 4, 1):
-        fail('FAIL 340: WAKEUP0 voltage not detected. Check J2 pin 17, R14.')
-    if not read_io_expander_pin(u1, 0, 3):
-        fail('FAIL 350: USB1_FAULT voltage not detected. Check R24.')
-    if not read_io_expander_pin(u2, 3, 4):
-        fail('FAIL 360: P2_7 voltage not detected. Check J2 pin 14, R15.')
-    if not check_gpio_pin(tester, 'J2_P19'):
-        fail('FAIL 370: I2C0_SCL voltage not detected. Check J2 pin 40, R18.')
-    if not check_gpio_pin(tester, 'J2_P20'):
-        fail('FAIL 380: I2C0_SDA voltage not detected. Check J2 pin 39, R17.')
-    if not check_gpio_pin(tester, 'J1_P25'):
-        fail('FAIL 390: TDO voltage not detected. Check R12.')
-    if not check_gpio_pin(tester, 'J1_P27'):
-        fail('FAIL 390: TCK voltage not detected. Check R11.')
-    if not check_gpio_pin(tester, 'J1_P21'):
-        fail('FAIL 400: DBGEN voltage not detected. Check R10.')
-    if not read_io_expander_pin(u1, 0, 2):
-        fail('FAIL 410: LED1 voltage not detected. Check D1, R1.')
-    if not read_io_expander_pin(u1, 0, 4):
-        fail('FAIL 420: LED2 voltage not detected. Check D2, R2.')
-    if not read_io_expander_pin(u1, 1, 1):
-        fail('FAIL 430: LED3 voltage not detected. Check D3, R3.')
-    if not read_io_expander_pin(u1, 1, 2):
-        fail('FAIL 440: LED4 voltage not detected. Check D4, R4.')
+        eut_detected = False
+        while True:
+            if self.read_analog_voltage("EUT_VCC") > 0.2:
+                eut_detected = True
+            # debounce
+            time.sleep(0.5)
+            if eut_detected:
+                if self.read_analog_voltage("EUT_VCC") > 0.2:
+                    break
 
-    # check that all signals with pull-down resistors are still low
-    #FIXME there is enough reverse leakage through D5 to trigger USB0_SENSE
-    #if read_io_expander_pin(u1, 1, 0):
-        #fail('FAIL 450: USB0_SENSE voltage detected. Check D5, R25, R26.')
-    if read_io_expander_pin(u1, 0, 5):
-        fail('FAIL 460: USB1_SENSE voltage detected. Unplug cable from USB1. Check U5, R16, R21, R22.')
-    if read_io_expander_pin(u1, 4, 2):
-        fail('FAIL 470: P1_2 voltage detected. Check J1 pin 12, R8.')
-    if read_io_expander_pin(u2, 2, 2):
-        fail('FAIL 480: P2_9 voltage detected. Check J7 pin 6, R7.')
-    if read_io_expander_pin(u2, 3, 5):
-        fail('FAIL 490: P2_8 voltage detected. Check J2 pin 13, R6, SW1.')
-    if check_gpio_pin(tester, 'J1_P35'):
-        fail('FAIL 500: USB1_EN voltage detected. Check R16.')
+        print('Detected EUT.')
 
-    test_reset_button(tester)
-    test_dfu_button(tester, u2)
-    eut = flash_firmware(args, tester)
-    setup_eut_pins(eut)
-    test_gpio(eut, tester, u1, u2)
-    test_leds(eut)
-    test_usb1(tester, eut)
+        if self.read_analog_voltage("USB0_VBUS") > 4.0:
+            self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
+        if self.read_analog_voltage("USB1_VBUS") > 4.0:
+            self.fail('FAIL 160: USB1 cable detected. Unplug USB cable from EUT J4/USB1.')
+        if self.read_analog_voltage("EUT_VCC") > 2.5:
+            self.fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
 
-    diode_drop = read_analog_voltage(tester, "VBUS_BYPASS") - read_analog_voltage(tester, "EUT_5V")
-    print("D5 voltage drop: %.2f V" % diode_drop)
-    if diode_drop > 0.275:
-        fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
+        for signal in self.analog_signals.keys():
+            print(signal, self.read_analog_voltage(signal))
+        print()
 
-    print('PASS')
-    eut.reset(reconnect=False)
-    tester.reset(reconnect=False)
+        self.tester_pins[self.other_pins["5V_EN"]].write(1)
+        time.sleep(0.5)
+
+        for signal in self.analog_signals.keys():
+            print(signal, self.read_analog_voltage(signal))
+        print()
+
+        if self.read_analog_voltage("EUT_5V") < 4.0:
+            self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            self.fail('FAIL 170: EUT_5V too low. Check for shorts across C3 and C4.')
+        if self.read_analog_voltage("EUT_VCC") < 0.6:
+            self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            self.fail('FAIL 180: EUT_VCC power not detected. Check U3.')
+        if self.read_analog_voltage("EUT_VCC") < 3.2:
+            self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            self.fail('FAIL 190: EUT_VCC voltage too low. Check U3. Check for shorts across C3 and C4 and decoupling capacitors.')
+
+        # FIXME do this later
+        #if read_analog_signal(self.tester, "USB1_VBUS") <= 100:
+            #self.fail('FAIL XXX: USB1_VBUS not detected. Check connection of EUT to Narcissus. Check U5, C11.')
+
+        #if read_analog_signal(self.tester, "USB0_VBUS") < 100:
+            #self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            #self.fail('FAIL 175: USB0_VBUS not detected. Check connection of EUT to Narcissus. Check D5, FB1, R25.')
+        #if read_analog_signal(self.tester, "VBUS_BYPASS") < 100:
+            #self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            #self.fail('FAIL 180: VBUS_BYPASS not detected. Check connection of EUT to Narcissus. Check D5, FB1, R25.')
+
+        # check that all GND pins are low
+        if self.read_io_expander_pin(self.u2, 2, 4):
+            self.fail('FAIL 200: GND_J2_P1 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 1. Check J2 pin 1.')
+        if self.read_io_expander_pin(self.u1, 0, 1):
+            self.fail('FAIL 210: GND_J7_P1 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 1.')
+        if self.read_io_expander_pin(self.u2, 0, 6):
+            self.fail('FAIL 230: GND_J7_P19 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 19.')
+
+        # check that all signals with pull-down resistors are low
+        if self.read_io_expander_pin(self.u1, 0, 5):
+            self.fail('FAIL 250: USB1_SENSE voltage detected. Check connection of EUT to Narcissus. Check U5, R16, R21, R22.')
+        if self.read_io_expander_pin(self.u1, 4, 2):
+            self.fail('FAIL 260: J1_P12 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 12, R8.')
+        if self.read_io_expander_pin(self.u2, 2, 2):
+            self.fail('FAIL 270: J7_P6 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 6, R7.')
+        if self.read_io_expander_pin(self.u2, 3, 5):
+            self.fail('FAIL 280: J2_P13 voltage detected. Check connection of EUT to Narcissus. Check J2 pin 13, R6.')
+        if self.check_gpio_pin('J1_P35'):
+            self.fail('FAIL 290: USB1_EN voltage detected. Check R16.')
+
+        if not self.read_io_expander_pin(self.u2, 0, 5): #VCC_J7_P20
+            self.fail('FAIL 310: EUT target power not detected. Check J1 pin 2, J7 pin 20, U3, C3, C4.')
+        #FIXME check EUT_VCC, EUT_5V, USB0_VBUS, VBUS_BYPASS, USB1_VBUS with ADC
+
+        # check that all signals with pull-up resistors are high
+        #if not self.check_gpio_pin('J1_P31'):
+            #self.fail('FAIL 320: RESET voltage not detected. Check J7 pin 11, R5, SW2, U1 pin 128.')
+        if not self.read_io_expander_pin(self.u1, 4, 3):
+            self.fail('FAIL 330: P1_1 voltage not detected. Check J1 pin 10, R26.')
+        if not self.read_io_expander_pin(self.u2, 4, 1):
+            self.fail('FAIL 340: WAKEUP0 voltage not detected. Check J2 pin 17, R14.')
+        if not self.read_io_expander_pin(self.u1, 0, 3):
+            self.fail('FAIL 350: USB1_FAULT voltage not detected. Check R24.')
+        if not self.read_io_expander_pin(self.u2, 3, 4):
+            self.fail('FAIL 360: P2_7 voltage not detected. Check J2 pin 14, R15.')
+        if not self.check_gpio_pin('J2_P19'):
+            self.fail('FAIL 370: I2C0_SCL voltage not detected. Check J2 pin 40, R18.')
+        if not self.check_gpio_pin('J2_P20'):
+            self.fail('FAIL 380: I2C0_SDA voltage not detected. Check J2 pin 39, R17.')
+        if not self.check_gpio_pin('J1_P25'):
+            self.fail('FAIL 390: TDO voltage not detected. Check R12.')
+        if not self.check_gpio_pin('J1_P27'):
+            self.fail('FAIL 390: TCK voltage not detected. Check R11.')
+        if not self.check_gpio_pin('J1_P21'):
+            self.fail('FAIL 400: DBGEN voltage not detected. Check R10.')
+        if not self.read_io_expander_pin(self.u1, 0, 2):
+            self.fail('FAIL 410: LED1 voltage not detected. Check D1, R1.')
+        if not self.read_io_expander_pin(self.u1, 0, 4):
+            self.fail('FAIL 420: LED2 voltage not detected. Check D2, R2.')
+        if not self.read_io_expander_pin(self.u1, 1, 1):
+            self.fail('FAIL 430: LED3 voltage not detected. Check D3, R3.')
+        if not self.read_io_expander_pin(self.u1, 1, 2):
+            self.fail('FAIL 440: LED4 voltage not detected. Check D4, R4.')
+
+        # check that all signals with pull-down resistors are still low
+        #FIXME there is enough reverse leakage through D5 to trigger USB0_SENSE
+        #if self.read_io_expander_pin(self.u1, 1, 0):
+            #self.fail('FAIL 450: USB0_SENSE voltage detected. Check D5, R25, R26.')
+        if self.read_io_expander_pin(self.u1, 0, 5):
+            self.fail('FAIL 460: USB1_SENSE voltage detected. Unplug cable from USB1. Check U5, R16, R21, R22.')
+        if self.read_io_expander_pin(self.u1, 4, 2):
+            self.fail('FAIL 470: P1_2 voltage detected. Check J1 pin 12, R8.')
+        if self.read_io_expander_pin(self.u2, 2, 2):
+            self.fail('FAIL 480: P2_9 voltage detected. Check J7 pin 6, R7.')
+        if self.read_io_expander_pin(self.u2, 3, 5):
+            self.fail('FAIL 490: P2_8 voltage detected. Check J2 pin 13, R6, SW1.')
+        if self.check_gpio_pin('J1_P35'):
+            self.fail('FAIL 500: USB1_EN voltage detected. Check R16.')
+
+        self.test_reset_button()
+        self.test_dfu_button()
+        self.flash_firmware(args)
+        self.setup_eut_pins()
+        self.test_gpio()
+        self.test_leds()
+        self.test_usb1()
+
+        diode_drop = self.read_analog_voltage("VBUS_BYPASS") - self.read_analog_voltage("EUT_5V")
+        print("D5 voltage drop: %.2f V" % diode_drop)
+        if diode_drop > 0.275:
+            self.fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
+
+        print('PASS')
+        self.eut.reset(reconnect=False)
+        self.tester.reset(reconnect=False)
 
 if __name__ == '__main__':
-    main()
+    Narcissus().main()
