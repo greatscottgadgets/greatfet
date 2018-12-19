@@ -240,6 +240,15 @@ class GreatBoard(object):
             raise DeviceNotFoundError()
 
 
+    def version_warnings(self):
+        """ Returns any warning messages relevant to the device's firmware version.
+        Can be used to warn the user when an upgrade is required.
+
+        Returns a string with any warnings, or None  if no warnings apply.
+        """
+        return None
+
+
     def initialize_apis(self):
         """ Hook-point for sub-boards to initialize their APIs after
             we have comms up and running and auto-enumeration is complete.
