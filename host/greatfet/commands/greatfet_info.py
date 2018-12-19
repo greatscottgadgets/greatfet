@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import textwrap
 import argparse
 import inspect
 import errno
@@ -22,6 +23,13 @@ def print_core_info(device):
     print("  Firmware version: {}".format(device.firmware_version()))
     print("  Part ID: {}".format(device.part_id()))
     print("  Serial number: {}".format(device.serial_number()))
+
+    # If this board has any version warnings to display, dipslay them.
+    warnings = device.version_warnings()
+    if warnings:
+        wrapped_warnings = textwrap.wrap(warnings)
+        wrapped_warnings = "\n".join(["    {}".format(line) for line in wrapped_warnings])
+        print("\n  !!! WARNING !!!\n{}\n".format(wrapped_warnings))
 
 
 def print_apis(device):
@@ -61,7 +69,7 @@ def print_apis(device):
             method_summary = method_first_line[0][0:60]
             print("      {} -- {}".format(method_name, method_summary))
 
-        # If we had nothing to print for the class, 
+        # If we had nothing to print for the class,
         if not printed:
             print("      <no introspectable methods>")
 
