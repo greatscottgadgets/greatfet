@@ -361,6 +361,19 @@ COMMS_DECLARE_HELPERS(uint32_t);
 COMMS_DECLARE_HELPERS(int8_t);
 COMMS_DECLARE_HELPERS(int16_t);
 COMMS_DECLARE_HELPERS(int32_t);
+COMMS_DECLARE_HELPERS(_Bool);
+
+/** Alias for _Bool, per the C standard. */
+static inline void *comms_response_add_bool(struct command_transaction *trans, bool response)
+{
+	return comms_response_add__Bool(trans, response);
+}
+
+/** Alias for _Bool, per the C standard. */
+static inline bool comms_argument_parse_bool(struct command_transaction *trans)
+{
+	return comms_argument_parse__Bool(trans);
+}
 
 
 /**

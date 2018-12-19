@@ -569,11 +569,11 @@ int usb_host_transfer(usb_peripheral_t *host, ehci_queue_head_t *qh, const usb_t
 	}
 
 	// Return an error code if the transaction errored out.
-	if (transfer_state.stalled) {
-		return EPIPE;
-	}
 	if (transfer_state.error) {
 		return EIO;
+	}
+	if (transfer_state.stalled) {
+		return EPIPE;
 	}
 
 	// If we got here, everything went well!

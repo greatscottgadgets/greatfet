@@ -67,6 +67,7 @@ COMMS_DEFINE_HELPERS(uint32_t);
 COMMS_DEFINE_HELPERS(int8_t);
 COMMS_DEFINE_HELPERS(int16_t);
 COMMS_DEFINE_HELPERS(int32_t);
+COMMS_DEFINE_HELPERS(_Bool);
 
 void *comms_response_add_string(struct command_transaction *trans, char const *const response)
 {
