@@ -39,8 +39,7 @@ class I2CBus(GreatFETPeripheral):
         self.duty_cycle_count = duty_cycle_count
 
         # Set up the I2C bus for communications.
-        board.comms._vendor_request_out(vendor_requests.I2C_START, value=duty_cycle_count)
-
+        board.apis.i2c.start(duty_cycle_count)
 
     def attach_device(self, device):
         """
