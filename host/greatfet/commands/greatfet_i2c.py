@@ -4,9 +4,9 @@
 
 from __future__ import print_function
 
-import argparse
 import errno
 import sys
+import ast
 
 import greatfet
 from greatfet import GreatFET
@@ -16,15 +16,14 @@ from greatfet.peripherals.i2c_bus import I2CBus
 
 
 def main():
+    from greatfet.utils import GreatFETArgumentParser
+
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for I2C communication via GreatFET")
-    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
-                        help="Serial number of device, if multiple devices", default=None)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser = GreatFETArgumentParser(description="Utility for I2C communication via GreatFET")
     parser.add_argument('-z', '--scan', action='store_true', help="Scan all possible i2c addresses")
-    parser.add_argument('-a', '--address', nargs=1, type=str, help="Address to transmit data to over the I2C Bus") 
-    parser.add_argument('-t', '--transmit', metavar='data', default=[], help="Data to transmit over the I2C Bus")
-    parser.add_argument('-r', '--receive_length', default=1, help="Number of bytes expecting to receive from the I2C Bus")
+    parser.add_argument('transmit', nargs='*', type=ast.literal_eval, default=[], help="Data to transmit over the I2C Bus <byte byte byte..>")
+    parser.add_argument('-a', '--address', nargs=1, type=ast.literal_eval, help="Address to transmit data to over the I2C Bus") 
+    parser.add_argument('-r', '--receive_length', default=0, help="Number of bytes expecting to receive from the I2C Bus")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -55,11 +54,14 @@ def scan(device, log_function):
     
 
 def transmit(device, address, data, receive_length, log_function):
-    i2c_device = I2CDevice(device.i2c, int(address, 16)>>1)
-    received_data = i2c_device.transmit(data, receive_length)
-    log_function("received bytes:")
-    for byte in received_data:
-        log_function(hex(byte))
+    i2c_device = I2CDevice(device.i2c, address >> 1)
+    received_data, i2c_status = i2c_device.transmit(data, receive_length)
+    if received_data:
+        log_function("received bytes:")
+        for byte in received_data:
+            log_function(hex(byte))
+    log_function("i2c status:")
+    log_function(hex(i2c_status))
 
 
 if __name__ == '__main__':
