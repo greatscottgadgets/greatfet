@@ -10,7 +10,6 @@
 
 #include "legacy_apis/usb_api_adc.h"
 #include "legacy_apis/usb_api_spi.h"
-#include "legacy_apis/usb_api_i2c.h"
 #include "legacy_apis/usb_api_leds.h"
 #include "legacy_apis/usb_api_logic_analyzer.h"
 #include "legacy_apis/usb_api_sdir.h"
@@ -35,11 +34,11 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	usb_vendor_request_spi_write,
 	usb_vendor_request_spi_read,
 	usb_vendor_request_spi_dump_flash,
-	usb_vendor_request_i2c_start,
-	usb_vendor_request_i2c_stop,
-	usb_vendor_request_i2c_xfer,
-	usb_vendor_request_i2c_response,
-	usb_vendor_request_i2c_get_status,
+	NULL, //usb_vendor_request_i2c_start,
+	NULL, //usb_vendor_request_i2c_stop,
+	NULL, //usb_vendor_request_i2c_xfer,
+	NULL, //usb_vendor_request_i2c_response,
+	NULL, //usb_vendor_request_i2c_get_status,
 	usb_vendor_request_logic_analyzer_start,
 	usb_vendor_request_logic_analyzer_stop,
 	NULL, //usb_vendor_request_reset,
