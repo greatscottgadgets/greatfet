@@ -188,12 +188,12 @@ def ask_user(question):
             print('Please respond with \'y\' or \'n\'.')
 
 def fail(message):
-    if tester:
-        try:
-            tester.reset(reconnect=False)
-        except:
-            pass
-    print(message, file=sys.stderr)
+    #if tester:
+        #try:
+            #tester.reset(reconnect=False)
+        #except:
+            #pass
+    print(message, file=sys.stdout)
     sys.exit()
 
 def read_adc(device):
@@ -261,7 +261,7 @@ def test_gpio(eut, tester, expander1, expander2):
     pin_failure = False
     for pin_name, state in check_all_gpio_pins(tester, expander1, expander2).items():
         if not state:
-            print('Detected no voltage on pin %s.' % pin_name, file=sys.stderr)
+            print('Detected no voltage on pin %s.' % pin_name, file=sys.stdout)
             pin_failure = True
     if pin_failure:
             fail('FAIL 1140: Detected no voltage on GPIO pin when all pins were driven high. See pins listed above.')
@@ -271,7 +271,7 @@ def test_gpio(eut, tester, expander1, expander2):
         eut_pins[pin_name].write(0)
     for pin_name, state in check_all_gpio_pins(tester, expander1, expander2).items():
         if state:
-            print('Detected voltage on pin %s.' % pin_name, file=sys.stderr)
+            print('Detected voltage on pin %s.' % pin_name, file=sys.stdout)
             pin_failure = True
     if pin_failure:
             fail('FAIL 1150: Detected voltage on GPIO pin when all pins were driven low. See pins listed above.')
@@ -281,10 +281,10 @@ def test_gpio(eut, tester, expander1, expander2):
         eut_pins[test_pin].write(1)
         for pin_name, state in check_all_gpio_pins(tester, expander1, expander2).items():
             if (pin_name != test_pin) and state:
-                print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin), file=sys.stderr)
+                print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin), file=sys.stdout)
                 pin_failure = True
             if (pin_name == test_pin) and not state:
-                print('Detected no voltage on pin %s when driven high.' % test_pin, file=sys.stderr)
+                print('Detected no voltage on pin %s when driven high.' % test_pin, file=sys.stdout)
                 pin_failure = True
         eut_pins[test_pin].write(0)
     if pin_failure:
@@ -333,7 +333,7 @@ def find_tester():
             print("Unexpected error:", sys.exc_info()[0])
             pass
         if time.time() >= timeout:
-            print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+            print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stdout)
             sys.exit(errno.ENODEV)
         time.sleep(1)
 
@@ -381,7 +381,7 @@ def test_reset_button(tester):
                 tester_pins[other_pins["RESET_J7_P11"]].write(0)
                 tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
                 return
-    fail('FAIL 600: Timeout while waiting for RESET button. Check SW2.')
+    fail("FAIL 600: Timeout while waiting for RESET button. Check SW2.")
     tester_pins[other_pins["RESET_J7_P11"]].write(0)
     tester_pins[other_pins["RESET_J7_P11"]].set_direction(tester.gpio.DIRECTION_OUT)
 
@@ -395,7 +395,7 @@ def test_dfu_button(tester, expander):
             if read_io_expander_pin(expander, 3, 5) and (read_analog_voltage(tester, "EUT_VCC") > 3.2):
                 print('Detected DFU button.')
                 return
-    fail('FAIL 610: Timeout while waiting for DFU button. Check SW1.')
+    fail("FAIL 610: Timeout while waiting for DFU button. Check SW1.")
 
 def flash_firmware(args, tester):
     tester_pins[other_pins["5V_EN"]].write(0)
@@ -411,20 +411,20 @@ def flash_firmware(args, tester):
             break
         except DeviceNotFoundError:
             if time.time() >= timeout:
-                print('FAIL 1100: EUT in DFU mode not found.', file=sys.stderr)
+                print("FAIL 1100: EUT in DFU mode not found.", file=sys.stdout)
                 sys.exit(errno.ENODEV)
         except IOError:
-            print('DFU IOError', file=sys.stderr)
+            print('DFU IOError', file=sys.stdout)
             pass
 
     devices = GreatFET(find_all=True)
     timeout = time.time() + 10
     while len(devices) < 2:
         if time.time() >= timeout:
-            print('FAIL 1110: EUT running from RAM not found.', file=sys.stderr)
+            print("FAIL 1110: EUT running from RAM not found.", file=sys.stdout)
             sys.exit(errno.ENODEV)
         if not devices:
-            print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+            print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stdout)
             sys.exit(errno.ENODEV)
         time.sleep(1)
         devices = GreatFET(find_all=True)
@@ -444,10 +444,10 @@ def flash_firmware(args, tester):
     timeout = time.time() + 10
     while len(devices) < 2:
         if time.time() >= timeout:
-            print('FAIL 1130: EUT running from flash not found.', file=sys.stderr)
+            print("FAIL 1130: EUT running from flash not found.", file=sys.stdout)
             sys.exit(errno.ENODEV)
         if not devices:
-            print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+            print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stdout)
             sys.exit(errno.ENODEV)
         time.sleep(1)
         devices = GreatFET(find_all=True)
@@ -471,10 +471,11 @@ def main():
     parser.add_argument('-a', '--address', metavar='<n>', type=int,
                         help="starting address (default: 0)", default=0)
     parser.add_argument('-w', '--write', dest='write', metavar='<filename>', type=str,
-                        help="Write data from file", default='/tmp/greatfet_usb.bin')
+                        help="Write data from file",
+                        default='/home/greatfet/releases/greatfet-2018.12.1/firmware-bin/greatfet_usb.bin')
     parser.add_argument('--dfu-stub', dest='dfu_stub', metavar='<stub.dfu>', type=str,
                         help="The stub to use for DFU programming. If not provided, the utility will attempt to automtaically find one.",
-                        default='/tmp/greatfet_usb.dfu')
+                        default='/home/greatfet/releases/greatfet-2018.12.1/firmware-bin/flash_stub.dfu')
     args = parser.parse_args()
 
     print("git-" + subprocess.getoutput('git log -n 1 --format=%hk'))
@@ -491,6 +492,10 @@ def main():
     tester_pins[other_pins["5V_EN"]].write(0)
     tester_pins[other_pins["5V_EN"]].set_direction(tester.gpio.DIRECTION_OUT)
 
+    for signal in sorted(analog_signals.keys()):
+        print(signal, read_analog_voltage(tester, signal))
+    print()
+
     print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
 
     eut_detected = False
@@ -505,6 +510,10 @@ def main():
 
     print('Detected EUT.')
 
+    for signal in sorted(analog_signals.keys()):
+        print(signal, read_analog_voltage(tester, signal))
+    print()
+
     if read_analog_voltage(tester, "USB0_VBUS") > 4.0:
         fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
     if read_analog_voltage(tester, "USB1_VBUS") > 4.0:
@@ -512,14 +521,10 @@ def main():
     if read_analog_voltage(tester, "EUT_VCC") > 2.5:
         fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
 
-    for signal in analog_signals.keys():
-        print(signal, read_analog_voltage(tester, signal))
-    print()
-
     tester_pins[other_pins["5V_EN"]].write(1)
     time.sleep(0.5)
 
-    for signal in analog_signals.keys():
+    for signal in sorted(analog_signals.keys()):
         print(signal, read_analog_voltage(tester, signal))
     print()
 
@@ -627,8 +632,8 @@ def main():
         fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
 
     print('PASS')
-    eut.reset(reconnect=False)
-    tester.reset(reconnect=False)
+    #eut.reset(reconnect=False)
+    #tester.reset(reconnect=False)
 
 if __name__ == '__main__':
     main()
