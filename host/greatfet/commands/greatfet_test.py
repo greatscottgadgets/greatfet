@@ -152,6 +152,109 @@ class Narcissus:
         "5V_EN"           : "J2_P8"
     }
 
+    u1_pin_connections = {
+        "J1_P1"  : "GND",
+        "J1_P2"  : "VCC",
+        "J1_P3"  : "U1 pin 33",
+        "J1_P4"  : "U1 pin 32",
+        "J1_P5"  : "U1 pin 35",
+        "J1_P6"  : "U1 pin 34",
+        "J1_P7"  : "U1 pin 38",
+        "J1_P8"  : "U1 pin 37",
+        "J1_P9"  : "U1 pin 39",
+        "J1_P10" : "U1 pin 42",
+        "J1_P11" : "U1 pin 45",
+        "J1_P12" : "U1 pin 43",
+        "J1_P13" : "U1 pin 48",
+        "J1_P14" : "U1 pin 46",
+        "J1_P15" : "U1 pin 50",
+        "J1_P16" : "U1 pin 49",
+        "J1_P17" : "U1 pin 52",
+        "J1_P18" : "U1 pin 51",
+        "J1_P19" : "U1 pin 54",
+        "J1_P20" : "U1 pin 53",
+        "J1_P21" : "U1 pin 56",
+        "J1_P22" : "U1 pin 55",
+        "J1_P23" : "U1 pin 58",
+        "J1_P24" : "U1 pin 57",
+        "J1_P25" : "U1 pin 61",
+        "J1_P26" : "U1 pin 60",
+        "J1_P27" : "U1 pin 63",
+        "J1_P28" : "U1 pin 62",
+        "J1_P29" : "U1 pin 65",
+        "J1_P30" : "U1 pin 64",
+        "J1_P31" : "U1 pin 67",
+        "J1_P32" : "U1 pin 66",
+        "J1_P33" : "U1 pin 69",
+        "J1_P34" : "U1 pin 72",
+        "J1_P35" : "U1 pin 75",
+        "J1_P36" : "U1 pin 73",
+        "J1_P37" : "U1 pin 70",
+        "J1_P38" : "U1 pin 68",
+        "J1_P39" : "U1 pin 47",
+        "J1_P40" : "U1 pin 44",
+        "J2_P1"  : "GND",
+        "J2_P2"  : "5V",
+        "J2_P3"  : "U1 pin 15",
+        "J2_P4"  : "U1 pin 1",
+        "J2_P5"  : "U1 pin 6",
+        "J2_P6"  : "U1 pin 10",
+        "J2_P7"  : "U1 pin 9",
+        "J2_P8"  : "U1 pin 8",
+        "J2_P9"  : "U1 pin 7",
+        "J2_P10" : "U1 pin 11",
+        "J2_P11" : "U1 pin 14",
+        "J2_P12" : "U1 pin 99",
+        "J2_P13" : "U1 pin 98",
+        "J2_P14" : "U1 pin 96",
+        "J2_P15" : "U1 pin 95",
+        "J2_P16" : "U1 pin 140",
+        "J2_P17" : "U1 pin 130",
+        "J2_P18" : "U1 pin 91",
+        "J2_P19" : "U1 pin 88",
+        "J2_P20" : "U1 pin 87",
+        "J2_P21" : "U1 pin 120",
+        "J2_P22" : "U1 pin 116",
+        "J2_P23" : "U1 pin 115",
+        "J2_P24" : "U1 pin 114",
+        "J2_P25" : "U1 pin 113",
+        "J2_P26" : "U1 pin 112",
+        "J2_P27" : "U1 pin 110",
+        "J2_P28" : "U1 pin 119",
+        "J2_P29" : "U1 pin 86",
+        "J2_P30" : "U1 pin 123",
+        "J2_P31" : "U1 pin 85",
+        "J2_P32" : "U1 pin 118",
+        "J2_P33" : "U1 pin 84",
+        "J2_P34" : "U1 pin 83",
+        "J2_P35" : "U1 pin 81",
+        "J2_P36" : "U1 pin 79",
+        "J2_P37" : "U1 pin 121",
+        "J2_P38" : "U1 pin 122",
+        "J2_P39" : "U1 pin 93",
+        "J2_P40" : "U1 pin 92",
+        "J7_P1"  : "GND",
+        "J7_P2"  : "U1 pin 80",
+        "J7_P3"  : "U1 pin 82",
+        "J7_P4"  : "U1 pin 144",
+        "J7_P5"  : "U1 pin 143",
+        "J7_P6"  : "U1 pin 102",
+        "J7_P7"  : "U1 pin 106",
+        "J7_P8"  : "U1 pin 108",
+        "J7_P9"  : "U1 pin 129",
+        "J7_P10" : "GND",
+        "J7_P11" : "U1 pin 128",
+        "J7_P12" : "U1 pin 127",
+        "J7_P13" : "U1 pin 105",
+        "J7_P14" : "U1 pin 104",
+        "J7_P15" : "U1 pin 100",
+        "J7_P16" : "U1 pin 97",
+        "J7_P17" : "U1 pin 78",
+        "J7_P18" : "U1 pin 74",
+        "J7_P19" : "GND",
+        "J7_P20" : "VCC"
+    }
+
     # how analog signals are connected to the multiplexer (U4)
     analog_signals = {
         "VBUS_BYPASS" : 0,
@@ -271,7 +374,7 @@ class Narcissus:
         pin_failure = False
         for pin_name, state in self.check_all_gpio_pins().items():
             if not state:
-                self.print('Detected no voltage on pin %s.' % pin_name)
+                self.print('Detected no voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
                 #FIXME print corresponding U1 pin
                 pin_failure = True
         if pin_failure:
@@ -282,7 +385,7 @@ class Narcissus:
             self.eut_pins[pin_name].write(0)
         for pin_name, state in self.check_all_gpio_pins().items():
             if state:
-                self.print('Detected voltage on pin %s.' % pin_name)
+                self.print('Detected voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
                 #FIXME print corresponding U1 pin
                 pin_failure = True
         if pin_failure:
@@ -293,11 +396,11 @@ class Narcissus:
             self.eut_pins[test_pin].write(1)
             for pin_name, state in self.check_all_gpio_pins().items():
                 if (pin_name != test_pin) and state:
-                    self.print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin))
+                    self.print('Detected voltage on pin %s (%s) when %s (%s) driven high.' % (pin_name, self.u1_pin_connections[pin_name], test_pin, self.u1_pin_connections[test_pin]))
                     #FIXME print corresponding U1 pins
                     pin_failure = True
                 if (pin_name == test_pin) and not state:
-                    self.print('Detected no voltage on pin %s when driven high.' % test_pin)
+                    self.print('Detected no voltage on pin %s (%s) when driven high.' % (test_pin, self.u1_pin_connections[test_pin]))
                     #FIXME print corresponding U1 pin
                     pin_failure = True
             self.eut_pins[test_pin].write(0)
