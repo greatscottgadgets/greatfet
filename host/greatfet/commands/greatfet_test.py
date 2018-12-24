@@ -197,11 +197,11 @@ class Narcissus:
                 print('Please respond with \'y\' or \'n\'.')
 
     def fail(self, message):
-        if self.tester:
-            try:
-                self.tester.reset(reconnect=False)
-            except:
-                pass
+        #if self.tester:
+            #try:
+                #self.tester.reset(reconnect=False)
+            #except:
+                #pass
         print(message, file=sys.stderr)
         sys.exit()
 
@@ -497,6 +497,10 @@ class Narcissus:
         self.tester_pins[self.other_pins["5V_EN"]].write(0)
         self.tester_pins[self.other_pins["5V_EN"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
+        for signal in sorted(self.analog_signals.keys()):
+            print(signal, self.read_analog_voltage(signal))
+        print()
+
         print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
 
         eut_detected = False
@@ -511,6 +515,10 @@ class Narcissus:
 
         print('Detected EUT.')
 
+        for signal in sorted(self.analog_signals.keys()):
+            print(signal, self.read_analog_voltage(signal))
+        print()
+
         if self.read_analog_voltage("USB0_VBUS") > 4.0:
             self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
         if self.read_analog_voltage("USB1_VBUS") > 4.0:
@@ -518,14 +526,10 @@ class Narcissus:
         if self.read_analog_voltage("EUT_VCC") > 2.5:
             self.fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
 
-        for signal in self.analog_signals.keys():
-            print(signal, self.read_analog_voltage(signal))
-        print()
-
         self.tester_pins[self.other_pins["5V_EN"]].write(1)
         time.sleep(0.5)
 
-        for signal in self.analog_signals.keys():
+        for signal in sorted(self.analog_signals.keys()):
             print(signal, self.read_analog_voltage(signal))
         print()
 
@@ -633,8 +637,8 @@ class Narcissus:
             self.fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
 
         print('PASS')
-        self.eut.reset(reconnect=False)
-        self.tester.reset(reconnect=False)
+        #self.eut.reset(reconnect=False)
+        #self.tester.reset(reconnect=False)
 
 if __name__ == '__main__':
     Narcissus().main()
