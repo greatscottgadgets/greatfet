@@ -175,6 +175,8 @@ class Narcissus:
         "EUT_ADC0_5"  : 1
     }
 
+    logfile = None
+
     # tester is the GreatFET One for which the Narcissus is a neighbor
     tester = None
 
@@ -189,12 +191,12 @@ class Narcissus:
     tester_pins = {}
 
     def ask_user(self, question):
-        print('%s [y/n]' % question)
+        self.print('%s [y/n]' % question)
         while True:
             try:
                 return strtobool(input())
             except ValueError:
-                print('Please respond with \'y\' or \'n\'.')
+                self.print('Please respond with \'y\' or \'n\'.')
 
     def fail(self, message):
         #if self.tester:
@@ -202,7 +204,7 @@ class Narcissus:
                 #self.tester.reset(reconnect=False)
             #except:
                 #pass
-        print(message, file=sys.stderr)
+        self.print(message)
         sys.exit()
 
     def read_adc(self, device):
@@ -269,7 +271,7 @@ class Narcissus:
         pin_failure = False
         for pin_name, state in self.check_all_gpio_pins().items():
             if not state:
-                print('Detected no voltage on pin %s.' % pin_name, file=sys.stderr)
+                self.print('Detected no voltage on pin %s.' % pin_name)
                 #FIXME print corresponding U1 pin
                 pin_failure = True
         if pin_failure:
@@ -280,7 +282,7 @@ class Narcissus:
             self.eut_pins[pin_name].write(0)
         for pin_name, state in self.check_all_gpio_pins().items():
             if state:
-                print('Detected voltage on pin %s.' % pin_name, file=sys.stderr)
+                self.print('Detected voltage on pin %s.' % pin_name)
                 #FIXME print corresponding U1 pin
                 pin_failure = True
         if pin_failure:
@@ -291,11 +293,11 @@ class Narcissus:
             self.eut_pins[test_pin].write(1)
             for pin_name, state in self.check_all_gpio_pins().items():
                 if (pin_name != test_pin) and state:
-                    print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin), file=sys.stderr)
+                    self.print('Detected voltage on pin %s when %s driven high.' % (pin_name, test_pin))
                     #FIXME print corresponding U1 pins
                     pin_failure = True
                 if (pin_name == test_pin) and not state:
-                    print('Detected no voltage on pin %s when driven high.' % test_pin, file=sys.stderr)
+                    self.print('Detected no voltage on pin %s when driven high.' % test_pin)
                     #FIXME print corresponding U1 pin
                     pin_failure = True
             self.eut_pins[test_pin].write(0)
@@ -342,10 +344,10 @@ class Narcissus:
             try:
                 devices = GreatFET(find_all=True)
             except:
-                print("Unexpected error:", sys.exc_info()[0])
+                self.print("Unexpected error: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
-                print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+                self.print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
             time.sleep(1)
 
@@ -354,12 +356,12 @@ class Narcissus:
 
         # Print the Tester's information...
         self.tester = devices[0]
-        print("Found Tester {}.".format(self.tester.board_name()))
-        print("  Board ID: {}".format(self.tester.board_id()))
-        print("  Firmware version: {}".format(self.tester.firmware_version()))
-        print("  Part ID: {}".format(self.tester.part_id()))
-        print("  Serial number: {}".format(self.tester.serial_number()))
-        print(" ")
+        self.print("Found Tester {}.".format(self.tester.board_name()))
+        self.print("  Board ID: {}".format(self.tester.board_id()))
+        self.print("  Firmware version: {}".format(self.tester.firmware_version()))
+        self.print("  Part ID: {}".format(self.tester.part_id()))
+        self.print("  Serial number: {}".format(self.tester.serial_number()))
+        self.print(" ")
 
         self.setup_tester_pins()
         self.tester_pins[self.other_pins["U4_E"]].write(1)
@@ -380,14 +382,14 @@ class Narcissus:
             sys.exit(errno.ENODEV)
 
     def test_reset_button(self):
-        print('Press RESET button (SW2) on EUT.')
+        self.print('Press RESET button (SW2) on EUT.')
         timeout = time.time() + 30
         while time.time() < timeout:
             if not self.check_gpio_pin(self.other_pins['RESET_J7_P11']):
                 # debounce
                 time.sleep(0.1)
                 if (not self.check_gpio_pin(self.other_pins['RESET_J7_P11'])) and (self.read_analog_voltage("EUT_VCC") > 3.2):
-                    print('Detected RESET button.')
+                    self.print('Detected RESET button.')
                     self.tester_pins[self.other_pins["RESET_J7_P11"]].write(0)
                     self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_OUT)
                     return
@@ -396,22 +398,22 @@ class Narcissus:
         self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
     def test_dfu_button(self):
-        print('Press DFU button (SW1) on EUT.')
+        self.print('Press DFU button (SW1) on EUT.')
         timeout = time.time() + 30
         while time.time() < timeout:
             if self.read_io_expander_pin(self.u2, 3, 5):
                 # debounce
                 time.sleep(0.1)
                 if self.read_io_expander_pin(self.u2, 3, 5) and (self.read_analog_voltage("EUT_VCC") > 3.2):
-                    print('Detected DFU button.')
+                    self.print('Detected DFU button.')
                     return
         self.fail('FAIL 610: Timeout while waiting for DFU button. Check SW1.')
 
     def flash_firmware(self, args):
         self.tester_pins[self.other_pins["5V_EN"]].write(0)
         tester_serial = self.tester.serial_number()
-        print('Connect USB cable between EUT USB1 and Tester USB1.')
-        print('Connect EUT to this host with USB cable (J3/USB0) while pressing DFU button (SW1).')
+        self.print('Connect USB cable between EUT USB1 and Tester USB1.')
+        self.print('Connect EUT to this host with USB cable (J3/USB0) while pressing DFU button (SW1).')
         self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_IN)
         timeout = time.time() + 30
         while True:
@@ -421,20 +423,20 @@ class Narcissus:
                 break
             except DeviceNotFoundError:
                 if time.time() >= timeout:
-                    print('FAIL 1100: EUT in DFU mode not found.', file=sys.stderr)
+                    self.print('FAIL 1100: EUT in DFU mode not found.')
                     sys.exit(errno.ENODEV)
             except IOError:
-                print('DFU IOError', file=sys.stderr)
+                self.print('DFU IOError')
                 pass
 
         devices = GreatFET(find_all=True)
         timeout = time.time() + 10
         while len(devices) < 2:
             if time.time() >= timeout:
-                print('FAIL 1110: EUT running from RAM not found.', file=sys.stderr)
+                self.print('FAIL 1110: EUT running from RAM not found.')
                 sys.exit(errno.ENODEV)
             if not devices:
-                print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+                self.print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
             time.sleep(1)
             devices = GreatFET(find_all=True)
@@ -443,29 +445,32 @@ class Narcissus:
                 eut = device
 
         # Print the EUT's information...
-        print("Found EUT {}.".format(eut.board_name()))
-        print("  Board ID: {}".format(eut.board_id()))
-        print("  Firmware version: {}".format(eut.firmware_version()))
-        print("  Part ID: {}".format(eut.part_id()))
-        print("  Serial number: {}".format(eut.serial_number()))
-        print(" ")
+        self.print("Found EUT {}.".format(eut.board_name()))
+        self.print("  Board ID: {}".format(eut.board_id()))
+        self.print("  Firmware version: {}".format(eut.firmware_version()))
+        self.print("  Part ID: {}".format(eut.part_id()))
+        self.print("  Serial number: {}".format(eut.serial_number()))
+        self.print(" ")
 
-        print('Writing data to SPI flash.')
-        greatfet_firmware.spi_flash_write(eut, args.write, args.address, log_verbose)
-        print('Write complete.')
-        print('Resetting EUT.')
+        self.print('Writing data to SPI flash.')
+        try:
+            greatfet_firmware.spi_flash_write(eut, args.write, args.address, log_verbose)
+        except:
+            self.fail('FAIL 1125: Error reading from file or writing to flash.')
+        self.print('Write complete.')
+        self.print('Resetting EUT.')
         eut.reset(reconnect=False)
-        print("Reset complete.")
+        self.print("Reset complete.")
         time.sleep(1)
 
         devices = GreatFET(find_all=True)
         timeout = time.time() + 10
         while len(devices) < 2:
             if time.time() >= timeout:
-                print('FAIL 1130: EUT running from flash not found.', file=sys.stderr)
+                self.print('FAIL 1130: EUT running from flash not found.')
                 sys.exit(errno.ENODEV)
             if not devices:
-                print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.', file=sys.stderr)
+                self.print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
             time.sleep(1)
             devices = GreatFET(find_all=True)
@@ -473,11 +478,17 @@ class Narcissus:
             if device.serial_number() != tester_serial:
                 self.eut = device
 
+    def print(self, output=''):
+        if self.logfile:
+            print(output, file=self.logfile)
+        print(output)
+
     def main(self):
         parser = argparse.ArgumentParser(
             description="Utility for testing GreatFET One")
         parser.add_argument('-a', '--address', metavar='<n>', type=int,
                             help="starting address (default: 0)", default=0)
+        parser.add_argument('-f', '--logfile', metavar='<logfile>', type=str, help="logfile to append to", default='log')
         parser.add_argument('-w', '--write', dest='write', metavar='<filename>', type=str,
                             help="Write data from file", default='/tmp/greatfet_usb.bin')
         parser.add_argument('--dfu-stub', dest='dfu_stub', metavar='<stub.dfu>', type=str,
@@ -485,7 +496,12 @@ class Narcissus:
                             default='/tmp/greatfet_usb.dfu')
         args = parser.parse_args()
 
-        print("git-" + subprocess.getoutput('git log -n 1 --format=%hk'))
+        try:
+            self.logfile = open(args.logfile, 'a')
+        except:
+            self.print('Warning: Could not open log file.')
+
+        self.print("git-" + subprocess.getoutput('git log -n 1 --format=%hk'))
 
         self.find_tester()
 
@@ -498,10 +514,10 @@ class Narcissus:
         self.tester_pins[self.other_pins["5V_EN"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
         for signal in sorted(self.analog_signals.keys()):
-            print(signal, self.read_analog_voltage(signal))
-        print()
+            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
+        self.print()
 
-        print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
+        self.print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
 
         eut_detected = False
         while True:
@@ -513,11 +529,11 @@ class Narcissus:
                 if self.read_analog_voltage("EUT_VCC") > 0.2:
                     break
 
-        print('Detected EUT.')
+        self.print('Detected EUT.')
 
         for signal in sorted(self.analog_signals.keys()):
-            print(signal, self.read_analog_voltage(signal))
-        print()
+            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
+        self.print()
 
         if self.read_analog_voltage("USB0_VBUS") > 4.0:
             self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
@@ -530,8 +546,8 @@ class Narcissus:
         time.sleep(0.5)
 
         for signal in sorted(self.analog_signals.keys()):
-            print(signal, self.read_analog_voltage(signal))
-        print()
+            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
+        self.print()
 
         if self.read_analog_voltage("EUT_5V") < 4.0:
             self.tester_pins[self.other_pins["5V_EN"]].write(0)
@@ -632,11 +648,11 @@ class Narcissus:
         self.test_usb1()
 
         diode_drop = self.read_analog_voltage("VBUS_BYPASS") - self.read_analog_voltage("EUT_5V")
-        print("D5 voltage drop: %.2f V" % diode_drop)
+        self.print("D5 voltage drop: %.2f V" % diode_drop)
         if diode_drop > 0.275:
             self.fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
 
-        print('PASS')
+        self.print('PASS')
         #self.eut.reset(reconnect=False)
         #self.tester.reset(reconnect=False)
 
