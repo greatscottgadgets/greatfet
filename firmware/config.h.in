@@ -1,0 +1,17 @@
+/**
+ * This file is part of greatfet.
+ *
+ * Base configuration for greatfet builds.
+ */
+
+//
+// WARNING: This configuration file (config.h) is automatically generated, and may be overwritten during build!
+//          The source for this file is config.h.in, which CMake automatically configures into config.h. You likely
+//          want to edit the cmake configuration (or the .in template file) instead.
+//
+
+// The identification number for the current board.
+#define CONFIG_BOARD_ID @BOARD_ID@
+
+// The version of the firmware currently running.
+#define CONFIG_VERSION_STRING "@VERSION_STRING@"
