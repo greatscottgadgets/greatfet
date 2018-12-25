@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include <config.h>
 #include <greatfet_core.h>
 #include <rom_iap.h>
 #include <libopencm3/lpc43xx/wwdt.h>
@@ -18,7 +19,7 @@
 
 #define CLASS_NUMBER_CORE 0
 
-char version_string[] = VERSION_STRING;
+char version_string[] = CONFIG_VERSION_STRING;
 
 /**
  * Method that determines the board's ID.
@@ -26,7 +27,7 @@ char version_string[] = VERSION_STRING;
  */
 uint32_t WEAK core_get_board_id()
 {
-	return BOARD_ID;
+	return CONFIG_BOARD_ID;
 }
 
 

@@ -1,14 +1,16 @@
 #
 # This file is part of GreatFET
+# Top directory CMake project for GreatFET firmware
 #
 
-# Top directory CMake project for GreatFET firmware
-
 cmake_minimum_required(VERSION 3.1.3)
-set(CMAKE_TOOLCHAIN_FILE cmake/toolchain-arm-cortex-m.cmake)
 
-project (greatfet_firmware_all)
+set(PATH_GREATFET ${CMAKE_CURRENT_LIST_DIR}/..)
 
-add_subdirectory(blinky)
-add_subdirectory(greatfet_usb)
-add_subdirectory(flash_stub)
+include(cmake/greatfet_prelude.cmake)
+project(greatfet_firmware_all)
+
+# Build each of the relevant firmware images.
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/greatfet_usb)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/blinky)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/flash_stub)

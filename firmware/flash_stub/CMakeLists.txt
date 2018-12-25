@@ -2,47 +2,26 @@
 # This file is part of GreatFET
 #
 
-cmake_minimum_required(VERSION 2.8.9)
-set(CMAKE_TOOLCHAIN_FILE ../cmake/toolchain-arm-cortex-m.cmake)
-set(PATH_GREATFET_FIRMWARE_GFUSB ../greatfet_usb/)
+cmake_minimum_required(VERSION 3.1.3)
 
-project(flash_stub)
+# Point the target to the GreatFET project.
+set(PATH_GREATFET ${CMAKE_CURRENT_LIST_DIR}/../..)
 
-# Override the active board to always reflect the (fully generic) flash stub.
-include(../cmake/greatfet-common.cmake)
+include(../cmake/greatfet_prelude.cmake)
+project(flash_stub C CXX ASM)
+include(../cmake/greatfet.cmake)
 
-set(SRC_M4
-    main.c
+# Get a quick reference to the main GreatFET-usb project, which (temporarily) provides some of the functionality we use.
+set(PATH_GREATFET_USB ${PATH_GREATFET_FIRMWARE}/greatfet_usb)
 
-    # usb content
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/usb_bulk_buffer.c
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/usb_descriptor.c
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/usb_device.c
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/usb_endpoint.c
-
-    # usb drivers
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb.c"
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_request.c"
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_standard_request.c"
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/${LIBGREAT_PLATFORM}/usb_queue.c"
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/usb/comms_backend.c"
-
-    # comms drivers
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/comms/comms_class.c"
-    "${PATH_LIBGREAT_FIRMWARE_DRIVERS}/comms/utils.c"
-
-    # minimal collection of class drivers
-    ${LIBGREAT_API_CLASSES}
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/classes/core.c
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/classes/debug.c
-    ${PATH_GREATFET_FIRMWARE_GFUSB}/classes/firmware.c
-
-    # simple drivers used
-    "${PATH_GREATFET_FIRMWARE_COMMON}/fault_handler.c"
-    "${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
-    "${PATH_GREATFET_FIRMWARE_COMMON}/spi_bus.c"
-    "${PATH_GREATFET_FIRMWARE_COMMON}/rom_iap.c"
+add_greatfet_targets(${PROJECT_NAME}
+	${PATH_GREATFET_USB}/usb_bulk_buffer.c
+	${PATH_GREATFET_USB}/usb_descriptor.c
+	${PATH_GREATFET_USB}/usb_device.c
+	${PATH_GREATFET_USB}/usb_endpoint.c
+	${PATH_GREATFET_USB}/classes/core.c
+	${PATH_GREATFET_USB}/classes/debug.c
+	${PATH_GREATFET_USB}/classes/firmware.c
+	${CMAKE_CURRENT_SOURCE_DIR}/main.c
 )
-
-
-DeclareTargets()
+use_libgreat_modules(${PROJECT_NAME} comms usb usb_comms gpio)
