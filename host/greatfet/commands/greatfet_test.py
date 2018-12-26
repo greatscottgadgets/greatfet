@@ -429,17 +429,21 @@ class Narcissus:
                 self.print('DFU IOError')
                 pass
 
-        devices = GreatFET(find_all=True)
+        devices = []
         timeout = time.time() + 10
         while len(devices) < 2:
+            time.sleep(1)
+            try:
+                devices = GreatFET(find_all=True)
+            except:
+                self.print("Unexpected error finding RAM EUT: %s" % sys.exc_info()[0])
+                pass
             if time.time() >= timeout:
                 self.print('FAIL 1110: EUT running from RAM not found.')
                 sys.exit(errno.ENODEV)
             if not devices:
                 self.print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
-            time.sleep(1)
-            devices = GreatFET(find_all=True)
         for device in devices:
             if device.serial_number() != tester_serial:
                 eut = device
@@ -463,17 +467,21 @@ class Narcissus:
         self.print("Reset complete.")
         time.sleep(1)
 
-        devices = GreatFET(find_all=True)
+        devices = []
         timeout = time.time() + 10
         while len(devices) < 2:
+            time.sleep(1)
+            try:
+                devices = GreatFET(find_all=True)
+            except:
+                self.print("Unexpected error finding flashed EUT: %s" % sys.exc_info()[0])
+                pass
             if time.time() >= timeout:
                 self.print('FAIL 1130: EUT running from flash not found.')
                 sys.exit(errno.ENODEV)
             if not devices:
                 self.print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
-            time.sleep(1)
-            devices = GreatFET(find_all=True)
         for device in devices:
             if device.serial_number() != tester_serial:
                 self.eut = device
