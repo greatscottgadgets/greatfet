@@ -653,14 +653,15 @@ class Narcissus:
         self.setup_eut_pins()
         self.test_gpio()
         self.test_leds()
-        self.test_usb1()
+        #self.test_usb1()
 
         diode_drop = self.read_analog_voltage("VBUS_BYPASS") - self.read_analog_voltage("EUT_5V")
         self.print("D5 voltage drop: %.2f V" % diode_drop)
         if diode_drop > 0.275:
             self.fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
 
-        self.print('PASS')
+        #self.print('PASS')
+        self.print('PASS (WARNING: skipped USB1 test)')
         #self.eut.reset(reconnect=False)
         #self.tester.reset(reconnect=False)
 
