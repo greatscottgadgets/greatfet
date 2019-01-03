@@ -42,7 +42,7 @@ def main():
     if args.scan:
         scan(device, log_function)
     if args.address:
-        transmit(device, args.address[0], args.transmit, int(args.receive_length), log_function)
+        transmit(device, args.address[0], args.data_to_transmit, int(args.receive_length), log_function)
 
 
 def scan(device, log_function):
