@@ -21,9 +21,9 @@ def main():
     # Set up a simple argument parser.
     parser = GreatFETArgumentParser(description="Utility for I2C communication via GreatFET")
     parser.add_argument('-z', '--scan', action='store_true', help="Scan all possible i2c addresses")
-    parser.add_argument('transmit', nargs='*', type=ast.literal_eval, default=[], help="Data to transmit over the I2C Bus <byte byte byte..>")
     parser.add_argument('-a', '--address', nargs=1, type=ast.literal_eval, help="Address to transmit data to over the I2C Bus") 
     parser.add_argument('-r', '--receive_length', default=0, help="Number of bytes expecting to receive from the I2C Bus")
+    parser.add_argument('data_to_transmit', nargs='*', type=ast.literal_eval, default=[], help="Data to transmit over the I2C Bus (in bytes)")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
