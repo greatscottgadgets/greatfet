@@ -39,9 +39,7 @@ class I2CBus(GreatFETPeripheral):
         self.duty_cycle_count = duty_cycle_count
 
         # Set up the I2C bus for communications.
-        board.comms._vendor_request_out(vendor_requests.I2C_START, value=duty_cycle_count)
-
-
+        board.apis.i2c.start(duty_cycle_count)
 
     def attach_device(self, device):
         """
@@ -55,7 +53,6 @@ class I2CBus(GreatFETPeripheral):
         # TODO: Check for address conflicts!
 
         self.devices.append(device)
-
 
 
     def transmit(self, address, data, receive_length=0):
@@ -81,22 +78,13 @@ class I2CBus(GreatFETPeripheral):
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
-        # Perform the core transfer...
-        self.board.comms._vendor_request_out(vendor_requests.I2C_XFER, value=address,
-                index=receive_length, data=data)
+        # Perform the core transfer, parse status and device response
+        data = bytes(data)
+        usb_response = self.board.apis.i2c.xfer(address, receive_length, data)
+        device_response = usb_response[:-1]
+        status = usb_response[-1]
 
-        # Read status (ACK/NAK)
-        status = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS,
-                length=receive_length)
-
-        # If reciept was requested, return the received data.
-        if receive_length:
-            data = self.board.comms._vendor_request_in(vendor_requests.I2C_RESPONSE,
-                length=receive_length)
-        else:
-            data = []
-
-        return data
+        return device_response, status
 
 
     def scan(self):
@@ -107,13 +95,11 @@ class I2CBus(GreatFETPeripheral):
         
         valid_addresses = []
         for address in range(128):
-            # Perform the core transfer...
-            self.board.comms._vendor_request_out(vendor_requests.I2C_XFER, value=address >> 1,
-                    index=1, data=[])
-            # Read status (ACK/NAK)
-            stat_array = self.board.comms._vendor_request_in(vendor_requests.I2C_GET_STATUS,
-                    length=1)
-            status = stat_array[0]
+            # Perform the core transfer, parse status and device response
+            usb_response = self.board.apis.i2c.xfer(address >> 1, 1, b'')
+            status = usb_response[-1]
+            device_response = usb_response[:-1]
+
             if status in I2CBus.VALID_STATES:
                 valid_addresses.append(address)
 
