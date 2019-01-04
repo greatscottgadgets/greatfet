@@ -328,6 +328,11 @@ class Narcissus:
         voltage = self.read_adc(self.tester) * 3.3 * self.voltage_divider[signal] / 1024
         return voltage
 
+    def report_all_analog_voltages(self):
+        for signal in sorted(self.analog_signals.keys()):
+            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
+        self.print()
+
     def read_io_expanders(self, expanders):
         state = []
         for expander in expanders:
@@ -375,7 +380,6 @@ class Narcissus:
         for pin_name, state in self.check_all_gpio_pins().items():
             if not state:
                 self.print('Detected no voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
-                #FIXME print corresponding U1 pin
                 pin_failure = True
         if pin_failure:
                 self.fail('FAIL 1140: Detected no voltage on GPIO pin when all pins were driven high. See pins listed above.')
@@ -386,7 +390,6 @@ class Narcissus:
         for pin_name, state in self.check_all_gpio_pins().items():
             if state:
                 self.print('Detected voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
-                #FIXME print corresponding U1 pin
                 pin_failure = True
         if pin_failure:
                 self.fail('FAIL 1150: Detected voltage on GPIO pin when all pins were driven low. See pins listed above.')
@@ -397,11 +400,9 @@ class Narcissus:
             for pin_name, state in self.check_all_gpio_pins().items():
                 if (pin_name != test_pin) and state:
                     self.print('Detected voltage on pin %s (%s) when %s (%s) driven high.' % (pin_name, self.u1_pin_connections[pin_name], test_pin, self.u1_pin_connections[test_pin]))
-                    #FIXME print corresponding U1 pins
                     pin_failure = True
                 if (pin_name == test_pin) and not state:
                     self.print('Detected no voltage on pin %s (%s) when driven high.' % (test_pin, self.u1_pin_connections[test_pin]))
-                    #FIXME print corresponding U1 pin
                     pin_failure = True
             self.eut_pins[test_pin].write(0)
         if pin_failure:
@@ -616,9 +617,7 @@ class Narcissus:
         self.tester_pins[self.other_pins["5V_EN"]].write(0)
         self.tester_pins[self.other_pins["5V_EN"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
-        for signal in sorted(self.analog_signals.keys()):
-            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
-        self.print()
+        self.report_all_analog_voltages()
 
         self.print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
 
@@ -634,9 +633,7 @@ class Narcissus:
 
         self.print('Detected EUT.')
 
-        for signal in sorted(self.analog_signals.keys()):
-            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
-        self.print()
+        self.report_all_analog_voltages()
 
         if self.read_analog_voltage("USB0_VBUS") > 4.0:
             self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
@@ -648,9 +645,7 @@ class Narcissus:
         self.tester_pins[self.other_pins["5V_EN"]].write(1)
         time.sleep(0.5)
 
-        for signal in sorted(self.analog_signals.keys()):
-            self.print("%12s %.3f" % (signal, self.read_analog_voltage(signal)))
-        self.print()
+        self.report_all_analog_voltages()
 
         if self.read_analog_voltage("EUT_5V") < 4.0:
             self.tester_pins[self.other_pins["5V_EN"]].write(0)
@@ -727,10 +722,9 @@ class Narcissus:
         if not self.read_io_expander_pin(self.u1, 1, 2):
             self.fail('FAIL 440: LED4 voltage not detected. Check D4, R4.')
 
-        # check that all signals with pull-down resistors are still low
-        #FIXME there is enough reverse leakage through D5 to trigger USB0_SENSE
-        #if self.read_io_expander_pin(self.u1, 1, 0):
-            #self.fail('FAIL 450: USB0_SENSE voltage detected. Check D5, R25, R26.')
+        # Check that all signals with pull-down resistors are still low.
+        # There is enough reverse leakage through D5 to trigger USB0_SENSE, so
+        # we don't check that one.
         if self.read_io_expander_pin(self.u1, 0, 5):
             self.fail('FAIL 460: USB1_SENSE voltage detected. Unplug cable from USB1. Check U5, R16, R21, R22.')
         if self.read_io_expander_pin(self.u1, 4, 2):
