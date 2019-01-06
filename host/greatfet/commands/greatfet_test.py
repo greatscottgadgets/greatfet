@@ -302,11 +302,6 @@ class Narcissus:
                 self.print('Please respond with \'y\' or \'n\'.')
 
     def fail(self, message):
-        #if self.tester:
-            #try:
-                #self.tester.reset(reconnect=False)
-            #except:
-                #pass
         self.print(message)
         sys.exit()
 
@@ -371,76 +366,6 @@ class Narcissus:
                 #pins[eut_pin_name] = self.check_gpio_pin(gpio_pins[eut_pin_name])
         return pins
 
-    def test_gpio(self):
-        # set all GPIO pins output high on EUT
-        for pin_name in list(self.gpio_pins):
-            self.eut_pins[pin_name].set_direction(self.eut.gpio.DIRECTION_OUT)
-            self.eut_pins[pin_name].write(1)
-        pin_failure = False
-        for pin_name, state in self.check_all_gpio_pins().items():
-            if not state:
-                self.print('Detected no voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
-                pin_failure = True
-        if pin_failure:
-                self.fail('FAIL 1140: Detected no voltage on GPIO pin when all pins were driven high. See pins listed above.')
-
-        # set all GPIO pins output low on EUT
-        for pin_name in list(self.gpio_pins):
-            self.eut_pins[pin_name].write(0)
-        for pin_name, state in self.check_all_gpio_pins().items():
-            if state:
-                self.print('Detected voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
-                pin_failure = True
-        if pin_failure:
-                self.fail('FAIL 1150: Detected voltage on GPIO pin when all pins were driven low. See pins listed above.')
-
-        # test GPIO pins one at a time
-        for test_pin in list(self.gpio_pins):
-            self.eut_pins[test_pin].write(1)
-            for pin_name, state in self.check_all_gpio_pins().items():
-                if (pin_name != test_pin) and state:
-                    self.print('Detected voltage on pin %s (%s) when %s (%s) driven high.' % (pin_name, self.u1_pin_connections[pin_name], test_pin, self.u1_pin_connections[test_pin]))
-                    pin_failure = True
-                if (pin_name == test_pin) and not state:
-                    self.print('Detected no voltage on pin %s (%s) when driven high.' % (test_pin, self.u1_pin_connections[test_pin]))
-                    pin_failure = True
-            self.eut_pins[test_pin].write(0)
-        if pin_failure:
-                self.fail('FAIL 1160: Test of individual GPIO pins failed. See pins listed above.')
-
-    def test_leds(self):
-        for led in range(1, 4):
-            LED(self.eut, led+1).set()
-        if not self.ask_user("Are LED2, LED3, and LED4 illuminated?"):
-            self.fail('FAIL 1200: User reported LED failure. Check LED2, LED3, LED4, R2, R3, R4, and U1 pins 3, 132, and 133.')
-        for led in range(1, 4):
-            LED(self.eut, led+1).clear()
-        if not self.ask_user("Is LED1 blinking?"):
-            self.fail('FAIL 1210: User reported LED1 failure. Check LED1, R1, and U1 pin 134.')
-
-    def test_usb1(self):
-        fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=self.tester)
-        fd = facedancer.USBDevice.USBDevice(fdapp)
-        fd.connect()
-        fd_thread=threading.Thread(target=fd.run)
-        fd_thread.start()
-        try:
-            descriptor = self.eut.glitchkit.usb.capture_control_in(
-                    request= self.eut.glitchkit.usb.GET_DESCRIPTOR,
-                    value  = self.eut.glitchkit.usb.GET_DEVICE_DESCRIPTOR,
-                    length = 18
-                )
-        except:
-            fd.stop()
-            fd_thread.join()
-            fd.disconnect()
-            self.fail('FAIL 1300: USB1 error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
-        if descriptor != b'\x12\x01\x00\x02\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00':
-            self.fail('FAIL 1310: USB descriptor error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
-        fd.stop()
-        fd_thread.join()
-        fd.disconnect()
-
     def find_tester(self):
         devices = []
         timeout = time.time() + 30
@@ -485,6 +410,104 @@ class Narcissus:
             self.fail('FAIL 110: I2C I/O expander U2 not detected. Connect Tester to Narcissus.')
             sys.exit(errno.ENODEV)
 
+    def detect_eut(self):
+        self.print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
+
+        eut_detected = False
+        while True:
+            if self.read_analog_voltage("EUT_VCC") > 0.2:
+                eut_detected = True
+            # debounce
+            time.sleep(0.5)
+            if eut_detected:
+                if self.read_analog_voltage("EUT_VCC") > 0.2:
+                    break
+
+        self.print('Detected EUT.')
+        self.report_all_analog_voltages()
+
+        if self.read_analog_voltage("USB0_VBUS") > 4.0:
+            self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
+        if self.read_analog_voltage("USB1_VBUS") > 4.0:
+            self.fail('FAIL 160: USB1 cable detected. Unplug USB cable from EUT J4/USB1.')
+        if self.read_analog_voltage("EUT_VCC") > 2.5:
+            self.fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
+
+    def activate_supply(self):
+        self.tester_pins[self.other_pins["5V_EN"]].write(1)
+        time.sleep(0.5)
+        self.report_all_analog_voltages()
+
+        if self.read_analog_voltage("EUT_5V") < 4.0:
+            self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            self.fail('FAIL 170: EUT_5V too low. Check for shorts across C3 and C4.')
+        if self.read_analog_voltage("EUT_VCC") < 0.6:
+            self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            self.fail('FAIL 180: EUT_VCC power not detected. Check U3.')
+        if self.read_analog_voltage("EUT_VCC") < 3.2:
+            self.tester_pins[self.other_pins["5V_EN"]].write(0)
+            self.fail('FAIL 190: EUT_VCC voltage too low. Check U3. Check for shorts across C3 and C4 and decoupling capacitors.')
+
+    def test_pull_downs(self):
+        if not self.tester_pins[self.other_pins["5V_EN"]].read():
+            self.activate_supply()
+        # check that all GND pins are low
+        if self.read_io_expander_pin(self.u2, 2, 4):
+            self.fail('FAIL 200: GND_J2_P1 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 1. Check J2 pin 1.')
+        if self.read_io_expander_pin(self.u1, 0, 1):
+            self.fail('FAIL 210: GND_J7_P1 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 1.')
+        if self.read_io_expander_pin(self.u2, 0, 6):
+            self.fail('FAIL 230: GND_J7_P19 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 19.')
+
+        # check that all signals with pull-down resistors are low
+        # There is enough reverse leakage through D5 to trigger USB0_SENSE, so
+        # we don't check that one.
+        if self.read_io_expander_pin(self.u1, 0, 5):
+            self.fail('FAIL 250: USB1_SENSE voltage detected. Unplug cable from USB1. Check U5, R16, R21, R22.')
+        if self.read_io_expander_pin(self.u1, 4, 2):
+            self.fail('FAIL 260: J1_P12 voltage detected. Check J1 pin 12, R8.')
+        if self.read_io_expander_pin(self.u2, 2, 2):
+            self.fail('FAIL 270: J7_P6 voltage detected. Check J7 pin 6, R7.')
+        if self.read_io_expander_pin(self.u2, 3, 5):
+            self.fail('FAIL 280: J2_P13 voltage detected. Check J2 pin 13, R6, SW1.')
+        if self.check_gpio_pin('J1_P35'):
+            self.fail('FAIL 290: USB1_EN voltage detected. Check R16.')
+
+    def test_pull_ups(self):
+        if not self.tester_pins[self.other_pins["5V_EN"]].read():
+            self.activate_supply()
+        if not self.read_io_expander_pin(self.u2, 0, 5): #VCC_J7_P20
+            self.fail('FAIL 310: EUT target power not detected. Check J1 pin 2, J7 pin 20, U3, C3, C4.')
+        # check that all signals with pull-up resistors are high
+        #if not self.check_gpio_pin('J1_P31'):
+            #self.fail('FAIL 320: RESET voltage not detected. Check J7 pin 11, R5, SW2, U1 pin 128.')
+        if not self.read_io_expander_pin(self.u1, 4, 3):
+            self.fail('FAIL 330: P1_1 voltage not detected. Check J1 pin 10, R26.')
+        if not self.read_io_expander_pin(self.u2, 4, 1):
+            self.fail('FAIL 340: WAKEUP0 voltage not detected. Check J2 pin 17, R14.')
+        if not self.read_io_expander_pin(self.u1, 0, 3):
+            self.fail('FAIL 350: USB1_FAULT voltage not detected. Check R24.')
+        if not self.read_io_expander_pin(self.u2, 3, 4):
+            self.fail('FAIL 360: P2_7 voltage not detected. Check J2 pin 14, R15.')
+        if not self.check_gpio_pin('J2_P19'):
+            self.fail('FAIL 370: I2C0_SCL voltage not detected. Check J2 pin 40, R18.')
+        if not self.check_gpio_pin('J2_P20'):
+            self.fail('FAIL 380: I2C0_SDA voltage not detected. Check J2 pin 39, R17.')
+        if not self.check_gpio_pin('J1_P25'):
+            self.fail('FAIL 390: TDO voltage not detected. Check R12.')
+        if not self.check_gpio_pin('J1_P27'):
+            self.fail('FAIL 390: TCK voltage not detected. Check R11.')
+        if not self.check_gpio_pin('J1_P21'):
+            self.fail('FAIL 400: DBGEN voltage not detected. Check R10.')
+        if not self.read_io_expander_pin(self.u1, 0, 2):
+            self.fail('FAIL 410: LED1 voltage not detected. Check D1, R1.')
+        if not self.read_io_expander_pin(self.u1, 0, 4):
+            self.fail('FAIL 420: LED2 voltage not detected. Check D2, R2.')
+        if not self.read_io_expander_pin(self.u1, 1, 1):
+            self.fail('FAIL 430: LED3 voltage not detected. Check D3, R3.')
+        if not self.read_io_expander_pin(self.u1, 1, 2):
+            self.fail('FAIL 440: LED4 voltage not detected. Check D4, R4.')
+
     def test_reset_button(self):
         self.print('Press RESET button (SW2) on EUT.')
         timeout = time.time() + 30
@@ -519,7 +542,19 @@ class Narcissus:
         self.print('Connect USB cable between EUT USB1 and Tester USB1.')
         self.print('Connect EUT to this host with USB cable (J3/USB0) while pressing DFU button (SW1).')
         self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_IN)
+
         timeout = time.time() + 30
+        while self.read_analog_voltage("USB0_VBUS") < 4.4:
+            time.sleep(1)
+            if time.time() >= timeout:
+                self.report_all_analog_voltages()
+                self.fail('FAIL 1000: EUT VBUS not detected. Check USB0 cable, J3')
+
+        self.report_all_analog_voltages()
+        if self.read_analog_voltage("VBUS_BYPASS") < 4.4:
+            self.fail('FAIL 1010: VBUS_BYPASS not detected. Check FB1.')
+
+        timeout = time.time() + 10
         while True:
             try:
                 greatfet_firmware.load_dfu_stub(args)
@@ -527,7 +562,7 @@ class Narcissus:
                 break
             except DeviceNotFoundError:
                 if time.time() >= timeout:
-                    self.print('FAIL 1100: EUT in DFU mode not found.')
+                    self.print('FAIL 1020: EUT in DFU mode not found.')
                     sys.exit(errno.ENODEV)
             except IOError:
                 self.print('DFU IOError')
@@ -543,10 +578,10 @@ class Narcissus:
                 self.print("Unexpected error finding RAM EUT: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
-                self.print('FAIL 1110: EUT running from RAM not found.')
+                self.print('FAIL 1030: EUT running from RAM not found.')
                 sys.exit(errno.ENODEV)
             if not devices:
-                self.print('FAIL 1120: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
+                self.print('FAIL 1040: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
         for device in devices:
             if device.serial_number() != tester_serial:
@@ -564,7 +599,7 @@ class Narcissus:
         try:
             greatfet_firmware.spi_flash_write(eut, args.write, args.address, log_verbose)
         except:
-            self.fail('FAIL 1125: Error reading from file or writing to flash.')
+            self.fail('FAIL 1050: Error reading from file or writing to flash.')
         self.print('Write complete.')
         self.print('Resetting EUT.')
         eut.reset(reconnect=False)
@@ -581,14 +616,94 @@ class Narcissus:
                 self.print("Unexpected error finding flashed EUT: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
-                self.print('FAIL 1130: EUT running from flash not found.')
+                self.print('FAIL 1060: EUT running from flash not found.')
                 sys.exit(errno.ENODEV)
             if not devices:
-                self.print('FAIL 1140: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
+                self.print('FAIL 1070: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
                 sys.exit(errno.ENODEV)
         for device in devices:
             if device.serial_number() != tester_serial:
                 self.eut = device
+
+    def test_gpio(self):
+        # set all GPIO pins output high on EUT
+        for pin_name in list(self.gpio_pins):
+            self.eut_pins[pin_name].set_direction(self.eut.gpio.DIRECTION_OUT)
+            self.eut_pins[pin_name].write(1)
+        pin_failure = False
+        for pin_name, state in self.check_all_gpio_pins().items():
+            if not state:
+                self.print('Detected no voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
+                pin_failure = True
+        if pin_failure:
+                self.fail('FAIL 1100: Detected no voltage on GPIO pin when all pins were driven high. See pins listed above.')
+
+        # set all GPIO pins output low on EUT
+        for pin_name in list(self.gpio_pins):
+            self.eut_pins[pin_name].write(0)
+        for pin_name, state in self.check_all_gpio_pins().items():
+            if state:
+                self.print('Detected voltage on pin %s (%s).' % (pin_name, self.u1_pin_connections[pin_name]))
+                pin_failure = True
+        if pin_failure:
+                self.fail('FAIL 1110: Detected voltage on GPIO pin when all pins were driven low. See pins listed above.')
+
+        # test GPIO pins one at a time
+        for test_pin in list(self.gpio_pins):
+            self.eut_pins[test_pin].write(1)
+            for pin_name, state in self.check_all_gpio_pins().items():
+                if (pin_name != test_pin) and state:
+                    self.print('Detected voltage on pin %s (%s) when %s (%s) driven high.' % (pin_name, self.u1_pin_connections[pin_name], test_pin, self.u1_pin_connections[test_pin]))
+                    pin_failure = True
+                if (pin_name == test_pin) and not state:
+                    self.print('Detected no voltage on pin %s (%s) when driven high.' % (test_pin, self.u1_pin_connections[test_pin]))
+                    pin_failure = True
+            self.eut_pins[test_pin].write(0)
+        if pin_failure:
+                self.fail('FAIL 1120: Test of individual GPIO pins failed. See pins listed above.')
+
+    def test_leds(self):
+        for led in range(1, 4):
+            LED(self.eut, led+1).set()
+        if not self.ask_user("Are LED2, LED3, and LED4 illuminated?"):
+            self.fail('FAIL 1200: User reported LED failure. Check LED2, LED3, LED4, R2, R3, R4, and U1 pins 3, 132, and 133.')
+        for led in range(1, 4):
+            LED(self.eut, led+1).clear()
+        if not self.ask_user("Is LED1 blinking?"):
+            self.fail('FAIL 1210: User reported LED1 failure. Check LED1, R1, and U1 pin 134.')
+
+    def test_diode(self):
+        diode_drop = self.read_analog_voltage("VBUS_BYPASS") - self.read_analog_voltage("EUT_5V")
+        self.print("D5 voltage drop: %.2f V" % diode_drop)
+        if diode_drop > 0.275:
+            self.fail('FAIL 1300: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
+
+    def test_usb1(self):
+        fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=self.tester)
+        fd = facedancer.USBDevice.USBDevice(fdapp)
+        fd.connect()
+        fd_thread=threading.Thread(target=fd.run)
+        fd_thread.start()
+        try:
+            descriptor = self.eut.glitchkit.usb.capture_control_in(
+                    request= self.eut.glitchkit.usb.GET_DESCRIPTOR,
+                    value  = self.eut.glitchkit.usb.GET_DEVICE_DESCRIPTOR,
+                    length = 18
+                )
+        except:
+            fd.stop()
+            fd_thread.join()
+            fd.disconnect()
+            self.fail('FAIL 1400: USB1 error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+        if descriptor != b'\x12\x01\x00\x02\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00':
+            self.fail('FAIL 1410: USB descriptor error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+        fd.stop()
+        fd_thread.join()
+        fd.disconnect()
+
+        # FIXME test USB1_VBUS
+        #if self.read_analog_voltage("USB1_VBUS") < 4.4:
+            #self.fail('FAIL XXX: USB1_VBUS not detected. Check connection of EUT to Narcissus. Check U5, C11.')
 
     def print(self, output=''):
         if self.logfile:
@@ -616,151 +731,32 @@ class Narcissus:
         self.print("git-" + subprocess.getoutput('git log -n 1 --format=%hk'))
 
         self.find_tester()
-
         self.initialize_jig()
 
+        # Hold EUT in reset for now.
         self.tester_pins[self.other_pins["RESET_J7_P11"]].write(0)
         self.tester_pins[self.other_pins["RESET_J7_P11"]].set_direction(self.tester.gpio.DIRECTION_OUT)
 
+        # Do not power EUT yet.
         self.tester_pins[self.other_pins["5V_EN"]].write(0)
         self.tester_pins[self.other_pins["5V_EN"]].set_direction(self.tester.gpio.DIRECTION_OUT)
-
         self.report_all_analog_voltages()
 
-        self.print('Connect Equipment Under Test (EUT) to spring pins on Narcissus. Do not connect EUT USB cables.')
-
-        eut_detected = False
-        while True:
-            if self.read_analog_voltage("EUT_VCC") > 0.2:
-                eut_detected = True
-            # debounce
-            time.sleep(0.5)
-            if eut_detected:
-                if self.read_analog_voltage("EUT_VCC") > 0.2:
-                    break
-
-        self.print('Detected EUT.')
-
-        self.report_all_analog_voltages()
-
-        if self.read_analog_voltage("USB0_VBUS") > 4.0:
-            self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
-        if self.read_analog_voltage("USB1_VBUS") > 4.0:
-            self.fail('FAIL 160: USB1 cable detected. Unplug USB cable from EUT J4/USB1.')
-        if self.read_analog_voltage("EUT_VCC") > 2.5:
-            self.fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
-
-        self.tester_pins[self.other_pins["5V_EN"]].write(1)
-        time.sleep(0.5)
-
-        self.report_all_analog_voltages()
-
-        if self.read_analog_voltage("EUT_5V") < 4.0:
-            self.tester_pins[self.other_pins["5V_EN"]].write(0)
-            self.fail('FAIL 170: EUT_5V too low. Check for shorts across C3 and C4.')
-        if self.read_analog_voltage("EUT_VCC") < 0.6:
-            self.tester_pins[self.other_pins["5V_EN"]].write(0)
-            self.fail('FAIL 180: EUT_VCC power not detected. Check U3.')
-        if self.read_analog_voltage("EUT_VCC") < 3.2:
-            self.tester_pins[self.other_pins["5V_EN"]].write(0)
-            self.fail('FAIL 190: EUT_VCC voltage too low. Check U3. Check for shorts across C3 and C4 and decoupling capacitors.')
-
-        # FIXME do this later
-        #if read_analog_signal(self.tester, "USB1_VBUS") <= 100:
-            #self.fail('FAIL XXX: USB1_VBUS not detected. Check connection of EUT to Narcissus. Check U5, C11.')
-
-        #if read_analog_signal(self.tester, "USB0_VBUS") < 100:
-            #self.tester_pins[self.other_pins["5V_EN"]].write(0)
-            #self.fail('FAIL 175: USB0_VBUS not detected. Check connection of EUT to Narcissus. Check D5, FB1, R25.')
-        #if read_analog_signal(self.tester, "VBUS_BYPASS") < 100:
-            #self.tester_pins[self.other_pins["5V_EN"]].write(0)
-            #self.fail('FAIL 180: VBUS_BYPASS not detected. Check connection of EUT to Narcissus. Check D5, FB1, R25.')
-
-        # check that all GND pins are low
-        if self.read_io_expander_pin(self.u2, 2, 4):
-            self.fail('FAIL 200: GND_J2_P1 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 1. Check J2 pin 1.')
-        if self.read_io_expander_pin(self.u1, 0, 1):
-            self.fail('FAIL 210: GND_J7_P1 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 1.')
-        if self.read_io_expander_pin(self.u2, 0, 6):
-            self.fail('FAIL 230: GND_J7_P19 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 19.')
-
-        # check that all signals with pull-down resistors are low
-        if self.read_io_expander_pin(self.u1, 0, 5):
-            self.fail('FAIL 250: USB1_SENSE voltage detected. Check connection of EUT to Narcissus. Check U5, R16, R21, R22.')
-        if self.read_io_expander_pin(self.u1, 4, 2):
-            self.fail('FAIL 260: J1_P12 voltage detected. Check connection of EUT to Narcissus. Check J1 pin 12, R8.')
-        if self.read_io_expander_pin(self.u2, 2, 2):
-            self.fail('FAIL 270: J7_P6 voltage detected. Check connection of EUT to Narcissus. Check J7 pin 6, R7.')
-        if self.read_io_expander_pin(self.u2, 3, 5):
-            self.fail('FAIL 280: J2_P13 voltage detected. Check connection of EUT to Narcissus. Check J2 pin 13, R6.')
-        if self.check_gpio_pin('J1_P35'):
-            self.fail('FAIL 290: USB1_EN voltage detected. Check R16.')
-
-        if not self.read_io_expander_pin(self.u2, 0, 5): #VCC_J7_P20
-            self.fail('FAIL 310: EUT target power not detected. Check J1 pin 2, J7 pin 20, U3, C3, C4.')
-        #FIXME check EUT_VCC, EUT_5V, USB0_VBUS, VBUS_BYPASS, USB1_VBUS with ADC
-
-        # check that all signals with pull-up resistors are high
-        #if not self.check_gpio_pin('J1_P31'):
-            #self.fail('FAIL 320: RESET voltage not detected. Check J7 pin 11, R5, SW2, U1 pin 128.')
-        if not self.read_io_expander_pin(self.u1, 4, 3):
-            self.fail('FAIL 330: P1_1 voltage not detected. Check J1 pin 10, R26.')
-        if not self.read_io_expander_pin(self.u2, 4, 1):
-            self.fail('FAIL 340: WAKEUP0 voltage not detected. Check J2 pin 17, R14.')
-        if not self.read_io_expander_pin(self.u1, 0, 3):
-            self.fail('FAIL 350: USB1_FAULT voltage not detected. Check R24.')
-        if not self.read_io_expander_pin(self.u2, 3, 4):
-            self.fail('FAIL 360: P2_7 voltage not detected. Check J2 pin 14, R15.')
-        if not self.check_gpio_pin('J2_P19'):
-            self.fail('FAIL 370: I2C0_SCL voltage not detected. Check J2 pin 40, R18.')
-        if not self.check_gpio_pin('J2_P20'):
-            self.fail('FAIL 380: I2C0_SDA voltage not detected. Check J2 pin 39, R17.')
-        if not self.check_gpio_pin('J1_P25'):
-            self.fail('FAIL 390: TDO voltage not detected. Check R12.')
-        if not self.check_gpio_pin('J1_P27'):
-            self.fail('FAIL 390: TCK voltage not detected. Check R11.')
-        if not self.check_gpio_pin('J1_P21'):
-            self.fail('FAIL 400: DBGEN voltage not detected. Check R10.')
-        if not self.read_io_expander_pin(self.u1, 0, 2):
-            self.fail('FAIL 410: LED1 voltage not detected. Check D1, R1.')
-        if not self.read_io_expander_pin(self.u1, 0, 4):
-            self.fail('FAIL 420: LED2 voltage not detected. Check D2, R2.')
-        if not self.read_io_expander_pin(self.u1, 1, 1):
-            self.fail('FAIL 430: LED3 voltage not detected. Check D3, R3.')
-        if not self.read_io_expander_pin(self.u1, 1, 2):
-            self.fail('FAIL 440: LED4 voltage not detected. Check D4, R4.')
-
-        # Check that all signals with pull-down resistors are still low.
-        # There is enough reverse leakage through D5 to trigger USB0_SENSE, so
-        # we don't check that one.
-        if self.read_io_expander_pin(self.u1, 0, 5):
-            self.fail('FAIL 460: USB1_SENSE voltage detected. Unplug cable from USB1. Check U5, R16, R21, R22.')
-        if self.read_io_expander_pin(self.u1, 4, 2):
-            self.fail('FAIL 470: P1_2 voltage detected. Check J1 pin 12, R8.')
-        if self.read_io_expander_pin(self.u2, 2, 2):
-            self.fail('FAIL 480: P2_9 voltage detected. Check J7 pin 6, R7.')
-        if self.read_io_expander_pin(self.u2, 3, 5):
-            self.fail('FAIL 490: P2_8 voltage detected. Check J2 pin 13, R6, SW1.')
-        if self.check_gpio_pin('J1_P35'):
-            self.fail('FAIL 500: USB1_EN voltage detected. Check R16.')
-
+        self.detect_eut()
+        self.activate_supply()
+        self.test_pull_downs()
+        self.test_pull_ups()
         self.test_reset_button()
         self.test_dfu_button()
         self.flash_firmware(args)
         self.setup_eut_pins()
         self.test_gpio()
         self.test_leds()
+        self.test_diode()
         #self.test_usb1()
-
-        diode_drop = self.read_analog_voltage("VBUS_BYPASS") - self.read_analog_voltage("EUT_5V")
-        self.print("D5 voltage drop: %.2f V" % diode_drop)
-        if diode_drop > 0.275:
-            self.fail('FAIL 1400: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
 
         #self.print('PASS')
         self.print('PASS (WARNING: skipped USB1 test)')
-        #self.eut.reset(reconnect=False)
-        #self.tester.reset(reconnect=False)
 
 if __name__ == '__main__':
     Narcissus().main()
