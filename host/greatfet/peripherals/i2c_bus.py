@@ -94,7 +94,7 @@ class I2CBus(GreatFETPeripheral):
         """
         
         valid_addresses = []
-        for address in range(128):
+        for address in range(0, 256, 2):
             # Perform the core transfer, parse status and device response
             usb_response = self.board.apis.i2c.xfer(address >> 1, 1, b'')
             status = usb_response[-1]
