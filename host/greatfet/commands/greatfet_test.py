@@ -668,14 +668,14 @@ class Narcissus:
                 self.fail('FAIL 1120: Test of individual GPIO pins failed. See pins listed above.')
 
     def test_leds(self):
-        for led in range(1, 4):
+        self.eut.apis.heartbeat.stop()
+        for led in range(0, 4):
             LED(self.eut, led+1).set()
-        if not self.ask_user("Are LED2, LED3, and LED4 illuminated?"):
-            self.fail('FAIL 1200: User reported LED failure. Check LED2, LED3, LED4, R2, R3, R4, and U1 pins 3, 132, and 133.')
-        for led in range(1, 4):
+        if not self.ask_user("Are LED1, LED2, LED3, and LED4 all illuminated?"):
+            self.fail('FAIL 1200: User reported LED failure. Check LED1, LED2, LED3, LED4, R1, R2, R3, R4, and U1 pins 3, 132, 133, and 134.')
+        for led in range(0, 4):
             LED(self.eut, led+1).clear()
-        if not self.ask_user("Is LED1 blinking?"):
-            self.fail('FAIL 1210: User reported LED1 failure. Check LED1, R1, and U1 pin 134.')
+        self.eut.apis.heartbeat.start()
 
     def test_diode(self):
         diode_drop = self.read_analog_voltage("VBUS_BYPASS") - self.read_analog_voltage("EUT_5V")
