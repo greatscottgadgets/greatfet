@@ -11,6 +11,7 @@ import argparse
 import subprocess
 from distutils.util import strtobool
 import threading
+import traceback
 
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
@@ -373,6 +374,7 @@ class Narcissus:
             try:
                 devices = GreatFET(find_all=True)
             except:
+                self.log(traceback.format_exc())
                 self.print("Unexpected error: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
@@ -575,6 +577,7 @@ class Narcissus:
             try:
                 devices = GreatFET(find_all=True)
             except:
+                self.log(traceback.format_exc())
                 self.print("Unexpected error finding RAM EUT: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
@@ -599,6 +602,7 @@ class Narcissus:
         try:
             greatfet_firmware.spi_flash_write(eut, args.write, args.address, log_verbose)
         except:
+            self.log(traceback.format_exc())
             self.fail('FAIL 1050: Error reading from file or writing to flash.')
         self.print('Write complete.')
         self.print('Resetting EUT.')
@@ -613,6 +617,7 @@ class Narcissus:
             try:
                 devices = GreatFET(find_all=True)
             except:
+                self.log(traceback.format_exc())
                 self.print("Unexpected error finding flashed EUT: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
@@ -687,6 +692,7 @@ class Narcissus:
                     timeout = 1
                 )
         except:
+            self.log(traceback.format_exc())
             pass
 
     def test_usb1(self):
@@ -703,6 +709,10 @@ class Narcissus:
         gk_thread.join()
         if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 5:
             self.fail('FAIL 1430: USB1 data error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+
+    def log(self, output=''):
+        if self.logfile:
+            print(output, file=self.logfile)
 
     def print(self, output=''):
         if self.logfile:
