@@ -378,7 +378,7 @@ class Narcissus:
                 self.print("Unexpected error: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
-                self.print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB.')
+                self.print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB. Ensure no EUT is present when connecting Tester to host via USB.')
                 sys.exit(errno.ENODEV)
             time.sleep(1)
 
@@ -698,17 +698,27 @@ class Narcissus:
     def test_usb1(self):
         if self.read_analog_voltage("USB1_VBUS") > 4.0:
             self.fail('FAIL 1400: USB1_VBUS detected. Check U5, R16, R21, R22, R23, R24, C10, C11.')
+        fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=self.tester)
+        fd = facedancer.USBDevice.USBDevice(fdapp)
+        fd.connect()
+        time.sleep(0.5)
+        self.log("initial USB status " + str(self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)))
         if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 133:
+            fd.disconnect()
             self.fail('FAIL 1410: unexpected USB1 data line state.')
         gk_thread=threading.Thread(target=self.glitchkit_host_test)
         gk_thread.start()
         self.report_all_analog_voltages()
         if self.read_analog_voltage("USB1_VBUS") < 4.1:
+            fd.disconnect()
             self.fail('FAIL 1420: USB1_VBUS too low. Check U5, R16, R21, R22, R23, R24, C10, C11.')
         #TODO use facedancer on tester and confirm descriptor data
         gk_thread.join()
+        self.log("final USB status " + str(self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)))
         if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 5:
+            fd.disconnect()
             self.fail('FAIL 1430: USB1 data error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+        fd.disconnect()
 
     def log(self, output=''):
         if self.logfile:
