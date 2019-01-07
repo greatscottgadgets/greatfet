@@ -24,7 +24,7 @@
 #define SPIFLASH_UNIQUE_ID    0x4B
 
 #define SPIFLASH_STATUS_BUSY  0x01
-
+#define SPIFLASH_STATUS_WEL   0x02
 
 /*
  * Set up pins for GPIO and SPI control, configure SSP0 peripheral for SPI.
@@ -85,6 +85,7 @@ void spiflash_write_enable(spiflash_driver_t* const drv)
 
 	uint8_t data[] = { SPIFLASH_WRITE_ENABLE };
 	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
+	while (!(spiflash_get_status(drv) & SPIFLASH_STATUS_WEL));
 }
 
 void spiflash_chip_erase(spiflash_driver_t* const drv)
