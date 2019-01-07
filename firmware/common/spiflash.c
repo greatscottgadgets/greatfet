@@ -18,7 +18,9 @@
 #define SPIFLASH_FAST_READ    0x0b
 #define SPIFLASH_WRITE_ENABLE 0x06
 #define SPIFLASH_CHIP_ERASE   0xC7
+#define SPIFLASH_WRITE_STATUS 0x01
 #define SPIFLASH_READ_STATUS1 0x05
+#define SPIFLASH_READ_STATUS2 0x35
 #define SPIFLASH_PAGE_PROGRAM 0x02
 #define SPIFLASH_DEVICE_ID    0xAB
 #define SPIFLASH_UNIQUE_ID    0x4B
@@ -140,6 +142,7 @@ void spiflash_program(spiflash_driver_t* const drv, uint32_t addr, uint32_t len,
 	uint8_t device_id;
 
 	device_id = 0;
+	spiflash_wait_while_busy(drv);
 	while(device_id != drv->device_id) {
 		device_id = spiflash_get_device_id(drv);
 	}	
@@ -198,4 +201,22 @@ void spiflash_read(spiflash_driver_t* const drv, uint32_t addr, uint32_t len, ui
 	};
 
 	spi_bus_transfer_gather(drv->target, transfers, ARRAY_SIZE(transfers));
+}
+
+void spiflash_clear_status(spiflash_driver_t* const drv)
+{
+	spiflash_write_enable(drv);
+	spiflash_wait_while_busy(drv);
+	uint8_t data[] = { SPIFLASH_WRITE_STATUS, 0x00, 0x00 };
+	spi_bus_transfer(drv->target, data, ARRAY_SIZE(data));
+}
+
+void spiflash_get_full_status(spiflash_driver_t* const drv, uint8_t* data)
+{
+	uint8_t cmd[] = { SPIFLASH_READ_STATUS1, 0xFF };
+	spi_bus_transfer(drv->target, cmd, ARRAY_SIZE(cmd));
+	data[0] = cmd[1];
+	uint8_t cmd2[] = { SPIFLASH_READ_STATUS2, 0xFF };
+	spi_bus_transfer(drv->target, cmd2, ARRAY_SIZE(cmd2));
+	data[1] = cmd2[1];
 }
