@@ -362,7 +362,6 @@ class Narcissus:
                 (expander, port, pin) = self.gpio_pins[eut_pin_name]
                 port += (expander - 1) * 5
                 pins[eut_pin_name] = (1 == (expander_state[port] >> pin) & 1)
-            #FIXME why does this fail?
             else:
                 pins[eut_pin_name] = self.check_gpio_pin(self.gpio_pins[eut_pin_name])
         return pins
@@ -481,6 +480,7 @@ class Narcissus:
         if not self.read_io_expander_pin(self.u2, 0, 5): #VCC_J7_P20
             self.fail('FAIL 310: EUT target power not detected. Check J1 pin 2, J7 pin 20, U3, C3, C4.')
         # check that all signals with pull-up resistors are high
+        # We don't check RESET for now because we are pulling it low.
         #if not self.check_gpio_pin('J1_P31'):
             #self.fail('FAIL 320: RESET voltage not detected. Check J7 pin 11, R5, SW2, U1 pin 128.')
         if not self.read_io_expander_pin(self.u1, 4, 3):
