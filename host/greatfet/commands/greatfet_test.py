@@ -562,7 +562,7 @@ class Narcissus:
                 break
             except DeviceNotFoundError:
                 if time.time() >= timeout:
-                    self.print('FAIL 1020: EUT in DFU mode not found.')
+                    self.print('FAIL 1020: EUT in DFU mode not found. Ensure that DFU button is pressed while connecting USB0 cable')
                     sys.exit(errno.ENODEV)
             except IOError:
                 self.print('DFU IOError')
@@ -678,32 +678,31 @@ class Narcissus:
         if diode_drop > 0.275:
             self.fail('FAIL 1300: Voltage drop across diode too high. Check D5. Check for hot spots due to excessive current draw.')
 
-    def test_usb1(self):
-        fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=self.tester)
-        fd = facedancer.USBDevice.USBDevice(fdapp)
-        fd.connect()
-        fd_thread=threading.Thread(target=fd.run)
-        fd_thread.start()
+    def glitchkit_host_test(self):
         try:
             descriptor = self.eut.glitchkit.usb.capture_control_in(
                     request= self.eut.glitchkit.usb.GET_DESCRIPTOR,
                     value  = self.eut.glitchkit.usb.GET_DEVICE_DESCRIPTOR,
-                    length = 18
+                    length = 18,
+                    timeout = 1
                 )
         except:
-            fd.stop()
-            fd_thread.join()
-            fd.disconnect()
-            self.fail('FAIL 1400: USB1 error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
-        if descriptor != b'\x12\x01\x00\x02\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00':
-            self.fail('FAIL 1410: USB descriptor error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
-        fd.stop()
-        fd_thread.join()
-        fd.disconnect()
+            pass
 
-        # FIXME test USB1_VBUS
-        #if self.read_analog_voltage("USB1_VBUS") < 4.4:
-            #self.fail('FAIL XXX: USB1_VBUS not detected. Check connection of EUT to Narcissus. Check U5, C11.')
+    def test_usb1(self):
+        if self.read_analog_voltage("USB1_VBUS") > 4.0:
+            self.fail('FAIL 1400: USB1_VBUS detected. Check U5, R16, R21, R22, R23, R24, C10, C11.')
+        if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 133:
+            self.fail('FAIL 1410: unexpected USB1 data line state.')
+        gk_thread=threading.Thread(target=self.glitchkit_host_test)
+        gk_thread.start()
+        self.report_all_analog_voltages()
+        if self.read_analog_voltage("USB1_VBUS") < 4.1:
+            self.fail('FAIL 1420: USB1_VBUS too low. Check U5, R16, R21, R22, R23, R24, C10, C11.')
+        #TODO use facedancer on tester and confirm descriptor data
+        gk_thread.join()
+        if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 5:
+            self.fail('FAIL 1430: USB1 data error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
 
     def print(self, output=''):
         if self.logfile:
@@ -753,10 +752,9 @@ class Narcissus:
         self.test_gpio()
         self.test_leds()
         self.test_diode()
-        #self.test_usb1()
+        self.test_usb1()
 
-        #self.print('PASS')
-        self.print('PASS (WARNING: skipped USB1 test)')
+        self.print('PASS')
 
 if __name__ == '__main__':
     Narcissus().main()
