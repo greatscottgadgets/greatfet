@@ -378,7 +378,7 @@ class Narcissus:
                 self.print("Unexpected error: %s" % sys.exc_info()[0])
                 pass
             if time.time() >= timeout:
-                self.print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect Tester to this host with USB. Ensure no EUT is present when connecting Tester to host via USB.')
+                self.print('FAIL 10: Tester not found. Connect Tester to Narcissus and connect only Tester to this host with USB. Ensure no EUT is present when connecting Tester to host via USB.')
                 sys.exit(errno.ENODEV)
             time.sleep(1)
 
@@ -429,9 +429,9 @@ class Narcissus:
         self.report_all_analog_voltages()
 
         if self.read_analog_voltage("USB0_VBUS") > 4.0:
-            self.fail('FAIL 150: USB0 cable detected. Unplug USB cable from EUT J3/USB0.')
+            self.fail('FAIL 150: USB0 power detected. Unplug USB cable from EUT J3/USB0.')
         if self.read_analog_voltage("USB1_VBUS") > 4.0:
-            self.fail('FAIL 160: USB1 cable detected. Unplug USB cable from EUT J4/USB1.')
+            self.fail('FAIL 160: USB1 power detected. Ensure USB cable from EUT J4/USB1 is connected only to Tester.')
         if self.read_analog_voltage("EUT_VCC") > 2.5:
             self.fail('FAIL 165: EUT target power detected. Disconnect USB cables from EUT.')
 
@@ -464,16 +464,16 @@ class Narcissus:
         # check that all signals with pull-down resistors are low
         # There is enough reverse leakage through D5 to trigger USB0_SENSE, so
         # we don't check that one.
+        if self.check_gpio_pin('J1_P35'):
+            self.fail('FAIL 290: USB1_EN voltage detected. Check R16.')
         if self.read_io_expander_pin(self.u1, 0, 5):
-            self.fail('FAIL 250: USB1_SENSE voltage detected. Unplug cable from USB1. Check U5, R16, R21, R22.')
+            self.fail('FAIL 250: USB1_SENSE voltage detected. Ensure USB cable from EUT J4/USB1 is connected only to Tester. Check U5, R16, R21, R22.')
         if self.read_io_expander_pin(self.u1, 4, 2):
             self.fail('FAIL 260: J1_P12 voltage detected. Check J1 pin 12, R8.')
         if self.read_io_expander_pin(self.u2, 2, 2):
             self.fail('FAIL 270: J7_P6 voltage detected. Check J7 pin 6, R7.')
         if self.read_io_expander_pin(self.u2, 3, 5):
             self.fail('FAIL 280: J2_P13 voltage detected. Check J2 pin 13, R6, SW1.')
-        if self.check_gpio_pin('J1_P35'):
-            self.fail('FAIL 290: USB1_EN voltage detected. Check R16.')
 
     def test_pull_ups(self):
         if not self.tester_pins[self.other_pins["5V_EN"]].read():
@@ -692,12 +692,13 @@ class Narcissus:
                     timeout = 1
                 )
         except:
+            #TODO reset and reconnect EUT so that other tests can be done
             self.log(traceback.format_exc())
             pass
 
     def test_usb1(self):
         if self.read_analog_voltage("USB1_VBUS") > 4.0:
-            self.fail('FAIL 1400: USB1_VBUS detected. Check U5, R16, R21, R22, R23, R24, C10, C11.')
+            self.fail('FAIL 1400: USB1_VBUS detected. Check U5, R16, R21, R22, R23, C10, C11. Ensure USB cable from EUT J4/USB1 is connected only to Tester.')
         fdapp = facedancer.GreatDancerApp.GreatDancerApp(device=self.tester)
         fd = facedancer.USBDevice.USBDevice(fdapp)
         fd.connect()
@@ -711,13 +712,15 @@ class Narcissus:
         self.report_all_analog_voltages()
         if self.read_analog_voltage("USB1_VBUS") < 4.1:
             fd.disconnect()
-            self.fail('FAIL 1420: USB1_VBUS too low. Check U5, R16, R21, R22, R23, R24, C10, C11.')
+            self.fail('FAIL 1420: USB1_VBUS too low. Check U5, R16, R21, R22, R23, C10, C11.')
+        if not self.read_io_expander_pin(self.u1, 0, 5):
+            self.fail('FAIL 1430: USB1_SENSE voltage not detected. Check R21, R22.')
         #TODO use facedancer on tester and confirm descriptor data
         gk_thread.join()
         self.log("final USB status " + str(self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)))
         if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 5:
             fd.disconnect()
-            self.fail('FAIL 1430: USB1 data error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
+            self.fail('FAIL 1440: USB1 data error. Check USB1 cable. Check J4, R19, R20, R21, R22, R29, R30, C8, C9.')
         fd.disconnect()
 
     def log(self, output=''):
