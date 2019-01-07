@@ -66,8 +66,8 @@ class Narcissus:
         # P36"     : P4_7 I2S0_TX_SCK/I2S1_TX_SCK
         "J1_P37"   : "J1_P37",
         # P38"     : P1_19 SSP1_SCK
-        "J1_P39"   : "J1_P39",
-        "J1_P40"   : "J1_P40",
+        "J1_P39"   : "J1_P40",
+        "J1_P40"   : "J1_P39",
         # J2_P1"   : (2, 2, 4) GND on EUT
         # J2_P2"   : EUT_5V connected to ADC
         "J2_P3"    : (2, 2, 6),
@@ -363,8 +363,8 @@ class Narcissus:
                 port += (expander - 1) * 5
                 pins[eut_pin_name] = (1 == (expander_state[port] >> pin) & 1)
             #FIXME why does this fail?
-            #else:
-                #pins[eut_pin_name] = self.check_gpio_pin(gpio_pins[eut_pin_name])
+            else:
+                pins[eut_pin_name] = self.check_gpio_pin(self.gpio_pins[eut_pin_name])
         return pins
 
     def find_tester(self):
