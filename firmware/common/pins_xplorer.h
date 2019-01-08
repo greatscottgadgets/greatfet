@@ -105,6 +105,11 @@ static const struct gpio_t gpio_onboard_flash_select = GPIO(5, 11);
 #define ONBOARD_FLASH_NUM_BYTES  (ONBOARD_FLASH_PAGE_LEN * ONBOARD_FLASH_NUM_PAGES)
 
 /* TODO add other Pins */
+#define SCU_PINMUX_GPIO0_10 (P1_3)  /* GPIO0[10] */
+#define SCU_PINMUX_GPIO0_11 (P1_4)  /* GPIO0[11] */
+#define SCU_PINMUX_GPIO0_15 (P1_20) /* GPIO0[15] */
+#define SCU_PINMUX_GPIO1_14 (P3_4)  /* GPIO1[14] */
+#define SCU_PINMUX_GPIO2_2  (P4_2)  /* GPIO2[2] */
 #define SCU_PINMUX_GPIO2_3  (P4_3)  /* GPIO2[3] */
 #define SCU_PINMUX_GPIO3_8  (P7_0)  /* GPIO3[8] */
 #define SCU_PINMUX_GPIO3_9  (P7_1)  /* GPIO3[9] */
