@@ -57,6 +57,7 @@ set(SRC_M4
     "${PATH_GREATFET_FIRMWARE_COMMON}/debug.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/sgpio.c"
     "${PATH_GREATFET_FIRMWARE_COMMON}/one_wire.c"
+    "${PATH_GREATFET_FIRMWARE_COMMON}/jtag.c"
 
     ${LIBGREAT_API_CLASSES}
     ${GREATFET_API_CLASSES}
@@ -71,7 +72,6 @@ set(SRC_M4
     legacy_apis/usb_api_usbhost.c
     legacy_apis/usb_api_glitchkit_simple.c
     legacy_apis/usb_api_DS18B20.c
-    legacy_apis/usb_api_msp430.c
 )
 
 DeclareTargets()
