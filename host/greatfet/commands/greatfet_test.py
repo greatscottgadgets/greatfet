@@ -706,7 +706,7 @@ class Narcissus:
         self.log("initial USB status " + str(self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)))
         if self.tester.comms._vendor_request_in(vendor_requests.USBHOST_GET_STATUS, index=0, length=4)[0] != 133:
             fd.disconnect()
-            self.fail('FAIL 1410: unexpected USB1 data line state.')
+            self.fail('FAIL 1410: unexpected USB1 data line state. Ensure USB cable from EUT J4/USB1 is connected only to Tester.')
         gk_thread=threading.Thread(target=self.glitchkit_host_test)
         gk_thread.start()
         self.report_all_analog_voltages()
