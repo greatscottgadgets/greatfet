@@ -302,6 +302,10 @@ class Narcissus:
             except ValueError:
                 self.print('Please respond with \'y\' or \'n\'.')
 
+    def prompt_for_id(self):
+        self.print('Type or scan unique ID for EUT (or press Enter for no ID):')
+        self.log('Unique ID: ' + input())
+
     def fail(self, message):
         self.print(message)
         sys.exit()
@@ -764,6 +768,7 @@ class Narcissus:
         self.tester_pins[self.other_pins["5V_EN"]].set_direction(self.tester.gpio.DIRECTION_OUT)
         self.report_all_analog_voltages()
 
+        self.prompt_for_id()
         self.detect_eut()
         self.activate_supply()
         self.test_pull_downs()
