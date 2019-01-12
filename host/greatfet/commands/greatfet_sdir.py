@@ -19,7 +19,7 @@ def main():
     logfile = 'log.bin'
 #    logfile = '/tmp/fifo'
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for experimenting with GreatFET's ADC")
+    parser = argparse.ArgumentParser(description="Utility for Software Defined Infrared (SDIR)")
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
                         help="Serial number of device, if multiple devices", default=None)
     parser.add_argument('-S', dest='samplerate', metavar='<samplerate>', type=int,

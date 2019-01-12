@@ -112,7 +112,7 @@ def i2c_xfer(device, log_function):
 
 def main():
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for talking to other SPI flash chips with GreatFET")
+    parser = argparse.ArgumentParser(description="Utility for talking to external SPI flash chips with GreatFET")
     parser.add_argument('-i', '--info', dest='info', action='store_true',
                         help="Read Jedec information from target")
     parser.add_argument('-d', '--dump', dest='dump', metavar='<filename>',
