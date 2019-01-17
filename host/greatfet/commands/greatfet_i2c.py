@@ -20,10 +20,10 @@ def main():
 
     # Set up a simple argument parser.
     parser = GreatFETArgumentParser(description="Utility for I2C communication via GreatFET")
+    parser.add_argument('-a', '--address', nargs=1, type=ast.literal_eval, help="7-bit address for communication over the I2C Bus") 
+    parser.add_argument('-r', '--read', default=0, help="Number of bytes expecting to receive from the I2C Bus")
+    parser.add_argument('-w', '--write', nargs='*', type=ast.literal_eval, default=[], help="Bytes to send over the I2C Bus")
     parser.add_argument('-z', '--scan', action='store_true', help="Scan all possible i2c addresses")
-    parser.add_argument('-a', '--address', nargs=1, type=ast.literal_eval, help="Address to transmit data to over the I2C Bus") 
-    parser.add_argument('-r', '--receive_length', default=0, help="Number of bytes expecting to receive from the I2C Bus")
-    parser.add_argument('data_to_transmit', nargs='*', type=ast.literal_eval, default=[], help="Data to transmit over the I2C Bus (in bytes)")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -41,27 +41,56 @@ def main():
 
     if args.scan:
         scan(device, log_function)
-    if args.address:
-        transmit(device, args.address[0], args.data_to_transmit, int(args.receive_length), log_function)
+    if args.write:
+        write(device, args.address[0], args.write, log_function)
+    if args.read:
+        read(device, args.address[0], int(args.read), log_function)
+
+
+def read(device, address, receive_length, log_function):
+    i2c_device = I2CDevice(device.i2c, address)
+    received_data, i2c_status = i2c_device.read(receive_length)
+    if received_data:
+        log_function("Bytes received from address %s:" % hex(address))
+        for byte in received_data:
+            log_function(hex(byte))
+    log_function("I2C read status: %s" % hex(i2c_status))
+
+
+def write(device, address, data, log_function):
+    i2c_device = I2CDevice(device.i2c, address)
+    log_function("Writing to address %s" %  hex(address))
+    i2c_status = i2c_device.write(data)
+    log_function("I2C write status: %s" % hex(i2c_status))
 
 
 def scan(device, log_function):
     i2c_bus = I2CBus(device)
-    valid_addresses = i2c_bus.scan()
-    print("Working address(es):")
-    for address in valid_addresses:
-        print(hex(address))
-    
+    addresses = i2c_bus.scan()
 
-def transmit(device, address, data, receive_length, log_function):
-    i2c_device = I2CDevice(device.i2c, address >> 1)
-    received_data, i2c_status = i2c_device.transmit(data, receive_length)
-    if received_data:
-        log_function("received bytes:")
-        for byte in received_data:
-            log_function(hex(byte))
-    log_function("i2c status:")
-    log_function(hex(i2c_status))
+    # list output
+    print("I2C address(es):")
+    for address, response in enumerate(addresses):
+        if response[0]:
+            print("%s W" % hex(address))
+        if response[1]:
+            print("%s R" % hex(address))
+
+    # table output
+    print("\n******** W/R bit set at each valid address ********")
+    print("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f", end='')
+    for i, response in enumerate(addresses):
+        if i % 16 == 0:
+            print("\n%d0:" % (i / 16), end=' ')
+        if response[0]:
+            print("W", end='')
+        else:
+            print("-", end='')
+        if response[1]:
+            print("R", end=' ')
+        else:
+            print("-", end=' ')
+    print()
 
 
 if __name__ == '__main__':

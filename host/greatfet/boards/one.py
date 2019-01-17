@@ -4,8 +4,6 @@
 
 from ..board import GreatFETBoard
 
-from ..peripherals.gpio import GPIO
-from ..peripherals.led import LED
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager
@@ -153,8 +151,11 @@ class GreatFETOne(GreatFETBoard):
         # XXX disable perpiherals as we develop libgreat
         # return
 
-        self.i2c_busses = [ I2CBus(self, 'I2C0') ]
+        # self.i2c_busses = [ I2CBus(self, 'I2C0') ]
         self.spi_busses = [ SPIBus(self, 'SPI1') ]
+
+        if self.supports_api('i2c'):
+            self.i2c_busses = [ I2CBus(self, 'I2C0') ]
 
         # Create an easy-to-use alias for the primary busses, for rapid
         # hacking/experimentation.

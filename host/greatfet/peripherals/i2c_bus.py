@@ -2,8 +2,8 @@
 # This file is part of GreatFET
 #
 
-from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
+
 
 class I2CBus(GreatFETPeripheral):
     """
@@ -12,9 +12,6 @@ class I2CBus(GreatFETPeripheral):
         For now, supports only the primary I2C bus (I2C0), but will be
         expanded when the vendor commands are.
     """
-
-    # Master Transmitter/Receiver mode should return 0x18/0x40 respectively
-    VALID_STATES = [0x18, 0x40]
 
     def __init__(self, board, name='i2c bus', buffer_size=255, duty_cycle_count=255):
         """
@@ -54,18 +51,15 @@ class I2CBus(GreatFETPeripheral):
 
         self.devices.append(device)
 
-
-    def transmit(self, address, data, receive_length=0):
+    def read(self, address, receive_length=0):
         """
-            Sends data over the I2C bus, and optionally recieves
-            data in response.
+            Reads data from the I2C bus.
 
             Args:
-                address -- The I2C address for the target device.
+                address -- The 7-bit I2C address for the target device.
                     Should not contain read/write bits. Can be used to address
                     special addresses, for now; but this behavior may change.
-                data -- The data to be sent to the given device.
-                receive_length -- If provided, the I2C controller will attempt
+                receive_length -- The I2C controller will attempt
                         to read the provided amount of data, in bytes.
         """
 
@@ -78,30 +72,64 @@ class I2CBus(GreatFETPeripheral):
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
-        # Perform the core transfer, parse status and device response
+        read_response = self.board.apis.i2c.read(address, receive_length)
+        read_status = read_response[-1]
+        read_data = read_response[:-1]
+
+        return read_data, read_status
+
+    def write(self, address, data):
+        """
+            Sends data over the I2C bus.
+
+            Args:
+                address -- The 7-bit I2C address for the target device.
+                    Should not contain read/write bits. Can be used to address
+                    special addresses, for now; but this behavior may change.
+                data -- The data to be sent to the given device.
+        """
+
+        if address > 127 or address < 0:
+            raise ValueError("Tried to transmit to an invalid I2C address!")
         data = bytes(data)
-        usb_response = self.board.apis.i2c.xfer(address, receive_length, data)
-        device_response = usb_response[:-1]
-        status = usb_response[-1]
+        write_status = self.board.apis.i2c.write(address, data)
+        
+        return write_status
 
-        return device_response, status
+    def transmit(self, address, data, receive_length):
+        """
+            Wrapper function for back to back TX/RX.
 
+            Args:
+                address -- The 7-bit I2C address for the target device.
+                    Should not contain read/write bits. Can be used to address
+                    special addresses, for now; but this behavior may change.
+                data -- The data to be sent to the given device.
+                receive_length -- The I2C controller will attempt
+                        to read the provided amount of data, in bytes.
+        """
+
+        write_status = self.write(address, data)
+        read_data, read_status = self.read(address, receive_length)
+
+        return read_data, write_status, read_status
 
     def scan(self):
         """
-            Sends empty data over the I2C bus, and recieves ACK/NAK
+            TX/RX over the I2C bus, and recieves ACK/NAK
             in response for valid/invalid addresses.
         """
-        
-        valid_addresses = []
-        for address in range(0, 256, 2):
-            # Perform the core transfer, parse status and device response
-            usb_response = self.board.apis.i2c.xfer(address >> 1, 1, b'')
-            status = usb_response[-1]
-            device_response = usb_response[:-1]
 
-            if status in I2CBus.VALID_STATES:
-                valid_addresses.append(address)
+        responses = self.board.apis.i2c.scan()
+        write_responses = responses[:16]
+        read_responses = responses[16:]
+        addresses = []
 
-        return valid_addresses
+        for write_response, read_response in zip(write_responses, read_responses):
+            for x in range(8):
+                addresses.append(
+                    (write_response & 1 << x != 0,
+                     read_response & 1 << x != 0))
+
+        return addresses
 
