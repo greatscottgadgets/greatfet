@@ -4,7 +4,7 @@
  */
 #include <stdbool.h>
 #include <greatfet_core.h>
-#include "jtag430.h"
+#include "jtag_msp430.h"
 #include "jtag.h"
 
 uint8_t jtag430mode=MSP430X2MODE;
