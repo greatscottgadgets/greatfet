@@ -108,6 +108,6 @@ static struct comms_verb _verbs[] = {
 			.doc = "Gets the chip ID of the chip specified" },
 		{} // Sentinel
 };
-COMMS_DEFINE_SIMPLE_CLASS(jtag, CLASS_NUMBER_SELF, "jtag_msp430", _verbs,
+COMMS_DEFINE_SIMPLE_CLASS(jtag_msp430, CLASS_NUMBER_SELF, "jtag_msp430", _verbs,
                           "MSP430 specific JTAG functions.");
 

@@ -3,8 +3,8 @@
  * derived from GoodFET (thanks Travis)
  */
 
-#ifndef __JTAG430_H__
-#define __JTAG430_H__
+#ifndef __JTAG_MSP430_H__
+#define __JTAG_MSP430_H__
 
 #define MSP430MODE 0
 #define MSP430XMODE 1
@@ -83,4 +83,4 @@ void jtag430_por();
 
 uint8_t jtag430_start_reset_halt();
 
-#endif /* __JTAG430_H__ */
+#endif /* __JTAG_MSP430_H__ */
