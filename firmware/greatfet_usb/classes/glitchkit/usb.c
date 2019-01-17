@@ -10,13 +10,13 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include <drivers/usb/lpc43xx/usb.h>
-#include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/usb.h>
+#include <drivers/usb/usb_queue.h>
 #include "../../usb_endpoint.h"
 
-#include <drivers/usb/lpc43xx/usb_host.h>
-#include <drivers/usb/lpc43xx/usb_queue_host.h>
-#include <drivers/usb/lpc43xx/usb_registers.h>
+#include <drivers/usb/usb_host.h>
+#include <drivers/usb/usb_queue_host.h>
+#include <drivers/usb/usb_registers.h>
 
 #define CLASS_NUMBER_SELF (0x107)
 

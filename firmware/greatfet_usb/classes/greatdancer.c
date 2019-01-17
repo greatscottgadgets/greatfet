@@ -9,18 +9,18 @@
 #include <debug.h>
 #include <string.h>
 
-#include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/usb_queue.h>
 #include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
 
 #include <greatfet_core.h>
 
-#include <drivers/usb/lpc43xx/usb.h>
-#include <drivers/usb/lpc43xx/usb_standard_request.h>
+#include <drivers/usb/usb.h>
+#include <drivers/usb/usb_standard_request.h>
 #include "../usb_descriptor.h"
 #include "../usb_device.h"
 #include "../usb_endpoint.h"
-#include <drivers/usb/lpc43xx/usb_request.h>
+#include <drivers/usb/usb_request.h>
 
 #include <glitchkit.h>
 

@@ -12,7 +12,7 @@
 
 #include <greatfet_core.h>
 
-#include "drivers/usb/lpc43xx/usb.h"
+#include "drivers/usb/usb.h"
 
 #include "usb_request_handlers.h"
 
@@ -34,8 +34,10 @@
 
 #include "debug.h"
 
+#include <drivers/platform_clock.h>
 #include <drivers/memory/allocator.h>
 
+void emergency_mode(void);
 
 void init_usb0(void) {
 	usb_set_descriptor_by_serial_number();
@@ -59,8 +61,6 @@ void init_usb0(void) {
 
 
 int main(void) {
-	cpu_clock_init();
-	cpu_clock_pll1_max_speed();
 	pin_setup();
 	heartbeat_init();
 
@@ -68,8 +68,13 @@ int main(void) {
 	// immediately use it. This can be enabled here, but it's likely best to
 	// just bring the RTC up on-demand.
 	/* rtc_init(); */
-
 	init_usb0();
+
+	pr_info("GreatFET initialization complete!\n");
+
+	if (platform_get_parent_clock_source(CLOCK_SOURCE_PLL0_USB) == CLOCK_SOURCE_INTERNAL_OSCILLATOR) {
+		emergency_mode();
+	}
 
 	while(true) {
 		if(sdir_rx_enabled) {
@@ -87,4 +92,19 @@ int main(void) {
 	}
 
 	return 0;
+}
+
+
+/**
+ * Emergency mode entered when the system's main clock has failed to start.
+ */
+void emergency_mode(void)
+{
+	while(1) {
+		led_toggle(LED2);
+		led_toggle(LED3);
+		led_toggle(LED4);
+		delay_us(10000000);
+		led_toggle(LED1);
+	}
 }

@@ -4,8 +4,8 @@
 
 #include "usb_endpoint.h"
 
-#include <drivers/usb/lpc43xx/usb_request.h>
-#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/usb_request.h>
+#include <drivers/usb/usb.h>
 
 #include "usb_device.h"
 

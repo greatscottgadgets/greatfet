@@ -7,6 +7,7 @@ import struct
 
 from ..board import GreatFETBoard
 from ..peripherals.firmware import DeviceFirmwareManager
+from ..errors import DeviceNotFoundError
 
 class GreatFETLegacy(GreatFETBoard):
     """ Class representing legacy-firmware (pre-libgreat) GreatFET boards.
@@ -24,6 +25,12 @@ class GreatFETLegacy(GreatFETBoard):
     # Currently, all GreatFET One boards have an ID of zero.
     HANDLED_BOARD_IDS = [0]
     BOARD_NAME = "GreatFET [legacy FW]"
+
+    # Reconnect delay after reset.
+    RECONNECT_DELAY = 5
+
+    # LibUSB constant for a stall / pipe error.
+    LIBUSB_PIPE_ERROR = 32
 
     def version_warnings(self):
         """ Notify the user that their GreatFET requires an urgent upgrade.  """
@@ -53,7 +60,7 @@ class GreatFETLegacy(GreatFETBoard):
             # On some platforms, providing identifiers that don't match with any
             # real device produces a USBError/Pipe Error. We'll convert it into a
             # DeviceNotFoundError.
-            if e.errno == LIBUSB_PIPE_ERROR:
+            if e.errno == self.LIBUSB_PIPE_ERROR:
                 raise DeviceNotFoundError()
             else:
                 raise e
@@ -158,19 +165,20 @@ class GreatFETLegacy(GreatFETBoard):
             switch_to_external_clock -- If true, the device will accept a 12MHz
                 clock signal on P4_7 (J2_P11 on the GreatFET one) after the reset.
         """
+
         import usb
+        import time
 
         type = 1 if switch_to_external_clock else 0
 
         try:
             self.vendor_request_out(self.REQUEST_RESET, value=type)
-        except usb.core.USBError as e:
+        except usb.core.USBError:
             pass
 
         # If we're to attempt a reconnect, do so.
-        connected = False
         if reconnect:
-            time.sleep(RECONNECT_DELAY)
+            time.sleep(self.RECONNECT_DELAY)
             self.__init__(**self.identifiers)
 
             # FIXME: issue a reset to all device peripherals with state, here?
@@ -257,7 +265,7 @@ class GreatFETLegacy(GreatFETBoard):
             index=index, length_or_data=data, timeout=timeout)
 
 
-    def read_debug_ring(self, max_length=2048, clear=False, encoding='latin1'):
+    def read_debug_ring(self, max_length=2047, clear=False, encoding='latin1'):
         """ Requests the GreatFET's debug ring.
         Args:
             max_length -- The maximum length to respond with. Must be less than 65536.
@@ -265,7 +273,7 @@ class GreatFETLegacy(GreatFETBoard):
         """
         import usb
 
-        return self.vendor_request_in_string(vendor_requests.REQUEST_READ_DMESG,
+        return self.vendor_request_in_string(self.REQUEST_READ_DMESG,
                 length=max_length, value= 1 if clear else 0, encoding=encoding)
 
 
@@ -349,7 +357,7 @@ class LegacyFirmwareAdapter(object):
         # Break the address down into two 16-bit words, as the target device expects
         # the address to be sent via the 16-bit value and index fields.
         address_high = address >> 16
-        address_low = address & 0xFFFF;
+        address_low = address & 0xFFFF
 
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
@@ -380,7 +388,7 @@ class LegacyFirmwareAdapter(object):
         # Break the address down into two 16-bit words, as the target device expects
         # the address to be sent via the 16-bit value and index fields.
         address_high = address >> 16
-        address_low = address & 0xFFFF;
+        address_low = address & 0xFFFF
 
         # Perform the actual read.
         result = self.board.vendor_request_in(self.REQUEST_SPIFLASH_READ,

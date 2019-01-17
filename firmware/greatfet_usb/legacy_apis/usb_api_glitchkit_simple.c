@@ -13,8 +13,8 @@
 #include <greatfet_core.h>
 #include <string.h>
 
-#include <drivers/usb/lpc43xx/usb.h>
-#include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/usb.h>
+#include <drivers/usb/usb_queue.h>
 #include "../usb_endpoint.h"
 
 #include "gpio_lpc.h"
@@ -161,7 +161,7 @@ usb_request_status_t usb_vendor_request_glitchkit_simple_enable_trigger(
 
           // Add this condition to our list of active conditions.
           _gpio_condition_add(condition);
-      } 
+      }
       // Otherwise, we have an _edge_ sensitive condition. Use this to set up an interrupt.
       // Note we don't activate the interrupt here, as the condition list is not yet complete
       // and we don't want to start counting. :)

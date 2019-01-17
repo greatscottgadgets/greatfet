@@ -205,7 +205,7 @@ def main():
     # Finally, reset the target
     if args.reset or args.dfu:
         log_function("Resetting GreatFET...")
-        device.reset(reconnect=False)
+        device.reset(reconnect=False, is_post_firmware_flash=bool(args.write))
         log_function("Reset complete!")
 
 if __name__ == '__main__':

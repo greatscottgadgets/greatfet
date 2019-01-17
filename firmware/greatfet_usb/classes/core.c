@@ -12,9 +12,9 @@
 #include <config.h>
 #include <greatfet_core.h>
 #include <rom_iap.h>
-#include <libopencm3/lpc43xx/wwdt.h>
 
 #include <drivers/comms.h>
+#include <drivers/reset.h>
 #include <debug.h>
 
 #define CLASS_NUMBER_CORE 0
@@ -25,7 +25,7 @@ char version_string[] = CONFIG_VERSION_STRING;
  * Method that determines the board's ID.
  * Overrideable if derivative firmware wants to auto-detect which board it's running on.
  */
-uint32_t WEAK core_get_board_id()
+uint32_t ATTR_WEAK core_get_board_id()
 {
 	return CONFIG_BOARD_ID;
 }
@@ -85,24 +85,58 @@ int core_verb_read_serial_number(struct command_transaction *trans)
 	return iap_cmd_res.status_res.status_ret;
 }
 
+typedef enum  {
+
+	//. Normal soft-reset. Resets everything.
+	RESET_REQUEST_NORMAL = 0,
+
+	// Request to switch to an external clock.
+	RESET_REQUEST_SWITCH_TO_EXTCLOCK = 1,
+
+	// Soft reset the entire device _minus_ the always-on power domain.
+	RESET_REQUEST_MAINTAIN_ALWAYS_ON_DOMAIN = 2,
+
+	// Normal reset request, but prints a message that we're rebooting into new firmware.
+	RESET_REQUEST_POST_FIRMWARE_FLASH = 3,
+
+} reset_request_commands_t;
+
 /**
- * Arguments:
- *
- *		value = 0: regular reset
- *		value = 1: switch to an external clock after eset
+ * Arguments is a reset_request_commands_t.
  */
 int core_verb_request_reset(struct command_transaction *trans)
 {
-	uint32_t reset_reason_command = comms_argument_parse_uint32_t(trans);
+	reset_request_commands_t reset_reason_command = comms_argument_parse_uint32_t(trans);
+	reset_reason_t reset_reason;
 
-	if(reset_reason_command == 1) {
-		pr_info("Performing soft reset and switching to external clock...\n");
-		reset_reason = RESET_REASON_USE_EXTCLOCK;
-	} else {
-		pr_info("Performing soft reset...\n");
-		reset_reason = RESET_REASON_SOFT_RESET;
+	bool reset_always_on_domain = true;
+
+	switch (reset_reason_command) {
+
+		case RESET_REQUEST_SWITCH_TO_EXTCLOCK:
+			pr_info("Performing soft reset and switching to external clock...\n");
+			reset_reason = RESET_REASON_USE_EXTCLOCK;
+			break;
+
+		case RESET_REQUEST_MAINTAIN_ALWAYS_ON_DOMAIN:
+			pr_info("Performing soft reset, but not resetting the always-on (RTC) power domain.\n");
+
+			reset_reason = RESET_REASON_SOFT_RESET;
+			reset_always_on_domain = false;
+			break;
+
+		case RESET_REQUEST_POST_FIRMWARE_FLASH:
+			pr_info("Resetting device into newly-flashed firmware...\n");
+			reset_reason = RESET_REASON_NEW_FIRMWARE;
+			break;
+
+		default:
+			pr_info("Performing soft reset...\n");
+			reset_reason = RESET_REASON_SOFT_RESET;
+			break;
 	}
 
-	wwdt_reset(100000);
+	// Perform the actual reset. Should never return.
+	system_reset(reset_reason, reset_always_on_domain);
 	return 0;
 }

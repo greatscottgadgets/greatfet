@@ -30,5 +30,4 @@ add_greatfet_library_if_necessary(libgreatfet OBJECT
     ${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/gpio_int.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/printf.c
-    ${PATH_GREATFET_FIRMWARE_COMMON}/time.c
 )
