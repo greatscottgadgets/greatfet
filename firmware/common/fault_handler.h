@@ -6,7 +6,6 @@
 #define __FAULT_HANDLER__
 
 #include <stdint.h>
-
 #include <libopencm3/cm3/memorymap.h>
 
 // TODO: Move all this to a Cortex-M(?) include file, since these

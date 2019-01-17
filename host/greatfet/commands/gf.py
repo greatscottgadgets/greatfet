@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Root command that delegates to all GreatFET subcommands.
-#
+
 # This file is part of GreatFET.
 
 from __future__ import print_function
@@ -104,14 +104,14 @@ def find_subcommand(name, allow_partial_matches=True, print_errors=True):
             return subcommands[matches[0]]
 
         # Otherwise, print the error.
-        elif print_errors:
+        elif matches and print_errors:
             matches = "\n\t".join(matches)
             print("Subcommand short-name '{}' is ambiguous; it could refer to:\n\t{}\n".format(name, matches))
             return False
 
     if print_errors:
         print("ERROR: Unsupported subcommand '{}'.\nCheck to ensure the package providing the " \
-                "subcommand is installed.\n".format(subcommand_name))
+                "subcommand is installed.\n".format(name))
 
     return False
 

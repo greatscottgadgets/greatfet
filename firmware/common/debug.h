@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <toolchain.h>
 #include <errno.h>
 
 #include <greatfet_core.h>
@@ -108,55 +109,55 @@ void vprintk(int loglevel, char *fmt, va_list list);
  * @param loglevel The log level at which the given string should be printed.
  * @param fmt Format string; matches printf.
  */
-void printk(int loglevel, char *fmt, ...);
+ATTR_PRINTF_N(2) void printk(int loglevel, char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the EMEREGENCY loglevel.
  */
-void pr_emergency(char *fmt, ...);
+ATTR_PRINTF void pr_emergency(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the ALERT loglevel.
  */
-void pr_alert(char *fmt, ...);
+ATTR_PRINTF void pr_alert(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the CRITICAL loglevel.
  */
-void pr_critical(char *fmt, ...);
+ATTR_PRINTF void pr_critical(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the ERROR loglevel.
  */
-void pr_error(char *fmt, ...);
+ATTR_PRINTF void pr_error(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the WARNING loglevel.
  */
-void pr_warning(char *fmt, ...);
+ATTR_PRINTF void pr_warning(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the INFO loglevel.
  */
-void pr_info(char *fmt, ...);
+ATTR_PRINTF void pr_info(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the DEBUG loglevel.
  */
-void pr_debug(char *fmt, ...);
+ATTR_PRINTF void pr_debug(char *fmt, ...);
 
 
 /**
  * Convenience function that prints errors using the DEBUG loglevel.
  */
-void pr_trace(char *fmt, ...);
+ATTR_PRINTF void pr_trace(char *fmt, ...);
 
 /**
  * @return true iff there is currently a debugger connected.

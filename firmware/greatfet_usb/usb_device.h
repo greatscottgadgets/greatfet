@@ -5,7 +5,7 @@
 #ifndef __USB_DEVICE_H__
 #define __USB_DEVICE_H__
 
-#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/usb_type.h>
 
 extern usb_peripheral_t usb_peripherals[2];
 

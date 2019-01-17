@@ -12,17 +12,17 @@
 
 #include <greatfet_core.h>
 
-#include <drivers/usb/lpc43xx/usb.h>
-#include <drivers/usb/lpc43xx/usb_type.h>
+#include <drivers/usb/usb.h>
+#include <drivers/usb/usb_type.h>
 
-#include <drivers/usb/lpc43xx/usb_standard_request.h>
+#include <drivers/usb/usb_standard_request.h>
 #include "../usb_descriptor.h"
 #include "../usb_device.h"
 #include "../usb_endpoint.h"
-#include <drivers/usb/lpc43xx/usb_request.h>
-#include <drivers/usb/lpc43xx/usb_host.h>
-#include <drivers/usb/lpc43xx/usb_queue_host.h>
-#include <drivers/usb/lpc43xx/usb_registers.h>
+#include <drivers/usb/usb_request.h>
+#include <drivers/usb/usb_host.h>
+#include <drivers/usb/usb_queue_host.h>
+#include <drivers/usb/usb_registers.h>
 
 // XXX: temporary
 #include "glitchkit.h"
@@ -52,7 +52,7 @@ static volatile ehci_queue_head_t *endpoint_in_qh[NUM_USB1_ENDPOINTS];
 /**
  * Enumeration describing each of the possible Index values for GET_STATUS
  * requests.
- */ 
+ */
 enum greatdancer_status_request {
 	GET_PORTSC1 = 0,
 	GET_READ_STATUS = 1,

@@ -43,16 +43,6 @@ extern "C"
 #endif
 
 // TODO: move into libgreat
-typedef enum {
-	// Keep these unique, so the RAM is unlikely to settle into these on first
-	// boot.
-	RESET_REASON_UNKNOWN           = 0xAA55FF00,
-	RESET_REASON_SOFT_RESET	       = 0xAA55FF01,
-	RESET_REASON_FAULT             = 0xAA55FF02,
-	RESET_REASON_USE_EXTCLOCK      = 0xAA55CCDD,
-
-	RESET_DEBUG_LIKELY_VALID_MASK  = 0xAA550000,
-}	reset_reason_t;
 
 /**
  * This special register is not cleared on reset-- it thus can

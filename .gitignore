@@ -39,3 +39,7 @@ firmware/*/build
 libgreat/host/build/
 libgreat/host/dist/
 *.egg-info
+
+# ccls output
+.ccls-cache
+

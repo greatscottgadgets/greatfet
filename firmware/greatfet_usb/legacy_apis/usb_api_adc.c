@@ -3,8 +3,8 @@
  */
 
 #include "usb_api_adc.h"
-#include <drivers/usb/lpc43xx/usb.h>
-#include <drivers/usb/lpc43xx/usb_queue.h>
+#include <drivers/usb/usb.h>
+#include <drivers/usb/usb_queue.h>
 #include "../usb_endpoint.h"
 #include "../usb_bulk_buffer.h"
 
@@ -34,7 +34,7 @@ usb_request_status_t usb_vendor_request_adc_read(
 	uint16_t value;
 
 	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		ADC0_CR = ADC_CR_SEL((uint32_t) pins) |	
+		ADC0_CR = ADC_CR_SEL((uint32_t) pins) |
 		ADC_CR_CLKDIV((uint32_t) clkdiv) |
 		ADC_CR_CLKS((uint32_t) clks) |
 		ADC_CR_PDN;
@@ -44,7 +44,7 @@ usb_request_status_t usb_vendor_request_adc_read(
 		value = (ADC0_DR0>>6) & 0x3ff;
 
 		usb_transfer_schedule_block(endpoint->in, &value, 2, NULL, NULL);
-		
+
 	} else if (stage == USB_TRANSFER_STAGE_DATA) {
 		usb_transfer_schedule_ack(endpoint->out);
 	}

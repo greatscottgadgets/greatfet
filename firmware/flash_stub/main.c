@@ -9,7 +9,7 @@
 
 #include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
-#include <drivers/usb/lpc43xx/usb.h>
+#include <drivers/usb/usb.h>
 #include <greatfet_core.h>
 
 #include "../greatfet_usb/usb_descriptor.h"
@@ -53,8 +53,6 @@ void init_usb0(void) {
 
 
 int main(void) {
-	cpu_clock_init();
-	cpu_clock_pll1_max_speed();
 	pin_setup();
 	init_usb0();
 

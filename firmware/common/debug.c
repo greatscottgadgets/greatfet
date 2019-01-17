@@ -7,6 +7,8 @@
 #include <inttypes.h>
 #include <toolchain.h>
 
+#include <drivers/reset.h>
+
 #include <pins.h>
 #include <time.h>
 
@@ -18,7 +20,6 @@
 #endif
 
 #include "debug.h"
-
 
 #define SEMIHOST_SWI		"0xAB"
 #define SEMIHOST_STDOUT_FILENO "2"
@@ -32,30 +33,21 @@
 #undef CONFIG_DEBUG_INCLUDE_TRACE
 #endif
 
+// Uncomment this to disable timestamps in debug logs.
+//#define CONFIG_DEBUG_OMIT_TIMESTAMPS
+
 extern volatile uint32_t reset_reason;
 
 /* Storage for the debug ringbuffer. */
-static char debug_ring[CONFIG_DEBUG_BUFFER_SIZE] ATTR_SECTION(".bss.persistent");
+static char debug_ring[CONFIG_DEBUG_BUFFER_SIZE] ATTR_PERSISTENT;
 
-unsigned int debug_read_index ATTR_SECTION(".bss.persistent");
-unsigned int debug_write_index ATTR_SECTION(".bss.persistent");
+unsigned int debug_read_index ATTR_PERSISTENT;
+unsigned int debug_write_index ATTR_PERSISTENT;
+
 
 // Store the active loglevel.
 // TODO: reduce this, maybe?
 static loglevel_t debug_loglevel = LOGLEVEL_INFO;
-
-
-/**
- * Return true iff it's likely our debug ring is intact
- * from a previous boot; e.g. after a soft reset. This can be
- * used to keep the debug ring around across soft resets.
- */
-static bool debug_memory_seems_okay()
-{
-	return
-		(reset_reason & RESET_DEBUG_LIKELY_VALID_MASK) ==
-		RESET_DEBUG_LIKELY_VALID_MASK;
-}
 
 
 /**
@@ -65,13 +57,21 @@ void debug_init(void)
 {
 	// If it doesn't seem likely our debug ring is intact from a
 	// previous boot, then clear out the debug ring.
-	if (debug_memory_seems_okay()) {
+	if (system_persistent_memory_likely_intact()) {
 		debug_ring_write_string("\n");
 	} else {
 		debug_read_index = 0;
 		debug_write_index = 0;
 	}
 
+	// If we're not omitting timestamps, print a dummy timestamp to indicate our start.
+	#ifndef CONFIG_DEBUG_OMIT_TIMESTAMPS
+		debug_ring_write_string("[------------] ");
+	#endif
+
+	debug_ring_write_string("System started after ");
+	debug_ring_write_string(system_get_reset_reason_string());
+	debug_ring_write_string(".\n");
 }
 CALL_ON_PREINIT(debug_init);
 
@@ -360,7 +360,9 @@ void vprintk(int loglevel, char *fmt, va_list list)
 
 	// TODO: support something like Linux's LOGLEVEL_CONTINUE
 
+#ifndef CONFIG_DEBUG_OMIT_TIMESTAMPS
 	printf("[%12" PRIu32 "] ", get_time());
+#endif
 	vprintf(fmt, list);
 }
 
@@ -407,7 +409,7 @@ void pr_alert(char *fmt, ...)
 
 
 /**
- * Convenience function that prints errors using the ERROR loglevel.
+ * Convenience function that prints errors using the CRITICAL loglevel.
  */
 void pr_critical(char *fmt, ...)
 {

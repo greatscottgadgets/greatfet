@@ -2,15 +2,15 @@
  * This file is part of GreatFET
  */
 
+#include <toolchain.h>
+
 #include <stdint.h>
 #include <debug.h>
-#include <toolchain.h>
+#include <drivers/reset.h>
 
 #include "greatfet_core.h"
 #include "fault_handler.h"
-#include "wwdt.h"
 
-extern volatile uint32_t reset_reason;
 
 typedef struct
 {
@@ -67,15 +67,11 @@ CALL_ON_PREINIT(set_up_fault_handlers);
 /**
  * Trigger an emergency reset, which resets with REASON_FAULT.
  */
-static void emergency_reset()
+static void emergency_reset(void)
 {
 	pr_emergency("Resetting system following fault!\n");
 	pr_emergency("Performing emergency reset...\n");
-	reset_reason = RESET_REASON_FAULT;
-
-	// Perform the actual reset.
-	wwdt_reset(100000);
-	while(1);
+	system_reset(RESET_REASON_FAULT, true);
 }
 
 
@@ -84,8 +80,8 @@ static void emergency_reset()
  */
 void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
 {
-	printk(loglevel, "PC: %08x\n", args->pc);
-	printk(loglevel, "LR: %08x\n", args->lr);
+	printk(loglevel, "PC: %08" PRIx32 "\n", args->pc);
+	printk(loglevel, "LR: %08" PRIx32 "\n", args->lr);
 
 	// Other interesting registers to examine:
 	//	CFSR: Configurable Fault Status Register
@@ -99,9 +95,9 @@ void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
 	// TODO insert special registers
 	printk(loglevel, "\n");
 	printk(loglevel, "Current core: Cortex-M4\n"); // FIXME detect this; right now we're harcoding because we only use the M4
-	printk(loglevel, "R0: %08x\t\tR1: %08x\n", args->r0, args->r1);
-	printk(loglevel, "R2: %08x\t\tR3: %08x\n", args->r2, args->r3);
-	printk(loglevel, "R12: %08x\t\tPSR: %08x\n", args->r12, args->psr);
+	printk(loglevel, "R0: %08" PRIx32 "\t\tR1: %08" PRIx32 "\n", args->r0, args->r1);
+	printk(loglevel, "R2: %08" PRIx32 "\t\tR3: %08" PRIx32 "\n", args->r2, args->r3);
+	printk(loglevel, "R12: %08" PRIx32 "\t\tPSR: %08" PRIx32 "\n", args->r12, args->psr);
 
 	// TODO: print stack
 
@@ -114,17 +110,17 @@ void mem_manage_handler_c(hard_fault_stack_t *state)
 {
 	pr_emergency("\n\n");
 	pr_emergency("FAULT: memory management fault detected!\n");
-	pr_emergency("    MMFSR: %02x\t MMFAR: %08x\n", SCB->MMFSR, SCB->MMFAR);
+	pr_emergency("    MMFSR: %02x\t MMFAR: %08" PRIx32 "\n", SCB->MMFSR, SCB->MMFAR);
 	pr_emergency("    is instruction access violation: %s\n", (SCB->MMFSR & SCB_MMFSR_IACCVIOL) ? "yes" : "no");
 	pr_emergency("    is data access violation: %s\n", (SCB->MMFSR & SCB_MMFSR_DACCVIOL) ? "yes" : "no");
 	pr_emergency("    stacking fault: %s\n", (SCB->MMFSR & SCB_MMFSR_MSTKERR) ? "yes" : "no");
 	pr_emergency("    unstacking fault: %s\n", (SCB->MMFSR & SCB_MMFSR_MUNSTKERR) ? "yes" : "no");
 
 	if (SCB->MMFSR & SCB_MMFSR_MMARVALID) {
-		pr_emergency("Faulting address: 0x%08x (accessed as data)\n", SCB->MMFAR);
+		pr_emergency("Faulting address: 0x%08" PRIx32 " (accessed as data)\n", SCB->MMFAR);
 	} else {
 		if (SCB->MMFSR & SCB_MMFSR_IACCVIOL) {
-			pr_emergency("Faulting address: 0x%08x (accessed as instruction)\n", state->pc);
+			pr_emergency("Faulting address: 0x%08" PRIx32 " (accessed as instruction)\n", state->pc);
 		} else {
 			pr_emergency("Faulting address not known (MMFAR invalid).\n");
 		}
@@ -154,7 +150,7 @@ __attribute__((used)) void hard_fault_handler_c(hard_fault_stack_t* state)
 	// Announce the fault.
 	pr_emergency("\n\n");
 	pr_emergency("FAULT: hard fault detected!\n");
-	pr_emergency("HFSR: %08x\tSHCSR: %08x\n", SCB->HFSR, SCB->SHCSR);
+	pr_emergency("HFSR: %08" PRIx32 "\tSHCSR: %08" PRIx32 "\n", SCB->HFSR, SCB->SHCSR);
 	pr_emergency("    on vector table read: %s\n", (SCB->HFSR & SCB_HFSR_VECTTBL) ? "yes" : "no");
 
 	// If this is a forced exception, we likely got here from another fault handler.

@@ -6,9 +6,6 @@
 
 int main(void)
 {
-	cpu_clock_init();
-	cpu_clock_pll1_max_speed();
-	rtc_init();
 	pin_setup();
 
 	/* Blink LED1/2/3/4 on the board. */

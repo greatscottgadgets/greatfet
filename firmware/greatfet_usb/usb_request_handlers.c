@@ -5,7 +5,7 @@
 // LEGACY SUPPORT APIS
 // These should be gotten rid of!
 
-#include <drivers/usb/lpc43xx/usb_standard_request.h>
+#include <drivers/usb/usb_standard_request.h>
 #include <drivers/usb/comms_backend.h>
 
 #include "legacy_apis/usb_api_adc.h"
