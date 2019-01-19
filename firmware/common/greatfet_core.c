@@ -62,14 +62,16 @@ i2c_bus_t i2c0 = {
 	.obj = (void*)I2C0_BASE,
 	.start = i2c_lpc_start,
 	.stop = i2c_lpc_stop,
-	.transfer = i2c_lpc_transfer,
+	.read = i2c_lpc_read,
+	.write = i2c_lpc_write
 };
 
 i2c_bus_t i2c1 = {
 	.obj = (void*)I2C1_BASE,
 	.start = i2c_lpc_start,
 	.stop = i2c_lpc_stop,
-	.transfer = i2c_lpc_transfer,
+	.read = i2c_lpc_read,
+	.write = i2c_lpc_write
 };
 
 const ssp_config_t ssp_config_spi = {

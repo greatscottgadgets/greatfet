@@ -25,33 +25,42 @@ void i2c_lpc_stop(i2c_bus_t* const bus) {
 	i2c_disable(port);
 }
 
-uint8_t i2c_lpc_transfer(i2c_bus_t* const bus,
+uint8_t i2c_lpc_read(i2c_bus_t* const bus,
 	const uint_fast8_t slave_address,
-	const uint8_t* const data_tx, const size_t count_tx,
 	uint8_t* const data_rx, const size_t count_rx
 ) {
 	const uint32_t port = (uint32_t)bus->obj;
 	size_t i;
 	bool ack = false;
 	uint8_t status = 0;
-	if (data_tx && (count_tx > 0)) {
-		i2c_tx_start(port);
-		i2c_tx_byte(port, (slave_address << 1) | I2C_WRITE);
-		for(i=0; i<count_tx; i++) {
-			i2c_tx_byte(port, data_tx[i]);
-		}
+
+	i2c_tx_start(port);
+	i2c_tx_byte(port, (slave_address << 1) | I2C_READ);
+	status = I2C0_STAT;
+
+	for(i=0; i<count_rx; i++) {
+		/* ACK each byte except the last */
+		ack = (i!=count_rx-1);
+		data_rx[i] = i2c_rx_byte(port, ack);
 	}
+	i2c_stop(port);
 
-	if (data_rx && (count_rx > 0)) {
-		i2c_tx_start(port);
-		i2c_tx_byte(port, (slave_address << 1) | I2C_READ);
-		status = I2C0_STAT;
+	return status;
+}
 
-		for(i=0; i<count_rx; i++) {
-			/* ACK each byte except the last */
-			ack = (i!=count_rx-1);
-			data_rx[i] = i2c_rx_byte(port, ack);
-		}
+uint8_t i2c_lpc_write(i2c_bus_t* const bus,
+	const uint_fast8_t slave_address,
+	const uint8_t* const data_tx, const size_t count_tx
+) {
+	const uint32_t port = (uint32_t)bus->obj;
+	size_t i;
+	uint8_t status = 0;
+
+	i2c_tx_start(port);
+	i2c_tx_byte(port, (slave_address << 1) | I2C_WRITE);
+	status = I2C0_STAT;
+	for(i=0; i<count_tx; i++) {
+		i2c_tx_byte(port, data_tx[i]);
 	}
 	i2c_stop(port);
 
