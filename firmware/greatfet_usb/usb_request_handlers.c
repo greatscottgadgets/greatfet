@@ -10,7 +10,6 @@
 
 #include "legacy_apis/usb_api_adc.h"
 #include "legacy_apis/usb_api_spi.h"
-#include "legacy_apis/usb_api_leds.h"
 #include "legacy_apis/usb_api_logic_analyzer.h"
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
@@ -27,7 +26,7 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_read_version_string,
 	NULL, //usb_vendor_request_read_partid_serialno,
 	NULL,
-	usb_vendor_request_set_leds,
+	NULL, //usb_vendor_request_set_leds,
 	NULL, //usb_vendor_request_gpio_register,
 	NULL, //usb_vendor_request_gpio_write,
 	usb_vendor_request_spi_init,

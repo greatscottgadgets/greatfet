@@ -151,17 +151,14 @@ class GreatFETOne(GreatFETBoard):
         # XXX disable perpiherals as we develop libgreat
         # return
 
-        # self.i2c_busses = [ I2CBus(self, 'I2C0') ]
-        self.spi_busses = [ SPIBus(self, 'SPI1') ]
-
         if self.supports_api('i2c'):
             self.i2c_busses = [ I2CBus(self, 'I2C0') ]
+            self.i2c = self.i2c_busses[0]
 
-        # Create an easy-to-use alias for the primary busses, for rapid
-        # hacking/experimentation.
-        self.i2c = self.i2c_busses[0]
-        self.spi = self.spi_busses[0]
-
+        if self.supports_api('spi'):
+            self.spi_busses = [ SPIBus(self, 'SPI1') ]
+            self.spi = self.spi_busses[0]
+            
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)
 
