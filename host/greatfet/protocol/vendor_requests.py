@@ -26,6 +26,7 @@ requests = (
 
     # Temporary, custom stuffs?
     'ENABLE_USB1',
+    'SET_LEDS',
 
     'GPIO_REGISTER',
     'GPIO_WRITE',
