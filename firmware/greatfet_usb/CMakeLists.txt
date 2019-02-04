@@ -65,7 +65,6 @@ set(SRC_M4
     # TODO: get rid of these!
     legacy_apis/usb_api_spi.c
     legacy_apis/usb_api_adc.c
-    legacy_apis/usb_api_leds.c
     legacy_apis/usb_api_logic_analyzer.c
     legacy_apis/usb_api_sdir.c
     legacy_apis/usb_api_usbhost.c
