@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 
+import difflib
 import errno
 import sys
 import os
@@ -28,7 +29,7 @@ def looks_like_valid_greatfet_subcommand(directory, executable):
     # Valid GreatFET subcommands start with our prefix.
     if not executable.startswith(GREATFET_PREFIX):
         return False
-    
+
     # Valid GreatFET subcommands are files.
     if not os.path.isfile(full_path):
         return False
@@ -63,7 +64,7 @@ def find_all_subcommands():
         # Skip any path entries that don't seem to be represented on the real system...
         if not os.path.isdir(directory):
             continue
-        
+
         # ... and search each entry that is a real directory.
         for executable in os.listdir(directory):
 
@@ -73,29 +74,69 @@ def find_all_subcommands():
                 # Cache the relationships between subcommands and their executables.
                 full_path = os.path.join(directory, executable)
                 subcommand_name = executable[len(GREATFET_PREFIX):]
-                subcommands[subcommand_name] = full_path 
+                subcommands[subcommand_name] = full_path
 
     return subcommands
 
 
-def find_subcommand(name):
+def find_subcommand(name, allow_partial_matches=True, print_errors=True):
     """
     Returns the full path to the current subcommand, if one exists.
 
     @param name The name of the subcommand to look for.
+    @param allow_partial_matches If set, this function will accept abbreviated subcommands.
+    @param print_errors If set, errors will be printed.
     @return The full path to the subcommand, or None if none exists.
     """
 
     subcommands = find_all_subcommands()
 
-    if name not in subcommands:
-        return None
+    # If we have a direct match, return it.
+    if name in subcommands:
+        return subcommands[name]
 
-    return subcommands[name]
+    # If we're accepting partial matches, look for one.
+    if allow_partial_matches:
+        matches = [subcommand for subcommand in subcommands.keys() if subcommand.startswith(name)]
+
+        # If we've found exactly one, use it.
+        if len(matches) == 1:
+            return subcommands[matches[0]]
+
+        # Otherwise, print the error.
+        elif print_errors:
+            matches = "\n\t".join(matches)
+            print("Subcommand short-name '{}' is ambiguous; it could refer to:\n\t{}\n".format(name, matches))
+            return False
+
+    if print_errors:
+        print("ERROR: Unsupported subcommand '{}'.\nCheck to ensure the package providing the " \
+                "subcommand is installed.\n".format(subcommand_name))
+
+    return False
+
+
+def find_corrections_message(name):
+    """
+    Generates a message that provides potential corrections to the user if
+    their command doesn't match.
+    """
+
+    # Find a list of "did you mean" style corrections.
+    corrections = difflib.get_close_matches(name, find_all_subcommands())
+
+    # If we didn't find any, don't provide a message.
+    if not corrections:
+        return ''
+
+    # Otherwise, generate a string that informs the user of their potential error.
+    plural_suffix = "s are" if len(corrections) > 1 else " is"
+    corrections.insert(0, "The most similar sub-command{}:".format(plural_suffix))
+    return "\n\t".join(corrections)
 
 
 def print_usage(argv):
-   
+
     # If we don't have argument name information, assume this was called "greatfet"
     name = os.path.basename(argv[0]) if len(argv) else "greatfet"
 
@@ -135,10 +176,15 @@ def main():
 
     # Find the binary to execute...
     binary = find_subcommand(subcommand_name)
+
+    # If we couldn't find the relevant binary, print a message.
     if not binary:
-        # TODO: "did you mean XYZ", here?"
-        print("ERROR: Unsupported subcommand '{}'.\nCheck to ensure the package providing the " \
-                "subcommand is installed.\n".format(subcommand_name))
+        # If there are words that are similar to the relevant word, suggest them as corrections.
+        corrections = find_corrections_message(subcommand_name)
+        if corrections:
+            print(corrections)
+            print('')
+
         sys.exit(errno.EINVAL)
 
 
