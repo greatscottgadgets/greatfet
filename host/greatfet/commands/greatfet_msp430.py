@@ -10,16 +10,16 @@ import sys
 
 import greatfet
 from greatfet import GreatFET
+from greatfet.peripherals import jtag_msp430
 from greatfet.utils import log_silent, log_verbose
-from greatfet.protocol import vendor_requests
 
 
 def main():
+    from greatfet.utils import GreatFETArgumentParser
+
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for flashing the GreatFET's onboard SPI flash")
-    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
-                        help="Serial number of device, if multiple devices", default=None)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser = GreatFETArgumentParser(description="Utility for MSP430 JTAG using GreatFET")
+    parser.add_argument('-i', '--info', action='store_true', help="Scan all possible i2c addresses")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -34,8 +34,7 @@ def main():
         else:
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
-
-    print(device.comms._vendor_request_in(vendor_requests.MSP430_JTAG, length=1))
+    
 
 if __name__ == '__main__':
     main()

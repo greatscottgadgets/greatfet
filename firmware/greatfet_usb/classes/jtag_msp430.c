@@ -10,68 +10,134 @@
 
 #define CLASS_NUMBER_SELF (0x10C)
 
-static int jtag_msp430_verb_setup(struct command_transaction *trans)
+
+static int jtag_msp430_verb_start(struct command_transaction *trans)
 {
-    (void)trans;
-    jtag_setup();
+	uint8_t jtagid;
+	jtag430_check_init();
+	jtagid = jtag430_start_reset_halt();
+	comms_response_add_uint8_t(trans, jtagid);
 	return 0;
 }
 
 static int jtag_msp430_verb_stop(struct command_transaction *trans)
 {
-    (void)trans;
-    jtag_stop();
+	(void)trans;
+	jtag430_check_init();
+    jtag430_stop();
 	return 0;
 }
 
-static int jtag_msp430_verb_ir_shift(struct command_transaction *trans)
+static int jtag_msp430_verb_halt_cpu(struct command_transaction *trans)
 {
-    uint8_t in = comms_argument_parse_uint8_t(trans);
-    comms_response_add_uint8_t(trans, jtag_ir_shift_8(in));
+	(void)trans;
+	jtag430_check_init();
+    jtag430_haltcpu();
 	return 0;
 }
 
-static int jtag_msp430_verb_dr_shift(struct command_transaction *trans)
+static int jtag_msp430_verb_release_cpu(struct command_transaction *trans)
 {
-    uint16_t in = comms_argument_parse_uint16_t(trans);
-    comms_response_add_uint16_t(trans, jtag_dr_shift_16(in));
+	(void)trans;
+	jtag430_check_init();
+    jtag430_releasecpu();
 	return 0;
 }
 
-static int jtag_msp430_verb_reset_tap(struct command_transaction *trans)
+static int jtag_msp430_verb_set_instruction_fetch(struct command_transaction *trans)
 {
-    (void)trans;
-    jtag_reset_tap();
+	(void)trans;
+	jtag430_check_init();
+    jtag430_setinstrfetch();
 	return 0;
 }
 
-static int jtag_msp430_verb_reset_target(struct command_transaction *trans)
+static int jtag_msp430_verb_read_mem(struct command_transaction *trans)
 {
-    (void)trans;
-	jtag_reset_tap();
-	jtag_reset_target();
+	// FIXME: DGS - tidy up the for loop a bit
+	uint32_t addr, length, i;
+	uint16_t value;
+	jtag430_check_init();
+	addr = comms_argument_parse_uint32_t(trans);
+	length = comms_argument_parse_uint32_t(trans);
+	
+    for(i = 0; i < length; i += 2) {
+		jtag430_resettap();
+		value = jtag430_readmem(addr);
+		comms_response_add_uint16_t(trans, value);
+		addr += 2;
+    }
 	return 0;
 }
 
-static int jtag_msp430_verb_detect_ir_width(struct command_transaction *trans)
+static int jtag_msp430_verb_write_mem(struct command_transaction *trans)
 {
-	jtag_reset_tap();
-    comms_response_add_uint16_t(trans, jtag_detect_ir_width());
+	uint32_t addr;
+	uint16_t value;
+	jtag430_check_init();
+	addr = comms_argument_parse_uint32_t(trans);
+	value = comms_argument_parse_uint16_t(trans);
+	
+    jtag430_haltcpu();
+    jtag430_writemem(addr, value);
+    value = jtag430_readmem(addr);
+	comms_response_add_uint16_t(trans, value);
 	return 0;
 }
 
-static int jtag_msp430_verb_detect_chain_length(struct command_transaction *trans)
+static int jtag_msp430_verb_write_flash(struct command_transaction *trans)
 {
-	jtag_reset_tap();
-    comms_response_add_uint16_t(trans, jtag_detect_chain_length());
+	uint32_t addr, length, i;
+	uint16_t *data_to_write;
+	jtag430_check_init();
+	addr = comms_argument_parse_uint32_t(trans);
+	data_to_write = comms_argument_read_buffer(trans, -1, &length);
+	
+	for(i=0; i < (length>>1)-2; i++) {
+		jtag430_writeflash(addr+(i<<1), data_to_write[i]);
+		//Reflash if needed.  Try this twice to save grace?
+		if(data_to_write[i]!=jtag430_readmem(addr)) {
+			jtag430_writeflash(addr+(i<<1), data_to_write[i]);
+		}
+    }
+	comms_response_add_uint16_t(trans, jtag430_readmem(addr));
 	return 0;
 }
 
-static int jtag_msp430_verb_get_device_id(struct command_transaction *trans)
+static int jtag_msp430_verb_erase_flash(struct command_transaction *trans)
 {
-    uint16_t chip = comms_argument_parse_uint16_t(trans);
-	jtag_reset_tap();
-    comms_response_add_uint32_t(trans, jtag_get_device_id(chip));
+	(void)trans;
+	jtag430_check_init();
+    jtag430_erase_entire_flash();
+	return 0;
+}
+
+static int jtag_msp430_verb_erase_info(struct command_transaction *trans)
+{
+	(void)trans;
+	jtag430_check_init();
+    jtag430_erase_info();
+	return 0;
+}
+
+static int jtag_msp430_verb_set_pc(struct command_transaction *trans)
+{
+	uint16_t value;
+	value = comms_argument_parse_uint16_t(trans);
+	jtag430_check_init();
+    jtag430_haltcpu();
+    jtag430_setpc(value);
+    jtag430_releasecpu();
+	return 0;
+}
+
+static int jtag_msp430_verb_set_reg(struct command_transaction *trans)
+{
+	uint16_t reg, value;
+	reg = comms_argument_parse_uint16_t(trans);
+	value = comms_argument_parse_uint16_t(trans);
+	jtag430_check_init();
+    jtag430_setr(reg, value);
 	return 0;
 }
 
@@ -79,33 +145,48 @@ static int jtag_msp430_verb_get_device_id(struct command_transaction *trans)
  * Verbs for the firmware API.
  */
 static struct comms_verb _verbs[] = {
-		{ .name = "setup", .handler = jtag_msp430_verb_setup,
-			.in_signature = "", .out_signature = "",
+		{ .name = "start", .handler = jtag_msp430_verb_start,
+			.in_signature = "", .out_signature = "<B",
+			.out_param_names = "jtagid",
 			.doc = "" },
 		{ .name = "stop", .handler = jtag_msp430_verb_stop,
 			.in_signature = "", .out_signature = "",
 			.doc = "" },
-		{ .name = "ir_shift", .handler = jtag_msp430_verb_ir_shift,
-			.in_signature = "<B", .out_signature = "<B",
-			.doc = "" },
-		{ .name = "dr_shift", .handler = jtag_msp430_verb_dr_shift,
-			.in_signature = "<H", .out_signature = "<H",
-			.doc = "" },
-		{ .name = "reset_tap", .handler = jtag_msp430_verb_reset_tap,
+		{ .name = "halt_cpu", .handler = jtag_msp430_verb_halt_cpu,
 			.in_signature = "", .out_signature = "",
 			.doc = "" },
-		{ .name = "reset_target", .handler = jtag_msp430_verb_reset_target,
+		{ .name = "release_cpu", .handler = jtag_msp430_verb_release_cpu,
 			.in_signature = "", .out_signature = "",
-			.doc = "Resets the target device" },
-		{ .name = "detect_ir_width", .handler = jtag_msp430_verb_detect_ir_width,
-			.in_signature = "", .out_signature = "<H",
-			.doc = "Detects the total bits in the IR register" },
-		{ .name = "detect_chain_length", .handler = jtag_msp430_verb_detect_chain_length,
-			.in_signature = "", .out_signature = "<H",
-			.doc = "Detects JTAG chain length" },
-		{ .name = "get_device_id", .handler = jtag_msp430_verb_get_device_id,
-			.in_signature = "<H", .out_signature = "<I",
-			.doc = "Gets the chip ID of the chip specified" },
+			.doc = "" },
+		{ .name = "set_instruction_fetch", .handler = jtag_msp430_verb_set_instruction_fetch,
+			.in_signature = "", .out_signature = "",
+			.doc = "" },
+		{ .name = "read_mem", .handler = jtag_msp430_verb_read_mem,
+			.in_signature = "<II", .out_signature = "<*H",
+			.in_param_names = "address, length", .out_param_names = "response",
+			.doc = "" },
+		{ .name = "write_mem", .handler = jtag_msp430_verb_write_mem,
+			.in_signature = "<IH", .out_signature = "<H",
+			.in_param_names = "address, value", .out_param_names = "value",
+			.doc = "" },
+		{ .name = "write_flash", .handler = jtag_msp430_verb_write_flash,
+			.in_signature = "<I*H", .out_signature = "<H",
+			.in_param_names = "address, data", .out_param_names = "first_word",
+			.doc = "" },
+		{ .name = "erase_flash", .handler = jtag_msp430_verb_erase_flash,
+			.in_signature = "", .out_signature = "",
+			.doc = "" },
+		{ .name = "erase_info", .handler = jtag_msp430_verb_erase_info,
+			.in_signature = "", .out_signature = "",
+			.doc = "" },
+		{ .name = "set_pc", .handler = jtag_msp430_verb_set_pc,
+			.in_signature = "<H", .out_signature = "",
+			.in_param_names = "value",
+			.doc = "" },
+		{ .name = "set_reg", .handler = jtag_msp430_verb_set_reg,
+			.in_signature = "<HH", .out_signature = "",
+			.in_param_names = "register, value",
+			.doc = "" },
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(jtag_msp430, CLASS_NUMBER_SELF, "jtag_msp430", _verbs,
