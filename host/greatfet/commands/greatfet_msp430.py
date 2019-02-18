@@ -10,11 +10,13 @@ import sys
 
 import greatfet
 from greatfet import GreatFET
+from greatfet.peripherals import jtag_msp430
 from greatfet.utils import log_silent, log_verbose
-from greatfet.protocol import vendor_requests
 
 
 def main():
+    from greatfet.utils import GreatFETArgumentParser
+
     # Set up a simple argument parser.
     parser = argparse.ArgumentParser(description="JTAG debug utility for MSP430")
     parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
@@ -34,8 +36,7 @@ def main():
         else:
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
-
-    print(device.comms._vendor_request_in(vendor_requests.MSP430_JTAG, length=1))
+    
 
 if __name__ == '__main__':
     main()

@@ -28,7 +28,8 @@ uint32_t jtag430_shift_addr( uint32_t addr )
 }
 
 //! Set a register.
-void jtag430_setr(uint8_t reg, uint16_t val){
+void jtag430_setr(uint8_t reg, uint16_t val)
+{
   jtag_ir_shift_8(IR_CNTRL_SIG_16BIT);
   jtag_dr_shift_16(0x3401);// release low byte
   jtag_ir_shift_8(IR_DATA_16BIT);
@@ -235,9 +236,19 @@ void jtag430_eraseflash(uint16_t mode, uint16_t adr, uint16_t count, bool info)
   //jtag430_releasecpu();
 }
 
+void jtag430_erase_entire_flash()
+{
+  jtag430_eraseflash(ERASE_MASS, 0xFFFE, 0x3000, 0);
+}
+
+void jtag430_erase_info()
+{
+  jtag430_eraseflash(ERASE_SGMT, 0x1000, 0x3000, 1);
+}
 
 //! Reset the TAP state machine.
-void jtag430_resettap(){
+void jtag430_resettap()
+{
   int i;
   // Settle output
   SETTDI; //430X2
@@ -377,4 +388,19 @@ uint8_t jtag430_start_reset_halt()
   jtag430_resettap();
   return jtagid;
 
+}
+
+void jtag430_check_init()
+{
+	/* FIXME from GoodFET
+	 * Sometimes JTAG doesn't init correctly.
+	 * This restarts the connection if the masked-rom
+	 * chip ID cannot be read.  Should print warning
+	 */
+	int i;
+	if (jtagid!=0) {
+		while((i=jtag430_readmem(0xff0))==0xFFFF) {
+			jtag430x2_start();
+		}
+	}
 }
