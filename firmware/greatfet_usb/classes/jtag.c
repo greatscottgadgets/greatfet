@@ -87,9 +87,11 @@ static struct comms_verb _verbs[] = {
 			.doc = "" },
 		{ .name = "ir_shift", .handler = jtag_verb_ir_shift,
 			.in_signature = "<B", .out_signature = "<B",
+			.in_param_names = "instruction", .out_param_names = "output",
 			.doc = "" },
 		{ .name = "dr_shift", .handler = jtag_verb_dr_shift,
 			.in_signature = "<H", .out_signature = "<H",
+			.in_param_names = "data", .out_param_names = "output",
 			.doc = "" },
 		{ .name = "reset_tap", .handler = jtag_verb_reset_tap,
 			.in_signature = "", .out_signature = "",
@@ -99,15 +101,17 @@ static struct comms_verb _verbs[] = {
 			.doc = "Resets the target device" },
 		{ .name = "detect_ir_width", .handler = jtag_verb_detect_ir_width,
 			.in_signature = "", .out_signature = "<H",
+			.out_param_names = "ir_width",
 			.doc = "Detects the total bits in the IR register" },
 		{ .name = "detect_chain_length", .handler = jtag_verb_detect_chain_length,
 			.in_signature = "", .out_signature = "<H",
+			.out_param_names = "chain_length",
 			.doc = "Detects JTAG chain length" },
 		{ .name = "get_device_id", .handler = jtag_verb_get_device_id,
 			.in_signature = "<H", .out_signature = "<I",
+			.in_param_names = "chip", .out_param_names = "device_id",
 			.doc = "Gets the chip ID of the chip specified" },
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(jtag, CLASS_NUMBER_SELF, "jtag", _verbs,
                           "Functions for debugging over JTAG.");
-
