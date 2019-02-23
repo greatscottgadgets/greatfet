@@ -2,10 +2,10 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
-import sys, time, string, cStringIO, struct, glob, os
+from ..jtag import JTAG
+import struct
 
-class JTAG_MSP430(GreatFETPeripheral):
+class JTAG_MSP430(JTAG):
     CoreID=0
     DeviceID=0
     JTAGID=0
@@ -18,12 +18,12 @@ class JTAG_MSP430(GreatFETPeripheral):
             Args:
                 board -- The GreatFET board connected to the target.
         """
-        self.board = board
-
-    def start(self):
+        JTAG.__init__(self, board)
+    
+    def setup(self):
         """Initialise the JTAG hardware and target device."""
         self.board.apis.jtag_msp430.start()
-        
+    
     def stop(self):
         """Stop debugging."""
         self.board.apis.jtag_msp430.stop()
@@ -34,14 +34,6 @@ class JTAG_MSP430(GreatFETPeripheral):
         CoreID=ord(self.data[0])+(ord(self.data[1])<<8)
         return CoreID
     
-    def MSP430deviceid(self):
-        """Get the Device ID. (MSP430X2 only?)"""
-        self.writecmd(self.MSP430APP,0xF1)
-        DeviceID=(
-            ord(self.data[0])+(ord(self.data[1])<<8)+
-            (ord(self.data[2])<<16)+(ord(self.data[3])<<24))
-        return DeviceID
-
     def peek(self, address):
         """
             Read a word at an address.
@@ -127,21 +119,17 @@ class JTAG_MSP430(GreatFETPeripheral):
         self.writecmd(self.MSP430APP,0xC1,0,self.data)
         return self.data[0]
     def MSP430ident(self):
-        """Grab self-identification word from 0x0FF0 as big endian."""
+        """Fetch self-identification word from 0x0FF0 as big endian."""
         ident=0x00
         if(self.JTAGID==0x89):
-            i=self.MSP430peek(0x0ff0)
+            i=self.peek(0x0ff0)
             ident=((i&0xFF00)>>8)+((i&0xFF)<<8)
             
         if(self.JTAGID==0x91):
-            i=self.MSP430peek(0x1A04)
+            i=self.peek(0x1A04)
             ident=((i&0xFF00)>>8)+((i&0xFF)<<8)
-            #ident=0x0091
-        
         return ident
-    def MSP430identstr(self):
-        """Grab model string."""
-        return self.MSP430devices.get(self.MSP430ident())
+
     MSP430devices={
         #MSP430F2xx
         0xf227: "MSP430F22xx",
@@ -171,6 +159,10 @@ class JTAG_MSP430(GreatFETPeripheral):
         0xf46f: "MSP430FG46xx", #or F471xx
         0xF413: "MSP430F413", #or maybe others.
         }
+    def MSP430identstr(self):
+        """Grab model string."""
+        return self.MSP430devices.get(self.MSP430ident())
+
     def MSP430test(self):
         """Test MSP430 JTAG.  Requires that a chip be attached."""
         
@@ -180,10 +172,10 @@ class JTAG_MSP430(GreatFETPeripheral):
         print "Testing RAM from 200 to 210."
         for a in range(0x200,0x210):
             self.MSP430poke(a,0)
-            if(self.MSP430peek(a)!=0):
+            if(self.peek(a)!=0):
                 print "Fault at %06x" % a
             self.MSP430poke(a,0xffff)
-            if(self.MSP430peek(a)!=0xffff):
+            if(self.peek(a)!=0xffff):
                 print "Fault at %06x" % a
                 
         print "Testing identity consistency."
@@ -196,16 +188,16 @@ class JTAG_MSP430(GreatFETPeripheral):
         print "Testing flash erase."
         self.MSP430masserase()
         for a in range(0xffe0, 0xffff):
-            if self.MSP430peek(a)!=0xffff:
+            if self.peek(a)!=0xffff:
                 print "%04x unerased, equals %04x" % (
-                    a, self.MSP430peek(a))
+                    a, self.peek(a))
 
         print "Testing flash write."
         for a in range(0xffe0, 0xffff):
             self.MSP430pokeflash(a,0xbeef)
-            if self.MSP430peek(a)!=0xbeef:
+            if self.peek(a)!=0xbeef:
                 print "%04x unset, equals %04x" % (
-                    a, self.MSP430peek(a))
+                    a, self.peek(a))
         
         print "Tests complete, erasing."
         self.MSP430masserase()
@@ -242,5 +234,5 @@ class JTAG_MSP430(GreatFETPeripheral):
     def MSP430dumpmem(self, begin, end):
         i=begin
         while i<end:
-            print("%04x %04x" % (i, self.MSP430peek(i)))
+            print("%04x %04x" % (i, self.peek(i)))
             i+=2
