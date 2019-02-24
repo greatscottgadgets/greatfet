@@ -38,7 +38,7 @@ def main():
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
 
-    device.comms._vendor_request_out(vendor_requests.LOGIC_ANALYZER_START)
+    device.apis.logic_analyzer.start()
 
     time.sleep(1)
 
@@ -50,7 +50,7 @@ def main():
     except KeyboardInterrupt:
         pass
 
-    device.comms._vendor_request_out(vendor_requests.LOGIC_ANALYZER_STOP)
+    device.apis.logic_analyzer.stop()
 
 
 if __name__ == '__main__':

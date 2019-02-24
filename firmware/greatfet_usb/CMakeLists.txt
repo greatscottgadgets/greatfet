@@ -26,7 +26,6 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/sgpio_isr.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_spi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_adc.c
-	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_logic_analyzer.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_sdir.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_usbhost.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_glitchkit_simple.c
