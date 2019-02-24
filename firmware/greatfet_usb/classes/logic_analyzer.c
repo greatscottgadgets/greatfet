@@ -2,7 +2,7 @@
  * This file is part of GreatFET
  */
 
-#include "usb_api_logic_analyzer.h"
+#include <drivers/comms.h>
 
 #include "sgpio.h"
 #include "../sgpio_isr.h"
@@ -19,6 +19,8 @@
 #include <libopencm3/lpc43xx/sgpio.h>
 #include <libopencm3/cm3/vector.h>
 
+#define CLASS_NUMBER_SELF (0x10D)
+
 volatile bool logic_analyzer_enabled = false;
 
 static const sgpio_config_t sgpio_config = {
@@ -26,7 +28,8 @@ static const sgpio_config_t sgpio_config = {
 	.clock_divider = 12,
 };
 
-static void logic_analyzer_sgpio_start() {
+static void logic_analyzer_sgpio_start()
+{
 	sgpio_configure_pin_functions(&sgpio_config);
 	sgpio_configure(&sgpio_config, SGPIO_DIRECTION_INPUT);
 
@@ -37,13 +40,17 @@ static void logic_analyzer_sgpio_start() {
 	SGPIO_SET_EN_1 = (1 << SGPIO_SLICE_A);
 }
 
-static void logic_analyzer_sgpio_stop() {
+static void logic_analyzer_sgpio_stop()
+{
 	SGPIO_CLR_EN_1 = (1 << SGPIO_SLICE_A);
 
 	nvic_disable_irq(NVIC_SGPIO_IRQ);
 }
 
-void logic_analyzer_mode(void) {
+void service_logic_analyzer(void)
+{
+	if(!logic_analyzer_enabled)
+		return;
 
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
@@ -80,22 +87,28 @@ void logic_analyzer_mode(void) {
 	usb_endpoint_disable(&usb0_endpoint_bulk_in);
 }
 
-usb_request_status_t usb_vendor_request_logic_analyzer_start(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+static int logic_analyzer_verb_start(struct command_transaction *trans)
 {
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		logic_analyzer_enabled = true;
-		usb_transfer_schedule_ack(endpoint->in);
-	}
-	return USB_REQUEST_STATUS_OK;
+	(void)trans;
+
+	logic_analyzer_enabled = true;
+	return 0;
 }
 
-usb_request_status_t usb_vendor_request_logic_analyzer_stop(
-	usb_endpoint_t* const endpoint, const usb_transfer_stage_t stage)
+static int logic_analyzer_verb_stop(struct command_transaction *trans)
 {
-	if (stage == USB_TRANSFER_STAGE_SETUP) {
-		logic_analyzer_enabled = false;
-		usb_transfer_schedule_ack(endpoint->in);
-	}
-	return USB_REQUEST_STATUS_OK;
+	(void)trans;
+
+	logic_analyzer_enabled = false;
+	return 0;
 }
+
+static struct comms_verb logic_analyzer_verbs[] = {
+	{ .name = "start", .handler = logic_analyzer_verb_start,
+		.in_signature = "", .out_signature = "", .doc = "starts a logic analyzer capture" },
+	{ .name = "stop", .handler = logic_analyzer_verb_stop,
+		.in_signature = "", .out_signature = "", .doc = "terminates an active logic analyzer capture" },
+	{}
+};
+COMMS_DEFINE_SIMPLE_CLASS(logic_analyzer, CLASS_NUMBER_SELF, "logic_analyzer", logic_analyzer_verbs,
+		"Controls the logic analyzer function using the SGPIO peripheral");

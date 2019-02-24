@@ -19,10 +19,10 @@
 // TODO: get rid of these
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
-#include "legacy_apis/usb_api_logic_analyzer.h"
 #include "legacy_apis/usb_api_adc.h"
 
 #include "classes/heartbeat.h"
+#include "classes/logic_analyzer.h"
 #include "glitchkit.h"
 
 #include <rom_iap.h>
@@ -72,9 +72,6 @@ int main(void) {
 	init_usb0();
 
 	while(true) {
-		if(logic_analyzer_enabled) {
-			logic_analyzer_mode();
-		}
 		if(sdir_rx_enabled) {
 			sdir_rx_mode();
 		}
@@ -85,6 +82,7 @@ int main(void) {
 			adc_mode();
 		}
 		service_heartbeat();
+		service_logic_analyzer();
 		service_glitchkit();
 	}
 
