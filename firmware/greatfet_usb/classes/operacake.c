@@ -3,12 +3,9 @@
  */
 
 #include <operacake.h>
-#include <greatfet_core.h>
-#include <libopencm3/lpc43xx/m4/nvic.h>
-#include <libopencm3/cm3/vector.h>
-#include <libopencm3/lpc43xx/timer.h>
+#include <gpio_lpc.h>
+#include "beacon.h"
 
-static uint32_t tx_samplerate = 100000000;
 volatile bool operacake_tx_enabled = false;
 
 #define OPERACAKE_GPIO_U2CTRL1(x) (x<<6)
@@ -31,8 +28,6 @@ volatile bool operacake_tx_enabled = false;
 #define PATH2 (OPERACAKE_PORT_A2 | OPERACAKE_PORT_B2)
 #define PATH3 (OPERACAKE_PORT_A3 | OPERACAKE_PORT_B3)
 #define PATH4 (OPERACAKE_PORT_A4 | OPERACAKE_PORT_B4)
-
-#include "beacon.h"
 
 #define CLASS_NUMBER_SELF (0x10F)
 
