@@ -23,6 +23,7 @@
 #include "legacy_apis/usb_api_adc.h"
 
 #include "classes/heartbeat.h"
+#include "classes/operacake.h"
 #include "glitchkit.h"
 
 #include <rom_iap.h>
@@ -85,6 +86,7 @@ int main(void) {
 			adc_mode();
 		}
 		service_heartbeat();
+		service_operacake();
 		service_glitchkit();
 	}
 

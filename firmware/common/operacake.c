@@ -54,14 +54,15 @@ uint8_t operacake_boards[8] = {0,0,0,0,0,0,0,0};
 uint8_t operacake_read_reg(i2c_bus_t* const bus, uint8_t address, uint8_t reg) {
 	const uint8_t data_tx[] = { reg };
 	uint8_t data_rx[] = { 0x00 };
-	i2c_bus_transfer(bus, address, data_tx, 1, data_rx, 1);
+	i2c_bus_write(bus, address, data_tx, 1);
+	i2c_bus_read(bus, address, data_rx, 1);
 	return data_rx[0];
 }
 
 /* Write to one of the PCA9557 registers */
 void operacake_write_reg(i2c_bus_t* const bus, uint8_t address, uint8_t reg, uint8_t value) {
 	const uint8_t data[] = {reg, value};
-	i2c_bus_transfer(bus, address, data, 2, NULL, 0);
+	i2c_bus_write(bus, address, data, 2);
 }
 
 uint8_t operacake_init(void) {
