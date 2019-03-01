@@ -47,9 +47,13 @@ void usb_queue_init(
 		endpoint_queues[queue->endpoint->device->controller][index] = queue;
 
 		usb_transfer_t* t = queue->free_transfers;
-		for (unsigned int i=0; i < queue->pool_size - 1; i++, t++) {
-				t->next = t+1;
-				t->queue = queue;
+        if (t!=NULL) {
+			for (unsigned int i=0; i < queue->pool_size - 1; i++, t++) {
+			        t->next = t+1;
+			        t->queue = queue;
+			}
+			t->next = NULL;
+			t->queue = queue;
 		}
 		t->next = NULL;
 		t->queue = queue;
@@ -76,12 +80,14 @@ static usb_transfer_t* allocate_transfer(
 /* Place a transfer in the free list */
 static void free_transfer(usb_transfer_t* const transfer)
 {
-		usb_queue_t* const queue = transfer->queue;
-		bool aborted;
-		do {
-				transfer->next = (void *) __ldrex((uint32_t *) &queue->free_transfers);
-				aborted = __strex((uint32_t) transfer, (uint32_t *) &queue->free_transfers);
-		} while (aborted);
+        if (transfer!=NULL) {
+          usb_queue_t* const queue = transfer->queue;
+          bool aborted;
+          do {
+                  transfer->next = (void *) __ldrex((uint32_t *) &queue->free_transfers);
+                  aborted = __strex((uint32_t) transfer, (uint32_t *) &queue->free_transfers);
+          } while (aborted);
+        }
 }
 
 /* Add a transfer to the end of an endpoint's queue. Returns the old
@@ -92,15 +98,20 @@ static usb_transfer_t* endpoint_queue_transfer(
 ) {
 		usb_queue_t* const queue = transfer->queue;
 		transfer->next = NULL;
-		if (queue->active != NULL) {
-			usb_transfer_t* t = queue->active;
-			while (t->next != NULL) t = t->next;
-			t->next = transfer;
-			return t;
-		} else {
-			queue->active = transfer;
-			return NULL;
+        if (queue != NULL) {
+			if (queue->active != NULL) {
+			    usb_transfer_t* t = queue->active;
+	                    if (t!=NULL) {
+				    while (t->next != NULL) t = t->next;
+				    t->next = transfer;
+				    return t;
+	                    } else return NULL;
+			} else {
+			    queue->active = transfer;
+			    return NULL;
+			}
 		}
+		return NULL;
 }
 
 int usb_transfer_schedule(

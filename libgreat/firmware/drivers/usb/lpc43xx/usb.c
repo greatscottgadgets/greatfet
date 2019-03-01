@@ -805,7 +805,8 @@ void usb_endpoint_init_without_descriptor(
 	// descriptor.
 	usb_queue_head_t* const qh = usb_queue_head(endpoint->address, endpoint->device);
 	qh->capabilities
-		= USB_QH_CAPABILITIES_MULT(0)
+	    // MULT has to be 1..3 for isochronous transfer, we assume 1 should be sufficient
+		= ((transfer_type != USB_TRANSFER_TYPE_ISOCHRONOUS) ? USB_QH_CAPABILITIES_MULT(0) : USB_QH_CAPABILITIES_MULT(1)) 
 		| USB_QH_CAPABILITIES_MPL(max_packet_size)
 		| ((transfer_type == USB_TRANSFER_TYPE_CONTROL) ? USB_QH_CAPABILITIES_IOS : 0)
 		| ((transfer_type == USB_TRANSFER_TYPE_CONTROL) ? 0 : USB_QH_CAPABILITIES_ZLT);
