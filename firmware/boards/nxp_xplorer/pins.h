@@ -8,10 +8,6 @@
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
 
-#ifndef NXP_XPLORER
-#error pins_xplorer.h included for a non-xplorer board! Use pins.h instead!
-#endif
-
 /* NXP populates the RTC crystal, so use of the RTC is allowed. */
 #define BOARD_CAPABILITY_RTC
 
