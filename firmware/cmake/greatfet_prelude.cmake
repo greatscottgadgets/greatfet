@@ -40,6 +40,9 @@ set(PATH_GREATFET_FIRMWARE_COMMON ${PATH_GREATFET_FIRMWARE}/common)
 set(PATH_LIBGREAT                 ${PATH_GREATFET}/libgreat)
 set(PATH_LIBGREAT_FIRMWARE_CMAKE  ${PATH_GREATFET}/libgreat/firmware/cmake)
 
+# CMake compatibility for older CMake versions.
+include(${PATH_LIBGREAT_FIRMWARE_CMAKE}/compatibility.cmake)
+
 # Ensure that we have any submodules we depend on.
 include(${PATH_GREATFET}/firmware/cmake/submodules.cmake)
 
