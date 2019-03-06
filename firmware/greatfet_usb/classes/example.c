@@ -64,7 +64,7 @@ static int example_verb_capitalize(struct command_transaction *trans)
 	uint32_t num_chars_to_capitalize;
 	uint32_t chars_read;
 	char *to_capitalize, *capitalized;
-	
+
 	// Read the number of characters to capitalize.
 	num_chars_to_capitalize = comms_argument_parse_uint16_t(trans);
 
@@ -91,7 +91,7 @@ static int example_verb_capitalize(struct command_transaction *trans)
 			capitalized[i] = to_capitalize[i];
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -100,13 +100,13 @@ static int example_verb_capitalize(struct command_transaction *trans)
  * Verbs for the firmware API.
  */
 static struct comms_verb example_verbs[] = {
-		{ 
+		{
 			// The number of the verb. Each verb must have a unique number.
-			.verb_number = 0x0, 
-			
+			.verb_number = 0x0,
+
 			// The name of the verb. These are typically named like C funciton names.
-			.name = "sum_and_difference", 
-			
+			.name = "sum_and_difference",
+
 			// The handler function for the given verb. This is the verb definition we
 			// provided above.
 			.handler = example_verb_sum_and_difference,

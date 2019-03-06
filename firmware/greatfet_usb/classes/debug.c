@@ -30,19 +30,52 @@ static int verb_clear_dmesg(struct command_transaction *trans)
 	return 0;
 }
 
+static int verb_peek(struct command_transaction *trans)
+{
+	volatile uint32_t *address = (void *)comms_argument_parse_uint32_t(trans);
+
+	if (!comms_transaction_okay(trans)) {
+		return EINVAL;
+	}
+
+	comms_response_add_uint32_t(trans, *address);
+	return 0;
+}
+
+static int verb_poke(struct command_transaction *trans)
+{
+	volatile uint32_t *address = (void *)comms_argument_parse_uint32_t(trans);
+	uint32_t value = comms_argument_parse_uint32_t(trans);
+
+	if (!comms_transaction_okay(trans)) {
+		return EINVAL;
+	}
+
+	*address = value;
+	return 0;
+}
+
 // TODO: verb for setting the current log level
 
 /**
  * Verbs for the debug API.
  */
 struct comms_verb debug_verbs[] = {
-		{ .verb_number = 0x0, .name = "read_dmesg",  .handler = verb_read_dmesg,
+		{ .name = "read_dmesg",  .handler = verb_read_dmesg,
             .in_signature = "", .out_signature="<S", .out_param_names = "log",
             .doc = "Fetches the content of the device's debug ring (log)."
         },
-		{ .verb_number = 0x1, .name = "clear_dmesg",  .handler = verb_clear_dmesg,
+		{ .name = "clear_dmesg",  .handler = verb_clear_dmesg,
             .in_signature = "", .out_signature="<S", .out_param_names = "log",
             .doc = "Fetches and clears content of the device's debug ring (log)."
+        },
+		{ .name = "peek",  .handler = verb_peek,
+            .in_signature = "<I", .out_signature="<I", .in_param_names = "address", .out_param_names = "value",
+            .doc = "Reads a raw LPC4330 memory address; for debug."
+        },
+		{ .name = "poke",  .handler = verb_poke,
+            .in_signature = "<II", .out_signature="", .in_param_names = "address, value", .out_param_names = "",
+            .doc = "Writes a raw LPC4330 memory address; for debug."
         },
 		{} // Sentinel
 };

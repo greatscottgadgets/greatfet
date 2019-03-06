@@ -104,7 +104,7 @@ static int gpio_verb_release_pin(struct command_transaction *trans)
     gpio_set_pin_direction(port, pin, false);
 
     // Finally, release the relevant reservation.
-    return pin_release_reservation(port, pin);
+    return pin_release_reservation(scu_group, scu_pin);
 }
 
 
