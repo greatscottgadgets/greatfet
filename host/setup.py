@@ -41,8 +41,8 @@ setup(
     tests_require=[''],
     install_requires=['pyusb', install_req, 'pygreat', 'future'],
     description='Python library for hardware hacking with the GreatFET',
-    long_description=read('../README.md'),
-    packages=find_packages(),#['greatfet'],
+    long_description=read('README'),
+    packages=find_packages(),
     include_package_data=True,
     platforms='any',
     classifiers = [

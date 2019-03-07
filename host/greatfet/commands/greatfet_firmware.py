@@ -13,15 +13,13 @@ import sys
 import errno
 import subprocess
 
-import usb
-
-from greatfet import GreatFET
+from greatfet import greatfet_assets_directory
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, GreatFETArgumentParser
 
 # The serial number expected from the DFU flash stub.
 DFU_STUB_NAME  = 'flash_stub.dfu'
-DFU_STUB_PATHS = [ '~/.local/share/greatfet', '~/.local/share/GreatFET' ]
+DFU_STUB_PATHS = [ greatfet_assets_directory() ]
 
 # Vendor VID/PID if the device is in DFU.
 NXP_DFU_VID = 0x1fc9
@@ -75,7 +73,6 @@ def find_dfu_stub(args):
     # Otherwise, search each of the paths around.
     for path in DFU_STUB_PATHS:
         filename = os.path.expanduser(os.path.join(path, DFU_STUB_NAME))
-        print(filename)
 
         if os.path.isfile(filename):
             return filename
@@ -86,15 +83,20 @@ def find_dfu_stub(args):
     return None
 
 
-
 def load_dfu_stub(args):
-    """ Loads a DFU programming stub onto a GreatFET in DFU mode. """
+    """ Loads the DFU stub onto the board for DFU-based programming. """
 
-    # First: check to make sure we _have_ a DFU'able device.
-    dev = usb.core.find(idVendor=NXP_DFU_VID, idProduct=NXP_DFU_PID)
-    if not dev:
-        raise DeviceNotFoundError
-    del dev
+    try:
+        import usb
+
+        # First: check to make sure we _have_ a DFU'able device.
+        dev = usb.core.find(idVendor=NXP_DFU_VID, idProduct=NXP_DFU_PID)
+        if not dev:
+            raise DeviceNotFoundError
+        del dev
+
+    except ImportError:
+        pass
 
     # If we have a DFU'able device, find the DFU stub and load it.
     stub_path = find_dfu_stub(args)
@@ -108,35 +110,6 @@ def load_dfu_stub(args):
     rc = subprocess.call(['dfu-util', '--device', format(NXP_DFU_VID, 'x'), format(NXP_DFU_PID, 'x'), '--alt', '0', '--download', stub_path])
     if rc:
         raise IOError("Error using DFU-util!")
-
-
-
-def find_greatfet(args):
-    """ Finds a GreatFET matching the relevant arguments."""
-
-    # If we're prorgamming via DFU mode, look for a device that sports the DFU stub.
-    # Note that we only support a single DFU-mode device for now.
-    if args.dfu:
-        return GreatFET(serial_number=DFU_STUB_SERIAL)
-
-    # If we have an index argument, grab _all_ greatFETs and select by index.
-    elif args.index:
-        # Find _all_ GreatFETs...
-        devices = GreatFET(find_all=True)
-
-        # ... and then select the one with the provided index.
-        if len(devices) <= args.index:
-            raise DeviceNotFoundError
-        return devices[args.index]
-
-    # If we have a serial number, look only for a single device. Theoretically,
-    # we should never have more than one GreatFET with the same serial number.
-    # Technically, this is violable, but libusb doesn't properly handle searching
-    # by serial number if there are multiple devices with the same one, so we
-    # enforce this.
-    else:
-        return GreatFET(serial_number=args.serial)
-
 
 
 def main():
