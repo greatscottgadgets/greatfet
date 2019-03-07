@@ -1,0 +1,2 @@
+recursive-include greatfet/assets *
+exclude greatfet/assets/.gitignore
