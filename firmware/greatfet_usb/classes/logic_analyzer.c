@@ -56,7 +56,7 @@ void service_logic_analyzer(void)
 
 	logic_analyzer_sgpio_start();
 
-	unsigned int phase = 0;
+	unsigned int phase = 1;
 	while(logic_analyzer_enabled) {
 		if ( usb_bulk_buffer_offset >= 16384
 		     && phase == 1) {
