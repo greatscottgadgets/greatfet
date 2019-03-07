@@ -2,7 +2,10 @@
 # CMake module for automatically fetching submodules.
 # Should help to smoothe over some of our common support issues.
 #
-include_guard()
+
+if(COMMAND include_guard)
+    include_guard()
+endif()
 
 find_package(Git QUIET)
 
