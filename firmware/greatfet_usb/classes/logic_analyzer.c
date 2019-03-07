@@ -25,7 +25,7 @@ volatile bool logic_analyzer_enabled = false;
 
 static const sgpio_config_t sgpio_config = {
 	.slice_mode_multislice = true,
-	.clock_divider = 12,
+	.clock_divider = 3,
 };
 
 static void logic_analyzer_sgpio_start()

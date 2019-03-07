@@ -57,7 +57,7 @@ void sgpio_configure(
 		SGPIO_SLICE_L,
 	};
 	
-	const uint_fast8_t pos = config->slice_mode_multislice ? 0x1f : 0x03;
+	const uint_fast8_t pos = config->slice_mode_multislice ? 0x7f : 0x03;
 	const bool single_slice = !config->slice_mode_multislice;
 	const uint_fast8_t slice_count = config->slice_mode_multislice ? 8 : 1;
 	
@@ -83,7 +83,7 @@ void sgpio_configure(
 
 		SGPIO_SLICE_MUX_CFG(slice_index) =
 		      SGPIO_SLICE_MUX_CFG_INV_QUALIFIER(0) /* Don't care */
-		    | SGPIO_SLICE_MUX_CFG_PARALLEL_MODE(3) /* Shift 1 byte(8bits) per clock. */
+		    | SGPIO_SLICE_MUX_CFG_PARALLEL_MODE(1) /* Shift 2 bits per clock. */
 		    | SGPIO_SLICE_MUX_CFG_DATA_CAPTURE_MODE(0) /* Don't care */
 		    | SGPIO_SLICE_MUX_CFG_INV_OUT_CLK(0) /* Normal clock. */
 		    | SGPIO_SLICE_MUX_CFG_CLKGEN_MODE(0) /* Use internal clock from COUNTER */
