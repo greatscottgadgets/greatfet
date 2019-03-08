@@ -44,3 +44,12 @@ libgreat/host/dist/
 .ccls-cache
 .ccls
 compile_commands.json
+
+# files involved in generating a release
+VERSION
+dist
+host-packages
+host/.eggs
+release-files
+*.tar.xz
+*.zip
