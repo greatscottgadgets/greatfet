@@ -25,3 +25,8 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/main.c
 )
 use_libgreat_modules(${PROJECT_NAME} comms usb usb_comms gpio)
+
+# Allow the flash stub to be included with the host distribution.
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.dfu
+	DESTINATION ${PATH_GREATFET}/host/greatfet/assets
+)

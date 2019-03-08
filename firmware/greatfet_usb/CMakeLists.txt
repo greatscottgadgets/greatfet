@@ -35,3 +35,8 @@ add_greatfet_targets(${PROJECT_NAME}
 use_libgreat_modules(${PROJECT_NAME} allocator comms usb usb_comms gpio ad970x)
 
 # TODO: include libgreat's m0_coprocessor include, to allow m0 code to be added
+
+# Allow the firmware to be included with the host distribution.
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.bin
+	DESTINATION ${PATH_GREATFET}/host/greatfet/assets
+)

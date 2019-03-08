@@ -40,13 +40,20 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
             raise_device_find_failures -- If set to True, this will throw a DeviceNotFoundError
                 instead of quitting if no device is present.
         """
-            
+
         # Determine if we should provide DFU arguments.
         if 'dfu' in kwargs:
             self.supports_dfu = kwargs['dfu']
             del kwargs['dfu']
         else:
             self.supports_dfu = False
+
+        # Determine if we should provide DFU arguments.
+        if 'verbose_by_default' in kwargs:
+            verbose_by_default = kwargs['verbose_by_default']
+            del kwargs['verbose_by_default']
+        else:
+            verbose_by_default = False
 
         # If set, this will throw DeviceNotFound errors instead of killing the process.
         if 'raise_device_find_failures' in kwargs:
@@ -70,8 +77,14 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
                             help="number of the attached device (default: 0)", default=0)
         self.add_argument('--wait', dest='wait', action='store_true',
                             help="Wait for a GreatFET device to come online if none is found.")
-        self.add_argument('-v', '--verbose', dest='verbose', action='store_true',
-                            help="Log more details to the console.")
+
+        if verbose_by_default:
+            self.add_argument('-q', '--quiet', dest='verbose', action='store_false',
+                                help="Don't log details to the console unless an error occurs.")
+        else:
+            self.add_argument('-v', '--verbose', dest='verbose', action='store_true',
+                                help="Log more details to the console.")
+
         # TODO: specify protocol?
         # TODO: accept comms URI
 

@@ -13,13 +13,9 @@ import sys
 import errno
 import subprocess
 
-from greatfet import greatfet_assets_directory
+from greatfet import find_greatfet_asset
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, GreatFETArgumentParser
-
-# The serial number expected from the DFU flash stub.
-DFU_STUB_NAME  = 'flash_stub.dfu'
-DFU_STUB_PATHS = [ greatfet_assets_directory() ]
 
 # Vendor VID/PID if the device is in DFU.
 NXP_DFU_VID = 0x1fc9
@@ -57,33 +53,7 @@ def spi_flash_write(device, filename, address, log_function=log_silent):
     log_function('')
 
 
-def find_dfu_stub(args):
-    """ Finds the DFU stub. """
-
-    # FIXME: This should be cleaned up to search paths that make sense given
-    # where and how we might install GreatFET.
-
-    # If we have an explicit DFU stub location, use it.
-    if args.dfu_stub:
-        path = os.path.expanduser(args.dfu_stub)
-
-        if os.path.isfile(path):
-            return path
-
-    # Otherwise, search each of the paths around.
-    for path in DFU_STUB_PATHS:
-        filename = os.path.expanduser(os.path.join(path, DFU_STUB_NAME))
-
-        if os.path.isfile(filename):
-            return filename
-
-    # If we weren't able to find it, give up, for now.
-    # TODO: eventually ship this with the GreatFET distribution and/or
-    # download it on demand?
-    return None
-
-
-def load_dfu_stub(args):
+def load_dfu_stub(dfu_stub_path):
     """ Loads the DFU stub onto the board for DFU-based programming. """
 
     try:
@@ -99,7 +69,7 @@ def load_dfu_stub(args):
         pass
 
     # If we have a DFU'able device, find the DFU stub and load it.
-    stub_path = find_dfu_stub(args)
+    stub_path = dfu_stub_path
     if stub_path is None:
         raise ValueError("Could not find the DFU stub!")
 
@@ -113,8 +83,13 @@ def load_dfu_stub(args):
 
 
 def main():
-    # Set up a simple argument parser.
-    parser = GreatFETArgumentParser(dfu=True,
+
+    # Grab any GreatFET assets that should have shipped with the tool.
+    dfu_stub_path = find_greatfet_asset('flash_stub.dfu')
+    auto_firmware_path = find_greatfet_asset("greatfet_usb.bin")
+
+    # Set up a simple argument parser.-
+    parser = GreatFETArgumentParser(dfu=True, verbose_by_default=True,
         description="Utility for flashing firmware on GreatFET boards")
     parser.add_argument('-a', '--address', metavar='<n>', type=int,
                         help="starting address (default: 0)", default=0)
@@ -127,7 +102,21 @@ def main():
                         help="Write data from file", default='')
     parser.add_argument('-R', '--reset', dest='reset', action='store_true',
                         help="Reset GreatFET after performing other operations.")
+
+    # If we have the ability to automatically install firmware, provide that as an option.
+    if auto_firmware_path:
+        parser.add_argument('--autoflash', action='store_true', dest='autoflash',
+                        help="Automatically flash the attached board with the firmware corresponding to the installed tools.")
+
     args = parser.parse_args()
+
+    # If we're trying to automatically flash the given firmware, set the relevant options accordingly.
+    try:
+        if not args.write and args.autoflash:
+            args.write = auto_firmware_path
+            args.reset = True
+    except AttributeError:
+        pass
 
     # Validate our options.
 
@@ -139,10 +128,13 @@ def main():
     # Determine whether we're going to log to the stdout, or not at all.
     log_function = parser.get_log_function()
 
+    if args.dfu_stub:
+        dfu_stub_path = args.dfu_stub
+
     # If we're supposed to install firmware via a DFU stub, install it first.
     if args.dfu:
         try:
-            load_dfu_stub(args)
+            load_dfu_stub(dfu_stub_path)
         except DeviceNotFoundError:
             print("Couldn't find a GreatFET-compatible board in DFU mode!", file=sys.stderr)
             sys.exit(errno.ENODEV)
