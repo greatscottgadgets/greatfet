@@ -26,7 +26,13 @@ add_greatfet_targets(${PROJECT_NAME}
 )
 use_libgreat_modules(${PROJECT_NAME} comms usb usb_comms gpio)
 
+# If we're not building DFU targets, don't include this in ALL.
+if (NOT DFU_TARGETS_AVAILABLE)
+	set(DFU_EXCLUDE_FROM_ALL "EXCLUDE_FROM_ALL")
+endif()
+
 # Allow the flash stub to be included with the host distribution.
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.dfu
 	DESTINATION ${PATH_GREATFET}/host/greatfet/assets
+	${DFU_EXCLUDE_FROM_ALL}
 )
