@@ -68,7 +68,7 @@ function(add_greatfet_targets EXECUTABLE_NAME)
 	add_dfu_executable(${EXECUTABLE_NAME}.dfu ${EXECUTABLE_NAME}.bin ${LINKER_SCRIPT_FLASH} ${LINKER_SCRIPT_DFU})
 
 	# Program/flash targets
-	add_custom_target(${EXECUTABLE_NAME}-flash   DEPENDS ${EXECUTABLE_NAME}.bin COMMAND greatfet_firmware -v -Rw ${EXECUTABLE_NAME}.bin)
+	add_custom_target(${EXECUTABLE_NAME}-flash   DEPENDS ${EXECUTABLE_NAME}.bin COMMAND greatfet_firmware -Rw ${EXECUTABLE_NAME}.bin)
 	add_custom_target(${EXECUTABLE_NAME}-program DEPENDS ${EXECUTABLE_NAME}.dfu COMMAND dfu-util --device 1fc9:000c --alt 0 --download ${EXECUTABLE_NAME}.dfu)
 
 endfunction(add_greatfet_targets)
