@@ -46,11 +46,12 @@ def main():
 
     fd, path = tempfile.mkstemp(None, None, os.getcwd())
     if args.output:
-        bin_file_name = args.output
-        arc_name = args.output + '.sr'
+        bin_file_name = arc_name = args.output
+        sr_name = args.output + ".sr"
     else:
-        bin_file_name = path[-11:]  # temporary filename is 11 characters
-        arc_name = 'pulseview_session.sr'
+        bin_file_name = path
+        arc_name = "logic-1"
+        sr_name = "pulseview_session.sr"
 
     print("Press Ctrl+C to stop reading data from device")
     try:
@@ -58,8 +59,10 @@ def main():
             try:
                 while True:
                     d = device.comms.device.read(0x81, 16384, 1000)
-                    bin_file.write(d)
-                    tmp.write(d)
+                    if args.output:
+                        bin_file.write(d)
+                    if args.pulseview:
+                        tmp.write(d)
             except KeyboardInterrupt:
                 print()
 
@@ -79,15 +82,18 @@ def main():
                                 "probe6=SGPIO5\n"
                                 "probe7=SGPIO6\n"
                                 "probe8=SGPIO7\n"
-                                "unitsize=1\n") % bin_file_name
+                                "unitsize=1\n") % arc_name
                 # pulseview compatible .sr archive
-                with ZipFile(arc_name, "w") as zip:
-                    zip.write(bin_file_name)
+                with ZipFile(sr_name, "w") as zip:
+                    zip.write(bin_file_name, arc_name)
                     zip.writestr("metadata", metadata_str)
                     zip.writestr("version", "2")
-                print("Pulseview compatible session file created: '%s'" % arc_name)
+                print("Pulseview compatible session file created: '%s'" % sr_name)
     finally:
-        os.remove(path)
+        try:
+            os.remove(path)
+        except OSError:
+            pass
 
     device.apis.logic_analyzer.stop()
 
