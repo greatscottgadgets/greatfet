@@ -1,6 +1,7 @@
 /*
  * This file is part of GreatFET
- * derived from GoodFET (thanks Travis)
+ * direct port from GoodFET
+ * Glory / failures go to Travis
  */
 #include <stdbool.h>
 #include <greatfet_core.h>
@@ -49,12 +50,14 @@ void jtag430_setr(uint8_t reg, uint16_t val)
 }
 
 //! Set the program counter.
-void jtag430_setpc(uint16_t adr){
+void jtag430_setpc(uint16_t adr)
+{
   jtag430_setr(0,adr);
 }
 
 //! Halt the CPU
-void jtag430_haltcpu(){
+void jtag430_haltcpu()
+{
   //jtag430_setinstrfetch();
   
   jtag_ir_shift_8(IR_DATA_16BIT);
@@ -67,7 +70,8 @@ void jtag430_haltcpu(){
 }
 
 //! Release the CPU
-void jtag430_releasecpu(){
+void jtag430_releasecpu()
+{
   CLRTCLK;
   // debugstr("Releasing target MSP430.");
   
@@ -81,7 +85,8 @@ void jtag430_releasecpu(){
 }
 
 //! Read data from address
-uint16_t jtag430_readmem(uint16_t adr){
+uint16_t jtag430_readmem(uint16_t adr)
+{
   uint16_t toret;
   jtag430_haltcpu();
   
@@ -104,7 +109,8 @@ uint16_t jtag430_readmem(uint16_t adr){
 }
 
 //! Write data to address.
-void jtag430_writemem(uint16_t adr, uint16_t data){
+void jtag430_writemem(uint16_t adr, uint16_t data)
+{
   CLRTCLK;
   jtag_ir_shift_8(IR_CNTRL_SIG_16BIT);
   if(adr>0xFF)
@@ -130,8 +136,8 @@ void jtag430_tclk_flashpulses(uint16_t count)
 }
 
 //! Write data to flash memory.  Must be preconfigured.
-void jtag430_writeflashword(uint16_t adr, uint16_t data){
-  
+void jtag430_writeflashword(uint16_t adr, uint16_t data)
+{
   CLRTCLK;
   jtag_ir_shift_8(IR_CNTRL_SIG_16BIT);
   jtag_dr_shift_16(0x2408);//word write
@@ -151,7 +157,8 @@ void jtag430_writeflashword(uint16_t adr, uint16_t data){
 }
 
 //! Configure flash, then write a word.
-void jtag430_writeflash(uint16_t adr, uint16_t data){
+void jtag430_writeflash(uint16_t adr, uint16_t data)
+{
   jtag430_haltcpu();
   
   //FCTL1=0xA540, enabling flash write
@@ -172,7 +179,8 @@ void jtag430_writeflash(uint16_t adr, uint16_t data){
 }
 
 //! Write a buffer to flash a word at a time
-void jtag430_writeflash_bulk(uint16_t adr, uint16_t len, uint16_t *data) {
+void jtag430_writeflash_bulk(uint16_t adr, uint16_t len, uint16_t *data)
+{
   int i;
   for(i = 0; i < len; i++) {
     //// debugstr("Poking flash memory.");
@@ -181,7 +189,8 @@ void jtag430_writeflash_bulk(uint16_t adr, uint16_t len, uint16_t *data) {
 }
 
 //! Power-On Reset
-void jtag430_por(){
+void jtag430_por()
+{
   // Perform Reset
   jtag_ir_shift_8(IR_CNTRL_SIG_16BIT);
   jtag_dr_shift_16(0x2C01); // apply
@@ -285,8 +294,8 @@ void jtag430_resettap()
 }
 
 //! Get the JTAG ID
-uint8_t jtag430x2_jtagid(){
-  
+uint8_t jtag430x2_jtagid()
+{
   jtagid = jtag_ir_shift_8(IR_BYPASS);
   // if(jtagid!=0x89 && jtagid!=0x91){
   //   // debugstr("Unknown JTAG ID");
@@ -295,7 +304,8 @@ uint8_t jtag430x2_jtagid(){
   return jtagid;
 }
 
-void jtag430_entry_sequence() {
+void jtag430_entry_sequence()
+{
    //Entry sequence from Page 67 of SLAU265A for 4-wire MSP430 JTAG
   CLRRST;
   delay_us(10);
@@ -309,7 +319,8 @@ void jtag430_entry_sequence() {
 }
 
 //! Start JTAG, take pins
-uint8_t jtag430x2_start(){
+uint8_t jtag430x2_start()
+{
   jtag_setup();
   delay_us(1000);
   SETTST;
@@ -324,7 +335,8 @@ uint8_t jtag430x2_start(){
 
 
 //! Stop JTAG.
-void jtag430_stop() {
+void jtag430_stop()
+{
   // debugstr("Exiting JTAG.");
   jtag_setup();
   
@@ -342,8 +354,8 @@ void jtag430_stop() {
 }
 
 //! Set CPU to Instruction Fetch
-void jtag430_setinstrfetch(){
-  
+void jtag430_setinstrfetch()
+{
   jtag_ir_shift_8(IR_CNTRL_SIG_CAPTURE);
 
   // Wait until instruction fetch state.
