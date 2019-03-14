@@ -18,7 +18,7 @@ all: firmware
 firmware:
 	# Create a firmware build directory, and configure our build.
 	@mkdir -p firmware/build
-	${CMAKE} -S firmware -B firmware/build
+	pushd firmware/build; cmake ..; popd
 
 	# Temporary: ensure libopencm3 is built.
 	$(MAKE) -C firmware/libopencm3 -j$(nproc)
