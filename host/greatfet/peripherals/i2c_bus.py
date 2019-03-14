@@ -67,7 +67,7 @@ class I2CBus(GreatFETPeripheral):
             raise ValueError("invalid receive length!")
 
         if receive_length > self.buffer_size:
-            raise ValueError("Tried to receive more than the size of the receive buffer.");
+            raise ValueError("Tried to receive more than the size of the receive buffer.")
 
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
@@ -123,13 +123,13 @@ class I2CBus(GreatFETPeripheral):
         responses = self.board.apis.i2c.scan()
         write_responses = responses[:16]
         read_responses = responses[16:]
-        addresses = []
+        responses = []
 
         for write_response, read_response in zip(write_responses, read_responses):
             for x in range(8):
-                addresses.append(
+                responses.append(
                     (write_response & 1 << x != 0,
                      read_response & 1 << x != 0))
 
-        return addresses
+        return responses
 
