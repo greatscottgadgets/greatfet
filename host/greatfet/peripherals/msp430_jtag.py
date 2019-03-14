@@ -84,7 +84,7 @@ class JTAG_MSP430(JTAG):
     
     def peekblock(self, address):
         """Grab a large block from an SPI Flash ROM."""
-        return self.peek(self, address, length=0x400)
+        return self.peek(address, length=0x400)
     
     def poke(self, address, value):
         """
@@ -94,11 +94,7 @@ class JTAG_MSP430(JTAG):
                 address -- The memory address to be written.
                 value -- Value to write to location.
         """
-        written = self.board.apis.jtag_msp430.write_mem(address, value)
-        
-        if(written != value):
-            print("Failed to write 0x%04x to 0x%04x" % (value ,address))
-        return written
+        return self.board.apis.jtag_msp430.write_mem(address, value)
     
     def poke_flash_block(self, address, data):
         """
@@ -108,6 +104,7 @@ class JTAG_MSP430(JTAG):
                 address -- The memory address to be written.
                 data -- Words to write to flash
         """
+        data = bytes(data)
         value = self.board.apis.jtag_msp430.write_flash(address, data)
         return value
     
@@ -119,7 +116,7 @@ class JTAG_MSP430(JTAG):
                 address -- The memory address to be written.
                 value -- Valuse to write to location
         """
-        value = self.poke_flash_block(address, [value])
+        value = self.poke_flash_block(address, (value,))
         return value
     
     def set_secret(self,value):
@@ -212,10 +209,10 @@ class JTAG_MSP430(JTAG):
         """Reset the MSP430 to run on its own."""
         self.board.apis.jtag_msp430.release_cpu()
     
-    def MSP430dumpbsl(self):
+    def dump_bsl(self):
         self.dump_memory(0xC00, 0xfff)
     
-    def MSP430dumpallmem(self):
+    def dump_all_memory(self):
         self.dump_memory(0x200, 0xffff)
     
     def dump_memory(self, begin, end):

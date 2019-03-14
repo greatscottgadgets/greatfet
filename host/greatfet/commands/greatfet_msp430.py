@@ -8,13 +8,14 @@ import argparse
 import errno
 import sys
 import ast
+from itertools import chain
 
 import greatfet
 from greatfet import GreatFET
 from greatfet.peripherals import msp430_jtag
 from greatfet.utils import log_silent, log_verbose
 
-def msp430_test(self):
+def msp430_test(jtag):
     """Test MSP430 JTAG functions.  Requires that a chip be attached."""
     
     if jtag.ident()==0xffff:
@@ -59,29 +60,30 @@ def main():
 
     # Set up a simple argument parser.
     parser = GreatFETArgumentParser(description="JTAG debug utility for MSP430")
-    parser.add_argument('-I', dest='ident', action='store_true',
+    parser.add_argument('-I', '--identify', dest='ident', action='store_true',
                         help="Show target identification")
-    parser.add_argument('-e', dest='erase', action='store_true',
+    parser.add_argument('-e', '--erase', dest='erase', action='store_true',
                         help="Erase target flash")
-    parser.add_argument('-E', dest='erase_info', action='store_true',
-                        help="Erase target info flash")
-    parser.add_argument('-f', dest='flash', type=str,
-                        help="Write target flash")
-    parser.add_argument('-V', dest='verify', type=str,
-                        help="Verify target flash")
-    parser.add_argument('-d', dest='dump', type=str,
-                        help="Dump target flash")
-    parser.add_argument('-r', dest='run', action='store_true',
+    parser.add_argument('-E', '--erase_info', dest='erase_info', 
+                        action='store_true', help="Erase target info flash")
+    parser.add_argument('-f', '--flash', dest='flash', type=str,
+                        metavar='<filename>', help="Write target flash")
+    parser.add_argument('-V', '--verify', dest='verify', type=str,
+                        metavar='<filename>', help="Verify target flash")
+    parser.add_argument('-d', '--dump', dest='dump', type=str,
+                        metavar='<filename>', help="Dump target flash")
+    parser.add_argument('-r', '--run', dest='run', action='store_true',
                         help="Run target device")
-    parser.add_argument('-R', dest='peek', action='store_true',
+    parser.add_argument('-R', '--peek', dest='peek', action='store_true',
                         help="Read from memory location")
-    parser.add_argument('-W', dest='poke', type=ast.literal_eval,
-                        help="Write to memory location")
-    parser.add_argument('-a', dest='address', type=ast.literal_eval,
-                        help="Address for peek/poke/flash/dump/verify actions")
-    parser.add_argument('-l', dest='length', type=ast.literal_eval,
-                        help="Length for peek/dump actions")
-    parser.add_argument('-t', dest='test', action='store_true',
+    parser.add_argument('-W', '--poke', dest='poke', type=ast.literal_eval,
+                        metavar='<value>', help="Write to memory location")
+    parser.add_argument('-a', '--address', dest='address', default=0,
+                        type=ast.literal_eval, metavar='<address>', 
+                        help="Address for peek/poke/flash/dump/verify actions (default 0x00)")
+    parser.add_argument('-l', '--length', dest='length', type=ast.literal_eval,
+                        metavar='<length>', help="Length for peek/dump actions in bytes")
+    parser.add_argument('-t', '--test', dest='test', action='store_true',
                         help="Test MSP430 JTAG functions (destructive)")
     args = parser.parse_args()
 
@@ -103,20 +105,29 @@ def main():
     if jtag_id in (0x89, 0x91):
         log_function("Target dentified as 0x%02x." % jtag_id)
     else:
-        print("Error, misidentified as %02x." % jtag_id)
+        print("Error, misidentified as 0x%02x." % jtag_id)
         print("Check wiring, as this should be 0x89 or 0x91.")
         sys.exit(errno.ENODEV)
     
     if args.ident:
-        print("Identifies as %s (%04x)" % 
+        print("Identifies as %s (0x%04x)" % 
                     (jtag.ident_string(), jtag.ident()))
     
     if args.dump:
-        end = args.address + args.length
-        log_function("Dumping from %04x to %04x to %s." 
+        if args.length:
+            end = args.address + args.length
+        else:
+            end = 0xffff
+        log_function("Dumping from 0x%04x to 0x%04x to %s." 
                      % (args.address, end, args.dump))
-        with open(args.dump, 'w') as f:
-            pass
+        with open(args.dump, 'wb') as f:
+            address = args.address
+            while address < end:
+                data = jtag.peekblock(address)
+                data_bytes = [(x&0xFF, (x&0xFF00)>>8) for x in data]
+                bytes_to_write = bytes(chain.from_iterable(data_bytes))
+                f.write(bytes_to_write)
+                address += len(bytes_to_write)
     
     if args.erase:
         log_function("Erasing main flash memory.")
@@ -133,9 +144,8 @@ def main():
             else:
                 buffer = f.read()
             length = len(buffer)
-            log_function("Writing %s from %04x to %04x."
+            log_function("Writing %s from 0x%04x to 0x%04x."
                          % (args.flash, args.address, args.address + length))
-            
     
     if args.verify:
         with open(args.verify, 'r') as f:
@@ -148,20 +158,34 @@ def main():
             else:
                 address = args.address
             length = len(buffer)
-            log_function("Verifying %04x bytes of %s from %04x."
+            log_function("Verifying 0x%04x bytes of %s from 0x%04x."
                          % (length, args.flash, address))
     
-    if args.peek:
-        pass
-    
     if args.poke:
-        jtag.poke()
+        log_function("Writing 0x%04x to 0x%04x." % (args.poke, args.address))
+        written = jtag.poke(args.address, args.poke)
+        if written != args.poke:
+            print("Failed to write 0x%04x to 0x%04x" % (args.poke, args.address))
+
+    if args.peek:
+        if args.length:
+            length = args.length
+            if length % 2:
+                length += 1
+        else:
+            length = 2
+        log_function("Reading %d bytes from 0x%04x." % (length, args.address))
+        values = jtag.peek(args.address, length)
+        for i, v in enumerate(values):
+            print("%04x: %04x" % (args.address + i*2, v))
     
     if args.run:
+        log_function("Resuming target execution.")
         jtag.run()
     
-    if args.poke:
-        pass
-
+    if args.test:
+        log_function("Running test.")
+        msp430_test(jtag)
+    
 if __name__ == '__main__':
     main()
