@@ -2,6 +2,8 @@
 # This file is part of GreatFET
 #
 
+from itertools import chain
+
 from ..peripheral import GreatFETPeripheral
 
 class JTAG(GreatFETPeripheral):
@@ -82,9 +84,12 @@ class JTAG_MSP430(JTAG):
         """
         return self.board.apis.jtag_msp430.read_mem(address, length)
     
-    def peekblock(self, address):
+    def peekblock(self, address, block_size=0x400):
         """Grab a large block from an SPI Flash ROM."""
-        return self.peek(address, length=0x400)
+        data = self.peek(address, block_size)
+        byte_pairs = [(x&0xFF, (x&0xFF00)>>8) for x in data]
+        data_bytes = bytes(chain.from_iterable(byte_pairs))
+        return data_bytes
     
     def poke(self, address, value):
         """

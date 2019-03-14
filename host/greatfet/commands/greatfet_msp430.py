@@ -8,7 +8,6 @@ import argparse
 import errno
 import sys
 import ast
-from itertools import chain
 
 import greatfet
 from greatfet import GreatFET
@@ -124,10 +123,8 @@ def main():
             address = args.address
             while address < end:
                 data = jtag.peekblock(address)
-                data_bytes = [(x&0xFF, (x&0xFF00)>>8) for x in data]
-                bytes_to_write = bytes(chain.from_iterable(data_bytes))
-                f.write(bytes_to_write)
-                address += len(bytes_to_write)
+                f.write(data)
+                address += len(data)
     
     if args.erase:
         log_function("Erasing main flash memory.")
@@ -148,18 +145,28 @@ def main():
                          % (args.flash, args.address, args.address + length))
     
     if args.verify:
-        with open(args.verify, 'r') as f:
+        with open(args.verify, 'rb') as f:
+            address = args.address
             if args.length:
-                buffer = f.read(args.length)
+                end = address + args.length
             else:
-                buffer = f.read()
-            if not args.address:
-                address = 0x00
+                end = address + f.seek(0, 2)
+                f.seek(0)
+            log_function("Verifying %d bytes of %s from 0x%04x."
+                         % (end-address, args.verify, address))
+            while address < end:
+                if end - address < 0x400:
+                    block_size = end - address
+                else:
+                    block_size = 0x400
+                data = jtag.peekblock(address, block_size)
+                buffer = f.read(len(data))
+                if data != buffer:
+                    print("File does not match flash.")
+                    break
+                address += len(data)
             else:
-                address = args.address
-            length = len(buffer)
-            log_function("Verifying 0x%04x bytes of %s from 0x%04x."
-                         % (length, args.flash, address))
+                print("Flash contents verified.")
     
     if args.poke:
         log_function("Writing 0x%04x to 0x%04x." % (args.poke, args.address))
