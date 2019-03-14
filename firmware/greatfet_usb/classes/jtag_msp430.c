@@ -93,7 +93,7 @@ static int jtag_msp430_verb_write_flash(struct command_transaction *trans)
 	addr = comms_argument_parse_uint32_t(trans);
 	data_to_write = comms_argument_read_buffer(trans, -1, &length);
 	
-	for(i=0; i < (length>>1)-2; i++) {
+	for(i=0; i < (length>>1); i++) {
 		jtag430_writeflash(addr+(i<<1), data_to_write[i]);
 		//Reflash if needed.  Try this twice to save grace?
 		if(data_to_write[i]!=jtag430_readmem(addr)) {
@@ -170,7 +170,7 @@ static struct comms_verb _verbs[] = {
 			.in_param_names = "address, value", .out_param_names = "value",
 			.doc = "Write a 16 bit word to memory." },
 		{ .name = "write_flash", .handler = jtag_msp430_verb_write_flash,
-			.in_signature = "<I*H", .out_signature = "<H",
+			.in_signature = "<I*X", .out_signature = "<H",
 			.in_param_names = "address, data", .out_param_names = "first_word",
 			.doc = "Write data to flash from a given address." },
 		{ .name = "erase_flash", .handler = jtag_msp430_verb_erase_flash,

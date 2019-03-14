@@ -122,7 +122,7 @@ def main():
         with open(args.dump, 'wb') as f:
             address = args.address
             while address < end:
-                data = jtag.peekblock(address)
+                data = jtag.peek_block(address)
                 f.write(data)
                 address += len(data)
     
@@ -135,15 +135,26 @@ def main():
         jtag.erase_info()    
     
     if args.flash:
-        with open(args.flash, 'r') as f:
+        with open(args.flash, 'rb') as f:
+            address = args.address
             if args.length:
-                buffer = f.read(args.length)
+                end = address + args.length
             else:
-                buffer = f.read()
-            length = len(buffer)
-            log_function("Writing %s from 0x%04x to 0x%04x."
-                         % (args.flash, args.address, args.address + length))
-    
+                end = address + f.seek(0, 2)
+                f.seek(0)
+            log_function("Writing %d bytes of %s to 0x%04x."
+                         % (end-address, args.flash, address))
+            while address < end:
+                if end - address < 0x400:
+                    block_size = end - address
+                else:
+                    block_size = 0x400
+                data = f.read(block_size)
+                result = jtag.poke_flash_block(address, data)
+                address += block_size
+            else:
+                log_function("Flash contents written.")
+
     if args.verify:
         with open(args.verify, 'rb') as f:
             address = args.address
@@ -159,7 +170,7 @@ def main():
                     block_size = end - address
                 else:
                     block_size = 0x400
-                data = jtag.peekblock(address, block_size)
+                data = jtag.peek_block(address, block_size)
                 buffer = f.read(len(data))
                 if data != buffer:
                     print("File does not match flash.")

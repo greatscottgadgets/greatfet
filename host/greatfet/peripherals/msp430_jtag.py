@@ -84,7 +84,7 @@ class JTAG_MSP430(JTAG):
         """
         return self.board.apis.jtag_msp430.read_mem(address, length)
     
-    def peekblock(self, address, block_size=0x400):
+    def peek_block(self, address, block_size=0x400):
         """Grab a large block from an SPI Flash ROM."""
         data = self.peek(address, block_size)
         byte_pairs = [(x&0xFF, (x&0xFF00)>>8) for x in data]
@@ -109,8 +109,7 @@ class JTAG_MSP430(JTAG):
                 address -- The memory address to be written.
                 data -- Words to write to flash
         """
-        data = bytes(data)
-        value = self.board.apis.jtag_msp430.write_flash(address, data)
+        value = self.board.apis.jtag_msp430.write_flash(address, data, timeout=30000)
         return value
     
     def poke_flash(self, address, value):
