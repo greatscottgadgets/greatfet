@@ -31,10 +31,10 @@ requests = (
     'GPIO_REGISTER',
     'GPIO_WRITE',
 
-    'SPI_INIT',
-    'SPI_WRITE',
-    'SPI_READ',
-    'SPI_DUMP_FLASH',
+    # 'SPI_INIT',
+    # 'SPI_WRITE',
+    # 'SPI_READ',
+    # 'SPI_DUMP_FLASH',
 
     'I2C_START',
     'I2C_STOP',
