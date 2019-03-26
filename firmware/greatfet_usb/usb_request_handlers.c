@@ -9,7 +9,6 @@
 #include <drivers/usb/comms_backend.h>
 
 #include "legacy_apis/usb_api_adc.h"
-#include "legacy_apis/usb_api_spi.h"
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
 #include "legacy_apis/usb_api_glitchkit_simple.h"

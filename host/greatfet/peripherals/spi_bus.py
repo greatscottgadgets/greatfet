@@ -2,7 +2,6 @@
 # This file is part of GreatFET
 #
 
-from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
 
 class SPIBus(GreatFETPeripheral):
