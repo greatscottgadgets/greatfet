@@ -29,5 +29,7 @@ add_greatfet_library_if_necessary(libgreatfet OBJECT
     ${PATH_GREATFET_FIRMWARE_COMMON}/i2c_lpc.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/gpio_lpc.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/gpio_int.c
+    ${PATH_GREATFET_FIRMWARE_COMMON}/jtag.c
+    ${PATH_GREATFET_FIRMWARE_COMMON}/jtag_msp430.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/printf.c
 )

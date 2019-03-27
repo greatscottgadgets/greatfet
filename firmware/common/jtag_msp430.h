@@ -1,10 +1,11 @@
 /*
  * This file is part of GreatFET
- * derived from GoodFET (thanks Travis)
+ * direct port from GoodFET
+ * Glory / failures go to Travis
  */
 
-#ifndef __JTAG430_H__
-#define __JTAG430_H__
+#ifndef __JTAG_MSP430_H__
+#define __JTAG_MSP430_H__
 
 #define MSP430MODE 0
 #define MSP430XMODE 1
@@ -33,10 +34,16 @@ void jtag430_haltcpu();
 void jtag430_releasecpu();
 //! Set CPU to Instruction Fetch
 void jtag430_setinstrfetch();
+//! Set register
+void jtag430_setr(uint8_t reg, uint16_t val);
 //! Set the program counter.
 void jtag430_setpc(uint16_t adr);
 //! Erase target flash from address
 void jtag430_eraseflash(uint16_t mode, uint16_t adr, uint16_t count, bool info);
+//! Mass flash erase helper function
+void jtag430_erase_entire_flash();
+//! Erase info flash helper function
+void jtag430_erase_info();
 //! Write data to address.
 void jtag430_writeflash(uint16_t adr, uint16_t data);
 //!
@@ -83,4 +90,8 @@ void jtag430_por();
 
 uint8_t jtag430_start_reset_halt();
 
-#endif /* __JTAG430_H__ */
+// Taken from GoodFET because
+// "Sometimes JTAG doesn't init correctly"
+void jtag430_check_init();
+
+#endif /* __JTAG_MSP430_H__ */

@@ -34,6 +34,7 @@ setup(
             'greatfet_i2c = greatfet.commands.greatfet_i2c:main',
             'greatfet_shell = greatfet.commands.greatfet_shell:main',
             'greatfet_dmesg = greatfet.commands.greatfet_dmesg:main',
+            'greatfet_msp430 = greatfet.commands.greatfet_msp430:main',
         ],
     },
     #author='', #TODO: Figure out whose name should go here!

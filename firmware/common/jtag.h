@@ -1,6 +1,7 @@
 /*
  * This file is part of GreatFET
- * derived from GoodFET (thanks Travis)
+ * direct port from GoodFET
+ * Glory / failures go to Travis
  */
 
 #ifndef __JTAG_H__
