@@ -42,4 +42,5 @@ libgreat/host/dist/
 
 # ccls output
 .ccls-cache
-
+.ccls
+compile_commands.json

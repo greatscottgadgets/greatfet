@@ -11,6 +11,9 @@
 #define CLASS_NUMBER_DEBUG (0x10)
 
 
+
+#ifdef CONFIG_ENABLE_DEBUG_RING
+
 /**
  * Command to read the contents of the debug ring buffer.
  */
@@ -29,6 +32,9 @@ static int verb_clear_dmesg(struct command_transaction *trans)
 	trans->data_out_length = debug_ring_read(trans->data_out, trans->data_out_max_length, true);
 	return 0;
 }
+
+#endif
+
 
 static int verb_peek(struct command_transaction *trans)
 {
@@ -58,26 +64,30 @@ static int verb_poke(struct command_transaction *trans)
 // TODO: verb for setting the current log level
 
 /**
- * Verbs for the debug API.
+t  * Verbs for the debug API.
  */
 struct comms_verb debug_verbs[] = {
-		{ .name = "read_dmesg",  .handler = verb_read_dmesg,
-            .in_signature = "", .out_signature="<S", .out_param_names = "log",
-            .doc = "Fetches the content of the device's debug ring (log)."
-        },
-		{ .name = "clear_dmesg",  .handler = verb_clear_dmesg,
-            .in_signature = "", .out_signature="<S", .out_param_names = "log",
-            .doc = "Fetches and clears content of the device's debug ring (log)."
-        },
-		{ .name = "peek",  .handler = verb_peek,
-            .in_signature = "<I", .out_signature="<I", .in_param_names = "address", .out_param_names = "value",
-            .doc = "Reads a raw LPC4330 memory address; for debug."
-        },
-		{ .name = "poke",  .handler = verb_poke,
-            .in_signature = "<II", .out_signature="", .in_param_names = "address, value", .out_param_names = "",
-            .doc = "Writes a raw LPC4330 memory address; for debug."
-        },
-		{} // Sentinel
+
+#ifdef CONFIG_ENABLE_DEBUG_RING
+	{ .name = "read_dmesg",  .handler = verb_read_dmesg,
+		.in_signature = "", .out_signature="<S", .out_param_names = "log",
+		.doc = "Fetches the content of the device's debug ring (log)."
+	},
+	{ .name = "clear_dmesg",  .handler = verb_clear_dmesg,
+		.in_signature = "", .out_signature="<S", .out_param_names = "log",
+		.doc = "Fetches and clears content of the device's debug ring (log)."
+	},
+#endif
+
+	{ .name = "peek",  .handler = verb_peek,
+		.in_signature = "<I", .out_signature="<I", .in_param_names = "address", .out_param_names = "value",
+		.doc = "Reads a raw LPC4330 memory address; for debug."
+	},
+	{ .name = "poke",  .handler = verb_poke,
+		.in_signature = "<II", .out_signature="", .in_param_names = "address, value", .out_param_names = "",
+		.doc = "Writes a raw LPC4330 memory address; for debug."
+	},
+	{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(debug_api, CLASS_NUMBER_DEBUG, "debug", debug_verbs,
         "API for accessing the device's debug state.");

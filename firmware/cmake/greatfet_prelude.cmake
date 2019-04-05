@@ -57,7 +57,7 @@ include(${PATH_GREATFET_FIRMWARE_CMAKE}/board_select.cmake)
 include(${PATH_LIBGREAT}/firmware/cmake/libgreat_prelude.cmake)
 
 # Default to release builds, if not set.
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
+set(CMAKE_BUILD_TYPE "MinSizeRel" CACHE STRING "Determines the type of build; usually 'MinSizeRel' or 'Debug'. See the CMake documentation for more info.")
 
 # Don't show optionst hat aren't relevant to us in ccmake.
 mark_as_advanced(CMAKE_INSTALL_PREFIX)

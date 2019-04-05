@@ -13,11 +13,12 @@ find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PATH_GREATFET}/.git")
 
     # Allow the user to disable submodule checkout.
-    option(PULL_GIT_SUBMODULES "Pull down submodules prior to build." ON)
+    option(AUTOPULL_GIT_SUBMODULES "Automatically update submodules prior to build, when necessary." ON)
+    option(FETCH_GIT_SUBMODULES "Fetch submdoules if they're not currently pressent." ON)
 
     # Try to pull down the submodules to build this.
-    if(PULL_GIT_SUBMODULES)
-        message(STATUS "Ensuring we have our local/submodule dependencies.")
+    if(AUTOPULL_GIT_SUBMODULES OR (NOT EXISTS "${PATH_GREATFET}/libgreat/.git" AND FETCH_GIT_SUBMODULES))
+        message(STATUS "Fetching git submodules.")
         execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --rebase
                         WORKING_DIRECTORY ${PATH_GREATFET} RESULT_VARIABLE GIT_SUBMOD_RESULT)
         if(NOT GIT_SUBMOD_RESULT EQUAL "0")

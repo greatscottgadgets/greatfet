@@ -10,7 +10,7 @@ PYTHON ?= python
 CMAKE  ?= cmake
 
 all: firmware
-.PHONY: all firmware install full_install install_and_flash
+.PHONY: all firmware install full_install install_and_flash menuconfig
 
 #
 # Convenience functiont to build our system
@@ -53,6 +53,10 @@ full_install: firmware
 #
 install: libgreat/README.md
 	$(call install_host)
+
+
+menuconfig: libgreat/README.md
+	pushd firmware/build; ccmake ..; popd
 
 
 #

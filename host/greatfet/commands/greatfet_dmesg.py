@@ -26,9 +26,16 @@ def main():
     gf = parser.find_specified_device()
     log_function = parser.get_log_function()
 
-    #Read and print the logs
-    logs = gf.read_debug_ring(args.length)
+    if not gf.supports_api('debug'):
+        print("ERROR: This board doesn't appear to support the debug API -- was its firmware built without it?")
+        return
 
+    if not gf.apis.debug.supports_verb('read_dmesg'):
+        print("ERROR: This board doesn't appear to support debug logging. Was its firmware built with logging or the ringbuffer off?")
+        return
+
+    #Read and print the dmesg log.
+    logs = gf.read_debug_ring(args.length)
     log_function("Ring buffer contained {} bytes of data:\n".format(len(logs)))
     print(logs)
 

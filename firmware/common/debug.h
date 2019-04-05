@@ -12,7 +12,11 @@
 #include <toolchain.h>
 #include <errno.h>
 
+#include <config.h>
+
 #include <greatfet_core.h>
+
+typedef struct backtrace_frame backtrace_frame_t;
 
 // Possible log levels.
 enum debug_log_level {
@@ -28,8 +32,23 @@ enum debug_log_level {
 };
 typedef enum debug_log_level loglevel_t;
 
-/* Initialize debugging. */
-void debug_init(void);
+#ifndef CONFIG_ENABLE_LOGGING
+	//
+	// If logging isn't enabled, all of our log functionality is a no-op.
+	//
+	#define printk(...)
+	#define pr_emergency(...)
+	#define pr_alert(...)
+	#define pr_critical(...)
+	#define pr_error(...)
+	#define pr_warning(...)
+	#define pr_notice(...)
+	#define pr_info(...)
+	#define pr_debug(...)
+	#define pr_trace(...)
+	#define print_backtrace(...)
+	#define print_backtrace_from_frame(...)
+#else
 
 /* Log text to the active debug interface, ignoring loglevel. */
 void debug_puts(char *str);
@@ -145,19 +164,42 @@ ATTR_PRINTF void pr_warning(char *fmt, ...);
 /**
  * Convenience function that prints errors using the INFO loglevel.
  */
-ATTR_PRINTF void pr_info(char *fmt, ...);
+#ifdef CONFIG_ENABLE_QUIET_LOGGING
+	#define pr_notice(...)
+#else
+	ATTR_PRINTF void pr_notice(char *fmt, ...);
+#endif
+
+
+/**
+ * Convenience function that prints errors using the INFO loglevel.
+ */
+#ifdef CONFIG_ENABLE_QUIET_LOGGING
+	#define pr_info(...)
+#else
+	ATTR_PRINTF void pr_info(char *fmt, ...);
+#endif
+
 
 
 /**
  * Convenience function that prints errors using the DEBUG loglevel.
  */
-ATTR_PRINTF void pr_debug(char *fmt, ...);
+#ifdef CONFIG_ENABLE_VERBOSE_LOGGING
+	ATTR_PRINTF void pr_debug(char *fmt, ...);
+#else
+	#define pr_debug(...)
+#endif
 
 
 /**
  * Convenience function that prints errors using the DEBUG loglevel.
  */
-ATTR_PRINTF void pr_trace(char *fmt, ...);
+#if defined(CONFIG_ENABLE_VERBOSE_LOGGING_TRACING) && defined(CONFIG_ENABLE_VERBOSE_LOGGING)
+	ATTR_PRINTF void pr_trace(char *fmt, ...);
+#else
+	#define pr_trace(...)
+#endif
 
 /**
  * @return true iff there is currently a debugger connected.
@@ -165,4 +207,16 @@ ATTR_PRINTF void pr_trace(char *fmt, ...);
 bool debugger_is_connected(void);
 
 
+/**
+ * Prints a backtrace starting with the current line of code.
+ */
+void print_backtrace(loglevel_t level, uint32_t levels_to_omit);
+
+
+/**
+ * Prints a backtrace starting with the current line of code.
+ */
+void print_backtrace_from_frame(loglevel_t level, backtrace_frame_t *frame, uint32_t levels_to_omit);
+
+#endif // ENABLE_LOGGING
 #endif //__DEBUG_H__

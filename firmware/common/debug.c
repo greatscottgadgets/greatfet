@@ -6,6 +6,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <toolchain.h>
+#include <backtrace.h>
 
 #include <drivers/reset.h>
 
@@ -19,7 +20,11 @@
 	#include <libopencm3/cm3/scs.h>
 #endif
 
-#include "debug.h"
+#include <debug.h>
+
+#include <config.h>
+
+#ifdef CONFIG_ENABLE_LOGGING
 
 #define SEMIHOST_SWI		"0xAB"
 #define SEMIHOST_STDOUT_FILENO "2"
@@ -27,22 +32,8 @@
 #define SEMIHOST_SYS_WRITE0	"0x4"
 #define SEMIHOST_SYS_WRITE	"0x5"
 
-// FIXME: Don't assume this from Common -- pull this in from e.g. a configuration header file.
-#ifndef CONFIG_DEBUG_BUFFER_SIZE
-#define CONFIG_DEBUG_BUFFER_SIZE 4096
-#undef CONFIG_DEBUG_INCLUDE_TRACE
-#endif
-
-// Uncomment this to disable timestamps in debug logs.
-//#define CONFIG_DEBUG_OMIT_TIMESTAMPS
-
 extern volatile uint32_t reset_reason;
 
-/* Storage for the debug ringbuffer. */
-static char debug_ring[CONFIG_DEBUG_BUFFER_SIZE] ATTR_PERSISTENT;
-
-unsigned int debug_read_index ATTR_PERSISTENT;
-unsigned int debug_write_index ATTR_PERSISTENT;
 
 
 // Store the active loglevel.
@@ -50,10 +41,19 @@ unsigned int debug_write_index ATTR_PERSISTENT;
 static loglevel_t debug_loglevel = LOGLEVEL_INFO;
 
 
+#ifdef CONFIG_ENABLE_DEBUG_RING
+
+/* Storage for the debug ringbuffer. */
+static char debug_ring[CONFIG_DEBUG_RING_SIZE] ATTR_PERSISTENT;
+
+unsigned int debug_read_index ATTR_PERSISTENT;
+unsigned int debug_write_index ATTR_PERSISTENT;
+
+
 /**
  * Initializes debugging support.
  */
-void debug_init(void)
+void debug_ring_init(void)
 {
 	// If it doesn't seem likely our debug ring is intact from a
 	// previous boot, then clear out the debug ring.
@@ -73,7 +73,8 @@ void debug_init(void)
 	debug_ring_write_string(system_get_reset_reason_string());
 	debug_ring_write_string(".\n");
 }
-CALL_ON_PREINIT(debug_init);
+CALL_ON_PREINIT(debug_ring_init);
+
 
 
 /**
@@ -148,7 +149,7 @@ unsigned int debug_ring_read(char *buffer, unsigned int maximum, bool clear)
 	memcpy(buffer, &debug_ring[debug_ring_read_index()], immediate_length);
 	memcpy(&buffer[immediate_length], debug_ring, wrapped_length);
 
-	// Update the read pointer, if we're clearing as we read.
+	// Update the read pointer, if we're clearing as we read.G
 	if (clear)
 		debug_read_index += length;
 
@@ -231,6 +232,7 @@ void debug_ring_write_string(const char *const str)
 	debug_ring_write(str, length);
 }
 
+#endif
 
 /**
  * Sets the system's active debug level. Any debug print with a level _higher_
@@ -242,7 +244,6 @@ void debug_set_loglevel(loglevel_t loglevel)
 {
 	debug_loglevel = loglevel;
 }
-
 
 /**
  * @return true iff there is currently a debugger connected.
@@ -257,6 +258,7 @@ bool debugger_is_connected(void)
 #endif
 }
 
+#ifdef CONFIG_ENABLE_SEMIHOSTING
 
 /**
  * Prints a single character via semihosting.
@@ -318,6 +320,8 @@ static void semihosting_puts(char volatile *s)
 #endif
 }
 
+#endif
+
 /**
  * Prints a string to the debug console. Ignores loglevel.
  *
@@ -325,10 +329,14 @@ static void semihosting_puts(char volatile *s)
  */
 void debug_puts(char *str)
 {
-	debug_ring_write_string(str);
+	#ifdef CONFIG_ENABLE_DEBUG_RING
+		debug_ring_write_string(str);
+	#endif
 
-	if (debugger_is_connected())
-		semihosting_puts(str);
+	#ifdef CONFIG_ENABLE_SEMIHOSTING
+		if (debugger_is_connected())
+			semihosting_puts(str);
+	#endif
 
 }
 
@@ -339,10 +347,14 @@ void debug_puts(char *str)
  */
 void debug_putc(char c)
 {
-	debug_ring_write(&c, 1);
+	#ifdef CONFIG_ENABLE_DEBUG_RING
+		debug_ring_write(&c, 1);
+	#endif
 
-	if (debugger_is_connected())
-		semihosting_putc(c);
+	#ifdef CONFIG_ENABLE_SEMIHOSTING
+		if (debugger_is_connected())
+			semihosting_putc(c);
+	#endif
 }
 
 /**
@@ -358,13 +370,15 @@ void vprintk(int loglevel, char *fmt, va_list list)
 	if (loglevel > debug_loglevel)
 		return;
 
-	// TODO: support something like Linux's LOGLEVEL_CONTINUE
 
-#ifndef CONFIG_DEBUG_OMIT_TIMESTAMPS
+#ifdef CONFIG_ENABLE_LOG_TIMESTAMPS
+	// TODO: support something like Linux's LOGLEVEL_CONTINUE
 	printf("[%12" PRIu32 "] ", get_time());
 #endif
+
 	vprintf(fmt, list);
 }
+
 
 /**
  * Core debugging print for GreatFET printing.
@@ -449,28 +463,34 @@ void pr_warning(char *fmt, ...)
 /**
  * Convenience function that prints errors using the DEBUG loglevel.
  */
-void pr_info(char *fmt, ...)
-{
-	va_list list;
+#ifndef CONFIG_ENABLE_QUIET_LOGGING
+	void pr_info(char *fmt, ...)
+	{
+		va_list list;
 
-	va_start(list, fmt);
-	vprintk(LOGLEVEL_INFO, fmt, list);
-	va_end(list);
-}
+		va_start(list, fmt);
+		vprintk(LOGLEVEL_INFO, fmt, list);
+		va_end(list);
+	}
+#endif
 
+#ifdef CONFIG_ENABLE_VERBOSE_LOGGING
 
-/**
- * Convenience function that prints errors using the DEBUG loglevel.
- */
-void pr_debug(char *fmt, ...)
-{
-	va_list list;
+	/**
+	* Convenience function that prints errors using the DEBUG loglevel.
+	*/
+	void pr_debug(char *fmt, ...)
+	{
+		va_list list;
 
-	va_start(list, fmt);
-	vprintk(LOGLEVEL_DEBUG, fmt, list);
-	va_end(list);
-}
+		va_start(list, fmt);
+		vprintk(LOGLEVEL_DEBUG, fmt, list);
+		va_end(list);
+	}
 
+#endif
+
+#ifdef CONFIG_ENABLE_VERBOSE_LOGGING_TRACING
 
 /**
  * Convenience function that prints errors using the TRACE loglevel.
@@ -479,13 +499,116 @@ void pr_debug(char *fmt, ...)
  */
 void pr_trace(char *fmt, ...)
 {
-	(void)fmt;
+	va_list list;
 
-	#ifdef CONFIG_DEBUG_INCLUDE_TRACE
-		va_list list;
+	va_start(list, fmt);
+	vprintk(LOGLEVEL_TRACE, fmt, list);
+	va_end(list);
+}
 
-		va_start(list, fmt);
-		vprintk(LOGLEVEL_TRACE, fmt, list);
-		va_end(list);
+#endif
+
+/**
+ * Prints a backtrace. Very experimental.
+ */
+
+int main(void);
+void usage_fault_handler(void);
+
+/**
+ * Weak/empty implementation of backtrace functionality for targets that don't include the backtrace module.
+ */
+ATTR_WEAK int _backtrace_unwind(backtrace_t *backtrace, int size, backtrace_frame_t *frame)
+{
+	(void)backtrace;
+	(void)size;
+	(void)frame;
+	return 0;
+}
+
+
+/**
+ * Prints a backtrace starting with the current line of code.
+ */
+void print_backtrace_from_frame(loglevel_t level, backtrace_frame_t *frame, uint32_t levels_to_omit)
+{
+	(void)level;
+	(void)frame;
+	(void)levels_to_omit;
+
+	#ifdef CONFIG_ENABLE_BACKTRACE
+
+	#ifndef CONFIG_ENABLE_FUNCTION_NAMES
+	const char *missing_name= "unknown";
+	#endif
+
+	// Fetch a backtrace...
+	backtrace_t backtrace[CONFIG_MAX_BACKTRACE_SIZE];
+	int length = _backtrace_unwind(backtrace, CONFIG_MAX_BACKTRACE_SIZE, frame);
+
+	printk(level, "Call Trace:\n");
+
+
+		for(int i = levels_to_omit; i < length; ++i) {
+			const char *decorator;
+
+			backtrace_t *entry = &backtrace[i];
+			uintptr_t offset = entry->address - entry->function;
+			const char *name = entry->name;
+
+			decorator = (i == 0) ? "<pc>" : "";
+
+			// FIXME: is this right?
+			// end our ISR-context handlers in the right place
+			if ((entry->function + 1) == usage_fault_handler) {
+				printk(level, "\t [<  nvic  >] --switch to interrupt context-- \n");
+				break;
+			}
+
+			#ifndef CONFIG_ENABLE_FUNCTION_NAMES
+				name = missing_name;
+			#endif
+
+			if (offset) {
+				printk(level, "\t [<%p>] %s+0x%x/0x%x %s\n", entry->address, name, (unsigned int)offset, (unsigned int)entry->address, decorator);
+			} else {
+				printk(level, "\t [<%p>] %s %s\n", entry->address, name, decorator);
+			}
+
+			// If we've reached main, it's time to stop. We don't need to expose CRT0 or bootrom details.
+			// Note that we need to add one to the function address to match the thumb-encoded address.
+			if ((entry->function + 1) == main) {
+				break;
+			}
+		}
+	#else
+		printk(level, "Call trace not avaiable in this build configuration.\n");
+	#endif
+
+}
+
+
+inline void print_backtrace(loglevel_t level, uint32_t levels_to_omit)
+{
+	#ifdef CONFIG_ENABLE_BACKTRACE
+		// Fetch the current program counter.
+		register uint32_t pc;
+		__asm__ volatile("mov %0, pc" : "=r"(pc));
+
+		// Build a backtrace frame to print from based on the current state.
+		backtrace_frame_t frame;
+		frame.sp = (uint32_t)__builtin_frame_address(0);
+		frame.fp = (uint32_t)__builtin_frame_address(0);
+		frame.lr = (uint32_t)__builtin_return_address(0);
+		frame.pc = pc;
+
+		// Print the main backtrace.
+		print_backtrace_from_frame(level, &frame, levels_to_omit + 1);
+	#else
+		// Re-use our generic backtrace handelr to print an error message.
+		print_backtrace_from_frame(level, NULL, levels_to_omit + 1);
 	#endif
 }
+
+
+#endif

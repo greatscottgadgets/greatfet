@@ -26,9 +26,9 @@ struct armv7m_scb_t {
 	union {
 		volatile uint32_t CFSR;
 		struct {
-			uint16_t UFSR;
-			uint8_t BFSR;
 			uint8_t MMFSR;
+			uint8_t BFSR;
+			uint16_t UFSR;
 		} __attribute__((packed));
 	};
 	volatile uint32_t HFSR;
@@ -60,8 +60,9 @@ static armv7m_scb_t* const SCB = (armv7m_scb_t*)SCB_BASE;
 #define SCB_HFSR_VECTTBL (1 << 1)
 
 
-#define SCB_SHCSR_MEMFAULTENA (1 << 0)
-#define SCB_SHCSR_BUSFAULTENA (1 << 1)
+#define SCB_SHCSR_MEMFAULTENA (1 << 16)
+#define SCB_SHCSR_BUSFAULTENA (1 << 17)
+#define SCB_SHCSR_USGFAULTENA (1 << 18)
 #define SCB_SHCSR_MEMFAULTPENDED (1 << 13)
 #define SCB_SHCSR_BUSFAULTPENDED (1 << 14)
 
@@ -79,6 +80,7 @@ static armv7m_scb_t* const SCB = (armv7m_scb_t*)SCB_BASE;
 	SCB_MMFSR_MLSPERR \
 	)
 
+#define SCB_BFSR_BFARVALID (1 << 7)
 #define SCB_BFSR_LSPERR (1 << 5)
 #define SCB_BFSR_STKERR (1 << 4)
 #define SCB_BFSR_UNSTKERR (1 << 3)

@@ -15,3 +15,29 @@
 
 // The version of the firmware currently running.
 #define CONFIG_VERSION_STRING "@VERSION_STRING@"
+
+// The size of the platform's debug ring, in bytes.
+#define CONFIG_DEBUG_RING_SIZE @DEBUG_RING_SIZE@
+#define CONFIG_DEFAULT_LOG_LEVEL @DEBUG_DEFAULT_LOG_LEVEL@
+
+// Define how much logging we're willing to enable.
+@CONFIG_ENABLE_LOGGING@
+@CONFIG_ENABLE_QUIET_LOGGING@
+@CONFIG_ENABLE_VERBOSE_LOGGING@
+@CONFIG_ENABLE_VERBOSE_TRACING@
+
+// Determine what logging methods we're willing to use.
+@CONFIG_ENABLE_DEBUG_RING@
+@CONFIG_ENABLE_SEMIHOSTING@
+
+// Genreal logging options.
+@CONFIG_ENABLE_LOG_TIMESTAMPS@
+
+// Uncommented automatically if the build has enabled backtrace support and the platform supports backtracing.
+@CONFIG_ENABLE_BACKTRACE@
+
+// The maximum depth of a debug backtrace.
+#define CONFIG_MAX_BACKTRACE_SIZE @DEBUG_MAX_BACKTRACE_DEPTH@
+
+// Uncommented if our compiler has included function names in the binary for our debug use.
+@CONFIG_ENABLE_FUNCTION_NAMES@

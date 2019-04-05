@@ -32,7 +32,7 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_DS18B20.c
 	${CLASSES_SOURCES}
 )
-use_libgreat_modules(${PROJECT_NAME} allocator comms usb usb_comms gpio ad970x)
+use_libgreat_modules(${PROJECT_NAME} allocator comms usb usb_comms gpio ad970x debug-backtrace)
 
 # TODO: include libgreat's m0_coprocessor include, to allow m0 code to be added
 

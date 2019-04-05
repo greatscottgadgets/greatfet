@@ -6,6 +6,14 @@
 include_guard()
 
 set(FLAGS_COMPILE_COMMON -std=gnu99 -Os -g3 -Wall -Wextra -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers)
+set(FLAGS_LINK_COMMON -Wl,--gc-sections -Os)
+
+# Variable which is used to set default values for features that should only be on in debug builds.
+if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+    set(DEFAULT_DEBUG_ONLY ON)
+else()
+    set(DEFAULT_DEBUG_ONLY OFF)
+endif()
 
 # libopencm3 requirements: generator stubd
 # TODO: better way to find the libgreat cmake includes?
@@ -17,11 +25,11 @@ include(${PATH_GREATFET_FIRMWARE_CMAKE}/dfu-util.cmake OPTIONAL)
 # Pull in support for DFU targets.
 include(${PATH_LIBGREAT_FIRMWARE_CMAKE}/dfu.cmake)
 
-# Pull in build configuration things.
-include(${PATH_GREATFET_FIRMWARE_CMAKE}/build_config.cmake)
-
 # Include libgreat.
 include(${PATH_LIBGREAT}/firmware/cmake/libgreat.cmake)
+
+# Pull in build configuration things.
+include(${PATH_GREATFET_FIRMWARE_CMAKE}/build_config.cmake)
 
 
 #
