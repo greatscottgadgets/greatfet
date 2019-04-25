@@ -105,19 +105,19 @@ void print_system_state(loglevel_t loglevel, hard_fault_stack_t *args)
 	printk(loglevel, "Current core: Cortex-M4\n"); // FIXME detect this; right now we're harcoding because we only use the M4
 	printk(loglevel, "System clock source: %s @ %" PRIu32 " Hz\n",
 		platform_get_cpu_clock_source_name(), platform_get_cpu_clock_source_frequency());
-	printk(loglevel, " PC:  %08" PRIx32 "\t\tLR:    %08" PRIx32 "\n", program_counter,  args->lr);
-	printk(loglevel, " R0:  %08" PRIx32 "\t\tR1:    %08" PRIx32 "\n", args->r0,  args->r1);
-	printk(loglevel, " R2:  %08" PRIx32 "\t\tR3:    %08" PRIx32 "\n", args->r2,  args->r3);
-	printk(loglevel, " R4:  %08" PRIx32 "\t\tR5:    %08" PRIx32 "\n", args->r4,  args->r5);
-	printk(loglevel, " R6:  %08" PRIx32 "\t\tR7|SP: %08" PRIx32 "\n", args->r6,  args->r7);
-	printk(loglevel, " R8:  %08" PRIx32 "\t\tR9:    %08" PRIx32 "\n", args->r8,  args->r9);
-	printk(loglevel, " R10: %08" PRIx32 "\t\tR11:   %08" PRIx32 "\n", args->r10, args->r11);
-	printk(loglevel, " R12: %08" PRIx32 "\t\tPSR:   %08" PRIx32 "\n", args->r12, args->psr);
+	printk(loglevel, "\t PC:  %08" PRIx32 "\t\tLR:    %08" PRIx32 "\n", program_counter,  args->lr);
+	printk(loglevel, "\t R0:  %08" PRIx32 "\t\tR1:    %08" PRIx32 "\n", args->r0,  args->r1);
+	printk(loglevel, "\t R2:  %08" PRIx32 "\t\tR3:    %08" PRIx32 "\n", args->r2,  args->r3);
+	printk(loglevel, "\t R4:  %08" PRIx32 "\t\tR5:    %08" PRIx32 "\n", args->r4,  args->r5);
+	printk(loglevel, "\t R6:  %08" PRIx32 "\t\tR7|SP: %08" PRIx32 "\n", args->r6,  args->r7);
+	printk(loglevel, "\t R8:  %08" PRIx32 "\t\tR9:    %08" PRIx32 "\n", args->r8,  args->r9);
+	printk(loglevel, "\t R10: %08" PRIx32 "\t\tR11:   %08" PRIx32 "\n", args->r10, args->r11);
+	printk(loglevel, "\t R12: %08" PRIx32 "\t\tPSR:   %08" PRIx32 "\n", args->r12, args->psr);
 
 	// Print the raw stack.
 	printk(loglevel, "Stack:\n");
 	for (int i = 0; i < 12; i += 4) {
-		printk(loglevel, " %08x %08x %08x %08x\n", stack[i], stack[i + 1], stack[i + 2], stack[i + 3]);
+		printk(loglevel, "\t %08x %08x %08x %08x\n", stack[i], stack[i + 1], stack[i + 2], stack[i + 3]);
 	}
 
 	// Print a stack trace, assuming we have one.

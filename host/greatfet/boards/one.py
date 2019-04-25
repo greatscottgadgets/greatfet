@@ -7,6 +7,7 @@ from ..board import GreatFETBoard
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager
+from ..peripherals.pattern_generator import PatternGenerator
 
 from ..glitchkit import *
 
@@ -148,9 +149,6 @@ class GreatFETOne(GreatFETBoard):
         if self.supports_api("gpio"):
             self._populate_gpio()
 
-        # XXX disable perpiherals as we develop libgreat
-        # return
-
         if self.supports_api('i2c'):
             self.i2c_busses = [ I2CBus(self, 'I2C0') ]
             self.i2c = self.i2c_busses[0]
@@ -158,6 +156,10 @@ class GreatFETOne(GreatFETBoard):
         if self.supports_api('spi') or True:
             self.spi_busses = [ SPIBus(self, 'SPI1') ]
             self.spi = self.spi_busses[0]
+
+        # Set up a pattern-generator object with all default arguments, for quick user use.
+        if self.supports_api('pattern_generator'):
+            self.pattern_generator = PatternGenerator(self)
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)

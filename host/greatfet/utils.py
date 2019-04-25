@@ -2,28 +2,113 @@
 # This file is part of GreatFET
 #
 """
-    Utilities that help in wirting simple scripts for GreatFET.
+    Utilities that help in writing simple scripts for GreatFET.
 """
 
 from __future__ import print_function
 
 import sys
+import ast
 import time
 import errno
 import argparse
+
+from decimal import Decimal
 
 from greatfet import GreatFET
 from greatfet.boards.flash_stub import GreatFETFlashStub
 
 from pygreat.errors import DeviceNotFoundError
 
+
+SI_PREFIXES = {
+    'E-12': 'p',
+    'E-9':  'n',
+    'E-6':  'u',
+    'E-3':  'm',
+    'E+3':  'k',
+    'E+6':  'M',
+    'E+9':  'G',
+    'E+12': 'T',
+}
+
+
 def log_silent(string, end=None):
     """Silently discards all log data, but provides our logging interface."""
     pass
 
+
 def log_verbose(string, end="\n"):
     """Prints all logging data to the screen."""
+
     print(string, end=end)
+    sys.stdout.flush()
+
+def log_error(string, end="\n"):
+    """ Prints errors to stderr. """
+
+    print(string, end=end, file=sys.stderr)
+    sys.stderr.flush()
+
+
+def eng_notation(number, unit=None, separator=' '):
+    """ Converts a given number to a nicely-formatted engineering number; so 10e6 would become 10 M."""
+
+    # Grab the raw engineering notation from python's decimal class...
+    string = Decimal(number).normalize().to_eng_string()
+
+    # ... and replace the normalized engineering suffix with the relevant SI prefix.
+    for normalized, prefix in SI_PREFIXES.items():
+        string = string.replace(normalized, separator + prefix)
+
+    if unit is not None:
+        string += unit
+
+    return string
+
+
+def from_eng_notation(string, unit=None, units=None, to_type=None):
+    """ Converts a string accepted on the command line (potentially in engineering notation) into a
+        python number. """
+
+    # Ensure we have a new list of units accessible to us.
+    if units is None:
+        units = []
+    else:
+        units = units[:]
+
+    # If we have a single unit specified, absorb it into our units list.
+    if unit is not None:
+        units.append(unit)
+
+    # If we have an acceptable unit, strip it off before we process things.
+    for unit in units:
+        string = string.replace(unit, '')
+        string = string.replace(unit.upper(), '')
+        string = string.replace(unit.lower(), '')
+
+    # Strip off any unnecessary whitespace.
+    string = string.strip()
+
+    # Replace each SI prefix with its normalized value.
+    for normalized, prefix in SI_PREFIXES.items():
+        if string.endswith(prefix):
+            string = string.replace(prefix, '').strip()
+            string += normalized
+            break
+
+    # Finally, try to parse the string as a python literal.
+    result = ast.literal_eval(string)
+
+    # If we have a post-processing function, apply it.
+    if callable(to_type):
+        result = to_type(result)
+
+    return result
+
+
+
+
 
 
 class GreatFETArgumentParser(argparse.ArgumentParser):
@@ -36,7 +121,7 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
         """ Sets up a GreatFET-specialized argument parser.
 
         Additional keyword arguments:
-            dfu -- If set to True, DFU-reglated arguemnts will be provided.
+            dfu -- If set to True, DFU-reglated arguments will be provided.
             raise_device_find_failures -- If set to True, this will throw a DeviceNotFoundError
                 instead of quitting if no device is present.
         """
@@ -114,7 +199,7 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
                 # If we're not in wait mode (or waiting for a DFU flash stub to come up), bail out.
                 if not (args.wait or (self.supports_dfu and args.dfu)):
 
-                    # If we're not handling locaiton failures, re-raise the exception.
+                    # If we're not handling location failures, re-raise the exception.
                     if self.raise_device_find_failures:
                         raise
 
@@ -137,6 +222,11 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
         return log_verbose if self.parse_args().verbose else log_silent
 
 
+    def get_log_functions(self):
+        """ Returns a 2-tuple of a function that can be used for logging data and errors, attempting to repsect -v/-q."""
+        return self.get_log_function(), log_error
+
+
     def parse_args(self):
         """ Specialized version of parse_args that memoizes, for GreatFET. """
 
@@ -152,7 +242,7 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
     def _find_greatfet(self, args):
         """ Finds a GreatFET matching the relevant arguments."""
 
-        # If we're prorgamming via DFU mode, look for a device that sports the DFU stub.
+        # If we're programming via DFU mode, look for a device that sports the DFU stub.
         # Note that we only support a single DFU-mode device for now, and thus always
         # grab the first one.
         if self.supports_dfu and args.dfu:

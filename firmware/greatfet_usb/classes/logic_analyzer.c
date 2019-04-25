@@ -4,110 +4,374 @@
 
 #include <drivers/comms.h>
 
-#include "sgpio.h"
 #include "../sgpio_isr.h"
 
+#include <drivers/sgpio.h>
 #include <drivers/usb/usb.h>
 #include <drivers/usb/usb_queue.h>
 
 #include "../usb_bulk_buffer.h"
 #include "../usb_endpoint.h"
 
-#include <greatfet_core.h>
-
 #include <libopencm3/lpc43xx/m4/nvic.h>
-#include <libopencm3/lpc43xx/sgpio.h>
 #include <libopencm3/cm3/vector.h>
+
+#include <drivers/platform_clock.h>
+
+#include <errno.h>
+#include <debug.h>
+#include <toolchain.h>
 
 #define CLASS_NUMBER_SELF (0x10D)
 
-volatile bool logic_analyzer_enabled = false;
-
-static const sgpio_config_t sgpio_config = {
-	.slice_mode_multislice = true,
-	.clock_divider = 12,
+enum {
+	LOGIC_ANALYZER_NUM_BUFFERS = 2,
+	LOGIC_ANALYZER_BUFFER_SIZE = 0x4000
 };
 
-static void logic_analyzer_sgpio_start()
-{
-	sgpio_configure_pin_functions(&sgpio_config);
-	sgpio_configure(&sgpio_config, SGPIO_DIRECTION_INPUT);
+volatile bool logic_analyzer_enabled = false;
 
-	vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input;
+// Set the default frequency for our logic analyzer.
+#define LOGIC_ANALYZER_DEFAULT_FREQUENCY (17 * 1000000)
+#define LOGIC_ANALYZER_DEFAULT_WIDTH     (8)
+
+static bool use_bank_b = false;
+
+/**
+ * Default set of pin mappings for each of the logic analyzer functions.
+ */
+static sgpio_pin_configuration_t logic_analyzer_pins[] = {
+	{ .sgpio_pin = 0,  .scu_group = 0, .scu_pin =  0, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 1,  .scu_group = 0, .scu_pin =  1, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 2,  .scu_group = 1, .scu_pin = 15, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 3,  .scu_group = 1, .scu_pin = 16, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 4,  .scu_group = 6, .scu_pin =  3, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 5,  .scu_group = 6, .scu_pin =  6, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 6,  .scu_group = 2, .scu_pin =  2, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 7,  .scu_group = 1, .scu_pin =  0, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 8,  .scu_group = 9, .scu_pin =  6, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 9,  .scu_group = 4, .scu_pin =  3, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 10, .scu_group = 1, .scu_pin = 14, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 11, .scu_group = 1, .scu_pin = 17, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 12, .scu_group = 1, .scu_pin = 18, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 13, .scu_group = 4, .scu_pin =  8, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 14, .scu_group = 4, .scu_pin =  9, .pull_resistors = SCU_NO_PULL},
+	{ .sgpio_pin = 15, .scu_group = 4, .scu_pin = 10, .pull_resistors = SCU_NO_PULL},
+};
+
+/**
+ * Definition of a set of logic analyzer functions.
+ */
+static sgpio_function_t logic_analyzer_functions[] = {
+	{
+		.enabled                 = true,
+
+		// We're observing only; and not generating a pattern.
+		.mode                    = SGPIO_MODE_STREAM_DATA_IN,
+
+		// Bind each of the lower eight pins to their proper places,
+		// and by deafault sample the eight of them.
+		.pin_configurations      = logic_analyzer_pins,
+		.bus_width               = LOGIC_ANALYZER_DEFAULT_WIDTH,
+
+		// Shift at the default logic analyzer frequency, unless configured otherwise.
+		.shift_clock_source      = SGPIO_CLOCK_SOURCE_COUNTER,
+		.shift_clock_frequency   = LOGIC_ANALYZER_DEFAULT_FREQUENCY,
+		.shift_clock_qualifier   = SGPIO_ALWAYS_SHIFT_ON_SHIFT_CLOCK,
+
+		// Capture our data into the USB bulk buffer, all ready to be sent up to the host.
+		.buffer                  = usb_bulk_buffer,
+		.buffer_order            = 15, // 16384 * 2 (LOGIC_ANALYZER_NUM_BUFFERS * LOGIC_ANALYZER_BUFFER_SIZE)
+	},
+};
+
+/**
+ * Logic analyzer configuration using SGPIO.
+ */
+static sgpio_t analyzer  = {
+	.functions      = logic_analyzer_functions,
+	.function_count = ARRAY_SIZE(logic_analyzer_functions),
+};
+
+
+static void temporary_set_up_ISRs()
+{
+	// XXX: replace me with the custom ISR generator
+	/*
+	if (use_bank_b) {
+		vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input_bank_b;
+	} else {
+		vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input;
+	}
+	*/
+	vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_dynamic_isr;
 
 	nvic_set_priority(NVIC_SGPIO_IRQ, 0);
 	nvic_enable_irq(NVIC_SGPIO_IRQ);
-	SGPIO_SET_EN_1 = (1 << SGPIO_SLICE_A);
 }
 
-static void logic_analyzer_sgpio_stop()
+// XXX
+static inline void cm_enable_interrupts(void)
 {
-	SGPIO_CLR_EN_1 = (1 << SGPIO_SLICE_A);
-
-	nvic_disable_irq(NVIC_SGPIO_IRQ);
+        __asm__("CPSIE I\n");
 }
 
-void service_logic_analyzer(void)
+static inline void cm_disable_interrupts(void)
 {
-	if(!logic_analyzer_enabled)
-		return;
+        __asm__("CPSID I\n");
+}
 
-	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
-	logic_analyzer_sgpio_start();
+/**
+ * Schedules transmission of a completed logic-analyzer buffer.
+ */
+static int schedule_usb_transfer(int buffer_number)
+{
+	// We reach the overrun threshold if the logic analyzer has captured enough data to fill
+	// every available buffer -- that is, every buffer except the one we're actively using to transmit.
+	unsigned overrun_threeshold = (LOGIC_ANALYZER_NUM_BUFFERS - 1) * LOGIC_ANALYZER_BUFFER_SIZE;
 
-	unsigned int phase = 1;
-	while(logic_analyzer_enabled) {
-		if ( usb_bulk_buffer_offset >= 16384
-		     && phase == 1) {
-
-			usb_transfer_schedule_block(
-				&usb0_endpoint_bulk_in,
-				&usb_bulk_buffer[0x0000],
-				0x4000, 0, 0
-				);
-			phase = 0;
-		}
-
-		// Set up IN transfer of buffer 1.
-		if ( usb_bulk_buffer_offset < 16384
-		     && phase == 0) {
-
-			usb_transfer_schedule_block(
-				&usb0_endpoint_bulk_in,
-				&usb_bulk_buffer[0x4000],
-				0x4000, 0, 0
-			);
-			phase = 1;
-		}
+	// If we don't have a full buffer of data to transmit, we can't send anything yet. Bail out.
+	if (logic_analyzer_functions[0].data_in_buffer < LOGIC_ANALYZER_BUFFER_SIZE) {
+		return EAGAIN;
 	}
 
-	logic_analyzer_sgpio_stop();
+	// Otherwise, transmit the relevant (complete) buffer...
+	usb_transfer_schedule_wait(
+		&usb0_endpoint_bulk_in,
+ 		&usb_bulk_buffer[buffer_number * LOGIC_ANALYZER_BUFFER_SIZE],
+		LOGIC_ANALYZER_BUFFER_SIZE, 0, 0, 0);
 
-	usb_endpoint_disable(&usb0_endpoint_bulk_in);
+	// ... and mark those samples as no longer pending transfer.
+	cm_disable_interrupts();
+	logic_analyzer_functions[0].data_in_buffer -= LOGIC_ANALYZER_BUFFER_SIZE;
+	cm_enable_interrupts();
+
+	// Basic overrun detection: if we have more than our threshold remaining after
+	// consuming a buffer (really, passing it to the USB hardware for transmission),
+	// then we overran.
+	if (logic_analyzer_functions[0].data_in_buffer > overrun_threeshold) {
+		pr_error("logic analyzer: overrun detected (%u data writes to buffer)!\n",
+			logic_analyzer_functions[0].data_in_buffer);
+		usb_endpoint_stall(&usb0_endpoint_bulk_in);
+	}
+
+	return 0;
 }
 
-static int logic_analyzer_verb_start(struct command_transaction *trans)
+
+/**
+ * Core logic analyzer service routine: ferries the captured data to the host.
+ */
+void service_logic_analyzer(void)
+{
+	static unsigned int phase = 1;
+	static unsigned int transfers = 0;
+	int rc;
+
+	if(!logic_analyzer_enabled) {
+		return;
+	}
+
+
+	if ((logic_analyzer_functions[0].position_in_buffer >= LOGIC_ANALYZER_BUFFER_SIZE) && phase == 1) {
+		rc = schedule_usb_transfer(0);
+		if(rc) {
+			return;
+		}
+
+		phase = 0;
+
+		++transfers;
+	}
+
+	if ((logic_analyzer_functions[0].position_in_buffer < LOGIC_ANALYZER_BUFFER_SIZE) && phase == 0) {
+		rc = schedule_usb_transfer(1);
+		if(rc) {
+			return;
+		}
+		phase = 1;
+
+		++transfers;
+	}
+
+	// Toggle the LED a bit to indicate progress.
+	if ((transfers % 100) == 0) {
+		led_toggle(LED4);
+	}
+}
+
+
+static int verb_configure(struct command_transaction *trans)
+{
+	uint32_t desired_sample_rate = comms_argument_parse_uint32_t(trans);
+	uint8_t  desired_bus_width   = comms_argument_parse_uint8_t(trans);
+
+	if (!comms_transaction_okay(trans)) {
+		return EINVAL;
+	}
+
+	// Set up the shape of our logic analyzer capture...
+	logic_analyzer_functions[0].shift_clock_frequency = desired_sample_rate;
+	logic_analyzer_functions[0].bus_width = desired_bus_width;
+
+	// ... and put us in capture mode.
+	sgpio_set_up_functions(&analyzer);
+
+	// Respond with the parameters of our sampling.
+	comms_response_add_uint32_t(trans, logic_analyzer_functions[0].shift_clock_frequency);
+	comms_response_add_uint32_t(trans, LOGIC_ANALYZER_BUFFER_SIZE);
+	comms_response_add_uint8_t(trans,  usb0_endpoint_bulk_in.address);
+
+	// And ensure we service the logic analyzer task routine.
+	return 0;
+}
+
+
+static int verb_start(struct command_transaction *trans)
 {
 	(void)trans;
 
+	temporary_set_up_ISRs();
+
+	// Set up our USB buffer for acquisition...
+	logic_analyzer_functions[0].position_in_buffer = 0;
+	logic_analyzer_functions[0].data_in_buffer     = 0;
+	usb_endpoint_init(&usb0_endpoint_bulk_in);
+
+	// ... and start a capture.
+	sgpio_run(&analyzer);
 	logic_analyzer_enabled = true;
+
 	return 0;
 }
 
-static int logic_analyzer_verb_stop(struct command_transaction *trans)
+
+
+static int verb_stop(struct command_transaction *trans)
 {
 	(void)trans;
 
+	// Stop the capture...
 	logic_analyzer_enabled = false;
+	usb_endpoint_disable(&usb0_endpoint_bulk_in);
+
+	pr_info("final position / count: %08x / %08x\n",
+		logic_analyzer_functions[0].position_in_buffer, logic_analyzer_functions[0].data_in_buffer);
+
+	// ... disable the shifting hardware ...
+	nvic_disable_irq(NVIC_SGPIO_IRQ);
+	sgpio_halt(&analyzer);
+
+	led_off(LED4);
+
+	// .. and disable the pipe we use to transmit samples.
 	return 0;
 }
+
+
+static int verb_dump_sgpio_config(struct command_transaction *trans)
+{
+	bool include_unused = comms_argument_parse_bool(trans);
+
+	if (!comms_transaction_okay(trans)) {
+		return EINVAL;
+	}
+
+	sgpio_dump_configuration(LOGLEVEL_INFO, &analyzer, include_unused);
+	return 0;
+}
+
+
+static int verb_change_first_pin(struct command_transaction *trans)
+{
+	uint8_t new_first_pin = comms_argument_parse_uint8_t(trans);
+
+	if (!comms_transaction_okay(trans)) {
+		return EINVAL;
+	}
+
+	// Validate that the new first pin is within our range.
+	if (new_first_pin > 15) {
+		pr_error("logic analyzer: tried to select an invalid first pin (SGPIO%d),"
+				" which doesn't exist\n", new_first_pin);
+		return EINVAL;
+	}
+
+	if (new_first_pin >= 8) {
+		use_bank_b = true;
+	} else {
+		use_bank_b = false;
+	}
+
+	logic_analyzer_functions[0].pin_configurations = &logic_analyzer_pins[new_first_pin];
+	return 0;
+}
+
+
+static int verb_use_alt_mappings(struct command_transaction *trans)
+{
+	bool use_rhoda_mappings = comms_argument_parse_bool(trans);
+
+	if (!comms_transaction_okay(trans)) {
+		return EINVAL;
+	}
+
+	if (use_rhoda_mappings) {
+
+		// SGPIO8 = J1_21 / P1_12
+		logic_analyzer_pins[8].scu_group = 1;
+		logic_analyzer_pins[8].scu_pin   = 12;
+
+		// SGPIO8 = J2_9 / P4_3
+		logic_analyzer_pins[9].scu_group = 4;
+		logic_analyzer_pins[9].scu_pin   = 3;
+	} else {
+		// SGPIO8 = J1_21 / P1_12
+		logic_analyzer_pins[8].scu_group = 9;
+		logic_analyzer_pins[8].scu_pin   = 6;
+
+		// SGPIO8 = J2_9 / P4_3
+		logic_analyzer_pins[9].scu_group = 4;
+		logic_analyzer_pins[9].scu_pin   = 3;
+	}
+
+	return 0;
+}
+
+
 
 static struct comms_verb logic_analyzer_verbs[] = {
-	{ .name = "start", .handler = logic_analyzer_verb_start,
-		.in_signature = "", .out_signature = "", .doc = "starts a logic analyzer capture" },
-	{ .name = "stop", .handler = logic_analyzer_verb_stop,
-		.in_signature = "", .out_signature = "", .doc = "terminates an active logic analyzer capture" },
+
+	/* Configuration. */
+	{ .name = "configure", .handler = verb_configure,
+		.in_signature = "<IB", .out_signature = "<IIB",
+		.in_param_names = "sample_rate_hz, num_channels", .out_param_names = "sample_rate_hz, buffer_size, endpoint",
+		.doc = "Configures a logic analyzer capture; should be called before calling start." },
+	{ .name = "change_first_pin", .handler = verb_change_first_pin,
+		.in_signature = "<B", .out_signature = "",
+		.in_param_names = "new_first_pin",
+		.doc = "Changes the first SGPIO pin captured in future captures, but can "
+			   "significantly diminish performance; you likely don't want any value but 0 or 8." },
+
+	/* Hackish config. */
+	{ .name = "configure_alt_mappings", .handler = verb_use_alt_mappings,
+		.in_signature = "<?", .out_signature = "",
+		.in_param_names = "use_usb_mappings",
+		.doc = "Swaps the locations of pins 8/9 for use with Rhodadendron's USB-FS analyzer." },
+
+	/* Actions */
+	{ .name = "start", .handler = verb_start,
+		.in_signature = "", .out_signature = "", .doc = "Starts a logic analyzer capture, which will run until stop is called." },
+	{ .name = "stop", .handler = verb_stop,
+		.in_signature = "", .out_signature = "", .doc = "Terminates an active logic analyzer capture." },
+
+
+	/* Debug. */
+	{ .name = "dump_sgpio_configuration",  .handler = verb_dump_sgpio_config,
+		.in_signature = "<?", .out_signature="", .in_param_names = "include_unused",
+		.doc = "Requests that the system dumps its SGPIO configuration state to the debug ring." },
+
 	{}
 };
 COMMS_DEFINE_SIMPLE_CLASS(logic_analyzer, CLASS_NUMBER_SELF, "logic_analyzer", logic_analyzer_verbs,
