@@ -365,15 +365,19 @@ void debug_putc(char c)
  */
 void vprintk(int loglevel, char *fmt, va_list list)
 {
+	int core_level = loglevel & LOG_LEVEL_MASK;
+	bool skip_header = (loglevel & LOG_CONTINUE);
+
 	// If this statement is above the maximum level to be displayed,
 	// bail out.
-	if (loglevel > debug_loglevel)
+	if (core_level > debug_loglevel)
 		return;
 
 
 #ifdef CONFIG_ENABLE_LOG_TIMESTAMPS
-	// TODO: support something like Linux's LOGLEVEL_CONTINUE
-	printf("[%12" PRIu32 "] ", get_time());
+	if (!skip_header) {
+		printf("[%12" PRIu32 "] ", get_time());
+	}
 #endif
 
 	vprintf(fmt, list);

@@ -47,7 +47,7 @@ static mutex_t pin_reservation_lock;
  *
  * @param group The pin group for the pin to be located.
  * @param pin The pin number for the pin to be located.
- * @param predecessor If non-null, this out argument will recieve the 
+ * @param predecessor If non-null, this out argument will recieve the
  *		predecessor to the located node.
  */
 static struct pin_reservation *_find_pin_reservation(uint8_t group, uint8_t pin,
@@ -64,7 +64,7 @@ static struct pin_reservation *_find_pin_reservation(uint8_t group, uint8_t pin,
 		if (reservation->pin_number == pin) {
 			pr_trace("manager: found in %p (%d:%d), owner is %d!\n", reservation,
 					reservation->pin_group, reservation->pin_number, reservation->owning_class);
-			break;	
+			break;
 		}
 		predecessor = reservation;
 	}
@@ -86,7 +86,7 @@ static struct pin_reservation *_find_pin_reservation(uint8_t group, uint8_t pin,
  * isn't reserved by any given class.
  *
  * @param group The pin group, as represented in the LPC SCU.
- * @param pin The pin number, as represented in the LPC SCU. 
+ * @param pin The pin number, as represented in the LPC SCU.
  *
  * @return The pin number of the owning class, or 0/core if the pin
  * isn't reserved by any given class.
@@ -102,7 +102,7 @@ uint32_t pin_get_owning_class(uint8_t group, uint8_t pin)
 	// defaulting to 0 if we can't find one.
 	reservation = _find_pin_reservation(group, pin, NULL);
 	owning_class = reservation ? reservation->owning_class : 0;
-	
+
 	libgreat_mutex_unlock(&pin_reservation_lock);
 	return owning_class;
 }
@@ -124,11 +124,11 @@ static int _pin_reserve_for_class(uint8_t group, uint8_t pin, uint32_t owning_cl
 		const char *old_class_name;
 
 		pr_trace("manager: reserving pin for an existing class!\n");
-		
+
 		// One exception: if the pin is reserved to us, consider this done.
 		if (reservation->owning_class == owning_class) {
 			pr_trace("manager: ignoring re-reservation for same class!\n");
-			return 0;	
+			return 0;
 		}
 
 		// Get usable names for the classes, for  our debug output.
@@ -136,14 +136,14 @@ static int _pin_reserve_for_class(uint8_t group, uint8_t pin, uint32_t owning_cl
 		old_class_name = comms_get_class_name(reservation->owning_class, "-unknown-");
 
 		// Fail, preventing re-assignment.
-		pr_warning("WARNING: not assigning pin P%X[%d] to '%s' (%d); already owned by '%s' (%d)",
+		pr_warning("WARNING: not assigning pin P%X[%d] to '%s' (%d); already owned by '%s' (%d)\n",
 				group, pin, new_class_name, owning_class, old_class_name, reservation->owning_class);
 		return EBUSY;
 	}
 
 	pr_trace("manager: creating new reservation for %d:%d!\n", group, pin);
 
-	// Otherwise, we'll need to create a new reservation and 
+	// Otherwise, we'll need to create a new reservation and
 	// add it to our list.
 	reservation = malloc(sizeof(*reservation));
 	if (!reservation) {
@@ -172,9 +172,9 @@ int pin_reserve_for_class(uint8_t group, uint8_t pin, uint32_t owning_class)
 	int rc;
 
 	// Delegate to the unlocked-version of our function.
-	libgreat_mutex_lock(&pin_reservation_lock);	
+	libgreat_mutex_lock(&pin_reservation_lock);
 	rc = _pin_reserve_for_class(group, pin, owning_class);
-	libgreat_mutex_unlock(&pin_reservation_lock);	
+	libgreat_mutex_unlock(&pin_reservation_lock);
 
 	return rc;
 }
@@ -202,13 +202,13 @@ static int _pin_release_reservation(uint8_t group, uint8_t pin)
 	// If we don't have a reservation, fail out.
 	if (!reservation) {
 		pr_warning("Tried to release a reservated for an unreserved pin!");
-		return EINVAL;	
+		return EINVAL;
 	}
 
 	// Special case: if we have a reservation, but no predecessor,
 	// this reservation is the head of our list.
 	if (!predecessor) {
-		
+
 		// Sanity check ourselves.
 		if (pin_group_heads[group] != reservation) {
 			pr_error("pin_manager: internal consistency error!\n");
@@ -218,7 +218,7 @@ static int _pin_release_reservation(uint8_t group, uint8_t pin)
 
 		// Remove our head link from the list.
 		pin_group_heads[group] = reservation->next;
-	} 
+	}
 	// Otherwise, we have a normal, non-head link.
 	// Remove it the simple way.
 	else {
@@ -241,9 +241,9 @@ int pin_release_reservation(uint8_t group, uint8_t pin)
 	int rc;
 
 	// Delegate to the unlocked-version of our function.
-	libgreat_mutex_lock(&pin_reservation_lock);	
+	libgreat_mutex_lock(&pin_reservation_lock);
 	rc = _pin_release_reservation(group, pin);
-	libgreat_mutex_unlock(&pin_reservation_lock);	
+	libgreat_mutex_unlock(&pin_reservation_lock);
 
 	return rc;
 }

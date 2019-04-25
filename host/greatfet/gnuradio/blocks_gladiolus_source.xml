@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<block>
+	<name>Gladiolus Source</name>
+	<key>greatfet_gladiolus_source</key>
+	<category>[SDIR]</category>
+	<flags>throttle</flags>
+	<import>from greatfet.gnuradio import gladiolus</import>
+	<make>gladiolus.gladiolus_source($sample_rate)</make>
+	<param>
+		<name>Sample Rate</name>
+		<key>sample_rate</key>
+		<value>10.2e6</value>
+		<type>float</type>
+	</param>
+	<source>
+		<name>out</name>
+		<type>byte</type>
+	</source>
+</block>

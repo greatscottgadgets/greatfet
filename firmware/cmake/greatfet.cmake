@@ -5,7 +5,7 @@
 
 include_guard()
 
-set(FLAGS_COMPILE_COMMON -std=gnu99 -Os -g3 -Wall -Wextra -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers)
+set(FLAGS_COMPILE_COMMON -std=gnu11 -Os -g3 -Wall -Wextra -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers)
 set(FLAGS_LINK_COMMON -Wl,--gc-sections -Os)
 
 # Variable which is used to set default values for features that should only be on in debug builds.

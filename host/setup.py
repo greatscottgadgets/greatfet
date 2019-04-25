@@ -54,6 +54,7 @@ setup(
             'greatfet_dmesg = greatfet.commands.greatfet_dmesg:main',
             'greatfet_msp430 = greatfet.commands.greatfet_msp430:main',
             'greatfet_host-tools = greatfet.commands.greatfet_host_tools:main',
+            'greatfet_pattern = greatfet.commands.greatfet_pattern:main',
         ],
     },
     author='Great Scott Gadgets',

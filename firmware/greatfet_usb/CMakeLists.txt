@@ -23,6 +23,7 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/usb_descriptor.c
 	${CMAKE_CURRENT_SOURCE_DIR}/usb_device.c
 	${CMAKE_CURRENT_SOURCE_DIR}/usb_endpoint.c
+	${CMAKE_CURRENT_SOURCE_DIR}/usb_streaming.c
 	${CMAKE_CURRENT_SOURCE_DIR}/sgpio_isr.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_adc.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_sdir.c
@@ -31,7 +32,8 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_DS18B20.c
 	${CLASSES_SOURCES}
 )
-use_libgreat_modules(${PROJECT_NAME} allocator comms usb usb_comms gpio ad970x debug-backtrace)
+use_libgreat_modules(${PROJECT_NAME} allocator comms usb usb_comms gpio ad970x
+	debug-backtrace sgpio)
 
 # TODO: include libgreat's m0_coprocessor include, to allow m0 code to be added
 
