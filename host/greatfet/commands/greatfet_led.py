@@ -17,9 +17,9 @@ def main():
     from greatfet.utils import GreatFETArgumentParser
     # Set up a simple argument parser.
     parser = GreatFETArgumentParser(description="Utility for LED configuration on GreatFET")
-    parser.add_argument('-t', '--toggle', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to toggle (0-3)")
-    parser.add_argument('--on', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn on (0-3)")
-    parser.add_argument('--off', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn off (0-3)")
+    parser.add_argument('-t', '--toggle', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to toggle (1-4)")
+    parser.add_argument('--on', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn on (1-4)")
+    parser.add_argument('--off', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn off (1-4)")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
