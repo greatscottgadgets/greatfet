@@ -11,7 +11,6 @@ import ast
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
-from greatfet.peripherals.led import LED
 
 
 def main():
@@ -46,22 +45,18 @@ def main():
 
 def toggle(device, leds, log_function):
     for led_num in leds:
-        led = LED(device, led_num)
-        led.toggle()
+        device.leds[led_num].toggle()
 
 
 def on(device, leds, log_function):
     for led_num in leds:
-        led = LED(device, led_num)
-        led.on()
+        device.leds[led_num].on()
 
 
 def off(device, leds, log_function):
     for led_num in leds:
-        led = LED(device, led_num)
-        led.off()
+        device.leds[led_num].off()
 
 
 if __name__ == '__main__':
     main()
-    
