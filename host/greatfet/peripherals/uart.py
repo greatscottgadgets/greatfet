@@ -144,6 +144,9 @@ class UARTPin(object):
         self.port = self.port_and_pin[0]
         self.pin = self.port_and_pin[1]
         data = bytes(data)
+
+        # TODO: allow fine tuning of divisor with divaddval and mulval
+        divisor = int(divisor)
         
         self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.divisor, self.divaddval, self.mulval)
         self.uart.api.write(self.uart_num, self.scu_func, self.port, self.pin, data)

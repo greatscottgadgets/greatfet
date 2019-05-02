@@ -24,6 +24,7 @@ def main():
     parser.add_argument('-r', '--read', action='store_true', help="Read data from the UART device")
     parser.add_argument('-w', '--write', nargs='*', type=ast.literal_eval, help="Byte to send to the UART device")
     parser.add_argument('-p', '--pin', nargs=1, type=str, help="Desired GratFET pin")
+    parser.add_argument('-b', '--baud', nargs=1, type=int, help="Desired baud rate") 
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -42,7 +43,7 @@ def main():
     if args.read:
         read(device)
     if args.write:
-        write(device, args.pin[0], args.write)
+        write(device, args.pin[0], args.write, args.baud[0])
 
 
 def read(device):
@@ -53,11 +54,11 @@ def read(device):
     print("read data:", read_data)
 
 
-def write(device, pin, data):
+def write(device, pin, data, baud):
     d = UART(device)
     device.gpio.mark_pin_as_used(pin)
     uart_pin = d.get_pin(pin)
-    uart_pin.write(data)
+    uart_pin.write(data, divisor=(204000000/(16*baud)))
     
 
 if __name__ == '__main__':
