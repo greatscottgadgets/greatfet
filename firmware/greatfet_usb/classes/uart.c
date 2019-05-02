@@ -24,9 +24,7 @@ static int uart_verb_init(struct command_transaction *trans)
     uint8_t number_of_data_bits	= comms_argument_parse_uint8_t(trans);
     uint8_t number_of_stop_bits = comms_argument_parse_uint8_t(trans);
     uint8_t parity_bit			= comms_argument_parse_uint8_t(trans);
-    uint16_t divisor			= comms_argument_parse_uint16_t(trans);
-    uint8_t divaddval			= comms_argument_parse_uint8_t(trans);
-    uint8_t mulval				= comms_argument_parse_uint8_t(trans);
+    uint16_t baud			    = comms_argument_parse_uint16_t(trans);
 
     switch(uart_num) {
         case 0:
@@ -84,6 +82,11 @@ static int uart_verb_init(struct command_transaction *trans)
             parity_bit = UART_PARITY_SP_0;
             break;
     }
+
+    // TODO: allow fine tuning of divisor with divaddval and mulval
+    uint16_t divisor = (204000000/(16*baud));
+    uint8_t divaddval = 0;
+    uint8_t mulval = 0;
 
     uart_init(uart_num, number_of_data_bits, number_of_stop_bits, parity_bit, divisor, divaddval, mulval);
 
@@ -144,8 +147,8 @@ static int uart_verb_write(struct command_transaction *trans)
  */
 static struct comms_verb _verbs[] = {
 		{ .name = "init", .handler = uart_verb_init,
-			.in_signature = "<IBBBHBB", .out_signature = "",
-			.in_param_names = "uart_num, num_of_data_bits, stop_bit, parity_bit, divisor, divaddval, mulval",
+			.in_signature = "<IBBBH", .out_signature = "",
+			.in_param_names = "uart_num, num_of_data_bits, stop_bit, parity_bit, baud",
 			.doc = "Initialize UART" },
         { .name = "read", .handler = uart_verb_read,
 			.in_signature = "<I", .out_signature = "<*B",

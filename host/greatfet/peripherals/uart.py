@@ -122,7 +122,7 @@ class UARTPin(object):
         read_data = self.uart.api.read(self.uart_num)
         return read_data
 
-    def write(self, data, num_data_bits=8, num_stop_bits=1, parity_bit=0, divisor=1328, divaddval=0, mulval=1):
+    def write(self, data, num_data_bits=8, num_stop_bits=1, parity_bit=0, baud=9600):
         """
             Sends data to the device connected to the UART pin.
 
@@ -138,16 +138,17 @@ class UARTPin(object):
         self.num_data_bits = num_data_bits
         self.num_stop_bits = num_stop_bits
         self.parity_bit = parity_bit
-        self.divisor = divisor
-        self.divaddval = divaddval
-        self.mulval = mulval
+        self.baud = int(baud)
+        # self.divisor = divisor
+        # self.divaddval = divaddval
+        # self.mulval = mulval
         self.port = self.port_and_pin[0]
         self.pin = self.port_and_pin[1]
         data = bytes(data)
 
+
         # TODO: allow fine tuning of divisor with divaddval and mulval
-        divisor = int(divisor)
         
-        self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.divisor, self.divaddval, self.mulval)
+        self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.baud)
         self.uart.api.write(self.uart_num, self.scu_func, self.port, self.pin, data)
 
