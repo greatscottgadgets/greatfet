@@ -1,2 +1,2 @@
-This folder contains assets generated at build time; it will generically be empty for non-release source.
+This folder contains assets generated at build time; it will generally be empty for non-release source.
 If you perform a full build, or download a release archive, it should have assets used by the GreatFET tools.

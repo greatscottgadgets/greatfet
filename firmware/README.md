@@ -5,53 +5,62 @@ of the other directories contain firmware source code for test and development.
 The common directory contains source code shared by multiple GreatFET firmware
 projects.
 
+## Updating Firmware
+
+Unless you are developing firmware or testing firmware from git, you can update
+the firmware on your GreatFET device (to match the version of software
+installed on your host) with:
+```
+gf fw --auto
+```
+
 ## Building and Installing to Flash
 
 The firmware is set up for compilation with the GCC toolchain available here:
 
 https://developer.arm.com/open-source/gnu-toolchain/gnu-rm
 
-Most Linux distributions maintain a package for the toolchain, these are the
-pefered method of installation.  For example, on Debian based systems:
+Most Linux distributions maintain a package for the toolchain; this is the
+peferred method of installation.  For example, on Debian based systems:
 ```
 sudo apt-get install gcc-arm-none-eabi
 ```
 
-Required dependency:
+Required dependencies:
 
-https://github.com/dominicgs/libopencm3
+* https://github.com/greatscottgadgets/libgreat
+* https://github.com/dominicgs/libopencm3
 
-If you are using git, the preferred way to install libopencm3 is to use the
-submodule:
+If you are using git, the preferred way to install these dependencies is to use
+the submodules:
 ```
-cd ..
 git submodule init
 git submodule update
-cd firmware/libopencm3
-make
 ```
 
-Then install the host tools:
-```
-cd greatfet/host
-python setup.py build
-sudo python setup.py install
-```
+Then install the host tools (see ../host/README.md).
 
 To build a firmware image for the GreatFET One:
 ```
-cd greatfet_usb
 mkdir build
 cd build
-cmake .. -DBOARD=GREATFET_ONE
+cmake .. -DBOARD=AZALEA
 make
 ```
 
-If building for another board, replace ```GREATFET_ONE``` with the the
+If building for another board, replace ```AZALEA``` with the the
 appropriate board string. The following board strings are currently recognized:
- * `GREATFET_ONE` for the GreatFET One
+ * `AZALEA` for the GreatFET One/Azalea.
  * `NXP_XPLORER` for the LPC4330 Xplorer.
  * `RAD1O_BADGE` for the CCCamp 2015 rad1o-badge.
+
+If you're using a CCCamp rad1o badge, follow the instructions for installing
+as a l0adable below.
+
+If you're using a GreatFET device that didn't come pre-flashed (e.g. one you
+made yourself), or using a stock NXP Xplorer, follow the instructions for DFU
+mode below to start off by running the GreatFET firmware from RAM. You can then
+use this firmware to program the device's flash.
 
 If you're running a GreatFET One or NXP Xplorer that's already flashed with a
 GreatFET firmware, you can load your newly-built firmware using the following
@@ -61,15 +70,14 @@ command:
 make greatfet_usb-flash
 ```
 
-(You'll need the GreatFET tools installed for these commands to work. See the
-top-level readme for this firmware for more information.)
+(You'll need the GreatFET tools installed for these commands to work. See
+../host/README.md)
 
-Reset the device by pressing the RESET button once, and your GreatFET should
-start up running the new firmware. You can check the software version by
-using the greatfet_info tool provided:
+Your GreatFET should reset and start running the new firmware. You can check
+the software version by using the gf info tool:
 
 ```
-# greatfet_info
+# gf info
 Found a GreatFET One!
   Board ID: 0
   Firmware version: git-87f4da4
@@ -77,15 +85,8 @@ Found a GreatFET One!
   Serial number: 0000000000000000ffffffffffffffff
 ```
 
-If you're using a GreatFET One that didn't come pre-flashed (e.g. one you made
-yourself), or using a stock NXP Xplorer, follow the instructions for DFU mode
-below to start off by running the GreatFET firmware from RAM. You can then use
-this firmware to program the device permanenly, from flash.
-
-If you're using a CCCamp rad1o badge, follow the instructions for installing
-as a l0adable below.
-
 ## DFU Mode: Running from RAM
+
 
 If your board doesn't currently have GreatFET firmware (e.g. if you built the
 board yourself, or if you're using a NXP Xplorer), or your firmware's in a bad
@@ -136,12 +137,8 @@ MSC enabled
 ```
 
 To install the GreatFET application, find the `greatfet_usb.bin` file, which
-should be located in:
-
-```
-# Assuming you created the 'build' directory above...
-build/greatfet_usb/greatfet_usb.bin
-```
+should be located in greatfet_usb/greatfet_usb.bin (asuming you followed
+Building and Installing to Flash above and are in the build directory).
 
 To install, you'll need to rename this binary to a filename ending in `b1n`
 on the badge's UMS device. It's recommended to do this from a terminal, rather
@@ -149,7 +146,7 @@ than from the UI on your machine:
 
 ```
 # Assuming the rad1o badge has been mounted to /Volumes/NO\ NAME/:
-cp greatfet_usb/greatfet_usb.bin /Volumes/NO \NAME/greatfet.b1n
+cp greatfet_usb/greatfet_usb.bin /Volumes/NO\ NAME/greatfet.b1n
 ```
 
 Eject the badge's USB mass storage device. You should now be able to select
