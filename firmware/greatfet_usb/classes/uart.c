@@ -107,8 +107,7 @@ static int uart_verb_write(struct command_transaction *trans)
     uint8_t scu_conf_func       = comms_argument_parse_uint8_t(trans);
     uint8_t scu_port            = comms_argument_parse_uint8_t(trans);
     uint8_t scu_pin             = comms_argument_parse_uint8_t(trans);
-    uint8_t tx_data             = comms_argument_parse_uint8_t(trans);
-
+    
     switch(uart_num) {
         case 0:
             uart_num = UART0_NUM;
@@ -130,10 +129,12 @@ static int uart_verb_write(struct command_transaction *trans)
 		return EBUSY;
 	}
 
-    // TODO: fix port/pin tuple for pinmux call
-    scu_pinmux((scu_port, scu_pin), SCU_UART_RX_TX | scu_conf_func);
-    uart_write(uart_num, tx_data);
-    // TODO: handle writing more than one byte at a time
+    while (comms_argument_data_remaining(trans)) {
+        uint8_t tx_byte         = comms_argument_parse_uint8_t(trans);
+        // TODO: fix port/pin tuple for pinmux call
+        scu_pinmux(P2_3, SCU_UART_RX_TX | scu_conf_func);
+        uart_write(uart_num, tx_byte);
+    }
 
     return 0;
 }
@@ -151,7 +152,7 @@ static struct comms_verb _verbs[] = {
 			.in_param_names = "uart_num", .out_param_names = "response",
 			.doc = "Read data from UART device" },
 		{ .name = "write", .handler = uart_verb_write,
-			.in_signature = "<IBBB*B", .out_signature = "",
+			.in_signature = "<IBBB*X", .out_signature = "",
 			.in_param_names = "uart_num, scu_func, scu_port, scu_pin, data", .out_param_names = "",
 			.doc = "Write data to UART device" },
 		{} // Sentinel

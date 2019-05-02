@@ -22,7 +22,7 @@ def main():
     parser = GreatFETArgumentParser(description="Utility for UART communication via GreatFET")
     parser.add_argument('-z', '--init', action='store_true', help="UART Initializer") 
     parser.add_argument('-r', '--read', action='store_true', help="Read data from the UART device")
-    parser.add_argument('-w', '--write', default=0, type=ast.literal_eval, help="Byte to send to the UART device")
+    parser.add_argument('-w', '--write', nargs='*', type=ast.literal_eval, help="Byte to send to the UART device")
     parser.add_argument('-p', '--pin', nargs=1, type=str, help="Desired GratFET pin")
     args = parser.parse_args()
 
@@ -55,7 +55,6 @@ def read(device):
 
 def write(device, pin, data):
     d = UART(device)
-    print("pin:", pin)
     device.gpio.mark_pin_as_used(pin)
     uart_pin = d.get_pin(pin)
     uart_pin.write(data)
