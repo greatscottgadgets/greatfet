@@ -33,7 +33,7 @@ static int gpio_verb_set_up_gpio_pin(struct command_transaction *trans)
 
 	// First, ensure we can access the given pin.
 	scu_group = gpio_get_group_number(port, pin);
-	scu_pin   = gpio_get_pin_number(port, pin);
+	scu_pin   = gpio_get_pin_number(port, pin); 
 
 	// If this port/pin doesn't correspond to a valid physical pin,
 	// fail out.

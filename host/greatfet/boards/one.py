@@ -6,6 +6,7 @@ from ..board import GreatFETBoard
 
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
+from ..peripherals.uart import UART
 from ..peripherals.firmware import DeviceFirmwareManager
 
 from ..glitchkit import *
@@ -127,6 +128,35 @@ class GreatFETOne(GreatFETBoard):
         #"J7_P20"  : VCC,
     }
 
+    # All UART mappings on GreatFET One
+    # name, scu port and pin, scu function number
+    UART_MAPPINGS = [
+    {
+        "J1_P33"    : ((9, 5), 7),
+        "J1_P34"    : ((9, 6), 7),
+        "J1_P35"    : ((2, 0), 1),
+        "J2_P35"    : ((2, 1), 1),
+        "J7_P2"     : ((6, 4), 2),
+        "J7_P3"     : ((6, 5), 2)
+    },
+    {
+        "J1_P25"    : ((1, 14), 1),
+        "J1_P26"    : ((1, 13), 1),
+        "J1_P27"    : ((5, 6), 4),
+        "J2_P28"    : ((3, 4), 4),
+        "J2_P37"    : ((3, 5), 4),
+    },
+    {
+        "J1_P28"    : ((1, 15), 1),
+        "J1_P30"    : ((1, 16), 1),
+        "J2_P23"    : ((7, 2), 6),
+        "J2_P25"    : ((7, 1), 6)
+    },
+    {
+        "J2_P8"     : ((4, 2), 6),
+        "J2_P19"    : ((2, 4), 2),
+        "J2_P20"    : ((2, 3), 2)
+    }]
 
     def initialize_apis(self):
         """ Initialize a new GreatFET One connection. """
@@ -165,5 +195,8 @@ class GreatFETOne(GreatFETBoard):
         # Add any GlitchKit modules we support.
         if self.supports_api("glitchkit"):
             self.glitchkit = GlitchKitCollection(self)
+
+        if self.supports_api("uart"):
+            self.uart = UART(self)
 
 

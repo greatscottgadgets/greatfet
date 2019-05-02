@@ -6,8 +6,10 @@
 #include <greatfet_core.h>
 #include <i2c_bus.h>
 #include <libopencm3/lpc43xx/uart.h>
+#include <libopencm3/lpc43xx/scu.h>
 #include <errno.h>
 #include <drivers/comms.h>
+#include <pins.h>
 
 
 #define CLASS_NUMBER_SELF (0x110)
@@ -16,109 +18,142 @@ static uint16_t duty_cycle_count;
 static uint8_t read_status;
 static uint8_t write_status;
 
-// static int i2c_verb_start(struct command_transaction *trans)
-// {
-// 	uint16_t value = comms_argument_parse_uint16_t(trans);
-// 	if (value == 0) {
-// 		duty_cycle_count = 255;
-// 	} else {
-// 		duty_cycle_count = value;
-// 	}
-// 	i2c_bus_start(&i2c0, duty_cycle_count);
-
-// 	return 0;
-// }
-
-static int uart_verb_init(struct command_transation *trans)
+static int uart_verb_init(struct command_transaction *trans)
 {
-    uint8_t uart_num 			= comms_argument_parse_uint8_t(trans);
+    uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
     uint8_t number_of_data_bits	= comms_argument_parse_uint8_t(trans);
     uint8_t number_of_stop_bits = comms_argument_parse_uint8_t(trans);
     uint8_t parity_bit			= comms_argument_parse_uint8_t(trans);
-    uint8_t divisor				= comms_argument_parse_uint8_t(trans);
+    uint16_t divisor			= comms_argument_parse_uint16_t(trans);
     uint8_t divaddval			= comms_argument_parse_uint8_t(trans);
     uint8_t mulval				= comms_argument_parse_uint8_t(trans);
 
-	uart_init(uart_num, number_of_data_bits, number_of_stop_bits, parity_bit, divisor, divaddval, mulval);
+    switch(uart_num) {
+        case 0:
+            uart_num = UART0_NUM;
+            break;
+        case 1:
+            uart_num = UART1_NUM;
+            break;
+        case 2:
+            uart_num = UART2_NUM;
+            break;
+        case 3:
+            uart_num = UART3_NUM;
+            break;
+    }
+    
+    switch(number_of_data_bits) {
+        case 5:
+            number_of_data_bits = UART_DATABIT_5;
+            break;
+        case 6:
+            number_of_data_bits = UART_DATABIT_6;
+            break;
+        case 7:
+            number_of_data_bits = UART_DATABIT_7;
+            break;
+        case 8:
+            number_of_data_bits = UART_DATABIT_8;
+            break;
+    }
+
+    switch(number_of_stop_bits) {
+        case 1:
+            number_of_stop_bits = UART_STOPBIT_1;
+            break;
+        case 2:
+            number_of_stop_bits = UART_STOPBIT_2;
+            break;
+    }
+
+    switch(parity_bit) {
+        case 0:
+            parity_bit = UART_PARITY_NONE;
+            break;
+        case 1:
+            parity_bit = UART_PARITY_ODD;
+            break;
+        case 2:
+            parity_bit = UART_PARITY_EVEN;
+            break;
+        case 3:
+            parity_bit = UART_PARITY_SP_1;
+            break;
+        case 4:
+            parity_bit = UART_PARITY_SP_0;
+            break;
+    }
+
+    uart_init(uart_num, number_of_data_bits, number_of_stop_bits, parity_bit, divisor, divaddval, mulval);
+
     return 0;
 }
 
-// static int i2c_verb_stop()
-// {
-// 	i2c_bus_stop(&i2c0);
-// 	return 0;	
-// }
+static int uart_verb_read(struct command_transaction *trans)
+{
+    uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
+    uint8_t rx_data = uart_read(UART0_NUM);
+	comms_response_add_uint8_t(trans, rx_data);
 
-// static int i2c_verb_read(struct command_transaction *trans)
-// {
-// 	uint16_t address 		= comms_argument_parse_uint16_t(trans);
-// 	uint16_t rx_length 		= comms_argument_parse_uint16_t(trans);
-// 	uint8_t *i2c_rx_buffer 	= comms_response_reserve_space(trans, rx_length);
-// 	// TODO: data validation
+    // TODO: add timeout and/or desired number of bytes to read
 
-// 	if (!comms_transaction_okay(trans)) {
-//         return EBADMSG;
-//     }
-// 	read_status = i2c_bus_read(&i2c0, address, i2c_rx_buffer, rx_length);
-// 	comms_response_add_uint8_t(trans, read_status);
+    return 0;
+}
 
-// 	return 0;
-// }
+static int uart_verb_write(struct command_transaction *trans)
+{
+    uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
+    uint8_t scu_conf_func       = comms_argument_parse_uint8_t(trans);
+    uint8_t scu_port            = comms_argument_parse_uint8_t(trans);
+    uint8_t scu_pin             = comms_argument_parse_uint8_t(trans);
+    uint8_t tx_data             = comms_argument_parse_uint8_t(trans);
 
-// static int i2c_verb_write(struct command_transaction *trans)
-// {
-// 	uint32_t tx_length;
-// 	uint16_t address 		= comms_argument_parse_uint16_t(trans);
-// 	uint8_t *data_to_write 	= comms_argument_read_buffer(trans, -1, &tx_length);
-// 	// TODO: data validation
+    switch(uart_num) {
+        case 0:
+            uart_num = UART0_NUM;
+            break;
+        case 1:
+            uart_num = UART1_NUM;
+            break;
+        case 2:
+            uart_num = UART2_NUM;
+            break;
+        case 3:
+            uart_num = UART3_NUM;
+            break;
+    }
 
-// 	if (!comms_transaction_okay(trans)) {
-//         return EBADMSG;
-//     }
-// 	write_status = i2c_bus_write(&i2c0, address, data_to_write, tx_length);
-// 	comms_response_add_uint8_t(trans, write_status);
+    // If we can't get a hold on the given pin.
+	if (!pin_ensure_reservation(scu_port, scu_pin, CLASS_NUMBER_SELF)) {
+		pr_warning("uart: couldn't reserve busy pin SCU%d[%d]!\n", scu_port, scu_pin);
+		return EBUSY;
+	}
 
-// 	return 0;
-// }
+    // TODO: fix port/pin tuple for pinmux call
+    scu_pinmux((scu_port, scu_pin), SCU_UART_RX_TX | scu_conf_func);
+    uart_write(uart_num, tx_data);
+    // TODO: handle writing more than one byte at a time
 
-// static int i2c_verb_scan(struct command_transaction *trans)
-// {
-// 	uint8_t *write_status_buffer = comms_response_reserve_space(trans, 16);
-// 	uint8_t *read_status_buffer = comms_response_reserve_space(trans, 16);
-// 	uint8_t address;
-
-// 	if (!comms_transaction_okay(trans)) {
-//         return EBADMSG;
-//     }
-
-// 	for (address = 0; address < 16; address++) {
-// 		write_status_buffer[address] = 0;
-// 		read_status_buffer[address] = 0;
-// 	}
-
-// 	for (address = 0; address < 128; address++) {
-// 		write_status = i2c_bus_write(&i2c0, address, NULL, 0);
-// 		if (write_status == 0x18) {
-// 			write_status_buffer[address >> 3] |= 1 << (address & 0x07);
-// 		}
-
-// 		read_status = i2c_bus_read(&i2c0, address, NULL, 0);
-// 		if (read_status == 0x40) {
-// 			read_status_buffer[address >> 3] |= 1 << (address & 0x07);
-// 		}
-// 	}
-
-// 	return 0;
-// }
+    return 0;
+}
 
 /**
  * Verbs for the firmware API.
  */
 static struct comms_verb _verbs[] = {
-		{ .name = "start", .handler = uart_verb_init,
-			.in_signature = "<I", .out_signature = "",
-			.in_param_names = "value, duty_cycle_count",
-			.doc = "Initialize and transmit a start bit to an I2C device" },
+		{ .name = "init", .handler = uart_verb_init,
+			.in_signature = "<IBBBHBB", .out_signature = "",
+			.in_param_names = "uart_num, num_of_data_bits, stop_bit, parity_bit, divisor, divaddval, mulval",
+			.doc = "Initialize UART" },
+        { .name = "read", .handler = uart_verb_read,
+			.in_signature = "<I", .out_signature = "<*B",
+			.in_param_names = "uart_num", .out_param_names = "response",
+			.doc = "Read data from UART device" },
+		{ .name = "write", .handler = uart_verb_write,
+			.in_signature = "<IBBB*B", .out_signature = "",
+			.in_param_names = "uart_num, scu_func, scu_port, scu_pin, data", .out_param_names = "",
+			.doc = "Write data to UART device" },
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(uart, CLASS_NUMBER_SELF, "uart", _verbs,
