@@ -138,17 +138,19 @@ class UARTPin(object):
         self.num_data_bits = num_data_bits
         self.num_stop_bits = num_stop_bits
         self.parity_bit = parity_bit
-        self.baud = int(baud)
-        # self.divisor = divisor
-        # self.divaddval = divaddval
-        # self.mulval = mulval
         self.port = self.port_and_pin[0]
         self.pin = self.port_and_pin[1]
-        data = bytes(data)
 
+        data = [bytes(datum) for datum in data]
+        data = b"".join(data)
+
+        self.desired_baud = int(baud)
+        self.divisor = int(round(204000000 / (16 * self.desired_baud)))
+        self.divaddval = 0
+        self.mulval = 1
 
         # TODO: allow fine tuning of divisor with divaddval and mulval
         
-        self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.baud)
+        self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.divisor, self.divaddval, self.mulval)
         self.uart.api.write(self.uart_num, self.scu_func, self.port, self.pin, data)
 
