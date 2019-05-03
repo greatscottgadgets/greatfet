@@ -11,16 +11,15 @@ import ast
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
-from greatfet.peripherals.led import LED
 
 
 def main():
     from greatfet.utils import GreatFETArgumentParser
     # Set up a simple argument parser.
     parser = GreatFETArgumentParser(description="Utility for LED configuration on GreatFET")
-    parser.add_argument('-t', '--toggle', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to toggle (0-3)")
-    parser.add_argument('--on', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn on (0-3)")
-    parser.add_argument('--off', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn off (0-3)")
+    parser.add_argument('-t', '--toggle', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to toggle (1-4)")
+    parser.add_argument('--on', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn on (1-4)")
+    parser.add_argument('--off', nargs='*', type=ast.literal_eval, default=[], help="LED numbers to turn off (1-4)")
     args = parser.parse_args()
 
     log_function = log_verbose if args.verbose else log_silent
@@ -46,22 +45,18 @@ def main():
 
 def toggle(device, leds, log_function):
     for led_num in leds:
-        led = LED(device, led_num)
-        led.toggle()
+        device.leds[led_num].toggle()
 
 
 def on(device, leds, log_function):
     for led_num in leds:
-        led = LED(device, led_num)
-        led.on()
+        device.leds[led_num].on()
 
 
 def off(device, leds, log_function):
     for led_num in leds:
-        led = LED(device, led_num)
-        led.off()
+        device.leds[led_num].off()
 
 
 if __name__ == '__main__':
     main()
-    

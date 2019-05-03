@@ -16,7 +16,7 @@ static int leds_verb_toggle(struct command_transaction *trans)
         return EBADMSG;
     }
 
-	led_toggle(led_num);
+	led_toggle(led_num - 1);
 
 	return 0;
 }
@@ -29,7 +29,7 @@ static int leds_verb_on(struct command_transaction *trans)
         return EBADMSG;
     }
 
-	led_on(led_num);
+	led_on(led_num - 1);
 
 	return 0;
 }
@@ -42,7 +42,7 @@ static int leds_verb_off(struct command_transaction *trans)
         return EBADMSG;
     }
 
-	led_off(led_num);
+	led_off(led_num - 1);
 
 	return 0;
 }
