@@ -21,7 +21,7 @@ The firmware is set up for compilation with the GCC toolchain available here:
 https://developer.arm.com/open-source/gnu-toolchain/gnu-rm
 
 Most Linux distributions maintain a package for the toolchain; this is the
-peferred method of installation.  For example, on Debian based systems:
+preferred method of installation.  For example, on Debian based systems:
 ```
 sudo apt-get install gcc-arm-none-eabi
 ```
