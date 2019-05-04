@@ -114,7 +114,7 @@ class UARTPin(object):
 
         # TODO: handle when an invalid pin name is entered
 
-    def read(self, num_data_bits=8, num_stop_bits=1, parity_bit=0, baud=9600, rx_length=0):
+    def read(self, rx_length=0, num_data_bits=8, num_stop_bits=1, parity_bit=0, baud=9600):
         """
             Reads data from the device connected to the UART pin.
         """
