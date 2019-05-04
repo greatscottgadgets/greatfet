@@ -12,8 +12,8 @@ import time
 import errno
 import argparse
 
-from greatfet import GreatFET
-from greatfet.boards.flash_stub import GreatFETFlashStub
+from . import GreatFET
+from .boards.flash_stub import GreatFETFlashStub
 
 from pygreat.errors import DeviceNotFoundError
 
