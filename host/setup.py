@@ -7,10 +7,13 @@ def read(fname):
     with open(filename, 'r') as f:
         return f.read()
 
-install_req = ['ipython']
-if sys.version_info[0] < 3 and 'bdist_wheel' not in sys.argv:
-    install_req.remove('ipython')
-    install_req.append('ipython<6')
+
+# Handle python2 vs python3 requirements.
+per_version_requirements = []
+if sys.version_info < (3, 0):
+    per_version_requirements.append('ipython<6')
+else:
+    per_version_requirements.append('ipython')
 
 
 setup_req = []
@@ -21,7 +24,7 @@ if os.path.isfile('../VERSION'):
     setup_options['version'] = read('../VERSION').strip()
 else:
     setup_options['version_config'] =  {
-        "version_format": '{tag}.dev{commitcount}+git.{gitsha}',
+        "version_format": '{tag}.dev+git.{sha}',
         "starting_version": "2019.05.01"
     }
     setup_req.append('better-setuptools-git-version')
@@ -51,10 +54,15 @@ setup(
             'greatfet_msp430 = greatfet.commands.greatfet_msp430:main',
         ],
     },
-    author='Great Scott Gadgets', #TODO: Figure out whose name should go here!
+    author='Great Scott Gadgets',
     author_email='ktemkin@greatscottgadgets.com',
     tests_require=[''],
-    install_requires=['pyusb', install_req, 'pygreat', 'future'],
+    install_requires= [
+        per_version_requirements,
+        'pyusb',
+        'pygreat',
+        'future'
+    ],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('README'),
     packages=find_packages(),
