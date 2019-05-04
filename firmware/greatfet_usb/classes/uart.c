@@ -14,10 +14,6 @@
 
 #define CLASS_NUMBER_SELF (0x110)
 
-static uint16_t duty_cycle_count;
-static uint8_t read_status;
-static uint8_t write_status;
-
 static int uart_verb_init(struct command_transaction *trans)
 {
     uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
@@ -93,19 +89,104 @@ static int uart_verb_init(struct command_transaction *trans)
 static int uart_verb_read(struct command_transaction *trans)
 {
     uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
-    uint8_t rx_data = uart_read(UART0_NUM);
-	comms_response_add_uint8_t(trans, rx_data);
+    uint8_t scu_conf_func       = comms_argument_parse_uint8_t(trans);
+    uint8_t scu_group           = comms_argument_parse_uint8_t(trans);
+    uint8_t scu_pin             = comms_argument_parse_uint8_t(trans);
+    uint16_t rx_length 		    = comms_argument_parse_uint16_t(trans);
+	uint8_t *uart_rx_buffer 	= comms_response_reserve_space(trans, rx_length);
 
-    // scu_pinmux(P2_3, SCU_UART_RX_TX | scu_conf_func);
+    uint32_t scu_group_pin = 0;
+    
+    switch(uart_num) {
+        case 0:
+            uart_num = UART0_NUM;
+            break;
+        case 1:
+            uart_num = UART1_NUM;
+            break;
+        case 2:
+            uart_num = UART2_NUM;
+            break;
+        case 3:
+            uart_num = UART3_NUM;
+            break;
+    }
 
-    // TODO: use read_timeout, with timeout of 0?
-    // for the api response, send no data back if timeout or data for success
+    switch(scu_group) {
+        case 1:
+            scu_group_pin += PIN_GROUP1;
+            break;
+        case 2:
+            scu_group_pin += PIN_GROUP2;
+            break;
+        case 3:
+            scu_group_pin += PIN_GROUP3;
+            break;
+        case 4:
+            scu_group_pin += PIN_GROUP4;
+            break;
+        case 5:
+            scu_group_pin += PIN_GROUP5;
+            break;
+        case 6:
+            scu_group_pin += PIN_GROUP6;
+            break;
+        case 7:
+            scu_group_pin += PIN_GROUP7;
+            break;
+        case 9:
+            scu_group_pin += PIN_GROUP9;
+            break;
+    }
 
-    // TODO: create switch statement to determine scu pin:
-    // port and pin are passed in separately, determine scu group and pin based on those
+    switch(scu_pin) {
+        case 0:
+            scu_group_pin += PIN0;
+            break;
+        case 1:
+            scu_group_pin += PIN1;
+            break;
+        case 2:
+            scu_group_pin += PIN2;
+            break;
+        case 3:
+            scu_group_pin += PIN3;
+            break;
+        case 4:
+            scu_group_pin += PIN4;
+            break;
+        case 5:
+            scu_group_pin += PIN5;
+            break;
+        case 6:
+            scu_group_pin += PIN6;
+            break;
+        case 13:
+            scu_group_pin += PIN13;
+            break;
+        case 14:
+            scu_group_pin += PIN14;
+            break;
+        case 15:
+            scu_group_pin += PIN15;
+            break;
+        case 16:
+            scu_group_pin += PIN16;
+            break;
+    }
 
+    // If we can't get a hold on the given pin.
+	if (!pin_ensure_reservation(scu_group, scu_pin, CLASS_NUMBER_SELF)) {
+		pr_warning("uart: couldn't reserve busy pin SCU%d[%d]!\n", scu_group, scu_pin);
+		return EBUSY;
+	}
 
-    // TODO: add timeout and/or desired number of bytes to read
+    scu_pinmux(scu_group_pin, SCU_UART_RX_TX | scu_conf_func);
+    uart_error_t *error;  
+
+    for (int i = 0; i < rx_length; i++) {
+        uart_rx_buffer[i] = uart_read_timeout(uart_num, 20000, error);
+    }
 
     return 0;
 }
@@ -221,8 +302,8 @@ static struct comms_verb _verbs[] = {
 			.in_param_names = "uart_num, num_of_data_bits, stop_bit, parity_bit, baud",
 			.doc = "Initialize UART" },
         { .name = "read", .handler = uart_verb_read,
-			.in_signature = "<I", .out_signature = "<*B",
-			.in_param_names = "uart_num", .out_param_names = "response",
+			.in_signature = "<IBBBH", .out_signature = "<*B",
+			.in_param_names = "uart_num, scu_func, scu_port, scu_pin, rx_length", .out_param_names = "response",
 			.doc = "Read data from UART device" },
 		{ .name = "write", .handler = uart_verb_write,
 			.in_signature = "<IBBB*X", .out_signature = "",
