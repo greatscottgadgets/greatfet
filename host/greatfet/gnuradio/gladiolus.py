@@ -1,3 +1,6 @@
+#
+# Gladiolus source/sink for Software Defined IR
+#
 
 import array
 
