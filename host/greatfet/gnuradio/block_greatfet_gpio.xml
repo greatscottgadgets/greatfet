@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<block>
+	<name>GreatFET GPIO Control</name>
+	<key>greatfet_demo_gpio_sink</key>
+	<category>[Demos]/GreatFET</category>
+	<import>from greatfet.gnuradio import demos</import>
+	<make>demos.gpio_pin_sink($pin, $led)</make>
+	<param>
+		<name>Mode</name>
+		<key>mode</key>
+		<value>toggle</value>
+		<type>string</type>
+	</param>
+	<param>
+		<name>GPIO Pin</name>
+		<key>pin</key>
+		<value>J1_P4</value>
+		<type>string</type>
+	</param>
+	<param>
+		<name>LED</name>
+		<key>led</key>
+		<value>2</value>
+		<type>int</type>
+	</param>
+	<sink>
+		<name>out</name>
+		<type>byte</type>
+	</sink>
+</block>
