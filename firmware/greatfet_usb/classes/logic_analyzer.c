@@ -3,18 +3,11 @@
  */
 
 #include <drivers/comms.h>
-
-#include "../sgpio_isr.h"
-
 #include <drivers/sgpio.h>
 #include <drivers/usb/usb.h>
 #include <drivers/usb/usb_queue.h>
 
-#include "../usb_bulk_buffer.h"
-#include "../usb_endpoint.h"
-
-#include <libopencm3/lpc43xx/m4/nvic.h>
-#include <libopencm3/cm3/vector.h>
+#include "../usb_streaming.h"
 
 #include <drivers/platform_clock.h>
 
@@ -23,13 +16,6 @@
 #include <toolchain.h>
 
 #define CLASS_NUMBER_SELF (0x10D)
-
-enum {
-	LOGIC_ANALYZER_NUM_BUFFERS = 2,
-	LOGIC_ANALYZER_BUFFER_SIZE = 0x4000
-};
-
-volatile bool logic_analyzer_enabled = false;
 
 // Set the default frequency for our logic analyzer.
 #define LOGIC_ANALYZER_DEFAULT_FREQUENCY (17 * 1000000)
@@ -94,114 +80,6 @@ static sgpio_t analyzer  = {
 };
 
 
-static void temporary_set_up_ISRs()
-{
-	// XXX: replace me with the custom ISR generator
-	/*
-	if (use_bank_b) {
-		vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input_bank_b;
-	} else {
-		vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_isr_input;
-	}
-	*/
-	vector_table.irq[NVIC_SGPIO_IRQ] = sgpio_dynamic_isr;
-
-	nvic_set_priority(NVIC_SGPIO_IRQ, 0);
-	nvic_enable_irq(NVIC_SGPIO_IRQ);
-}
-
-// XXX
-static inline void cm_enable_interrupts(void)
-{
-        __asm__("CPSIE I\n");
-}
-
-static inline void cm_disable_interrupts(void)
-{
-        __asm__("CPSID I\n");
-}
-
-
-/**
- * Schedules transmission of a completed logic-analyzer buffer.
- */
-static int schedule_usb_transfer(int buffer_number)
-{
-	// We reach the overrun threshold if the logic analyzer has captured enough data to fill
-	// every available buffer -- that is, every buffer except the one we're actively using to transmit.
-	unsigned overrun_threeshold = (LOGIC_ANALYZER_NUM_BUFFERS - 1) * LOGIC_ANALYZER_BUFFER_SIZE;
-
-	// If we don't have a full buffer of data to transmit, we can't send anything yet. Bail out.
-	if (logic_analyzer_functions[0].data_in_buffer < LOGIC_ANALYZER_BUFFER_SIZE) {
-		return EAGAIN;
-	}
-
-	// Otherwise, transmit the relevant (complete) buffer...
-	usb_transfer_schedule_wait(
-		&usb0_endpoint_bulk_in,
- 		&usb_bulk_buffer[buffer_number * LOGIC_ANALYZER_BUFFER_SIZE],
-		LOGIC_ANALYZER_BUFFER_SIZE, 0, 0, 0);
-
-	// ... and mark those samples as no longer pending transfer.
-	cm_disable_interrupts();
-	logic_analyzer_functions[0].data_in_buffer -= LOGIC_ANALYZER_BUFFER_SIZE;
-	cm_enable_interrupts();
-
-	// Basic overrun detection: if we have more than our threshold remaining after
-	// consuming a buffer (really, passing it to the USB hardware for transmission),
-	// then we overran.
-	if (logic_analyzer_functions[0].data_in_buffer > overrun_threeshold) {
-		pr_error("logic analyzer: overrun detected (%u data writes to buffer)!\n",
-			logic_analyzer_functions[0].data_in_buffer);
-		usb_endpoint_stall(&usb0_endpoint_bulk_in);
-	}
-
-	return 0;
-}
-
-
-/**
- * Core logic analyzer service routine: ferries the captured data to the host.
- */
-void service_logic_analyzer(void)
-{
-	static unsigned int phase = 1;
-	static unsigned int transfers = 0;
-	int rc;
-
-	if(!logic_analyzer_enabled) {
-		return;
-	}
-
-
-	if ((logic_analyzer_functions[0].position_in_buffer >= LOGIC_ANALYZER_BUFFER_SIZE) && phase == 1) {
-		rc = schedule_usb_transfer(0);
-		if(rc) {
-			return;
-		}
-
-		phase = 0;
-
-		++transfers;
-	}
-
-	if ((logic_analyzer_functions[0].position_in_buffer < LOGIC_ANALYZER_BUFFER_SIZE) && phase == 0) {
-		rc = schedule_usb_transfer(1);
-		if(rc) {
-			return;
-		}
-		phase = 1;
-
-		++transfers;
-	}
-
-	// Toggle the LED a bit to indicate progress.
-	if ((transfers % 100) == 0) {
-		led_toggle(LED4);
-	}
-}
-
-
 static int verb_configure(struct command_transaction *trans)
 {
 	uint32_t desired_sample_rate = comms_argument_parse_uint32_t(trans);
@@ -220,8 +98,8 @@ static int verb_configure(struct command_transaction *trans)
 
 	// Respond with the parameters of our sampling.
 	comms_response_add_uint32_t(trans, logic_analyzer_functions[0].shift_clock_frequency);
-	comms_response_add_uint32_t(trans, LOGIC_ANALYZER_BUFFER_SIZE);
-	comms_response_add_uint8_t(trans,  usb0_endpoint_bulk_in.address);
+	comms_response_add_uint32_t(trans, USB_STREAMING_BUFFER_SIZE);
+	comms_response_add_uint8_t(trans,  USB_STREAMING_IN_ADDRESS);
 
 	// And ensure we service the logic analyzer task routine.
 	return 0;
@@ -232,17 +110,15 @@ static int verb_start(struct command_transaction *trans)
 {
 	(void)trans;
 
-	temporary_set_up_ISRs();
-
 	// Set up our USB buffer for acquisition...
 	logic_analyzer_functions[0].position_in_buffer = 0;
 	logic_analyzer_functions[0].data_in_buffer     = 0;
-	usb_endpoint_init(&usb0_endpoint_bulk_in);
+
 
 	// ... and start a capture.
+	usb_streaming_start_streaming_to_host(
+		&logic_analyzer_functions[0].position_in_buffer, &logic_analyzer_functions->data_in_buffer);
 	sgpio_run(&analyzer);
-	logic_analyzer_enabled = true;
-
 	return 0;
 }
 
@@ -252,18 +128,9 @@ static int verb_stop(struct command_transaction *trans)
 {
 	(void)trans;
 
-	// Stop the capture...
-	logic_analyzer_enabled = false;
-	usb_endpoint_disable(&usb0_endpoint_bulk_in);
-
-	pr_info("final position / count: %08x / %08x\n",
-		logic_analyzer_functions[0].position_in_buffer, logic_analyzer_functions[0].data_in_buffer);
-
-	// ... disable the shifting hardware ...
-	nvic_disable_irq(NVIC_SGPIO_IRQ);
+	// Disable our stream-to-host, and disable the SGPIO capture.
+	usb_streaming_stop_streaming_to_host();
 	sgpio_halt(&analyzer);
-
-	led_off(LED4);
 
 	// .. and disable the pipe we use to transmit samples.
 	return 0;

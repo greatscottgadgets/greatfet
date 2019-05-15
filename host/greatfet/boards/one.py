@@ -8,6 +8,7 @@ from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager
 from ..peripherals.pattern_generator import PatternGenerator
+from ..peripherals.sdir import SDIRTransceiver
 
 from ..glitchkit import *
 
@@ -160,6 +161,9 @@ class GreatFETOne(GreatFETBoard):
         # Set up a pattern-generator object with all default arguments, for quick user use.
         if self.supports_api('pattern_generator'):
             self.pattern_generator = PatternGenerator(self)
+
+        if self.supports_api('sdir'):
+            self.sdir = SDIRTransceiver(self)
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)

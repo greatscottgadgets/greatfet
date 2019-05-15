@@ -1,7 +1,9 @@
 from __future__ import print_function
 # Alias objects to make them easier to import.
-from .greatfet import GreatFET
+from .greatfet import GreatFET, GreatFETSingleton
+
 GreatFET = GreatFET  # pyflakes
+GreatFETSingleton = GreatFETSingleton
 
 def greatfet_assets_directory():
     """ Provide a quick function that helps us get at our assets directory. """

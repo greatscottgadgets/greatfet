@@ -23,6 +23,7 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/usb_descriptor.c
 	${CMAKE_CURRENT_SOURCE_DIR}/usb_device.c
 	${CMAKE_CURRENT_SOURCE_DIR}/usb_endpoint.c
+	${CMAKE_CURRENT_SOURCE_DIR}/usb_streaming.c
 	${CMAKE_CURRENT_SOURCE_DIR}/sgpio_isr.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_spi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/legacy_apis/usb_api_adc.c

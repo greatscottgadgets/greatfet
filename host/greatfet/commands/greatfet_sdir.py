@@ -44,17 +44,17 @@ def main():
         sys.exit(errno.ENODEV)
 
     if args.receive:
-        device.comms._vendor_request_out(vendor_requests.SDIR_RX_START)
+        device.sdir.start_receive()
         time.sleep(1)
         with open(args.filename, 'wb') as f:
             try:
                 while True:
-                    d = device.comms.device.read(0x81, 0x4000, 1000)
+                    d = device.sdir.read()
                     # print(d)
                     f.write(d)
             except KeyboardInterrupt:
                 pass
-        device.comms._vendor_request_out(vendor_requests.SDIR_RX_STOP)
+        device.sdir.stop()
 
     else:
         index = args.samplerate & 0xFFFF
