@@ -19,12 +19,10 @@ To build and install GreatFET software without pip, you will require:
 * https://github.com/greatscottgadgets/libgreat
 
 If you are using git, the preferred way to install libgreat is to use the
-submodule:
+submodule. From inside the cloned greatfet directory:
 ```
-cd ..
 git submodule init
 git submodule update
-cd host
 ```
 
 Install libgreat:
@@ -40,5 +38,4 @@ Install greatfet:
 cd host
 python3 setup.py build
 sudo python3 setup.py install
-cd ../..
 ```
