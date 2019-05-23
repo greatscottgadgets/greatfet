@@ -194,7 +194,7 @@ def main():
     arguments = [binary_name] + argv[2:]
 
     # Pass control entirely to the subcommand.
-    sys.exit(os.execv(binary, arguments))
+    sys.exit(os.spawnv(os.P_WAIT, binary, arguments))
 
 
 if __name__ == '__main__':
