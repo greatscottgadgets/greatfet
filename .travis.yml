@@ -44,6 +44,7 @@ before_install:
 
 before_script:
   - export CFLAGS="-Wall -Wextra"
+  - export PYTHONPATH="/home/travis/.local/lib/python3.6/site-packages/:/home/travis/.local/lib/python2.7/site-packages/"
 #  - export CFLAGS="-Wall -Wextra -Werror"
 
 script:
@@ -51,11 +52,11 @@ script:
   - python -V
   - pushd libgreat/host/
   - python setup.py build
-  - sudo python setup.py install
+  - python setup.py install --user
   - popd
   - pushd host/
   - python setup.py build
-  - sudo python setup.py install
+  - python setup.py install --user
   - popd
   # - greatfet_info
   # Firmware
