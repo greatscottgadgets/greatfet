@@ -52,11 +52,11 @@ script:
   - python -V
   - pushd libgreat/host/
   - python setup.py build
-  - python setup.py install --user
+  - sudo $(which python) setup.py install
   - popd
   - pushd host/
   - python setup.py build
-  - python setup.py install --user
+  - sudo $(which python) setup.py install
   - popd
   # - greatfet_info
   # Firmware
