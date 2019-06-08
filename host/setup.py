@@ -27,7 +27,7 @@ else:
         "version_format": '{tag}.dev+git.{sha}',
         "starting_version": "2019.05.01"
     }
-    setup_req.append('better-setuptools-git-version')
+    setup_req.append('even-better-setuptools-git-version')
 
 setup(
     name='GreatFET',
