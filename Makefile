@@ -3,6 +3,8 @@
 # This makefile is full of helper functions to get you up and running fast.
 #
 
+SHELL = /bin/bash
+
 # By default, use the system's "python" binary.
 PYTHON  ?= python
 PYTHON2 ?= python2
