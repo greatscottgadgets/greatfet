@@ -48,10 +48,15 @@ def main():
 
     _, path = tempfile.mkstemp(None, None, os.getcwd())
     if args.binary:
-        bin_file_name = arc_name = args.output
-        sr_name = args.output + ".sr"
+        bin_file_name = arc_name = args.binary
     else:
         bin_file_name = path
+
+    if args.pulseview:
+        if args.pulseview.endswith(".sr"):
+            sr_name = args.pulseview
+        else:
+            sr_name = args.pulseview + ".sr"
 
 
     print("Press Ctrl+C to stop reading data from device")
@@ -65,7 +70,7 @@ def main():
                 print()
 
             if args.binary:
-                print("Binary data written to file '%s'" % args.output)
+                print("Binary data written to file '%s'" % args.binary)
 
             if args.pulseview:
                 metadata_str = "[device 1]\n" \
@@ -83,11 +88,11 @@ def main():
                     "probe8=SGPIO7\n" \
                     "unitsize=1\n".format(capture_data_name)
                 # pulseview compatible .sr archive
-                with ZipFile(args.pulseview, "w") as zip:
+                with ZipFile(sr_name, "w") as zip:
                     zip.write(bin_file_name, arcname='logic-1')
                     zip.writestr("metadata", metadata_str)
                     zip.writestr("version", "2")
-                print("Pulseview compatible session file created: '%s'" % args.pulseview)
+                print("Pulseview compatible session file created: '%s'" % sr_name)
     finally:
         try:
             os.remove(path)
