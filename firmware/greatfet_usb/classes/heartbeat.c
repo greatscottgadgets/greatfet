@@ -96,7 +96,7 @@ static int heartbeat_verb_get_period(struct command_transaction *trans)
 
 static struct comms_verb heartbeat_verbs[] = {
 	{ .verb_number = 0x0, .name = "stop", .handler = heartbeat_verb_stop, 
-		.in_signature ="", .out_signature = "", .doc = "Disables heartbeat mode, free'ing the LED for user use." },
+		.in_signature ="", .out_signature = "", .doc = "Disables heartbeat mode, freeing the LED for user use." },
 	{ .verb_number = 0x1, .name = "start", .handler = heartbeat_verb_start,
 		.in_signature ="", .out_signature = "", .doc = "Enables heartbeat mode, e.g. after the heartbeat has been stopped." },
 	{ .verb_number = 0x2, .name = "set_period", .handler = heartbeat_verb_set_period, .in_signature = "<I",
