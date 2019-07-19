@@ -34,7 +34,8 @@ addons:
       # - python-yaml
 
   homebrew:
-    taps: PX4/homebrew-px4
+    update: true
+    taps: armmbed/formulae
     packages:
        - gcc-arm-none-eabi
        - dfu-util
