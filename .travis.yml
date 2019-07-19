@@ -71,11 +71,11 @@ script:
   - make
   - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/greatfet_usb.bin
   - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/greatfet_usb.dfu
-  - cd ../build-nxp_xplorer
-  - cmake -DBOARD=NXP_XPLORER ..
-  - make
-  - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.bin
-  - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.dfu
+  #- cd ../build-nxp_xplorer
+  #- cmake -DBOARD=NXP_XPLORER ..
+  #- make
+  #- cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.bin
+  #- cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.dfu
   #- cd ../build-rad1o_badge
   #- cmake -DBOARD=RAD1O_BADGE ..
   # - make
