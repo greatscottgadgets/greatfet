@@ -15,6 +15,8 @@ matrix:
       # "Python builds are not available on the macOS environment."
       # So we tell Travis it's C and run python commands
       language: c
+      osx_image: xcode11
+      
 
 env:
   global:
@@ -34,9 +36,9 @@ addons:
       # - python-yaml
 
   homebrew:
-    taps: PX4/homebrew-px4
+    taps: armmbed/formulae
     packages:
-       - gcc-arm-none-eabi
+       - arm-none-eabi-gcc
        - dfu-util
 
 before_install:
