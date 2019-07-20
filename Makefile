@@ -14,6 +14,9 @@ PYTHON3 ?= python3
 # By default, use cmake as cmake.
 CMAKE  ?= cmake
 
+# If we're building a nightly, use the provided build number.
+BUILD_NUMBER ?= $(TRAVIS_BUILD_NUMBER)
+
 # Used only for deploying nightlies -- only DEPLOY_COMMAND is used in the text below.
 DEPLOY_USER    ?= deploy
 DEPLOY_PATH    ?= ~/nightlies/greatfet
@@ -157,8 +160,7 @@ deploy_nightly: prepare_nightly
 #
 prepare_nightly: firmware
 	@mkdir -p release-files/
-	$(eval VERSION := $(shell date -I)-git-$(shell git rev-parse --short HEAD))
-	echo $(VERSION)
+	$(eval VERSION := $(shell date -I)-build_$(BUILD_NUMBER)-git_$(shell git rev-parse --short HEAD))
 
 	@echo --- Creating our host-python distribution directories
 	@rm -rf host-packages
