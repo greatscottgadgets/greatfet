@@ -188,6 +188,6 @@ prepare_nightly: firmware
 	@git-archive-all $(ARCHIVE_FLAGS_NIGHTLY) release-files/greatfet-$(VERSION).zip
 
 	@echo --- Preparing the relevant hashes to enable deployment.
-	@sha256sum release-files/greatfet-$(VERSION).tar.xz > release-files/greatfet-$(VERSION).tar.xz.sha256
-	@sha256sum release-files/greatfet-$(VERSION).zip > release-files/greatfet-$(VERSION).zip.sha256
+	@pushd release-files > /dev/null; sha256sum greatfet-$(VERSION).tar.xz > greatfet-$(VERSION).tar.xz.sha256; popd > /dev/null
+	@pushd release-files > /dev/null; sha256sum greatfet-$(VERSION).zip > greatfet-$(VERSION).zip.sha256; popd > /dev/null
 
