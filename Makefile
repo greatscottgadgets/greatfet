@@ -30,8 +30,7 @@ all: firmware
 ARCHIVE_FLAGS = \
 	--extra=VERSION --extra=RELEASENOTES $(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) \
 	--force-submodules --prefix=greatfet-$(VERSION)/
-ARCHIVE_FLAGS_NIGHTLY = \
-	$(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) --force-submodules --prefix=greatfet-$(VERSION)/
+ARCHIVE_FLAGS_NIGHTLY = $(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) --force-submodules --prefix=greatfet-$(VERSION)/
 
 
 #
@@ -91,7 +90,7 @@ libgreat/README.md:
 #
 # Prepares a GreatFET release based on the VERSION arguments and based on a RELEASENOTES file.
 #
-prepare_release: firmware RELEASENOTES
+prepare_release_files: firmware RELEASENOTES
 	@mkdir -p release-files/
 
 	@echo Tagging release $(VERSION).
@@ -102,11 +101,13 @@ prepare_release: firmware RELEASENOTES
 
 	@echo --- Creating our host-python distribution directories
 	@rm -rf host-packages
+	@rm -rf build
 	@mkdir -p host-packages
+	@mkdir -p build
 
 	@#Python 2
-	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
-	@pushd host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
+	@pushd host; $(PYTHON2) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
 
 	@#Python 3
 	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
@@ -121,6 +122,10 @@ prepare_release: firmware RELEASENOTES
 	@rm firmware-bin/.gitignore
 	@rm firmware-bin/README
 
+
+# Split the second half of the preparation phase; as our wildcards need to be executed -after- the
+# previous step.
+prepare_release: prepare_release_files RELEASENOTES
 	@echo --- Preparing the release archives.
 	$(eval FIRMWARE_BIN_FLAGS := $(addprefix --extra=, $(wildcard firmware-bin/*)))
 	$(eval HOST_PACKAGE_FLAGS := $(addprefix --extra=, $(wildcard host-packages/*)))
@@ -152,26 +157,27 @@ deploy_nightly: prepare_nightly
 	@cp release-files/* $(DEPLOY_FILES_PATH)
 
 	@echo --- Deploying files to target server.
-	@echo $(DEPLOY_COMMAND)
 	@pushd deploy-files; $(DEPLOY_COMMAND); popd
 
 #
 # Prepares a GreatFET nightly based on the bare source tree.
 #
-prepare_nightly: firmware
+prepare_nightly_files: firmware
 	@mkdir -p release-files/
 	$(eval VERSION := $(shell date -I)-build_$(BUILD_NUMBER)-git_$(shell git rev-parse --short HEAD))
 
-	@echo --- Creating our host-python distribution directories
+	@echo --- Creating our host-python distribution directories.
 	@rm -rf host-packages
+	@rm -rf build
 	@mkdir -p host-packages
+	@mkdir -p build
 
 	@#Python 2
-	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel --universal -b $(CURDIR)/build -d $(CURDIR)/host-packages; popd
 	@pushd host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 
 	@#Python 3
-	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel --universal -b $(CURDIR)/build -d $(CURDIR)/host-packages; popd
 	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 
 	@echo --- Creating our firmware-binary directory.
@@ -183,6 +189,10 @@ prepare_nightly: firmware
 	@rm firmware-bin/.gitignore
 	@rm firmware-bin/README
 
+
+# Split the second half of the preparation phase; as our wildcards need to be executed -after- the
+# previous step.
+prepare_nightly: prepare_nightly_files
 	@echo --- Preparing the release archives.
 	$(eval FIRMWARE_BIN_FLAGS := $(addprefix --extra=, $(wildcard firmware-bin/*)))
 	$(eval HOST_PACKAGE_FLAGS := $(addprefix --extra=, $(wildcard host-packages/*)))
