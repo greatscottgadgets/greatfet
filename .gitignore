@@ -51,5 +51,10 @@ dist
 host-packages
 host/.eggs
 release-files
+deploy-files
 *.tar.xz
 *.zip
+
+# Never include unencrypted deploy keys.
+id_deploy
+id_deploy.pub

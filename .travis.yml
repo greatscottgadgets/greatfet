@@ -1,96 +1,64 @@
 language: python
-
 matrix:
   include:
-    - os: linux
-      cache: apt
-      dist: xenial
-      python: "2.7"
-    - os: linux
-      cache: apt
-      dist: xenial
-      python: "3.6"
-
-    - os: osx
-      # "Python builds are not available on the macOS environment."
-      # So we tell Travis it's C and run python commands
-      language: c
-      osx_image: xcode11
-      
-
-env:
-  global:
-    - BUILD_NAME="GreatFET-`date --iso-8601`-$TRAVIS_OS_NAME-$TRAVIS_COMMIT"
-    - ARTEFACT_BASE=$TRAVIS_BUILD_DIR/artefacts/
-    - ARTEFACT_PATH=$ARTEFACT_BASE/$BUILD_NAME
-
+  - os: linux
+    cache: apt
+    dist: xenial
+    python: '2.7'
+  - os: linux
+    cache: apt
+    dist: xenial
+    python: '3.6'
+    env: DEPLOY="true"
+  - os: osx
+    language: c
+    osx_image: xcode11
 addons:
   apt:
     packages:
-      - python-usb
-      - python-setuptools
-      - dfu-util
-      - gcc-arm-none-eabi
-      - libnewlib-arm-none-eabi
-      - libstdc++-arm-none-eabi-newlib
-      # - python-yaml
-
+    - python-usb
+    - python-setuptools
+    - dfu-util
+    - gcc-arm-none-eabi
+    - libnewlib-arm-none-eabi
+    - libstdc++-arm-none-eabi-newlib
   homebrew:
     taps: armmbed/formulae
     packages:
-       - arm-none-eabi-gcc
-       - dfu-util
-
+    - arm-none-eabi-gcc
+    - dfu-util
 before_install:
-  - pip install PyYAML
-
+- openssl aes-256-cbc -K $encrypted_3584182e1d21_key -iv $encrypted_3584182e1d21_iv
+  -in id_deploy.enc -out id_deploy -d
+- pip install PyYAML
 before_script:
-  - export CFLAGS="-Wall -Wextra"
-  - export PYTHONPATH="/home/travis/.local/lib/python3.6/site-packages/:/home/travis/.local/lib/python2.7/site-packages/"
-#  - export CFLAGS="-Wall -Wextra -Werror"
-
+- export CFLAGS="-Wall -Wextra"
+- export PYTHONPATH="/home/travis/.local/lib/python3.6/site-packages/:/home/travis/.local/lib/python2.7/site-packages/"
 script:
-  # Host code
-  - python -V
-  - pushd libgreat/host/
-  - python setup.py build
-  - sudo $(which python) setup.py install
-  - popd
-  - pushd host/
-  - python setup.py build
-  - sudo $(which python) setup.py install
-  - popd
-  # - greatfet_info
-  # Firmware
-  - mkdir -p $ARTEFACT_PATH/firmware-bin
-  - mkdir firmware/build-greatfet_one
-  - mkdir firmware/build-nxp_xplorer
-  - mkdir firmware/build-rad1o_badge
-  - cd firmware/libopencm3
-  - make
-  - cd ../build-greatfet_one
-  - cmake ..
-  - make
-  - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/greatfet_usb.bin
-  - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/greatfet_usb.dfu
-  #- cd ../build-nxp_xplorer
-  #- cmake -DBOARD=NXP_XPLORER ..
-  #- make
-  #- cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.bin
-  #- cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/nxp-xplorer_usb.dfu
-  #- cd ../build-rad1o_badge
-  #- cmake -DBOARD=RAD1O_BADGE ..
-  # - make
-  # - cp greatfet_usb/greatfet_usb.bin $ARTEFACT_PATH/firmware-bin/rad1o_usb.bin
-  # - cp greatfet_usb/greatfet_usb.dfu $ARTEFACT_PATH/firmware-bin/rad1o_usb.dfu
-
+- pushd libgreat/host/
+- python setup.py build
+- sudo $(which python) setup.py install
+- popd
+- pushd host/
+- python setup.py build
+- sudo $(which python) setup.py install
+- popd
+- make firmware
+before_deploy:
+- openssl aes-256-cbc -K $encrypted_3584182e1d21_key -iv $encrypted_3584182e1d21_iv
+  -in id_deploy.enc -out id_deploy -d
+- mkdir bin
+- wget https://raw.githubusercontent.com/Kentzo/git-archive-all/master/git_archive_all.py -O bin/git-archive-all
+- chmod +x bin/git-archive-all
+- export PATH=$PATH:$PWD/bin/
+- eval "$(ssh-agent -s)"
+- chmod 600 id_deploy
+- ssh-add id_deploy
+- echo $KNOWN_HOSTS_ENTRIES >> $HOME/.ssh/known_hosts
 deploy:
-  provider: pages
-  verbose: true
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
-  keep-history: true
-  repo: greatscottgadgets/nightly-builds
-  local-dir: $ARTEFACT_BASE
+  provider: script
+  skip_cleanup: true
+  script: make deploy_nightly
   on:
     branch: master
+    condition: $DEPLOY = "true"

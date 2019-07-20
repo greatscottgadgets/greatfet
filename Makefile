@@ -3,6 +3,9 @@
 # This makefile is full of helper functions to get you up and running fast.
 #
 
+# Build using Bash script semantics.
+SHELL := /bin/bash
+
 # By default, use the system's "python" binary.
 PYTHON  ?= python
 PYTHON2 ?= python2
@@ -10,6 +13,11 @@ PYTHON3 ?= python3
 
 # By default, use cmake as cmake.
 CMAKE  ?= cmake
+
+# Used only for deploying nightlies -- only DEPLOY_COMMAND is used in the text below.
+DEPLOY_USER    ?= deploy
+DEPLOY_PATH    ?= ~/nightlies/greatfet
+DEPLOY_COMMAND ?= scp -r * $(DEPLOY_USER)@$(DEPLOY_SERVER):$(DEPLOY_PATH)
 
 all: firmware
 .PHONY: all firmware install full_install install_and_flash menuconfig
@@ -19,10 +27,12 @@ all: firmware
 ARCHIVE_FLAGS = \
 	--extra=VERSION --extra=RELEASENOTES $(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) \
 	--force-submodules --prefix=greatfet-$(VERSION)/
+ARCHIVE_FLAGS_NIGHTLY = \
+	$(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) --force-submodules --prefix=greatfet-$(VERSION)/
 
 
 #
-# Convenience functiont to build our system
+# Convenience targets for our inner build system.
 #
 firmware:
 	# Create a firmware build directory, and configure our build.
@@ -122,3 +132,62 @@ prepare_release: firmware RELEASENOTES
 	@echo
 	@echo And push the relevant packages to Pypi:
 	@echo "    python3 -m twine upload host-packages/*"
+
+
+
+#
+# Deploys a nightly build to the build repository. Intended to help with our Travis environment.
+#
+# Assumes you have a DEPLOY_COMMAND populated that will deploy the contents of the working directory to
+# the remote server.
+#
+deploy_nightly: prepare_nightly
+	$(eval DEPLOY_FILES_PATH := deploy-files/$(shell date +%Y/%m)/)
+
+	@echo --- Creating our deploy files.
+	@mkdir -p $(DEPLOY_FILES_PATH)
+	@cp release-files/* $(DEPLOY_FILES_PATH)
+
+	@echo --- Deploying files to target server.
+	@echo $(DEPLOY_COMMAND)
+	@pushd deploy-files; $(DEPLOY_COMMAND); popd
+
+#
+# Prepares a GreatFET nightly based on the bare source tree.
+#
+prepare_nightly: firmware
+	@mkdir -p release-files/
+	$(eval VERSION := $(shell date -I)-git-$(shell git rev-parse --short HEAD))
+	echo $(VERSION)
+
+	@echo --- Creating our host-python distribution directories
+	@rm -rf host-packages
+	@mkdir -p host-packages
+
+	@#Python 2
+	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@pushd host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+
+	@#Python 3
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+
+	@echo --- Creating our firmware-binary directory.
+	@# Extract the firmware-binaries from the assets folder we've produced.
+	@rm -rf firmware-bin
+	@cp -r host/greatfet/assets firmware-bin
+
+	@# And remove the irreleveant README/.gitignore that have carried over from the assets folder.
+	@rm firmware-bin/.gitignore
+	@rm firmware-bin/README
+
+	@echo --- Preparing the release archives.
+	$(eval FIRMWARE_BIN_FLAGS := $(addprefix --extra=, $(wildcard firmware-bin/*)))
+	$(eval HOST_PACKAGE_FLAGS := $(addprefix --extra=, $(wildcard host-packages/*)))
+	@git-archive-all $(ARCHIVE_FLAGS_NIGHTLY) release-files/greatfet-$(VERSION).tar.xz
+	@git-archive-all $(ARCHIVE_FLAGS_NIGHTLY) release-files/greatfet-$(VERSION).zip
+
+	@echo --- Preparing the relevant hashes to enable deployment.
+	@sha256sum release-files/greatfet-$(VERSION).tar.xz > release-files/greatfet-$(VERSION).tar.xz.sha256
+	@sha256sum release-files/greatfet-$(VERSION).zip > release-files/greatfet-$(VERSION).zip.sha256
+
