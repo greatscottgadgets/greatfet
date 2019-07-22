@@ -60,5 +60,5 @@ deploy:
   skip_cleanup: true
   script: make deploy_nightly
   on:
+    branch: master
     condition: $DEPLOY = "true"
-    all_branches: true
