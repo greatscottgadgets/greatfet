@@ -1,4 +1,4 @@
-# GreatFET
+# GreatFET [![Build Status](https://travis-ci.org/greatscottgadgets/greatfet.svg?branch=master)](https://travis-ci.org/greatscottgadgets/greatfet) [![GitHub license](https://img.shields.io/github/license/greatscottgadgets/greatfet.svg)](https://github.com/greatscottgadgets/greatfet/blob/master/LICENSE) [![GitHub release](https://img.shields.io/github/tag/greatscottgadgets/GreatFET.svg)](https://GitHub.com/greatscottgadgets/greatfet/releases/)
 
 ### firmware and software for the GreatFET project
 
