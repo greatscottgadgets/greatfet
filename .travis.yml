@@ -28,8 +28,6 @@ addons:
     - arm-none-eabi-gcc
     - dfu-util
 before_install:
-- openssl aes-256-cbc -K $encrypted_3584182e1d21_key -iv $encrypted_3584182e1d21_iv
-  -in id_deploy.enc -out id_deploy -d
 - pip install PyYAML
 before_script:
 - export CFLAGS="-Wall -Wextra"
