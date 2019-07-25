@@ -4,46 +4,34 @@
 
 from __future__ import print_function
 
+import sys
 import time
 
 from greatfet.protocol import vendor_requests
 
 
 def main():
-    logfile = 'log.bin'
-#    logfile = '/tmp/fifo'
     from greatfet.utils import GreatFETArgumentParser
-   
+
     # Set up a simple argument parser.
-    parser = GreatFETArgumentParser(description="Utility for experimenting with GreatFET's ADC")
-    parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="Write data to file", default=logfile)
-    parser.add_argument('-a', dest='adc', action='store_true', help="Use internal ADC")
+    parser = GreatFETArgumentParser(description="utility for reading from the GreatFET's ADC")
 
-    args = parser.parse_args()
+    args         = parser.parse_args()
     log_function = parser.get_log_function()
-    device = parser.find_specified_device()
+    device       = parser.find_specified_device()
 
-    if args.adc:
-        device.comms._vendor_request_out(vendor_requests.ADC_INIT)
-    else:
-        device.comms._vendor_request_out(vendor_requests.SDIR_RX_START)
+    if not device.supports_api('adc'):
+        sys.stderr.write("This device doesn't seem to support an ADC. Perhaps your firmware needs to be upgraded?\n")
+        sys.exit(0)
 
-    time.sleep(1)
-    print(device.comms.device)
 
-    with open(args.filename, 'wb') as f:
-        try:
-            while True:
-                d = device.comms.device.read(0x81, 0x4000, 1000)
-                # print(d)
-                f.write(d)
-        except KeyboardInterrupt:
-            pass
+    # TODO: replace me with a proper call to gf.adc
+    sample = device.apis.adc.read_sample(0, 0, 10)
+    reading = (sample / 1024.0) * 3.3
 
-    if not args.adc:
-        device.comms._vendor_request_out(vendor_requests.SDIR_RX_STOP)
+    print("{}V".format(reading))
 
 
 if __name__ == '__main__':
     main()
-    
+
