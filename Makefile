@@ -22,21 +22,45 @@ DEPLOY_USER    ?= deploy
 DEPLOY_PATH    ?= ~/nightlies/greatfet
 DEPLOY_COMMAND ?= scp -r * $(DEPLOY_USER)@$(DEPLOY_SERVER):$(DEPLOY_PATH)
 
+# By default, if RELEASE_VERSION is set, use it as our version.
+VERSION        ?= $(RELEASE_VERSION)
+
 all: firmware
-.PHONY: all firmware install full_install install_and_flash menuconfig
+.PHONY: all firmware install full_install install_and_flash menuconfig prepare_release prepare_release_archives \
+	prepare_nightly versioning clean
+
 
 # Flags for creating build archives.
 # These effectively tell the release tool how to modify git-archive output to create a complete build.
 ARCHIVE_FLAGS = \
-	--extra=VERSION --extra=RELEASENOTES $(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) \
+	$(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) \
 	--force-submodules --prefix=greatfet-$(VERSION)/
-ARCHIVE_FLAGS_NIGHTLY = $(FIRMWARE_BIN_FLAGS) $(HOST_PACKAGE_FLAGS) --force-submodules --prefix=greatfet-$(VERSION)/
 
+#
+# If we have a release version, also include the version and release-notes files.
+#
+ifdef RELEASE_VERSION
+ARCHIVE_FLAGS += --extra=VERSION --extra=RELEASENOTES
+endif
+
+
+# Phony target that handles anything necessary for versioning.
+versioning:
+ifdef RELEASE_VERSION
+			@# Tag a version before we complete this build, if requested.
+			@echo Tagging release $(VERSION).
+			@git tag -a v$(VERSION) -m "release $(VERSION)" $(TAG_OPTIONS)
+			@git -C libgreat tag -a v$(VERSION) -m "release $(VERSION)" $(TAG_OPTIONS)
+			@echo "$(VERSION)" > VERSION
+			@echo "$(VERSION)" > libgreat/VERSION
+endif
 
 #
 # Convenience targets for our inner build system.
 #
-firmware:
+firmware: versioning
+
+
 	# Create a firmware build directory, and configure our build.
 	@mkdir -p firmware/build
 	pushd firmware/build; cmake ..; popd
@@ -90,14 +114,13 @@ libgreat/README.md:
 #
 # Prepares a GreatFET release based on the VERSION arguments and based on a RELEASENOTES file.
 #
-prepare_release_files: firmware RELEASENOTES
+prepare_release_files: firmware
 	@mkdir -p release-files/
 
-	@echo Tagging release $(VERSION).
-	@git tag -a v$(VERSION) -m "release $(VERSION)" $(TAG_OPTIONS)
-	@git -C libgreat tag -a v$(VERSION) -m "release $(VERSION)" $(TAG_OPTIONS)
-	@echo "$(VERSION)" > VERSION
-	@echo "$(VERSION)" > libgreat/VERSION
+ifndef RELEASE_VERSION
+	# If we don't have a version, create a nightly-style version.
+	$(eval VERSION := $(shell date -I)-build_$(BUILD_NUMBER)-git_$(shell git rev-parse --short HEAD))
+endif
 
 	@echo --- Creating our host-python distribution directories
 	@rm -rf host-packages
@@ -125,12 +148,29 @@ prepare_release_files: firmware RELEASENOTES
 
 # Split the second half of the preparation phase; as our wildcards need to be executed -after- the
 # previous step.
-prepare_release: prepare_release_files RELEASENOTES
+prepare_release_archives: prepare_release_files
 	@echo --- Preparing the release archives.
 	$(eval FIRMWARE_BIN_FLAGS := $(addprefix --extra=, $(wildcard firmware-bin/*)))
 	$(eval HOST_PACKAGE_FLAGS := $(addprefix --extra=, $(wildcard host-packages/*)))
 	@git-archive-all $(ARCHIVE_FLAGS) release-files/greatfet-$(VERSION).tar.xz
 	@git-archive-all $(ARCHIVE_FLAGS) release-files/greatfet-$(VERSION).zip
+
+	@# Generate hash files.
+	@echo --- Preparing the relevant hashes to enable distribution.
+	@pushd release-files > /dev/null; sha256sum greatfet-$(VERSION).tar.xz > greatfet-$(VERSION).tar.xz.sha256; popd > /dev/null
+	@pushd release-files > /dev/null; sha256sum greatfet-$(VERSION).zip > greatfet-$(VERSION).zip.sha256; popd > /dev/null
+
+
+
+#
+# prepare_release generates the actual release, and then prints instructions.
+#
+prepare_release: RELEASENOTES prepare_release_archives
+
+	@# If no tag was supplied, warn the user.
+ifndef RELEASE_VERSION
+		$(warning Preapring a release without tagging a version -- this likely isn't what you want!)
+endif
 
 	@echo
 	@echo Archives seem to be ready in ./release-files.
@@ -141,6 +181,12 @@ prepare_release: prepare_release_files RELEASENOTES
 	@echo And push the relevant packages to Pypi:
 	@echo "    python3 -m twine upload host-packages/*"
 
+
+#
+# prepare_nightly is mostly a convenience stub; but it may give us a place to
+#
+prepare_nightly: prepare_release_archives
+	@echo --- Nightly prepared.
 
 
 #
@@ -159,47 +205,18 @@ deploy_nightly: prepare_nightly
 	@echo --- Deploying files to target server.
 	@pushd deploy-files; $(DEPLOY_COMMAND); popd
 
+
+
 #
-# Prepares a GreatFET nightly based on the bare source tree.
+# Pseudo-target for cleaning a build.
 #
-prepare_nightly_files: firmware
-	@mkdir -p release-files/
-	$(eval VERSION := $(shell date -I)-build_$(BUILD_NUMBER)-git_$(shell git rev-parse --short HEAD))
+clean:
 
-	@echo --- Creating our host-python distribution directories.
-	@rm -rf host-packages
-	@rm -rf build
-	@mkdir -p host-packages
-	@mkdir -p build
+	# Temporary: ensure libopencm3 is cleaned.
+	$(MAKE) -C firmware/libopencm3 -j$(nproc) clean
 
-	@#Python 2
-	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel --universal -b $(CURDIR)/build -d $(CURDIR)/host-packages; popd
-	@pushd host; $(PYTHON2) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	# Clean our firmware build.
+	$(MAKE) -C firmware/build -j$(nproc) clean
 
-	@#Python 3
-	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel --universal -b $(CURDIR)/build -d $(CURDIR)/host-packages; popd
-	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
-
-	@echo --- Creating our firmware-binary directory.
-	@# Extract the firmware-binaries from the assets folder we've produced.
-	@rm -rf firmware-bin
-	@cp -r host/greatfet/assets firmware-bin
-
-	@# And remove the irreleveant README/.gitignore that have carried over from the assets folder.
-	@rm firmware-bin/.gitignore
-	@rm firmware-bin/README
-
-
-# Split the second half of the preparation phase; as our wildcards need to be executed -after- the
-# previous step.
-prepare_nightly: prepare_nightly_files
-	@echo --- Preparing the release archives.
-	$(eval FIRMWARE_BIN_FLAGS := $(addprefix --extra=, $(wildcard firmware-bin/*)))
-	$(eval HOST_PACKAGE_FLAGS := $(addprefix --extra=, $(wildcard host-packages/*)))
-	@git-archive-all $(ARCHIVE_FLAGS_NIGHTLY) release-files/greatfet-$(VERSION).tar.xz
-	@git-archive-all $(ARCHIVE_FLAGS_NIGHTLY) release-files/greatfet-$(VERSION).zip
-
-	@echo --- Preparing the relevant hashes to enable deployment.
-	@pushd release-files > /dev/null; sha256sum greatfet-$(VERSION).tar.xz > greatfet-$(VERSION).tar.xz.sha256; popd > /dev/null
-	@pushd release-files > /dev/null; sha256sum greatfet-$(VERSION).zip > greatfet-$(VERSION).zip.sha256; popd > /dev/null
-
+	# Clean out our created files and directories.
+	rm -rf VERSION firmware-bin host-packages release-files distro-packages *.egg-info CMakeFiles

@@ -13,9 +13,6 @@ if (NOT(VERSION_LOCAL_SUFFIX STREQUAL ""))
     set(VERSION "${VERSION}-${VERSION_SUFFIX}")
 endif()
 
-# FIXME: handle versioning correctly
-set(VERSION_STRING "git-${VERSION}")
-
 # Set the maximum depth of a debug backtrace.
 set(DEBUG_MAX_BACKTRACE_DEPTH 25 CACHE STRING "The maximum depth of a backtrace to report, if backtracing is enabled.")
 configuration_depends_on_features(DEBUG_MAX_BACKTRACE_DEPTH BACKTRACE)
