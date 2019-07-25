@@ -10,7 +10,8 @@ set(VERSION_LOCAL_SUFFIX "" CACHE STRING "A local suffix added to version number
 
 # If we have a version suffix, include it in our build version-ing.
 if (NOT(VERSION_LOCAL_SUFFIX STREQUAL ""))
-    set(VERSION "${VERSION}-${VERSION_SUFFIX}")
+    set(VERSION "${VERSION}-${VERSION_LOCAL_SUFFIX}")
+    set(VERSION_STRING "${VERSION_STRING}-${VERSION_LOCAL_SUFFIX}")
 endif()
 
 # Set the maximum depth of a debug backtrace.

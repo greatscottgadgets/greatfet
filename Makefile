@@ -25,6 +25,10 @@ DEPLOY_COMMAND ?= scp -r * $(DEPLOY_USER)@$(DEPLOY_SERVER):$(DEPLOY_PATH)
 # By default, if RELEASE_VERSION is set, use it as our version.
 VERSION        ?= $(RELEASE_VERSION)
 
+# Allow for easy specification of a version suffix, if desired.
+VERSION_SUFFIX   ?= ""
+
+
 all: firmware
 .PHONY: all firmware install full_install install_and_flash menuconfig prepare_release prepare_release_archives \
 	prepare_nightly versioning clean
@@ -63,7 +67,7 @@ firmware: versioning
 
 	# Create a firmware build directory, and configure our build.
 	@mkdir -p firmware/build
-	pushd firmware/build; cmake ..; popd
+	pushd firmware/build; cmake .. -DVERSION_LOCAL_SUFFIX=$(VERSION_SUFFIX); popd
 
 	# Temporary: ensure libopencm3 is built.
 	$(MAKE) -C firmware/libopencm3 -j$(nproc)

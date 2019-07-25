@@ -55,8 +55,7 @@ before_deploy:
 - echo $KNOWN_HOSTS_ENTRIES >> $HOME/.ssh/known_hosts
 deploy:
   provider: script
-  skip_cleanup: true
-  script: make deploy_nightly
+  script: make deploy_nightly VERSION_SUFFIX="auto-nightly"
   on:
     branch: master
     condition: $DEPLOY = "true"
