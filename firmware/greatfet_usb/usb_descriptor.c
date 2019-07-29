@@ -58,8 +58,8 @@ uint8_t usb0_descriptor_device_qualifier[] = {
 uint8_t usb0_descriptor_configuration_full_speed[] = {
 	9,					// bLength
 	USB_DESCRIPTOR_TYPE_CONFIGURATION,	// bDescriptorType
-	USB_WORD(32),				// wTotalLength
-	0x01,					// bNumInterfaces
+	USB_WORD(41),				// wTotalLength
+	0x02,					// bNumInterfaces
 	0x01,					// bConfigurationValue
 	0x00,					// iConfiguration
 	0x80,					// bmAttributes: USB-powered
@@ -68,6 +68,16 @@ uint8_t usb0_descriptor_configuration_full_speed[] = {
 	9,							// bLength
 	USB_DESCRIPTOR_TYPE_INTERFACE,		// bDescriptorType
 	0x00,							// bInterfaceNumber
+	0x00,							// bAlternateSetting
+	0x00,							// bNumEndpoints
+	0xFF,							// bInterfaceClass: vendor-specific
+	0xFF,							// bInterfaceSubClass
+	0xFF,							// bInterfaceProtocol: vendor-specific
+	0x00,							// iInterface
+
+	9,							// bLength
+	USB_DESCRIPTOR_TYPE_INTERFACE,		// bDescriptorType
+	0x01,							// bInterfaceNumber
 	0x00,							// bAlternateSetting
 	0x02,							// bNumEndpoints
 	0xFF,							// bInterfaceClass: vendor-specific
@@ -95,8 +105,8 @@ uint8_t usb0_descriptor_configuration_full_speed[] = {
 uint8_t usb0_descriptor_configuration_high_speed[] = {
 	9,							// bLength
 	USB_DESCRIPTOR_TYPE_CONFIGURATION,	// bDescriptorType
-	USB_WORD(32),						// wTotalLength
-	0x01,							// bNumInterfaces
+	USB_WORD(41),						// wTotalLength
+	0x02,							// bNumInterfaces
 	0x01,							// bConfigurationValue
 	0x00,							// iConfiguration
 	0x80,							// bmAttributes: USB-powered
@@ -105,6 +115,16 @@ uint8_t usb0_descriptor_configuration_high_speed[] = {
 	9,							// bLength
 	USB_DESCRIPTOR_TYPE_INTERFACE,		// bDescriptorType
 	0x00,							// bInterfaceNumber
+	0x00,							// bAlternateSetting
+	0x00,							// bNumEndpoints
+	0xFF,							// bInterfaceClass: vendor-specific
+	0xFF,							// bInterfaceSubClass
+	0xFF,							// bInterfaceProtocol: vendor-specific
+	0x00,							// iInterface
+
+	9,							// bLength
+	USB_DESCRIPTOR_TYPE_INTERFACE,		// bDescriptorType
+	0x01,							// bInterfaceNumber
 	0x00,							// bAlternateSetting
 	0x02,							// bNumEndpoints
 	0xFF,							// bInterfaceClass: vendor-specific
