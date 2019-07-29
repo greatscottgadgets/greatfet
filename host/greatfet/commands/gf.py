@@ -30,6 +30,10 @@ def looks_like_valid_greatfet_subcommand(directory, executable):
     if not executable.startswith(GREATFET_PREFIX):
         return False
 
+    # Windows likes to put the binaries right next to their .py scripts
+    if executable.endswith('.py'):
+        return False
+
     # Valid GreatFET subcommands are files.
     if not os.path.isfile(full_path):
         return False
@@ -73,6 +77,10 @@ def find_all_subcommands():
 
                 # Cache the relationships between subcommands and their executables.
                 full_path = os.path.join(directory, executable)
+
+                # Strip .exe suffix if applicable
+                executable = executable[:-4] if executable.endswith('.exe') else executable
+
                 subcommand_name = executable[len(GREATFET_PREFIX):]
                 subcommands[subcommand_name] = full_path
 
