@@ -47,7 +47,7 @@ before_deploy:
 - openssl aes-256-cbc -K $encrypted_3584182e1d21_key -iv $encrypted_3584182e1d21_iv
   -in id_deploy.enc -out id_deploy -d
 - mkdir bin
-- sudo pip3 install git-archive-all
+- sudo $(which python) -m pip install git-archive-all
 - eval "$(ssh-agent -s)"
 - chmod 600 id_deploy
 - ssh-add id_deploy
