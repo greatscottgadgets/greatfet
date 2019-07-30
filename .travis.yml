@@ -46,9 +46,7 @@ before_deploy:
 - openssl aes-256-cbc -K $encrypted_3584182e1d21_key -iv $encrypted_3584182e1d21_iv
   -in id_deploy.enc -out id_deploy -d
 - mkdir bin
-- wget https://raw.githubusercontent.com/Kentzo/git-archive-all/master/git_archive_all.py -O bin/git-archive-all
-- chmod +x bin/git-archive-all
-- export PATH=$PATH:$PWD/bin/
+- sudo pip install git-archive-all
 - eval "$(ssh-agent -s)"
 - chmod 600 id_deploy
 - ssh-add id_deploy
