@@ -22,6 +22,7 @@ addons:
     - gcc-arm-none-eabi
     - libnewlib-arm-none-eabi
     - libstdc++-arm-none-eabi-newlib
+    - liblzma5
   homebrew:
     taps: armmbed/formulae
     packages:
