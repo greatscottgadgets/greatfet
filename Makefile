@@ -29,6 +29,8 @@ VERSION        ?= $(RELEASE_VERSION)
 VERSION_SUFFIX   ?= ""
 
 
+
+
 all: firmware
 .PHONY: all firmware install full_install install_and_flash menuconfig prepare_release prepare_release_archives \
 	prepare_nightly versioning clean
@@ -50,6 +52,14 @@ endif
 
 # Phony target that handles anything necessary for versioning.
 versioning:
+ifdef USE_NIGHTLY_VERSIONING
+			$(eval VERSION := $(shell date -I)-build_$(BUILD_NUMBER)-git_$(shell git rev-parse --short HEAD))
+ifdef VERSION_SUFFIX
+			$(eval VERSION := $(VERSION)-$(VERSION_SUFFIX))
+endif
+			@echo "$(VERSION)" > VERSION
+			@echo "$(VERSION)" > libgreat/VERSION
+endif
 ifdef RELEASE_VERSION
 			@# Tag a version before we complete this build, if requested.
 			@echo Tagging release $(VERSION).
@@ -63,7 +73,6 @@ endif
 # Convenience targets for our inner build system.
 #
 firmware: versioning
-
 
 	# Create a firmware build directory, and configure our build.
 	@mkdir -p firmware/build
@@ -140,6 +149,10 @@ endif
 	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 
+	@# Create files for e.g. the nightly.
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/release-files; popd
+	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/release-files; popd
+
 	@echo --- Creating our firmware-binary directory.
 	@# Extract the firmware-binaries from the assets folder we've produced.
 	@rm -rf firmware-bin
@@ -187,7 +200,7 @@ endif
 
 
 #
-# prepare_nightly is mostly a convenience stub; but it may give us a place to
+# prepare_nightly is mostly a convenience stub; but it may give us a place to hook things.
 #
 prepare_nightly: prepare_release_archives
 	@echo --- Nightly prepared.
