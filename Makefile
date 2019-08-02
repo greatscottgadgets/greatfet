@@ -20,15 +20,17 @@ BUILD_NUMBER ?= $(TRAVIS_BUILD_NUMBER)
 # Used only for deploying nightlies -- only DEPLOY_COMMAND is used in the text below.
 DEPLOY_USER    ?= deploy
 DEPLOY_PATH    ?= ~/nightlies/greatfet
-DEPLOY_COMMAND ?= scp -r * $(DEPLOY_USER)@$(DEPLOY_SERVER):$(DEPLOY_PATH)
+DEPLOY_COMMAND ?= scp -q -r * $(DEPLOY_USER)@$(DEPLOY_SERVER):$(DEPLOY_PATH)
 
 # By default, if RELEASE_VERSION is set, use it as our version.
 VERSION        ?= $(RELEASE_VERSION)
 
 # Allow for easy specification of a version suffix, if desired.
-VERSION_SUFFIX   ?= ""
-
-
+ifdef VERSION_SUFFIX
+VERSION_WITH_SUFFIX = "$(VERSION)-$(VERSION_SUFFIX)"
+else
+VERSION_WITH_SUFFIX = $(VERSION)
+endif
 
 
 all: firmware
@@ -54,11 +56,8 @@ endif
 versioning:
 ifdef USE_NIGHTLY_VERSIONING
 			$(eval VERSION := $(shell date -I)-build_$(BUILD_NUMBER)-git_$(shell git rev-parse --short HEAD))
-ifdef VERSION_SUFFIX
-			$(eval VERSION := $(VERSION)-$(VERSION_SUFFIX))
-endif
-			@echo "$(VERSION)" > VERSION
-			@echo "$(VERSION)" > libgreat/VERSION
+			@echo "$(VERSION_WITH_SUFFIX)" > VERSION
+			@echo "$(VERSION_WITH_SUFFIX)" > libgreat/VERSION
 endif
 ifdef RELEASE_VERSION
 			@# Tag a version before we complete this build, if requested.
