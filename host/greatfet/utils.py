@@ -44,6 +44,7 @@ def log_verbose(string, end="\n"):
     print(string, end=end)
     sys.stdout.flush()
 
+
 def log_error(string, end="\n"):
     """ Prints errors to stderr. """
 
@@ -105,9 +106,6 @@ def from_eng_notation(string, unit=None, units=None, to_type=None):
         result = to_type(result)
 
     return result
-
-
-
 
 
 

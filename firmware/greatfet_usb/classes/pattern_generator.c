@@ -8,6 +8,7 @@
 
 #include <drivers/sgpio.h>
 #include <drivers/usb/usb.h>
+#include <drivers/gpio.h>
 #include <drivers/usb/usb_queue.h>
 
 #include "../usb_bulk_buffer.h"
@@ -108,7 +109,8 @@ static sgpio_t generator  = {
  * @param data A pointer to the data to be shifted out, or NULL if the data's already been loaded into our buffer.
  * @param data_length The length of the pattern to be shifted out. Must be a binary number for rapid repeating.
  */
-static int start_fixed_pattern_generation(uint32_t sample_rate, uint8_t bus_width, void *data, uint32_t data_length)
+static int start_fixed_pattern_generation(uint32_t sample_rate, uint8_t bus_width, void *data,
+		uint32_t data_length, bool repeat)
 {
 	int rc;
 
@@ -136,6 +138,15 @@ static int start_fixed_pattern_generation(uint32_t sample_rate, uint8_t bus_widt
 	pattern_generator_functions[0].shift_clock_frequency = sample_rate;
 	pattern_generator_functions[0].bus_width             = bus_width;
 
+	// ... configure if we're repeating or one-shot'ing ...
+	if (repeat) {
+		pattern_generator_functions[0].shift_count_limit = 0;
+		pr_info("pattern gen: not limiting runtime\n");
+	} else {
+		pattern_generator_functions[0].shift_count_limit = (data_length * 8) / bus_width;
+		pr_info("pattern gen: limiting runtime to %d shifts!\n", pattern_generator_functions[0].shift_count_limit);
+	}
+
 	// ... and configure the SGPIO hardware to issue our pattern.
 	pattern_generator_functions[0].mode = SGPIO_MODE_FIXED_DATA_OUT;
 	rc = sgpio_set_up_functions(&generator);
@@ -156,6 +167,7 @@ static int verb_generate_simple_pattern(struct command_transaction *trans)
 
 	uint32_t sample_rate = comms_argument_parse_uint32_t(trans);
 	uint8_t  bus_width   = comms_argument_parse_uint8_t(trans);
+	bool     repeat      = comms_argument_parse_bool(trans);
 
 	if (!comms_transaction_okay(trans)) {
 		return EINVAL;
@@ -169,7 +181,7 @@ static int verb_generate_simple_pattern(struct command_transaction *trans)
 	}
 
 	// ... and set up a simple pattern.
-	return start_fixed_pattern_generation(sample_rate, bus_width, data, total_data);
+	return start_fixed_pattern_generation(sample_rate, bus_width, data, total_data, repeat);
 }
 
 
@@ -214,13 +226,14 @@ static int verb_generate_pattern(struct command_transaction *trans)
 	uint32_t sample_rate = comms_argument_parse_uint32_t(trans);
 	uint8_t  bus_width   = comms_argument_parse_uint8_t(trans);
 	uint32_t total_data  = comms_argument_parse_uint32_t(trans);
+	bool     repeat      = comms_argument_parse_bool(trans);
 
 	if (!comms_transaction_okay(trans)) {
 		return EINVAL;
 	}
 
 	// Generate the pattern directly from our USB buffer.
-	return start_fixed_pattern_generation(sample_rate, bus_width, NULL, total_data);
+	return start_fixed_pattern_generation(sample_rate, bus_width, NULL, total_data, repeat);
 }
 
 
@@ -265,12 +278,12 @@ static struct comms_verb pattern_generator_verbs[] = {
 
 	/* Shortcut for short patterns. */
 	{ .name = "generate_simple_pattern", .handler = verb_generate_simple_pattern,
-		.in_signature = "<IB*X", .out_signature = "", .in_param_names = "sample_rate_hz, num_channels, data",
-		.doc = "Sets the GreatFET to repeatedly emit a short pattern.\n\n"
+		.in_signature = "<IB*X?", .out_signature = "", .in_param_names = "sample_rate_hz, num_channels, data, repeat",
+		.doc = "Sets the GreatFET to emit a short pattern.\n\n"
 			"    sample_rate_hz -- The target sample rate, in Hz.\n"
 			"    num_channels -- The number of channels to emit; up to 8.\n"
-			"    data -- The packed data to emit. Must be sized to a binary number of bytes." },
-
+			"    data -- The packed data to emit. \n"
+			"    repeat -- If set, the pattern will be emitted repeatedly. The pattern must be sized to a binary number of bytes." },
 
 	/* Upload and scan-out longer patterns. */
 	{ .name = "upload_samples", .handler = verb_upload_samples,
@@ -279,11 +292,12 @@ static struct comms_verb pattern_generator_verbs[] = {
 			"    offset_into_buffer -- The offset into the sample buffer, in bytes..\n"
 			"    samples -- The packed samples to be uploaded; usually up to around 4096 samples.\n" },
 	{ .name = "generate_pattern", .handler = verb_generate_pattern,
-		.in_signature = "<IBI", .out_signature = "", .in_param_names = "sample_rate_hz, num_channels, pattern_length",
+		.in_signature = "<IBI?", .out_signature = "", .in_param_names = "sample_rate_hz, num_channels, pattern_length",
 		.doc = "Sets the GreatFET to repeatedly emit a short pattern.\n\n"
 			"    sample_rate_hz -- The target sample rate, in Hz.\n"
 			"    num_channels -- The number of channels to emit; up to 8.\n"
-			"    pattern_length -- The length of the relevant pattern, in samples." },
+			"    pattern_length -- The length of the relevant pattern, in samples."
+			"    repeat -- If set, the pattern will be emitted repeatedly. The pattern must be sized to a binary number of bytes." },
 
 
 	/* Debug. */

@@ -338,7 +338,7 @@ static int verb_stop(struct command_transaction *trans)
 {
 	(void)trans;
 
-	// Halt transmission / reciept.
+	// Halt transmission / receipt.
 	usb_streaming_stop_streaming_to_host();
 	return terminate_sdir();
 }
@@ -346,7 +346,7 @@ static int verb_stop(struct command_transaction *trans)
 
 static struct comms_verb _verbs[] = {
 		{  .name = "start_receive", .handler = verb_start_receive, .in_signature = "", .out_signature = "",
-           .doc = "Start reciept of SDIR data on the primary bulk comms pipe." },
+           .doc = "Start receipt of SDIR data on the primary bulk comms pipe." },
 		{  .name = "stop", .handler = verb_stop, .in_signature = "", .out_signature = "",
            .doc = "Halt SDIR communications; termianting any active communications" },
 

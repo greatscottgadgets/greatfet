@@ -15,7 +15,10 @@
 
 enum {
 	USB_STREAMING_NUM_BUFFERS = 2,
-	USB_STREAMING_BUFFER_SIZE = 0x4000,
+
+	// FIXME: halve this when doing both in and out
+	USB_STREAMING_BUFFER_SIZE    = 0x4000,
+	USB_STREAMING_MIN_TRANSFER_SIZE = 32,
 
 	USB_STREAMING_IN_ADDRESS  = 0x81,
 	USB_STREAMING_OUT_ADDRESS = 0x02,
@@ -30,7 +33,8 @@ void service_usb_streaming(void);
 /**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
  */
-void usb_streaming_start_streaming_to_host(uint32_t *user_position_in_buffer, uint32_t *user_data_in_buffer);
+void usb_streaming_start_streaming_to_host(uint32_t *volatile user_position_in_buffer,
+	uint32_t *volatile user_data_in_buffer);
 
 
 /**

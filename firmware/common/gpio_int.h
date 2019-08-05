@@ -8,7 +8,6 @@
 #define __GPIO_INT_H__
 
 #include <stdint.h>
-#include <libopencm3/cm3/vector.h>
 #include <libopencm3/lpc43xx/scu.h>
 
 
@@ -49,6 +48,8 @@
 #define GPIO_PIN_INTERRUPT_IST          MMIO32(GPIO_PIN_INTERRUPT_BASE + 0x024)
 
 
+
+
 /**
  * Enumeration describing the types of GPIO interrupts we support.
  */
@@ -78,7 +79,7 @@ typedef enum gpio_interrupt_sensitivity gpio_interrupt_sensitivity_t;
  */
 void gpio_interrupt_configure(int gpio_int_number, int port_number,
     int pin_number, gpio_interrupt_sensitivity_t sensitivity,
-    vector_table_entry_t isr, int interrupt_priority);
+    void *isr, int interrupt_priority);
 
 
 /**

@@ -39,6 +39,21 @@ void sgpio_isr_input() {
 	// Which has equivalent shadow register offsets:
 	//     44 -> 20 -> 40 -> 8 -> 36 -> 16 -> 32 -> 0
 
+// 0  <-- 7   r1
+// 4          r2
+// 8  <-- 3   r3
+// 12         r4
+// 16 <-- 5   r5
+// 20 <-- 1   r6
+// 24         r7
+// 28         r8
+// 32 <-- 6   r9
+// 36 <-- 4   r10
+// 40 <-- 2   r11
+// 44 <-- 0   r12
+
+//12 -> 6 -> 11 -> 3 -> 10 -> 5 -> 9 -> 1
+
 	uint32_t* const p = (uint32_t*)&usb_bulk_buffer[usb_bulk_buffer_offset];
 	__asm__(
 		"ldr r0, [%[SGPIO_REG_SS], #44]\n\t"

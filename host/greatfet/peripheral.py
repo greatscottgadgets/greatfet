@@ -6,4 +6,9 @@ class GreatFETPeripheral(object):
     """
     Generic base class for GreatFET peripherals.
     """
-    pass
+
+
+    def __init__(self, device):
+        """ Default peripheral initializer -- just stores a reference to the relevant GreatFET. """
+
+        self.device = device

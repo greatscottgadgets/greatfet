@@ -55,6 +55,8 @@ setup(
             'greatfet_msp430 = greatfet.commands.greatfet_msp430:main',
             'greatfet_host-tools = greatfet.commands.greatfet_host_tools:main',
             'greatfet_pattern = greatfet.commands.greatfet_pattern:main',
+            'greatfet_loadable = greatfet.commands.greatfet_loadable:main',
+            'greatfet_usb_capture = greatfet.commands.greatfet_usb_capture:main',
         ],
     },
     author='Great Scott Gadgets',

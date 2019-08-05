@@ -39,7 +39,7 @@ class PatternGenerator(GreatFETPeripheral):
             self.api.upload_samples(offset, chunk)
 
 
-    def scan_out_pattern(self, samples):
+    def scan_out_pattern(self, samples, repeat=True):
         """ Sends a collection of fixed samples to the board, and then instructs it to repeatedly """
 
         samples = bytes(samples)
@@ -48,7 +48,7 @@ class PatternGenerator(GreatFETPeripheral):
         self._upload_samples(samples)
 
         # ... and then trigger the scan-out itself.
-        self.api.generate_pattern(self.sample_rate, self.bus_width, len(samples))
+        self.api.generate_pattern(self.sample_rate, self.bus_width, len(samples), repeat)
 
 
     def stop(self):

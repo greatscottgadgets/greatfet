@@ -10,7 +10,6 @@ from ..peripherals.firmware import DeviceFirmwareManager
 from ..peripherals.pattern_generator import PatternGenerator
 from ..peripherals.sdir import SDIRTransceiver
 
-from ..glitchkit import *
 
 
 
@@ -145,16 +144,10 @@ class GreatFETOne(GreatFETBoard):
         # Set up the core connection.
         super(GreatFETOne, self).initialize_apis()
 
-        # TODO: Abstract the below into a 'pull out standard peripherals'
-        # method?
+        # Create our simple peripherals.
+        self._populate_simple_peripherals()
 
         # Initialize the fixed peripherals that come on the board.
-        # TODO: Use a self.add_peripheral mechanism, so peripherals can
-        # be dynamically listed?
-        if self.supports_api('firmware'):
-            self.onboard_flash = DeviceFirmwareManager(self)
-
-
         # Populate the per-board GPIO.
         if self.supports_api("gpio"):
             self._populate_gpio()
@@ -163,25 +156,13 @@ class GreatFETOne(GreatFETBoard):
             self._populate_adc()
 
         if self.supports_api('i2c'):
-            self.i2c_busses = [ I2CBus(self, 'I2C0') ]
-            self.i2c = self.i2c_busses[0]
+            self._add_peripheral('i2c_busses', [ I2CBus(self, 'I2C0') ])
+            self._add_peripheral('i2c', self.i2c_busses[0])
 
         if self.supports_api('spi'):
-            self.spi_busses = [ SPIBus(self, 'SPI1') ]
-            self.spi = self.spi_busses[0]
-
-        # Set up a pattern-generator object with all default arguments, for quick user use.
-        if self.supports_api('pattern_generator'):
-            self.pattern_generator = PatternGenerator(self)
-
-        if self.supports_api('sdir'):
-            self.sdir = SDIRTransceiver(self)
+            self._add_peripheral('spi_busses', [ SPIBus(self, 'SPI1') ])
+            self._add_peripheral('spi', self.spi_busses[0])
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)
-
-        # Add any GlitchKit modules we support.
-        if self.supports_api("glitchkit"):
-            self.glitchkit = GlitchKitCollection(self)
-
 

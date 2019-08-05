@@ -23,9 +23,13 @@
 
 
 static bool usb_streaming_enabled = false;
+static unsigned int phase = 1;
 
-static uint32_t *position_in_buffer;
-static uint32_t *data_in_buffer;
+static uint32_t *volatile position_in_buffer;
+static uint32_t *volatile data_in_buffer;
+volatile uint32_t debug_data;
+
+uint32_t read_position;
 
 
 // XXX
@@ -50,27 +54,29 @@ static int streaming_schedule_usb_transfer_in(int buffer_number)
 	unsigned overrun_threeshold = (USB_STREAMING_NUM_BUFFERS- 1) * USB_STREAMING_BUFFER_SIZE;
 
 	// If we don't have a full buffer of data to transmit, we can't send anything yet. Bail out.
-	if (*data_in_buffer < USB_STREAMING_BUFFER_SIZE) {
+	if (data_in_buffer && (*data_in_buffer < USB_STREAMING_BUFFER_SIZE)) {
 		return EAGAIN;
 	}
 
 	// Otherwise, transmit the relevant (complete) buffer...
 	usb_transfer_schedule_wait(
 		&usb0_endpoint_bulk_in,
- 		&usb_bulk_buffer[buffer_number * USB_STREAMING_BUFFER_SIZE],
+		&usb_bulk_buffer[buffer_number * USB_STREAMING_BUFFER_SIZE],
 		USB_STREAMING_BUFFER_SIZE, 0, 0, 0);
 
 	// ... and mark those samples as no longer pending transfer.
-	cm_disable_interrupts();
-	*data_in_buffer -= USB_STREAMING_BUFFER_SIZE;
-	cm_enable_interrupts();
+	if (data_in_buffer) {
+		cm_disable_interrupts();
+		*data_in_buffer -= USB_STREAMING_BUFFER_SIZE;
+		cm_enable_interrupts();
 
-	// Basic overrun detection: if we have more than our threshold remaining after
-	// consuming a buffer (really, passing it to the USB hardware for transmission),
-	// then we overran.
-	if (*data_in_buffer > overrun_threeshold) {
-		pr_error("logic analyzer: overrun detected (%u data writes to buffer)!\n", *data_in_buffer);
-		usb_endpoint_stall(&usb0_endpoint_bulk_in);
+		// Basic overrun detection: if we have more than our threshold remaining after
+		// consuming a buffer (really, passing it to the USB hardware for transmission),
+		// then we overran.
+		if (*data_in_buffer > overrun_threeshold) {
+			pr_error("logic analyzer: overrun detected (%u data writes to buffer)!\n", *data_in_buffer);
+			usb_endpoint_stall(&usb0_endpoint_bulk_in);
+		}
 	}
 
 	return 0;
@@ -79,7 +85,6 @@ static int streaming_schedule_usb_transfer_in(int buffer_number)
 
 static void service_usb_streaming_in(void)
 {
-	static unsigned int phase = 1;
 	static unsigned int transfers = 0;
 	int rc;
 
@@ -127,13 +132,16 @@ void service_usb_streaming(void)
 /**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
  */
-void usb_streaming_start_streaming_to_host(uint32_t *user_position_in_buffer, uint32_t *user_data_in_buffer)
+void usb_streaming_start_streaming_to_host(uint32_t *volatile user_position_in_buffer,
+	uint32_t *volatile user_data_in_buffer)
 {
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
 	// Store our references to the user variables to be updated.
 	position_in_buffer = user_position_in_buffer;
 	data_in_buffer     = user_data_in_buffer;
+
+	phase = (*position_in_buffer > USB_STREAMING_BUFFER_SIZE) ? 0 : 1;
 
 	// And enable USB streaming.
 	// FIXME: support out streaming, too
@@ -149,6 +157,8 @@ void usb_streaming_stop_streaming_to_host()
 {
 	usb_streaming_enabled = false;
 	usb_endpoint_disable(&usb0_endpoint_bulk_in);
+
+	pr_info("Position in buffer: %08x\n", *position_in_buffer);
 
 	led_off(LED4);
 }

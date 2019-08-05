@@ -67,6 +67,8 @@ def main():
                          dest='bus_width', help='the width of the bus, in bits; up to 16 [default: 8]')
     parser.add_argument('-f', '--samplerate', metavar='samples_per_second', type=int_from_msps, default=1000000,
                          dest='sample_rate', help='samples to emit per second; up to 204MSPS [default: 1MSPS]')
+    parser.add_argument('--oneshot', dest='repeat', action='store_false',
+                         help='If provided, the given pattern will be shifted out only once.')
     parser.add_argument('--debug-sgpio', dest='debug_sgpio', action='store_true',
                          help='Developer option for debugging; dumps the SGPIO configuration after starting.')
 
@@ -93,7 +95,7 @@ def main():
 
     # If the generator has generated samples, scan them out.
     if samples:
-        pattern_generator.scan_out_pattern(samples)
+        pattern_generator.scan_out_pattern(samples, args.repeat)
 
     # If we've been asked to dump our SGPIO configuration, do so.
     if args.debug_sgpio:

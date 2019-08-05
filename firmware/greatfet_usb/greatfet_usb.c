@@ -24,6 +24,7 @@
 #include "classes/heartbeat.h"
 #include "usb_streaming.h"
 #include "glitchkit.h"
+#include "rhododendron.h"
 
 #include <rom_iap.h>
 #include "usb_descriptor.h"
@@ -36,6 +37,8 @@
 
 #include <drivers/platform_clock.h>
 #include <drivers/memory/allocator.h>
+
+
 
 void emergency_mode(void);
 
@@ -55,9 +58,16 @@ void init_usb0(void) {
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
 	nvic_set_priority(NVIC_USB0_IRQ, 254);
+	nvic_set_priority(NVIC_SGPIO_IRQ, 0);
 
 	usb_run(&usb_peripherals[0]);
 }
+
+// XXX:
+void service_usb_analysis(void);
+
+// XXX
+int rhododendron_early_init(void);
 
 
 int main(void) {
@@ -76,6 +86,8 @@ int main(void) {
 		emergency_mode();
 	}
 
+	rhododendron_early_init();
+
 	while(true) {
 		if(sdir_rx_enabled) {
 			sdir_rx_mode();
@@ -89,6 +101,8 @@ int main(void) {
 		service_heartbeat();
 		service_usb_streaming();
 		service_glitchkit();
+		service_usb_analysis();
+		service_rhododendron();
 	}
 
 	return 0;
