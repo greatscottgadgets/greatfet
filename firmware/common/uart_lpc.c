@@ -18,6 +18,7 @@ void uart_lpc_start() {
     uint16_t divisor = 2;   // arbitrary value
     uint8_t divaddval = 4;  // arbitrary value
     uint8_t mulval = 9;     // arbitrary value
+    
     uart_init(UART0, UART_DATABIT_8, UART_STOPBIT_1, UART_PARITY_EVEN, divisor, divaddval, mulval);
 }
 

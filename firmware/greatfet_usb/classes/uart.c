@@ -16,13 +16,14 @@
 
 static int uart_verb_init(struct command_transaction *trans)
 {
-    uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
-    uint8_t number_of_data_bits	= comms_argument_parse_uint8_t(trans);
-    uint8_t number_of_stop_bits = comms_argument_parse_uint8_t(trans);
-    uint8_t parity_bit			= comms_argument_parse_uint8_t(trans);
+    uint32_t uart_num           = comms_argument_parse_uint32_t(trans);
     uint16_t divisor            = comms_argument_parse_uint16_t(trans);
+    uint8_t number_of_data_bits = comms_argument_parse_uint8_t(trans);
+    uint8_t number_of_stop_bits = comms_argument_parse_uint8_t(trans);
+    uint8_t parity_bit          = comms_argument_parse_uint8_t(trans);
     uint8_t divaddval           = comms_argument_parse_uint8_t(trans);
     uint8_t mulval              = comms_argument_parse_uint8_t(trans);
+
 
     switch(uart_num) {
         case 0:
@@ -88,12 +89,12 @@ static int uart_verb_init(struct command_transaction *trans)
 
 static int uart_verb_read(struct command_transaction *trans)
 {
-    uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
+    uint32_t uart_num           = comms_argument_parse_uint32_t(trans);
+    uint16_t rx_length          = comms_argument_parse_uint16_t(trans);
     uint8_t scu_conf_func       = comms_argument_parse_uint8_t(trans);
     uint8_t scu_group           = comms_argument_parse_uint8_t(trans);
     uint8_t scu_pin             = comms_argument_parse_uint8_t(trans);
-    uint16_t rx_length 		    = comms_argument_parse_uint16_t(trans);
-	uint8_t *uart_rx_buffer 	= comms_response_reserve_space(trans, rx_length);
+	uint8_t *uart_rx_buffer     = comms_response_reserve_space(trans, rx_length);
 
     uint32_t scu_group_pin = 0;
     
@@ -176,10 +177,10 @@ static int uart_verb_read(struct command_transaction *trans)
     }
 
     // If we can't get a hold on the given pin.
-	if (!pin_ensure_reservation(scu_group, scu_pin, CLASS_NUMBER_SELF)) {
-		pr_warning("uart: couldn't reserve busy pin SCU%d[%d]!\n", scu_group, scu_pin);
-		return EBUSY;
-	}
+    if (!pin_ensure_reservation(scu_group, scu_pin, CLASS_NUMBER_SELF)) {
+        pr_warning("uart: couldn't reserve busy pin SCU%d[%d]!\n", scu_group, scu_pin);
+        return EBUSY;
+    }
 
     scu_pinmux(scu_group_pin, SCU_UART_RX_TX | scu_conf_func);
     uart_error_t *error;  
@@ -193,7 +194,7 @@ static int uart_verb_read(struct command_transaction *trans)
 
 static int uart_verb_write(struct command_transaction *trans)
 {
-    uint32_t uart_num 			= comms_argument_parse_uint32_t(trans);
+    uint32_t uart_num           = comms_argument_parse_uint32_t(trans);
     uint8_t scu_conf_func       = comms_argument_parse_uint8_t(trans);
     uint8_t scu_group           = comms_argument_parse_uint8_t(trans);
     uint8_t scu_pin             = comms_argument_parse_uint8_t(trans);
@@ -279,15 +280,16 @@ static int uart_verb_write(struct command_transaction *trans)
     }
 
     // If we can't get a hold on the given pin.
-	if (!pin_ensure_reservation(scu_group, scu_pin, CLASS_NUMBER_SELF)) {
-		pr_warning("uart: couldn't reserve busy pin SCU%d[%d]!\n", scu_group, scu_pin);
-		return EBUSY;
-	}
+    if (!pin_ensure_reservation(scu_group, scu_pin, CLASS_NUMBER_SELF)) {
+        pr_warning("uart: couldn't reserve busy pin SCU%d[%d]!\n", scu_group, scu_pin);
+return EBUSY;
+    }
 
     while (comms_argument_data_remaining(trans)) {
         uint8_t tx_byte         = comms_argument_parse_uint8_t(trans);
         scu_pinmux(scu_group_pin, SCU_UART_RX_TX | scu_conf_func);
         uart_write(uart_num, tx_byte);
+        pr_info("\nwrite successful, data: %d,  uart_num: %d, scu_func: %d, scu_group: %d, scu_pin: %d\n",tx_byte, uart_num, scu_conf_func, scu_group, scu_pin);
     }
 
     return 0;
@@ -297,20 +299,20 @@ static int uart_verb_write(struct command_transaction *trans)
  * Verbs for the firmware API.
  */
 static struct comms_verb _verbs[] = {
-		{ .name = "init", .handler = uart_verb_init,
-			.in_signature = "<IBBBHBB", .out_signature = "",
-			.in_param_names = "uart_num, num_of_data_bits, stop_bit, parity_bit, baud",
-			.doc = "Initialize UART" },
+        { .name = "init", .handler = uart_verb_init,
+            .in_signature = "<IHBBBBB", .out_signature = "",
+            .in_param_names = "uart_num, divisor, num_of_data_bits, stop_bit, parity_bit, divaddval, mulval",
+            .doc = "Initialize UART" },
         { .name = "read", .handler = uart_verb_read,
-			.in_signature = "<IBBBH", .out_signature = "<*B",
-			.in_param_names = "uart_num, scu_func, scu_port, scu_pin, rx_length", .out_param_names = "response",
-			.doc = "Read data from UART device" },
-		{ .name = "write", .handler = uart_verb_write,
-			.in_signature = "<IBBB*X", .out_signature = "",
-			.in_param_names = "uart_num, scu_func, scu_port, scu_pin, data", .out_param_names = "",
-			.doc = "Write data to UART device" },
-		{} // Sentinel
+            .in_signature = "<IHBBB", .out_signature = "<*B",
+            .in_param_names = "uart_num, rx_length, scu_func, scu_port, scu_pin", .out_param_names = "response",
+            .doc = "Read data from UART device" },
+        { .name = "write", .handler = uart_verb_write,
+            .in_signature = "<IBBB*X", .out_signature = "",
+            .in_param_names = "uart_num, scu_func, scu_port, scu_pin, data", .out_param_names = "",
+            .doc = "Write data to UART device" },
+        {} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(uart, CLASS_NUMBER_SELF, "uart", _verbs,
-		"API for UART communication.");
+        "API for UART communication.");
 

@@ -15,6 +15,7 @@ from greatfet.utils import log_silent, log_verbose
 from greatfet.peripherals.uart import UART
 
 
+
 def main():
     from greatfet.utils import GreatFETArgumentParser
 

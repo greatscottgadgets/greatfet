@@ -106,13 +106,17 @@ class UARTPin(object):
         self.uart = uart_collection
         self.name = name
 
+        # TODO: handle when an invalid pin name is entered
+        self.uart_num = -1
+        self.port_and_pin = ((-1, -1), -1)
+        self.scu_func = -1
+
         for uart_num, uart_dict in enumerate(self.uart.uart_mappings):
             if name in uart_dict.keys():
                 self.uart_num = uart_num
                 self.port_and_pin = uart_dict[name][0]
                 self.scu_func = uart_dict[name][1]
 
-        # TODO: handle when an invalid pin name is entered
 
     def read(self, rx_length=0, num_data_bits=8, num_stop_bits=1, parity_bit=0, baud=9600):
         """
@@ -132,9 +136,9 @@ class UARTPin(object):
 
         # TODO: allow fine tuning of divisor with divaddval and mulval
 
-        self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.divisor, self.divaddval, self.mulval)
-        read_data = self.uart.api.read(self.uart_num, self.scu_func, self.port, self.pin, rx_length)
-        
+        self.uart.api.init(self.uart_num, self.divisor, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.divaddval, self.mulval)
+        read_data = self.uart.api.read(self.uart_num, rx_length, self.scu_func, self.port, self.pin)
+        # J1_P34 : scu_func = 7, port = 9, pin = 6
         return read_data
 
     def write(self, data, num_data_bits=8, num_stop_bits=1, parity_bit=0, baud=9600):
@@ -156,16 +160,58 @@ class UARTPin(object):
         self.port = self.port_and_pin[0]
         self.pin = self.port_and_pin[1]
 
-        data = [bytes(datum) for datum in data]
-        data = b"".join(data)
+        print("data before:", data)
 
-        self.desired_baud = int(baud)
-        self.divisor = int(round(204000000 / (16 * self.desired_baud)))
-        self.divaddval = 0
-        self.mulval = 1
+        # [20]
+
+        data = bytes(data)
+
+        # print("data bytes:", data)
+        # data = [bytes(datum) for datum in data]
+        # data = b"".join(data)
+
+        desired_baud = int(baud)
+        divisor = int(round(204000000 / (16 * desired_baud)))
+        divaddval = 0
+        mulval = 1
+
+
+        real_baud = (mulval / (mulval + divaddval)) * (204000000 / (16 * divisor))
+
+        print("data after:", data)    
+        print("desired baud:", desired_baud)
+        print("real baud:", real_baud)
+        print("divisor:", divisor)
+        percent_error = abs((real_baud - desired_baud) / desired_baud) * 100
+        error_threshold = 1.1
+        print("percent error:", percent_error)
+
+        # 1. 1 <= MULVAL <= 15
+        # 2. 0 <= DIVADDVAL <= 14
+        # 3. DIVADDVAL < MULVAL
+        # if percent_error > error_threshold:
+        #     for mulval in range(1, 16):
+        #         for divaddval in range(0, 15):
+        #             real_baud = (mulval / (mulval + divaddval)) * (204000000 / (16 * divisor))
+        #             percent_error = abs((real_baud - desired_baud) / desired_baud) * 100
+        #             if percent_error < 1.1:
+        #                 divisor = int(round(204000000 / (16 * real_baud)))
+        #                 break
+
 
         # TODO: allow fine tuning of divisor with divaddval and mulval
         
-        self.uart.api.init(self.uart_num, self.num_data_bits, self.num_stop_bits, self.parity_bit, self.divisor, self.divaddval, self.mulval)
+        print("uart num:", self.uart_num)
+        print("num of data bits:", self.num_data_bits)
+        print("num of stop bits:", self.num_stop_bits)
+        print("parity bit:", self.parity_bit)
+        print("scu func:", self.scu_func)
+        print("port:", self.port)
+        print("pin:", self.pin)
+        print("data:", data)
+
+
+        self.uart.api.init(self.uart_num, divisor, self.num_data_bits, self.num_stop_bits, self.parity_bit, divaddval, mulval)
+        # self.uart.api.init(0, 1328, 8, 1, 0)#, divaddval, mulval)
         self.uart.api.write(self.uart_num, self.scu_func, self.port, self.pin, data)
 
