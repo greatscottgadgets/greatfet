@@ -1,3 +1,7 @@
+/*
+ * This file is part of GreatFET
+ */
+
 #ifndef __SWRA124_H__
 #define __SWRA124_H__
 
