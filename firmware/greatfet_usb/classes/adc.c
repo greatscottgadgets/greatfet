@@ -70,7 +70,7 @@ static int verb_read_samples(struct command_transaction *trans)
 	}
 
 
-	// FIXME: support other significant bits values than 10.
+	// TODO: support other amounts of significant bits by using burst mode.
 	set_up_onboard_adc(adc_number == 1, 1 << pin_channel_number, 10);
 
 

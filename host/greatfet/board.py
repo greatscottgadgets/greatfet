@@ -8,6 +8,7 @@ Module containing the core definitions for a GreatFET board.
 
 from .peripherals.led import LED
 from .peripherals.gpio import GPIO
+from .peripherals.adc import ADC
 
 from pygreat.board import GreatBoard
 
@@ -62,4 +63,12 @@ class GreatFETBoard(GreatBoard):
         for name, pin in self.GPIO_MAPPINGS.items():
             self.gpio.register_gpio(name, pin)
 
+    def _populate_adc(self):
+        """Adds ADC definitions to the board."""
+
+        # Handle each ADC mapping.
+        for name, pin in self.ADC_MAPPINGS.items():
+            ADC.register_adc(name, pin)
+
+        self.adc = ADC(self)
 
