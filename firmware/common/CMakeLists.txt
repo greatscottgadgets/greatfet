@@ -32,6 +32,7 @@ add_greatfet_library_if_necessary(libgreatfet OBJECT
     ${PATH_GREATFET_FIRMWARE_COMMON}/jtag.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/jtag_msp430.c
     ${PATH_GREATFET_FIRMWARE_COMMON}/printf.c
+    ${PATH_GREATFET_FIRMWARE_COMMON}/swra124.c
 )
 
 # FIXME: move debug into its own module so we don't  have to manually code this
