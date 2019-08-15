@@ -3,11 +3,15 @@
  */
 
 
+#include <toolchain.h>
+#include <time.h>
+
 #include <errno.h>
 #include <debug.h>
 
 #include <greatfet_core.h>
 #include <drivers/comms.h>
+
 
 // FIXME: replace with libgreat driver
 #include <libopencm3/lpc43xx/adc.h>
@@ -48,65 +52,87 @@ static void set_up_onboard_adc(bool use_adc1, uint32_t pin_mask, uint8_t signifi
 
 
 
-static int verb_read_sample(struct command_transaction *trans)
+static int verb_read_samples(struct command_transaction *trans)
 {
-	uint16_t value;
+	const uint32_t adc_sample_mask = 0x03FF;
 
-	uint8_t adc_number       = comms_argument_parse_uint8_t(trans);
-	uint8_t pin_number       = comms_argument_parse_uint8_t(trans);
-	uint8_t significant_bits = comms_argument_parse_uint8_t(trans);
+	uint8_t  adc_number         = comms_argument_parse_uint8_t(trans);
+	uint8_t  pin_channel_number = comms_argument_parse_uint8_t(trans);
+	uint16_t sample_count       = comms_argument_parse_uint16_t(trans);
+
+	volatile uint32_t *adc_cr;
+	volatile uint32_t *adc_gdr;
+
+	uint16_t sampled_value;
 
 	if (!comms_transaction_okay(trans)) {
-        return EBADMSG;
-    }
-
-
-	// Sanity check our arguments.
-	if (adc_number > 8) {
-		pr_error("adc: invalid ADC number %" PRIu8 "provided (must be <= 1)!\n", adc_number);
-		return EINVAL;
-	}
-	if (pin_number > 8) {
-		pr_error("adc: invalid pin number %" PRIu8 "provided (must be <= 8)!\n", pin_number);
-		return EINVAL;
-	}
-	if ((significant_bits < 3) || (significant_bits > 10)) {
-		pr_error("adc: invalid pin number %" PRIu8 "provided (must be between 3 and 10, inclusive)!\n", significant_bits);
-		return EINVAL;
+		return EBADMSG;
 	}
 
-	// Configure the primary ADC to capture the relevant sample.
-	set_up_onboard_adc(adc_number, 1 << pin_number, significant_bits);
 
-	// Start a conversion, and then wait for it to complete.
-	ADC0_CR |= ADC_CR_START(1);
-	while(!(ADC0_DR0 & ADC_DR_DONE));
+	// FIXME: support other significant bits values than 10.
+	set_up_onboard_adc(adc_number == 1, 1 << pin_channel_number, 10);
 
-	// Read the ADC value, and send it
-	value = (ADC0_DR0 >> 6) & 0x3ff;
-	comms_response_add_uint16_t(trans, value);
+
+	// Sanity checks.
+	if (adc_number == 0) {
+		adc_cr = &ADC0_CR;
+		adc_gdr = &ADC0_GDR;
+	}
+	else if (adc_number == 1) {
+		adc_cr = &ADC1_CR;
+		adc_gdr = &ADC1_GDR;
+	} else {
+		pr_error("adc: invalid adc number %" PRIu8 " provided (must be <= 1)!\n", adc_number);
+		return EINVAL;
+	}
+
+	if (pin_channel_number > 8) {
+		pr_error("adc: error: invalid pin number %" PRIu8 " provided (must be <= 8)!\n", pin_channel_number);
+		return EINVAL;
+	}
+
+	while (sample_count--) {
+
+		uint32_t time_base = get_time();
+
+		// Start a conversion.
+		*adc_cr |= ADC_CR_START(1);
+
+		// And wait for it to complete.
+		while(!(*adc_gdr & ADC_DR_DONE) || (((*adc_gdr >> 24) & 0x7) != pin_channel_number)) {
+			if (get_time_since(time_base) > 500) {
+				return ETIMEDOUT;
+			}
+		}
+
+		// Read the most recently sampled V_REF from the global data register.
+		sampled_value = (*adc_gdr >> 6) & adc_sample_mask;
+
+		comms_response_add_uint16_t(trans, sampled_value);
+	}
 
 	return 0;
 }
 
 
 /**
- * Verbs for the firmware API.
+ * Verbs for the ADC API.
  */
 static struct comms_verb _verbs[] = {
-		{ .name = "read_sample", .handler = verb_read_sample,
-			.in_signature = "<BBB", .out_signature = "<H",
-			.in_param_names = "adc_number, pin_number, significant_bits",
-			.out_param_names = "adc_sample",
+		{ .name = "read_samples", .handler = verb_read_samples,
+			.in_signature = "<BBH", .out_signature = "<*H",
+			.in_param_names = "adc_number, channel_number, sample_count",
+			.out_param_names = "adc_samples",
 			.doc =
-				"Read a single sample from the ADC.\n"
+				"Initialize the specified ADC for usage, with the given parameters.\n"
 				"\n"
 				"Params:\n"
-				"    adc_number       -- which ADC to use to do the reading (should be 0 or 1)\n"
-				"    pin_number       -- the ADC pin to read using the given ADC\n"
-				"    significant_bits -- the total significant bits to capture: (from 3-10).\n"
-				"                     -- fewer bits will result in a faster sample"
-			},
+				"    adc_number -- which ADC to use to do the reading (should be 0 or 1)\n"
+				"    channel_number -- which channel to use to do the reading (0-7)\n"
+				"    sample_count -- number of samples to read\n"
+				"Returns: the raw samples read from the ADC."
+		},
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(adc, CLASS_NUMBER_SELF, "adc", _verbs,
