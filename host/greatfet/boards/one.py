@@ -136,6 +136,35 @@ class GreatFETOne(GreatFETBoard):
         "J7_P4"  : [(0, 5), (1, 5)],
         "J7_P5"  : [(0, 2), (1, 2)],
     }
+    # All UART mappings on GreatFET One
+    # name, scu port and pin, scu function number
+    UART_MAPPINGS = [
+    {
+        "J1_P33"    : ((9, 5), 7),      # TX
+        "J1_P34"    : ((9, 6), 7),      # RX
+        "J1_P35"    : ((2, 0), 1),      # TX
+        "J2_P35"    : ((2, 1), 1),      # RX
+        "J7_P2"     : ((6, 4), 2),      # TX
+        "J7_P3"     : ((6, 5), 2)       # RX
+    },
+    {
+        "J1_P25"    : ((1, 14), 1),     # RX
+        "J1_P26"    : ((1, 13), 1),     # TX
+        "J1_P27"    : ((5, 6), 4),      # TX
+        "J2_P28"    : ((3, 4), 4),      # TX
+        "J2_P37"    : ((3, 5), 4),      # RX
+    },
+    {
+        "J1_P28"    : ((1, 15), 1),     # TX
+        "J1_P30"    : ((1, 16), 1),     # RX
+        "J2_P23"    : ((7, 2), 6),      # RX
+        "J2_P25"    : ((7, 1), 6)       # TX
+    },
+    {
+        "J2_P8"     : ((4, 2), 6),      # RX
+        "J2_P19"    : ((2, 4), 2),      # RX
+        "J2_P20"    : ((2, 3), 2)       # TX
+    }]
 
 
     def initialize_apis(self):
