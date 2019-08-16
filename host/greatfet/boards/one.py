@@ -127,6 +127,15 @@ class GreatFETOne(GreatFETBoard):
         #"J7_P20"  : VCC,
     }
 
+    # All of the ADC mappings accessible from the GreatFET headers.
+    ADC_MAPPINGS = {
+        "J2_P5"  : [(0, 0), (1, 0)],
+        "J2_P9"  : [(0, 0), None],
+        "J2_P16" : [None, (1, 6)],
+        "J7_P4"  : [(0, 5), (1, 5)],
+        "J7_P5"  : [(0, 2), (1, 2)],
+    }
+
 
     def initialize_apis(self):
         """ Initialize a new GreatFET One connection. """
@@ -147,6 +156,9 @@ class GreatFETOne(GreatFETBoard):
         # Populate the per-board GPIO.
         if self.supports_api("gpio"):
             self._populate_gpio()
+
+        if self.supports_api("adc"):
+            self._populate_adc()
 
         # XXX disable perpiherals as we develop libgreat
         # return

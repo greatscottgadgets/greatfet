@@ -4,46 +4,62 @@
 
 from __future__ import print_function
 
+import sys
 import time
+import argparse
 
 from greatfet.protocol import vendor_requests
 
 
-def main():
-    logfile = 'log.bin'
-#    logfile = '/tmp/fifo'
-    from greatfet.utils import GreatFETArgumentParser
-   
-    # Set up a simple argument parser.
-    parser = GreatFETArgumentParser(description="Utility for experimenting with GreatFET's ADC")
-    parser.add_argument('-f', dest='filename', metavar='<filename>', type=str, help="Write data to file", default=logfile)
-    parser.add_argument('-a', dest='adc', action='store_true', help="Use internal ADC")
+def output_sample(sample, args):
 
-    args = parser.parse_args()
-    log_function = parser.get_log_function()
-    device = parser.find_specified_device()
+    # We have to write string strings (and not binary strings) to stdout as argparse ignores the binary mode specifier
+    # for stdout and stdin, until https://github.com/python/cpython/pull/13165 is merged.
 
-    if args.adc:
-        device.comms._vendor_request_out(vendor_requests.ADC_INIT)
+    if args.format == "raw":
+
+        # Output the binary fraction itself as an integer.
+        args.output.write("{}\n".format(sample))
+
     else:
-        device.comms._vendor_request_out(vendor_requests.SDIR_RX_START)
 
-    time.sleep(1)
-    print(device.comms.device)
+        # Interpret the binary fraction and output a string representing the returned voltage.
+        if args.machine_readable:
+            args.output.write("{}\n".format((sample / 1024.0) * 3.3))
+        else:
+            args.output.write("{}V\n".format((sample / 1024.0) * 3.3))
 
-    with open(args.filename, 'wb') as f:
-        try:
-            while True:
-                d = device.comms.device.read(0x81, 0x4000, 1000)
-                # print(d)
-                f.write(d)
-        except KeyboardInterrupt:
-            pass
 
-    if not args.adc:
-        device.comms._vendor_request_out(vendor_requests.SDIR_RX_STOP)
+def main():
+    from greatfet.utils import GreatFETArgumentParser
 
+    # Set up a simple argument parser.
+    parser = GreatFETArgumentParser(description="utility for reading from the GreatFET's ADC")
+    parser.add_argument('-f', '--format', dest='format', type=str, default='voltage',
+                        choices=['voltage', 'raw'],
+                        help="Format to output in.\nVoltage string, or raw fraction returned by the ADC.")
+    parser.add_argument('-m', '--machine-readable', dest='machine_readable', action='store_true',
+                        default=False, help="Don't output unit suffixes.")
+    parser.add_argument('-n', '--samples', dest='sample_count', type=int, default=1,
+                        help="The number of samples to read. (default: 1)")
+    parser.add_argument('-o', '--output', dest='output', type=argparse.FileType('w'), default='-',
+                        help="File to output to. Specify - to output to stdout (default).")
+
+    args         = parser.parse_args()
+    log_function = parser.get_log_function()
+    device       = parser.find_specified_device()
+
+    if not device.supports_api('adc'):
+        sys.stderr.write("This device doesn't seem to support an ADC. Perhaps your firmware needs to be upgraded?\n")
+        sys.exit(0)
+
+    samples = device.adc.read_samples(args.sample_count)
+
+    for sample in samples:
+        output_sample(sample, args)
+
+    args.output.close()
 
 if __name__ == '__main__':
     main()
-    
+
