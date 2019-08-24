@@ -13,6 +13,10 @@ import sys
 import errno
 import subprocess
 
+
+from fwup.lpc43xx import LPC43xxTarget
+from fwup.errors import BoardNotFoundError
+
 from greatfet import find_greatfet_asset
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import log_silent, GreatFETArgumentParser
@@ -53,39 +57,46 @@ def spi_flash_write(device, filename, address, log_function=log_silent):
     log_function('')
 
 
+def dfu_upload(dfu_target, filename, log_function=log_silent):
+    def print_progress(bytes_written, bytes_total):
+        log_function("Uploaded {} bytes of {}.".format(bytes_written, bytes_total), end='\r')
+
+    with open(filename, 'rb') as f:
+        data = f.read()
+        dfu_target.program(data, print_progress)
+
+    log_function('')
+    log_function('Firmware uploaded but not flashed; changes will not persist post-reset!')
+    log_function('')
+
+
+
 def load_dfu_stub(dfu_stub_path):
     """ Loads the DFU stub onto the board for DFU-based programming. """
 
     try:
-        import usb
-
-        # First: check to make sure we _have_ a DFU'able device.
-        dev = usb.core.find(idVendor=NXP_DFU_VID, idProduct=NXP_DFU_PID)
-        if not dev:
-            raise DeviceNotFoundError
-        del dev
-
-    except ImportError:
-        pass
+        dfu_target = LPC43xxTarget()
+    except BoardNotFoundError:
+        raise DeviceNotFoundError
 
     # If we have a DFU'able device, find the DFU stub and load it.
     stub_path = dfu_stub_path
     if stub_path is None:
         raise ValueError("Could not find the DFU stub!")
 
-    #
-    # FIXME: This isn't a good way to do things. It's being stubbed in
-    # for now, but it'd be better to talk DFU from python directly.
-    #
-    rc = subprocess.call(['dfu-util', '--device', format(NXP_DFU_VID, 'x'), format(NXP_DFU_PID, 'x'), '--alt', '0', '--download', stub_path])
-    if rc:
-        raise IOError("Error using DFU-util!")
+    # Read the DFU stub into memory...
+    with open(dfu_stub_path, "rb") as f:
+        dfu_stub = f.read()
+
+    # ... and program it to the board.
+    dfu_target.program(dfu_stub)
+
 
 
 def main():
 
     # Grab any GreatFET assets that should have shipped with the tool.
-    dfu_stub_path = find_greatfet_asset('flash_stub.dfu')
+    dfu_stub_path = find_greatfet_asset('flash_stub.bin')
     auto_firmware_path = find_greatfet_asset("greatfet_usb.bin")
 
     # Set up a simple argument parser.-
@@ -102,11 +113,15 @@ def main():
                         help="Write data from file", default='')
     parser.add_argument('-R', '--reset', dest='reset', action='store_true',
                         help="Reset GreatFET after performing other operations.")
+    parser.add_argument('-V', '--volatile-upload', dest='volatile', metavar="<filename>", type=str,
+                        help="Uploads a GreatFET firmware image to RAM via DFU mode. Firmware is not flashed.")
 
     # If we have the ability to automatically install firmware, provide that as an option.
     if auto_firmware_path:
         parser.add_argument('--autoflash', action='store_true', dest='autoflash',
                         help="Automatically flash the attached board with the firmware corresponding to the installed tools.")
+        parser.add_argument('-U', '--volatile-upload-auto', dest='volatile_auto', action='store_true',
+                            help="Automatically upload the tools' firmware via DFU mode. Firmware is not flashed.")
 
     args = parser.parse_args()
 
@@ -118,10 +133,16 @@ def main():
     except AttributeError:
         pass
 
+    try:
+        if not args.volatile and args.volatile_auto:
+            args.volatile = auto_firmware_path
+    except AttributeError:
+        pass
+
     # Validate our options.
 
     # If we don't have an option, print our usage.
-    if not any((args.read, args.write, args.reset,)):
+    if not any((args.read, args.write, args.reset, args.volatile)):
         parser.print_help()
         sys.exit(0)
 
@@ -130,6 +151,20 @@ def main():
 
     if args.dfu_stub:
         dfu_stub_path = args.dfu_stub
+
+
+    # If we're uploading a file via DFU for a "volatile" flash, do so and abort.
+    if args.volatile:
+
+        try:
+            device = LPC43xxTarget()
+        except BoardNotFoundError:
+            print("Couldn't find a GreatFET-compatible board in DFU mode!", file=sys.stderr)
+            sys.exit(errno.ENODEV)
+
+        dfu_upload(device, args.volatile, log_function)
+        sys.exit(0)
+
 
     # If we're supposed to install firmware via a DFU stub, install it first.
     if args.dfu:
