@@ -32,7 +32,6 @@ if (NOT DFU_TARGETS_AVAILABLE)
 endif()
 
 # Allow the flash stub to be included with the host distribution.
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.dfu
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.bin
 	DESTINATION ${PATH_GREATFET}/host/greatfet/assets
-	${DFU_EXCLUDE_FROM_ALL}
 )

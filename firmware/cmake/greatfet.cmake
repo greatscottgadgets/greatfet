@@ -19,12 +19,6 @@ endif()
 # TODO: better way to find the libgreat cmake includes?
 include(${PATH_LIBGREAT}/firmware/cmake/libopencm3.cmake)
 
-# Pull into dfu-util in libgreat
-include(${PATH_GREATFET_FIRMWARE_CMAKE}/dfu-util.cmake OPTIONAL)
-
-# Pull in support for DFU targets.
-include(${PATH_LIBGREAT_FIRMWARE_CMAKE}/dfu.cmake)
-
 # Include libgreat.
 include(${PATH_LIBGREAT}/firmware/cmake/libgreat.cmake)
 
@@ -69,15 +63,12 @@ function(add_greatfet_targets EXECUTABLE_NAME)
 	add_greatfet_library(${EXECUTABLE_NAME} OBJECT ${ARGN} ${CLASSES_SOURCES})
 	add_dependencies(${EXECUTABLE_NAME} libopencm3)
 
-	# TODO: Handle m0 stuff, here?
-
 	# Create our executables.
 	add_flash_executable(${EXECUTABLE_NAME}.bin $<TARGET_OBJECTS:${EXECUTABLE_NAME}> $<TARGET_OBJECTS:libgreatfet> $<TARGET_OBJECTS:libgreat>)
-	add_dfu_executable(${EXECUTABLE_NAME}.dfu ${EXECUTABLE_NAME}.bin ${LINKER_SCRIPT_FLASH} ${LINKER_SCRIPT_DFU})
 
-	# Program/flash targets
+	# Program/flash targets.
 	add_custom_target(${EXECUTABLE_NAME}-flash   DEPENDS ${EXECUTABLE_NAME}.bin COMMAND greatfet_firmware -Rw ${EXECUTABLE_NAME}.bin)
-	add_custom_target(${EXECUTABLE_NAME}-program DEPENDS ${EXECUTABLE_NAME}.dfu COMMAND dfu-util --device 1fc9:000c --alt 0 --download ${EXECUTABLE_NAME}.dfu)
+	add_custom_target(${EXECUTABLE_NAME}-program DEPENDS ${EXECUTABLE_NAME}.bin COMMAND greatfet_firmware -V ${EXECUTABLE_NAME}.bin)
 
 endfunction(add_greatfet_targets)
 

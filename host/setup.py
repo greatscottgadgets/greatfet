@@ -58,12 +58,12 @@ setup(
     },
     author='Great Scott Gadgets',
     author_email='ktemkin@greatscottgadgets.com',
-    tests_require=[''],
     install_requires= [
         per_version_requirements,
         'pyusb',
         'pygreat',
-        'future'
+        'future',
+        'pyfwup'
     ],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('README.md'),
