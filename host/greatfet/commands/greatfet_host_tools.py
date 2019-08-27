@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import argparse
 import shutil
+import errno
 import sys
 import os
 
@@ -44,8 +45,9 @@ def ensure_access_linux():
             print('Copying plugdev udev rules...')
             shutil.copy(plugdev_rules, rules_target_path)
 
-    except PermissionError:
-        raise PermissionError('Failed to copy udev rules to {}! Maybe try with sudo -E?'.format(rules_target_path)) from None
+    except (OSError, IOError) as e:
+        if e.errno == errno.EACCES or e.errno == errno.EPERM:
+            raise OSError(e.errno, 'Failed to copy udev rules to {}! Maybe try with sudo -E?'.format(rules_target_path))
 
     print('Done')
 
