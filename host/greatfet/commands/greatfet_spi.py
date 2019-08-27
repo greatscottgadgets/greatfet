@@ -18,7 +18,7 @@ def main():
     from greatfet.utils import GreatFETArgumentParser
 
     # Set up a simple argument parser.
-    parser = GreatFETArgumentParser(description="Utility for I2C communication via GreatFET")
+    parser = GreatFETArgumentParser(description="Utility for SPI communication via GreatFET")
     parser.add_argument('-r', '--read', default=0, help="Number of bytes expecting to receive from the SPI Bus")
     parser.add_argument('-w', '--write', nargs='*', type=ast.literal_eval, default=[], help="Bytes to send over the SPI Bus")
     args = parser.parse_args()
