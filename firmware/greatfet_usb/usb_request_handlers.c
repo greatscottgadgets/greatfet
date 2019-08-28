@@ -9,7 +9,6 @@
 #include <drivers/usb/comms_backend.h>
 
 #include "legacy_apis/usb_api_adc.h"
-#include "legacy_apis/usb_api_spi.h"
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
 #include "legacy_apis/usb_api_glitchkit_simple.h"
@@ -27,10 +26,10 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_set_leds,
 	NULL, //usb_vendor_request_gpio_register,
 	NULL, //usb_vendor_request_gpio_write,
-	usb_vendor_request_spi_init,
-	usb_vendor_request_spi_write,
-	usb_vendor_request_spi_read,
-	usb_vendor_request_spi_dump_flash,
+	NULL, //usb_vendor_request_spi_init,
+	NULL, //usb_vendor_request_spi_write,
+	NULL, //usb_vendor_request_spi_read,
+	NULL, //usb_vendor_request_spi_dump_flash,
 	NULL, //usb_vendor_request_i2c_start,
 	NULL, //usb_vendor_request_i2c_stop,
 	NULL, //usb_vendor_request_i2c_xfer,

@@ -167,7 +167,7 @@ class GreatFETOne(GreatFETBoard):
             self.i2c_busses = [ I2CBus(self, 'I2C0') ]
             self.i2c = self.i2c_busses[0]
 
-        if self.supports_api('spi') or True:
+        if self.supports_api('spi'):
             self.spi_busses = [ SPIBus(self, 'SPI1') ]
             self.spi = self.spi_busses[0]
 
