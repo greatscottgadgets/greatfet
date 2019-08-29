@@ -72,30 +72,6 @@ static int spi_verb_transmit(struct command_transaction *trans)
 	return 0;
 }
 
-// TODO
-// static int spi_verb_dump_flash(struct command_transaction *trans)
-// {
-// 	uint32_t addr;
-// 	uint16_t value	= comms_argument_parse_uint16_t(trans);
-// 	uint16_t index	= comms_argument_parse_uint16_t(trans);
-// 	uint16_t length	= comms_argument_parse_uint16_t(trans);
-
-// 	// not sure about spi_buffer here, not sure how dump flash gets called
-// 	uint8_t *spi_buffer = comms_argument_read_buffer(trans, -1, &write_length);
-
-// 	spi1_target_drv.page_len = 256;
-// 	spi1_target_drv.num_pages = 8192;
-// 	spi1_target_drv.num_bytes = 256*8192;
-// 	spi1_target_drv.device_id = 0x14;
-// 	addr = (value << 16) | index;
-// 	spiflash_read(&spi1_target_drv, addr, length, spi_buffer);
-// 	comms_response_add_raw(trans, spi_buffer, length);
-// 	// usb_transfer_schedule_block(endpoint->in, &spi_buffer[0],
-// 	// 							endpoint->setup.length, NULL, NULL);
-
-// 	return 0;
-// }
-
 /**
  * Verbs for the firmware API.
  */

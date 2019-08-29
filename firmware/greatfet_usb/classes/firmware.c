@@ -17,7 +17,7 @@
 #define CLASS_NUMBER_FIRMWARE (0x1)
 
 /**
- * Configuration for the SPI bus we used to 
+ * Configuration for the SPI bus we used to
  * communicate with our onboard flash.
  */
 static spi_target_t spi_target = {
@@ -28,7 +28,7 @@ static spi_target_t spi_target = {
 };
 
 /**
- * Configuration for the SPI flash driver we used to 
+ * Configuration for the SPI flash driver we used to
  * communicate with our onboard flash.
  */
 static spiflash_driver_t spi_flash_drv = {
@@ -79,23 +79,23 @@ int firmware_verb_write_page(struct command_transaction *trans)
 
     // Ensure we have data.
     if (!data_to_write || !comms_transaction_okay(trans)) {
-        pr_error("error: recieved invalid firmware write request (insufficient data)!");
+        pr_error("error: received invalid firmware write request (insufficient data)!");
         return EINVAL;
     }
 
     // Validate our write spans.
     if (length > spi_flash_drv.page_len) {
-        pr_warning("firmware: rejecting write of more than page length! (%d > %d)\n", 
+        pr_warning("firmware: rejecting write of more than page length! (%d > %d)\n",
                 length, spi_flash_drv.page_len);
         return EINVAL;
     }
     if (address > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting write that's larger than our flash! (%d > %d)\n", 
+        pr_warning("firmware: rejecting write that's larger than our flash! (%d > %d)\n",
                 length, spi_flash_drv.num_bytes);
         return EINVAL;
     }
     if ((address + length) > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting write that extends past the end of flash! (%d > %d)\n", 
+        pr_warning("firmware: rejecting write that extends past the end of flash! (%d > %d)\n",
                 address + length, spi_flash_drv.num_bytes);
         return EINVAL;
     }
@@ -121,12 +121,12 @@ int firmware_verb_read_page(struct command_transaction *trans)
 
     // Validate our read spans.
     if (address > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting read that's larger than our flash! (%d > %d)\n", 
+        pr_warning("firmware: rejecting read that's larger than our flash! (%d > %d)\n",
                 address, spi_flash_drv.num_bytes);
         return EINVAL;
     }
     if ((address + spi_flash_drv.page_len) > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting read that extends past the end of flash flash! (%d > %d)\n", 
+        pr_warning("firmware: rejecting read that extends past the end of flash flash! (%d > %d)\n",
                 address + spi_flash_drv.page_len, spi_flash_drv.num_bytes);
         return EINVAL;
     }
