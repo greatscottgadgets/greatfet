@@ -41,13 +41,6 @@ struct gpio_t gpio_usb1_sense	= GPIO(SCU_PINMUX_USB1_SENSE_PORT, SCU_PINMUX_USB1
 struct gpio_t gpio_usb1_en	= GPIO(SCU_PINMUX_USB1_EN_PORT, SCU_PINMUX_USB1_EN_PIN);
 #endif
 
-/* CPLD JTAG interface GPIO pins */
-static struct gpio_t gpio_tdo			= GPIO(5, 18);
-static struct gpio_t gpio_tck			= GPIO(3,  0);
-static struct gpio_t gpio_tms			= GPIO(3,  4);
-static struct gpio_t gpio_tdi			= GPIO(3,  1);
-
-
 i2c_bus_t i2c0 = {
 	.obj = (void*)I2C0_BASE,
 	.start = i2c_lpc_start,
@@ -81,8 +74,8 @@ spi_bus_t spi_bus_ssp0 = {
 
 const ssp_config_t ssp1_config_spi = {
 	.data_bits = SSP_DATA_8BITS,
-	.serial_clock_rate = 2,
-	.clock_prescale_rate = 100,
+	.serial_clock_rate = 8,
+	.clock_prescale_rate = 8,
 };
 
 spi_bus_t spi_bus_ssp1 = {
@@ -114,22 +107,15 @@ void pin_setup(void) {
 
 	pr_info("Configuring board pins...\n");
 
-	/* Release CPLD JTAG pins */
-	scu_pinmux(SCU_PINMUX_TDO, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION4);
-	scu_pinmux(SCU_PINMUX_TCK, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
-	scu_pinmux(SCU_PINMUX_TMS, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
-	scu_pinmux(SCU_PINMUX_TDI, SCU_GPIO_NOPULL | SCU_CONF_FUNCTION0);
-
-	/* By default, use CLK0 as an external clock. */
-	scu_pinmux(CLK0, SCU_CLK_OUT | SCU_CONF_FUNCTION1);
-
-	gpio_input(&gpio_tdo);
-	gpio_input(&gpio_tck);
-	gpio_input(&gpio_tms);
-	gpio_input(&gpio_tdi);
-
 	/* Configure all GPIO as Input (safe state) */
 	gpio_init();
+
+	/* GreatFET SPI pins / SSP1 pins. */
+	scu_pinmux(SCU_SSP1_SCK,  SCU_SSP_IO | SCU_SSP1_SCK_FUNC);
+	scu_pinmux(SCU_SSP1_MISO, SCU_SSP_IO | SCU_SSP1_MISO_FUNC);
+	scu_pinmux(SCU_SSP1_MOSI, SCU_SSP_IO | SCU_SSP1_MOSI_FUNC);
+	scu_pinmux(SCU_SSP1_SSEL, SCU_SSP_IO | SCU_SSP1_SSEL_FUNC);
+
 
 	/* Configure each of the LEDs. */
 	for (i = 0; i < NUM_LEDS; ++i) {

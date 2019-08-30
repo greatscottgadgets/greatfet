@@ -142,7 +142,7 @@ typedef struct ATTR_PACKED {
 } spi_flash_sfdp_info_t;
 
 
-typedef struct {
+typedef struct ATTR_PACKED {
 	uint8_t manufacturer;
 	uint16_t device_id;
 	uint8_t capacity;

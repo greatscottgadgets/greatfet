@@ -3,6 +3,8 @@
  */
 
 #include <drivers/comms.h>
+#include <drivers/gpio.h>
+
 #include <debug.h>
 
 #include <stddef.h>
@@ -12,6 +14,8 @@
 #include <spiflash.h>
 #include <spiflash_target.h>
 #include <gpio_lpc.h>
+#include <pins.h>
+
 
 #define CLASS_NUMBER_SPI_FLASH (0x101)
 
@@ -20,15 +24,17 @@ static struct gpio_t gpio_spiflash_hold   = GPIO(1, 14);
 static struct gpio_t gpio_spiflash_wp     = GPIO(1, 15);
 static struct gpio_t gpio_spiflash_select;
 
+
 /**
  * Object representing a generic SPI communication.
  */
 static spi_target_t spi_target = {
-	.bus         = &spi_bus_ssp0,
+	.bus         = &spi_bus_ssp1,
 	.gpio_hold   = &gpio_spiflash_hold,
 	.gpio_wp     = &gpio_spiflash_wp,
 	.gpio_select = &gpio_spiflash_select,
 };
+
 
 
 /**
@@ -40,25 +46,29 @@ static spiflash_driver_t spi_flash_drv = {
 };
 
 
+
 /**
  * Command to initialize use of the SPIFlash class / API and configure
  * how we'll talk to the SPI flash.
  */
 static int spi_flash_verb_initialize(struct command_transaction *trans)
 {
-    uint8_t gpio_pin, gpio_port;
+    uint8_t cs_port, cs_pin;
 
 	// FIXME: allow use of other GPIO ports, where possible, for hold/WP
     spi_flash_drv.page_len  = comms_argument_parse_uint16_t(trans);
     spi_flash_drv.num_pages = comms_argument_parse_uint16_t(trans);
     spi_flash_drv.num_bytes = comms_argument_parse_uint32_t(trans);
-    gpio_port               = comms_argument_parse_uint8_t(trans);
-    gpio_pin                = comms_argument_parse_uint8_t(trans);
+    cs_port                 = comms_argument_parse_uint8_t(trans);
+    cs_pin                  = comms_argument_parse_uint8_t(trans);
     spi_flash_drv.device_id = comms_argument_parse_uint8_t(trans);
 
+
+
 	// Apply our GPIO settings.
+	gpio_configure_pinmux_and_resistors(gpio_pin(cs_port, cs_pin), RESISTOR_CONFIG_NO_PULL);
 	// FIXME: use libgreat's gpio dirver rather than libopencm3's
-    GPIO_SET(gpio_spiflash_select, gpio_port, gpio_pin);
+    GPIO_SET(gpio_spiflash_select, cs_port, cs_pin);
 
     spi_bus_start(spi_flash_drv.target, &ssp_config_spi);
     return spiflash_setup(&spi_flash_drv);
@@ -76,7 +86,7 @@ static int spi_flash_verb_full_erase(struct command_transaction *trans)
 }
 
 
-/**
+/*?*
  * Command to write a page to the relevant flash chip.
  */
 static int spi_flash_verb_write_page(struct command_transaction *trans)
@@ -190,7 +200,6 @@ static int spi_flash_verb_query_topology(struct command_transaction *trans)
 		// Otherwise, we have a maximum bit number, so add one to get a capacity.
 		size_in_bits = info.memory_density + 1;
 	}
-
 
 	// ... and convert it to a usable format. :)
 	size_in_bytes = size_in_bits / 8;

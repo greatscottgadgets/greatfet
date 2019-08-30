@@ -48,6 +48,7 @@ setup(
             'greatfet_logic = greatfet.commands.greatfet_logic:main',
             'greatfet_sdir = greatfet.commands.greatfet_sdir:main',
             'greatfet_spiflash = greatfet.commands.greatfet_spiflash:main',
+            'greatfet_spi-flash = greatfet.commands.greatfet_spiflash:main',
             'greatfet_DS18B20 = greatfet.commands.greatfet_DS18B20:main',
             'greatfet_i2c = greatfet.commands.greatfet_i2c:main',
             'greatfet_shell = greatfet.commands.greatfet_shell:main',
@@ -56,7 +57,7 @@ setup(
             'greatfet_host-tools = greatfet.commands.greatfet_host_tools:main',
             'greatfet_pattern = greatfet.commands.greatfet_pattern:main',
             'greatfet_loadable = greatfet.commands.greatfet_loadable:main',
-            'greatfet_usb_capture = greatfet.commands.greatfet_usb_capture:main',
+            'greatfet_usb-capture = greatfet.commands.greatfet_usb_capture:main',
         ],
     },
     author='Great Scott Gadgets',
@@ -66,7 +67,8 @@ setup(
         'pyusb',
         'pygreat',
         'future',
-        'pyfwup'
+        'pyfwup',
+        'tqdm'
     ],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('README.md'),

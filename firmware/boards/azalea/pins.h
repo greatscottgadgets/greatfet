@@ -29,6 +29,8 @@ extern struct gpio_t gpio_usb1_en;
 
 /* GPIO Output PinMux */
 
+// FIXME: move all of this over to the libgreat driver
+
 #define NUM_LEDS 4
 
 #define SCU_PINMUX_LED1     (P7_6)  /* GPIO3[14] on P7_6 */
@@ -81,14 +83,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_SSP1_SCK        (P1_19) /* P1_19 */
 #define SCU_SSP1_SSEL       (P1_20) /* P1_20 */
 
-/* JTAG interface */
-#define SCU_PINMUX_TDO (P9_5)  /* GPIO5[18] */
-#define SCU_PINMUX_TCK (P6_1)  /* GPIO3[ 0] */
-#define SCU_PINMUX_TMS (P6_5)  /* GPIO3[ 4] */
-#define SCU_PINMUX_TDI (P6_2)  /* GPIO3[ 1] */
 
-
-/* CPLD SGPIO interface */
 #define SCU_PINMUX_SGPIO0   (P0_0)
 #define SCU_PINMUX_SGPIO1   (P0_1)
 #define SCU_PINMUX_SGPIO2   (P1_15)
@@ -106,6 +101,7 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_SGPIO14  (P4_9)
 #define SCU_PINMUX_SGPIO15  (P4_10)
 
+
 /* SPI flash */
 #define SCU_SSP0_MISO       (P3_6)
 #define SCU_SSP0_MOSI       (P3_7)
@@ -113,6 +109,18 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_SSP0_SSEL       (P3_8) /* GPIO5[11] on P3_8 */
 #define SCU_FLASH_HOLD      (P3_4) /* GPIO1[14] on P3_4 */
 #define SCU_FLASH_WP        (P3_5) /* GPIO1[15] on P3_5 */
+
+/* External SPI bus. */
+#define SCU_SSP1_MISO       (P1_3)
+#define SCU_SSP1_MOSI       (P1_4)
+#define SCU_SSP1_SCK        (P1_19)
+#define SCU_SSP1_SSEL       (P1_20) /* GPIO0[15] on P1_20 */
+#define SCU_SSP1_MISO_FUNC  (SCU_CONF_FUNCTION5)
+#define SCU_SSP1_MOSI_FUNC  (SCU_CONF_FUNCTION5)
+#define SCU_SSP1_SCK_FUNC   (SCU_CONF_FUNCTION1)
+#define SCU_SSP1_SSEL_FUNC  (SCU_CONF_FUNCTION1)
+
+
 
 #define ONBOARD_FLASH_DEVICE_ID  0x14 /* Expected device_id for W25Q16DV */
 #define ONBOARD_FLASH_PAGE_LEN   256U

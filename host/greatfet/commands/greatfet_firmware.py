@@ -13,6 +13,7 @@ import sys
 import errno
 import subprocess
 
+from tqdm import tqdm
 
 from fwup.lpc43xx import LPC43xxTarget
 from fwup.errors import BoardNotFoundError
@@ -31,39 +32,58 @@ MAX_FLASH_LENGTH = 0x100000
 def spi_flash_read(device, filename, address, length, log_function=log_silent):
     """Reads the data from the device's SPI flash to a file. """
 
-    def print_progress(bytes_read, bytes_total):
-        log_function("Read {} bytes of {}.".format(bytes_read, bytes_total), end='\r')
+    silent    = (log_function == log_silent)
+    page_size = device.onboard_flash.page_size
+    total_data = length if length else (device.onboard_flash.maximum_address + 1)
 
     # Read the data from the board's SPI flash to a file.
-    with open(filename, 'wb') as f:
-        flash_data = device.onboard_flash.read(address, length,
-                                               progress_callback=print_progress)
-        flash_data.tofile(f)
+    with tqdm(total=total_data, ncols=80, unit='B', leave=False, disable=silent) as progress:
+        flash_data = device.onboard_flash.dump(filename, address, length, auto_truncate=(length is None),
+                progress_callback=lambda offset, len : progress.update(page_size))
+
     log_function('')
 
 
 def spi_flash_write(device, filename, address, log_function=log_silent):
     """Writes the data from a given file to the SPI flash."""
 
-    def print_progress(bytes_written, bytes_total):
-        log_function("Written {} bytes of {}.".format(bytes_written, bytes_total), end='\r')
+    silent     = (log_function == log_silent)
+    page_size  = device.onboard_flash.page_size
+    total_data = os.path.getsize(filename)
 
     # Read the data from the board's SPI flash to a file.
-    with open(filename, 'rb') as f:
-        flash_data = f.read()
-        device.onboard_flash.write(flash_data, address,
-                                   erase_first=True,
-                                   progress_callback=print_progress)
+    with tqdm(total=total_data, ncols=80, unit='B', leave=False, disable=silent) as progress:
+        device.onboard_flash.upload(filename, address, erase_first=True,
+                progress_callback=lambda offset,  len : progress.update(page_size))
     log_function('')
 
 
 def dfu_upload(dfu_target, filename, log_function=log_silent):
-    def print_progress(bytes_written, bytes_total):
-        log_function("Uploaded {} bytes of {}.".format(bytes_written, bytes_total), end='\r')
+    """ Uploads the given filename to the device via DFU. """
+
+    silent = (log_function == log_silent)
+    total_data = os.path.getsize(filename)
+
+    # This container essentially creates a nonlocal context that's py2 compatible. :)
+    class progress_context:
+        last_update = 0
+
+    def update_progress(offset, total):
+        """ Callback to update our progress bar in non-silent mode. """
+
+        # Figure out how much we've advanced, and update the progress bar.
+        delta = offset - progress_context.last_update
+        progress.update(delta)
+
+        # And store the last update, so we can continue providing deltas.
+        progress_context.last_update = offset
+
 
     with open(filename, 'rb') as f:
         data = f.read()
-        dfu_target.program(data, print_progress)
+
+    with tqdm(total=total_data, ncols=80, unit='B', leave=False, disable=silent) as progress:
+        dfu_target.program(data, update_progress)
 
     log_function('')
     log_function('Firmware uploaded but not flashed; changes will not persist post-reset!')
@@ -104,9 +124,8 @@ def main():
         description="Utility for flashing firmware on GreatFET boards")
     parser.add_argument('-a', '--address', metavar='<n>', type=int,
                         help="starting address (default: 0)", default=0)
-    parser.add_argument('-l', '--length', metavar='<n>', type=int,
-                        help="number of bytes to read (default: {})".format(MAX_FLASH_LENGTH),
-                        default=MAX_FLASH_LENGTH)
+    parser.add_argument('-l', '--length', metavar='<n>', type=int, default=None,
+                        help="number of bytes to read; if not specified, we try to read the programmed sections")
     parser.add_argument('-r', '--read', dest='read', metavar='<filename>', type=str,
                         help="Read data into file", default='')
     parser.add_argument('-w', '--write', dest='write', metavar='<filename>', type=str,
@@ -162,6 +181,7 @@ def main():
             print("Couldn't find a GreatFET-compatible board in DFU mode!", file=sys.stderr)
             sys.exit(errno.ENODEV)
 
+        log_function("Uploading data to RAM...\n")
         dfu_upload(device, args.volatile, log_function)
         sys.exit(0)
 
@@ -190,7 +210,7 @@ def main():
 
     # If we have a write command, write first, to match the behavior of hackrf_spiflash.
     if args.write:
-        log_function("Writing data to SPI flash...")
+        log_function("Writing data to SPI flash...\n")
         spi_flash_write(device, args.write, args.address, log_function)
         log_function("Write complete!")
         if not (args.reset or args.dfu):
@@ -198,7 +218,7 @@ def main():
 
     # Handle any read commands.
     if args.read:
-        log_function("Reading data from SPI flash...")
+        log_function("Reading data from SPI flash...\n")
         spi_flash_read(device, args.read, args.address, args.length, log_function)
         log_function("Read complete!")
 

@@ -243,7 +243,7 @@ void spiflash_read(spiflash_driver_t* const drv, uint32_t addr, uint32_t len, ui
 	};
 
 	const spi_transfer_t transfers[] = {
-		{ header, ARRAY_SIZE(header) },
+		{ header, sizeof(header) },
 		{ data, len }
 	};
 
@@ -290,6 +290,11 @@ void spiflash_read_sfdp_data(spiflash_driver_t *const drv, uint32_t sfdp_address
 		(sfdp_address >>  0) & 0xff,
 		0x00,                          // Dummy byte, per the SFDP standard.
 	};
+
+	// Clear out the buffer, so we're sending zeroes rather than uninitialized ram.
+	// This is very important, so the SPI flash can't spy on us.~ (... spi on us?)
+	// [Author's note: assign git blame for the last line to someone else.]
+	memset(buffer, 0, length);
 
 	// Build a scatter-gather list that includes our command and our user buffer.
 	// This allows us to send the command and read the response without de-asserting the chip-select.

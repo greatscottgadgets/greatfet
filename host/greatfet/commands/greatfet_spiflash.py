@@ -5,151 +5,220 @@
 
 from __future__ import print_function
 
-import argparse
-import errno
+import os
 import sys
+import errno
+import argparse
+
+from tqdm import tqdm
+
 
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
-from greatfet.utils import log_silent, log_verbose
-from greatfet.protocol import vendor_requests
+from greatfet.utils import from_eng_notation, human_readable_size, GreatFETArgumentParser
+from greatfet.peripherals.spi_flash import SPIFlash
+
+from pygreat.comms import CommandFailureError
 
 
-JEDECmanufacturers = {
-    0xFF: "MISSING",
-    0xEF: "Winbond",
-    0xC2: "MXIC",
-    0x20: "Numonyx/ST",
-    0x1F: "Atmel",
-    0x1C: "eON",
-    0x01: "AMD/Spansion",
-}
 
-JEDECdevices = {
-    0xFFFFFF: "MISSING",
-    0xEF3015: "W25X16L",
-    0xEF3014: "W25X80L",
-    0xEF3013: "W25X40L",
-    0xEF3012: "W25X20L",
-    0xEF3011: "W25X10L",
-    0xEF4015: "W25Q16DV",
-    0xEF4018: "W25Q16DV",
-    0xC22017: "MX25L6405D",
-    0xC22016: "MX25L3205D",
-    0xC22015: "MX25L1605D",
-    0xC22014: "MX25L8005",
-    0xC22013: "MX25L4005",
-    0xC22010: "MX25L512E",
-    0x204011: "M45PE10",
-    0x202014: "M25P80",
-    0x1f4501: "AT24DF081",
-    0x1C3114: "EN25F80",
-}
+def print_flash_info(spi_flash, log_function, log_error, args):
+    """ Function that prints the relevant flash chip's information to the console. """
 
-JEDECsizes = {
-    0x18: 0x1000000,
-    0x17: 0x800000,
-    0x16: 0x400000,
-    0x15: 0x200000,
-    0x14: 0x100000,
-    0x13: 0x080000,
-    0x12: 0x040000,
-    0x11: 0x020000,
-    0x10: 0x010000,
-}
+    capacity = spi_flash.maximum_address + 1
+
+    if args.bypass_jedec:
+        log_function("Taking it on faith that an SPI flash is there.")
+    else:
+        log_function("SPI flash detected:")
+
+    log_function("\tManufacturer: {} (0x{:02x})".format(spi_flash.manufacturer, spi_flash.manufacturer_id))
+    log_function("\tPart number: {} (0x{:02x})".format(spi_flash.part, spi_flash.part_id))
+    log_function("\tCapacity: {} ({})".format(human_readable_size(capacity),
+        human_readable_size(capacity * 8, unit='b')))
+    log_function("\tPage size: {} B".format(spi_flash.page_size))
+    log_function('')
 
 
-def spi_read(device, command, length):
-    device.comms._vendor_request_out(request=vendor_requests.SPI_WRITE, data=command)
-    data = device.comms._vendor_request_in(request=vendor_requests.SPI_READ, length=length, value=command)
-    #log_function(' '.join(["0x%02x" % d for d in data]))
-    return data
+def log_summary(log_function, spi_flash):
+    """ Print a quick summary of the detected flash; for use in non-info commands. """
 
-def spi_info(device, log_function=log_silent):
-    log_function("Reading target device information")
-    # data = device.comms._vendor_request_in(request=vendor_requests.SPI_READ, length=length)
-    data = spi_read(device, 0x9F, 4)
-    manufacturer, model, capacity = data[1:4]
-    device = (manufacturer << 16) | (model << 8) | capacity
-    log_function("Manufacturer: {:02X} {}".format(manufacturer, JEDECmanufacturers.get(manufacturer, "Unknown")))
-    log_function("Device: {:02X} {}".format(model, JEDECdevices.get(device, "Unknown")))
-    log_function("Capacity: {:02X} {} bytes".format(capacity, JEDECsizes.get(capacity, "Unknown")), end="\n\n")
-    return JEDECsizes.get(capacity)
+    if spi_flash.manufacturer_id in SPIFlash.JEDEC_MANUFACTURERS:
+        log_function("Detected a {} {} ({}).".format(spi_flash.manufacturer, spi_flash.part,
+            human_readable_size(spi_flash.maximum_address + 1)))
+    else:
+        log_function("Detected an unknown flash chip.")
 
-def dump_flash(device, address=None, length=None, filename="flash.bin", log_function=log_silent):
-    flash_size = spi_info(device, log_function=log_silent)
-    if address is None:
-        address = 0x00
-    if length is None:
-        length = flash_size - address
-    log_function("Dumping flash")
-    block_length = 256
-    with open(filename, 'wb') as file:
-        while(address < length):
-            if(address+block_length > length):
-                block_length = length - address
-            if(address & 0xFF == 0):
-                log_function("Reading 0x{:06x}".format(address))
-            value = (address>>16) & 0xFFFF
-            index = address & 0xFFFF
-            data = device.comms._vendor_request_in(vendor_requests.SPI_DUMP_FLASH,
-                                            length=block_length, index=index, value=value)
-            file.write(data)
-            address += 256
 
-def i2c_xfer(device, log_function):
-    log_function("Starting I2C")
-    device.comms._vendor_request_out(vendor_requests.I2C_START)
-    log_function("I2C started, writing byte")
-    # value = slave address, index = response length"
-    device.comms._vendor_request_out(vendor_requests.I2C_XFER, value=0x41, index=3, data=[0xF8])
-    log_function("Fetching response")
-    data = device.comms._vendor_request_in(vendor_requests.I2C_RESPONSE, length=3)
-    log_function(data)
+def be_cautious(args, log_error, operation="write to"):
+    """ Enforces the --cowardly option, which refuses to do dangerous things. """
+
+    if args.cowardly or os.getenv('BE_COWARDLY'):
+        log_error("Cowardly refusing to {} flash chip. [You provided -C.]".format(operation))
+        log_error("")
+        sys.exit(-3)
+
+
+def erase_chip(spi_flash, log_function, log_error, args):
+    """ Erase the provided SPI flash. """
+
+    log_summary(log_function, spi_flash)
+    be_cautious(args, log_error, operation="erase")
+
+    spi_flash.erase()
+    log_function("Erase complete.")
+
+
+def run_flash_operation(operation_function, page_size, total_data, args, *pargs, **kwargs):
+    """ Runs a read or write operation, while showing nice progress bars when appropriate. """
+
+    with tqdm(total=total_data, ncols=80, unit='B', leave=False, disable=not args.verbose) as progress:
+        kwargs['progress_callback'] = lambda written, total : progress.update(page_size)
+        operation_function(*pargs, **kwargs)
+
+
+def dump_chip(spi_flash, log_function, log_error, args):
+    """ Dump the contents of the provided chip. """
+
+    log_summary(log_function, spi_flash)
+
+    # Figure out how much we're going to read.
+    length_to_read = args.length if args.length else (spi_flash.maximum_address + 1)
+
+    # Truncate the read size to the flash's length, if necessary.
+    flash_size = spi_flash.maximum_address + 1
+    if (args.address + length_to_read) > flash_size:
+        length_to_read = flash_size - args.address
+
+        log_error("This operation would read past the end of flash -- truncating to {}.".format(
+            human_readable_size(length_to_read)))
+
+    if args.filename is None:
+        log_error("You must provide a filename to write the captured data to!\n")
+        sys.exit(-1)
+
+
+    # Finally, run the flash operation.
+    try:
+        log_function("Reading {}.\n".format(human_readable_size(length_to_read)))
+        run_flash_operation(spi_flash.dump, spi_flash.page_size, length_to_read, args,
+            args.filename, args.address, length_to_read, auto_truncate=args.truncate)
+        log_function("Read complete.\n")
+    except FileNotFoundError:
+        log_error("Cannot open {} for writing.\n".format(args.filename))
+
+
+
+def program_chip(spi_flash, log_function, log_error, args):
+    """ Programs data to the given chip. """
+
+    log_summary(log_function, spi_flash)
+    be_cautious(args, log_error, operation="erase")
+
+    if args.filename is None:
+        log_error("You must provide a filename that will provided the data to write!\n")
+        sys.exit(-1)
+
+    try:
+        # Grab the size of the file to read.
+        if args.length is None:
+            length_to_write = None if args.filename == '-' else os.path.getsize(args.filename)
+
+        # Check that we can write the relevant file into flash.
+        flash_size = spi_flash.maximum_address + 1
+        if length_to_write and ((length_to_write + args.address) > flash_size):
+            log_error("This operation would write past the end of flash. If you'd like to trim your file, try --length.\n")
+            sys.exit(-3)
+
+        log_function("Writing {}.\n".format(human_readable_size(length_to_write)))
+        run_flash_operation(spi_flash.upload, spi_flash.page_size, length_to_write,
+            args, args.filename, args.address, length_to_write, erase_first=args.autoerase)
+        log_function("Write complete.\n")
+
+    except FileNotFoundError:
+        log_error("Cannot open {} for reading.\n".format(args.filename))
+
 
 def main():
+
+    commands = {
+        'info': print_flash_info,
+        'erase': erase_chip,
+        'read': dump_chip,
+        'write': program_chip
+    }
+
+
     # Set up a simple argument parser.
-    parser = argparse.ArgumentParser(description="Utility for talking to external SPI flash chips with GreatFET")
-    parser.add_argument('-i', '--info', dest='info', action='store_true',
-                        help="Read Jedec information from target")
-    parser.add_argument('-d', '--dump', dest='dump', metavar='<filename>',
-                        type=str, help="Dump flash into file")
-    parser.add_argument('-a', '--address', metavar='<n>', default=0,
-                        type=int, help="Flash dump starting address")
-    parser.add_argument('-l', '--length', metavar='<n>', type=int,default=None,
-                        help="number of bytes to read (default: flash size)")
-    parser.add_argument('-s', dest='serial', metavar='<serialnumber>', type=str,
-                        help="Serial number of device, if multiple devices", default=None)
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Write data from file")
+    parser = GreatFETArgumentParser(description="Utility for programming and dumping SPI flash chips",
+                                    verbose_by_default=True)
+    parser.add_argument('command', choices=commands, help='the operation to complete')
+    parser.add_argument('filename', metavar="[filename]", nargs='?',
+                        help='the filename to read or write to, for read/write operations')
+
+    parser.add_argument('-a', '--address', metavar='<addr>', default=0,
+                        type=from_eng_notation, help="Starting offset in the given flash memory.")
+    parser.add_argument('-l', '--length', metavar='<length>', type=from_eng_notation,
+                        default=None, help="number of bytes to read (default: flash size)")
+    parser.add_argument('-E', '--no-autoerase', action='store_false', dest='autoerase',
+                        help="If provided, the target flash will not be erased before a write operation.")
+    parser.add_argument('-C', '--cautious', '--cowardly', action='store_true', dest='cowardly',
+                        help="Refuses to do anything that might overwrite or lose chip data.")
+    parser.add_argument('-S', '--no-spdf', dest='autodetect', action='store_false',
+                        help="Don't attempt to use SPDF to autodetect flash parameters.")
+    parser.add_argument('-R', '--require-spdf', dest='allow_fallback', action='store_false',
+                        help="Only use SPDF; ignore any argument provided as fall-back options.")
+    parser.add_argument('-T', '--auto-truncate', dest='truncate', action='store_true',
+                        help="If provided, any read operations will truncate trailing unprogrammed words (0xFFs).")
+    parser.add_argument('--page-size', metavar='<bytes>', type=int, default=256,
+                        help="manually specify the page size of the target flash; for use with -S")
+    parser.add_argument('--flash-size', metavar='<bytes>', type=int, default=8192,
+                        help="manually specify the capacity of the target flash; for use with -S")
+    parser.add_argument('-J', '--allow-null-jedec-id', dest='bypass_jedec', action='store_true',
+                        help="Allow the device to work even if it doesn't appear to support a JEDEC ID.")
+
+
     args = parser.parse_args()
+    device = parser.find_specified_device()
 
-    # If we don't have an option, print our usage.
-    if not args.info and not args.dump:
-        parser.print_help()
-        sys.exit()
+    if args.command == 'info':
+        args.verbose = True
+    elif args.filename == "-":
+        args.verbose = False
 
-    # Determine whether we're going to log to the stdout, or not at all.
-    log_function = log_verbose if args.verbose else log_silent
+    # Grab our log functions.
+    log_function, log_error = parser.get_log_functions()
 
-    # Create our GreatFET connection.
     try:
-        log_function("Trying to find a GreatFET device...")
-        device = GreatFET(serial_number=args.serial)
-        log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
-    except DeviceNotFoundError:
-        if args.serial:
-            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
-        else:
-            print("No GreatFET board found!", file=sys.stderr)
-        sys.exit(errno.ENODEV)
+        # TODO: use a GreatFET method to automatically instantiate spi_flash
 
-    device.comms._vendor_request_out(vendor_requests.SPI_INIT)
+        # Figure out the "override" page and flash size for any arguments provided.
+        # If autodetection is enabled and works, these aren't used.
+        maximum_address = args.flash_size - 1
+        num_pages = (args.flash_size + (args.page_size - 1)) // args.page_size
 
-    if args.info:
-        spi_info(device, log_function=log_verbose)
-    if args.dump:
-        dump_flash(device, filename=args.dump, address=args.address,
-                   length=args.length, log_function=log_verbose)
+        # Create a SPI flash object.
+        spi_flash = SPIFlash(device, args.autodetect, args.allow_fallback,
+            page_size=args.page_size, maximum_address=maximum_address, allow_null_jedec=args.bypass_jedec)
+
+        # If we have a device that's ancient enough to not speak JEDEC, notify the user. Pithily.
+        if args.bypass_jedec and spi_flash.manufacturer_id == 0xff and spi_flash.part_id == 0xffff:
+            log_function("I... really can't see an SPI flash here. I'll trust you.")
+
+
+    except CommandFailureError:
+        log_error("This device doesn't appear to support identifying itself.")
+        log_error(" You'll need to specify the page and flash size manually.")
+        sys.exit(-1)
+    except IOError as e:
+        log_error(str(e))
+        log_error("If you believe you have a device properly connected, you")
+        log_error(" may want to try again with --allow-null-jedec-id.")
+        log_error("")
+        sys.exit(-2)
+
+    command = commands[args.command]
+    command(spi_flash, log_function, log_error, args)
 
 
 if __name__ == '__main__':

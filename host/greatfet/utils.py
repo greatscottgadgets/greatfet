@@ -48,6 +48,7 @@ def log_verbose(string, end="\n"):
 def log_error(string, end="\n"):
     """ Prints errors to stderr. """
 
+    sys.stdout.flush()
     print(string, end=end, file=sys.stderr)
     sys.stderr.flush()
 
@@ -106,6 +107,30 @@ def from_eng_notation(string, unit=None, units=None, to_type=None):
         result = to_type(result)
 
     return result
+
+
+def human_readable_size(byte_count, unit="B", binary_marker='i'):
+    """ Converts a number of bytes into a human-readable size string. """
+
+    SUFFIXES = {
+        0: "",
+        1: "k" + binary_marker,
+        2: "M" + binary_marker,
+        3: "G" + binary_marker,
+        4: "T" + binary_marker,
+        5: "P" + binary_marker
+    }
+
+    if byte_count is None:
+        return 0
+
+    suffix_order =0
+
+    while byte_count >= 1024:
+        suffix_order += 1
+        byte_count /= 1024
+
+    return "{} {}{}".format(byte_count, SUFFIXES[suffix_order], unit)
 
 
 
