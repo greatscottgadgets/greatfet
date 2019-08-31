@@ -26,6 +26,19 @@ static int swra124_verb_debug_init()
 	return 0;
 }
 
+static int swra124_verb_debug_stop()
+{
+    swra124_debug_stop();
+    return 0;
+}
+
+static int swra124_verb_chip_erase()
+{
+    swra124_halt();
+    swra124_chip_erase();
+    return 0;
+}
+
 static int swra124_verb_read_status(struct command_transaction *trans)
 {
 	comms_response_add_uint8_t(trans, swra124_read_status());
@@ -77,6 +90,76 @@ static int swra124_verb_get_pc(struct command_transaction *trans)
 	return 0;
 }
 
+static int swra124_verb_set_pc(struct command_transaction *trans)
+{
+    uint16_t value = comms_argument_parse_uint16_t(trans);
+
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+    swra124_set_pc(value);
+
+    return 0;
+}
+
+static int swra124_verb_peek_code_byte(struct command_transaction *trans)
+{
+    uint32_t address = comms_argument_parse_uint32_t(trans);
+    uint8_t value;
+
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+    value = swra124_peek_code_byte(address);
+    comms_response_add_int8_t(trans, value);
+
+    return 0;
+}
+
+static int swra124_verb_peek_data_byte(struct command_transaction *trans)
+{
+    uint16_t address = comms_argument_parse_uint16_t(trans);
+    uint8_t value;
+
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+    value = swra124_peek_data_byte(address);
+    comms_response_add_int8_t(trans, value);
+
+    return 0;
+}
+
+static int swra124_verb_poke_data_byte(struct command_transaction *trans)
+{
+    uint16_t address = comms_argument_parse_uint16_t(trans);
+    uint8_t value = comms_argument_parse_uint8_t(trans);
+
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+    swra124_poke_data_byte(address, value);
+
+    return 0;
+}
+
+static int swra124_verb_write_flash_page(struct command_transaction *trans)
+{
+    uint32_t address = comms_argument_parse_uint32_t(trans);
+
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+    swra124_write_flash_page(address);
+
+    return 0;
+}
+
 static struct comms_verb swra124_verbs[] =
 {
 	{
@@ -93,6 +176,13 @@ static struct comms_verb swra124_verbs[] =
 		.out_signature = "",
 		.doc = "reset target into debugging mode",
 	},
+    {
+        .name = "debug_stop",
+        .handler = swra124_verb_debug_stop,
+        .in_signature = "",
+        .out_signature = "",
+        .doc = "reset target out of debugging mode",
+    },
 	{
 		.name = "read_status",
 		.handler = swra124_verb_read_status,
@@ -146,6 +236,53 @@ static struct comms_verb swra124_verbs[] =
 		.out_param_names = "pc",
 		.doc = "get program counter from target",
 	},
+    {
+        .name = "set_pc",
+        .handler = swra124_verb_set_pc,
+        .in_signature = "<H",
+        .out_signature = "",
+        .in_param_names = "value",
+        .doc = "set program counter to target",
+    },
+    {
+	    .name = "chip_erase",
+	    .handler = swra124_verb_chip_erase,
+	    .in_signature = "",
+	    .out_signature = "",
+	    .doc = "erase all data on target"
+    },
+    {
+        .name = "peek_code_byte",
+        .handler = swra124_verb_peek_code_byte,
+        .in_signature = "<I",
+        .out_signature = "B",
+        .in_param_names = "address",
+        .doc = "peek code byte on target"
+    },
+    {
+        .name = "peek_data_byte",
+        .handler = swra124_verb_peek_data_byte,
+        .in_signature = "<H",
+        .out_signature = "B",
+        .in_param_names = "address",
+        .doc = "peek data byte on target"
+    },
+    {
+        .name = "poke_data_byte",
+        .handler = swra124_verb_poke_data_byte,
+        .in_signature = "<HB",
+        .out_signature = "",
+        .in_param_names = "address, value",
+        .doc = "poke data byte on target"
+    },
+    {
+        .name = "write_flash_page",
+        .handler = swra124_verb_write_flash_page,
+        .in_signature = "<I",
+        .out_signature = "",
+        .in_param_names = "address",
+        .doc = "write target address page to flash on target"
+    },
 	{},
 };
 COMMS_DEFINE_SIMPLE_CLASS(swra124, CLASS_NUMBER_SELF, "swra124", swra124_verbs,

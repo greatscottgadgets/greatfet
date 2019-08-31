@@ -54,6 +54,7 @@ setup(
             'greatfet_dmesg = greatfet.commands.greatfet_dmesg:main',
             'greatfet_msp430 = greatfet.commands.greatfet_msp430:main',
             'greatfet_host-tools = greatfet.commands.greatfet_host_tools:main',
+            'greatfet_swra124 = greatfet.commands.greatfet_swra124:main',
         ],
     },
     author='Great Scott Gadgets',
@@ -63,7 +64,8 @@ setup(
         'pyusb',
         'pygreat',
         'future',
-        'pyfwup'
+        'pyfwup',
+        'intelhex'
     ],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('README.md'),
