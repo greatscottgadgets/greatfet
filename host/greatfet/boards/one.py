@@ -2,6 +2,8 @@
 # This file is part of GreatFET
 #
 
+import os
+
 from ..board import GreatFETBoard
 
 from ..peripherals.i2c_bus import I2CBus
@@ -9,8 +11,6 @@ from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager
 from ..peripherals.pattern_generator import PatternGenerator
 from ..peripherals.sdir import SDIRTransceiver
-
-
 
 
 class GreatFETOne(GreatFETBoard):
@@ -162,6 +162,14 @@ class GreatFETOne(GreatFETBoard):
         if self.supports_api('spi'):
             self._add_peripheral('spi_busses', [ SPIBus(self, 'SPI1') ])
             self._add_peripheral('spi', self.spi_busses[0])
+
+        # As a convenience, if GREATFET_USE_LOWLEVEL is set in the environment,
+        # automatically set it up.
+        try:
+            if os.getenv('GREATFET_USE_LOWLEVEL'):
+                self.enable_low_level_access()
+        except:
+            pass
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)

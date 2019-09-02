@@ -68,7 +68,9 @@ setup(
         'pygreat',
         'future',
         'pyfwup',
-        'tqdm'
+        'tqdm',
+        'cmsis_svd'
+        'tabulate',
     ],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('README.md'),

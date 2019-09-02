@@ -6,6 +6,8 @@
 Module containing the core definitions for a GreatFET board.
 """
 
+from pygreat.board import GreatBoard
+
 from .peripherals.led import LED
 from .peripherals.gpio import GPIO
 from .peripherals.adc import ADC
@@ -15,11 +17,10 @@ from .peripherals.firmware import DeviceFirmwareManager
 from .peripherals.pattern_generator import PatternGenerator
 from .peripherals.sdir import SDIRTransceiver
 
-
 from .glitchkit import *
 
-from pygreat.board import GreatBoard
 
+from .debug.lpc43xx import LPC43xxTarget
 
 # Default device identifiers.
 GREATFET_VENDOR_ID = 0x1d50
@@ -149,4 +150,25 @@ class GreatFETBoard(GreatBoard):
             if self.supports_api(comms_class):
                 name, python_class = peripheral
                 self._add_simple_peripheral(name, python_class)
+
+
+
+    def enable_low_level_access(self):
+        """ Adds a `.low_level` property to this object that enables low-level acesss to device memory.
+
+        This is intended for debugging or quick prototyping. Generally, you should use this only if you're
+        comfortable working with the LPC43xx's memory interfaces. For longer-term use, consider whether adding
+        functions to the GreatFET firmware may be a better option.
+        """
+
+        if not self.supports_api('debug'):
+            raise IOError("The target board does not support the necessary debug APIs.")
+
+        # If our low-level access is already set up, we're done!
+        if hasattr(self, 'lowlevel'):
+            return
+
+        # Create our low-level access point.
+        self.lowlevel = LPC43xxTarget(self)
+
 
