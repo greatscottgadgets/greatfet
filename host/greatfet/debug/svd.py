@@ -238,6 +238,10 @@ class MemoryWindow(SVDGenerated):
             self.poke(address, value)
 
 
+    def __repr__(self):
+        return object.__repr__(self)
+
+
 
 class DebugTarget(SVDGenerated):
     """ Class representing a target board, and its associated address space.. """
