@@ -10,7 +10,7 @@ tabulate.PRESERVE_WHITESPACE = True
 class SVDGenerated(object):
     """ Generic base class for objects generated from SVDs. """
 
-    children           = None
+    _children           = None
     parent             = None
     _name              = None
     _read_before_write = True
@@ -48,7 +48,7 @@ class SVDGenerated(object):
 
 
     def __dir__(self):
-        return self.children.keys()
+        return self._children.keys()
 
 
     def _get_long_name(self):
@@ -70,17 +70,22 @@ class SVDGenerated(object):
     def __getattr__(self, name):
         """ General 'missed attribute' handler that makes objects case-insensitive. """
 
-        if name.lower() in self.children:
-            return self.children[name.lower()]
+        # Special case: translate __name__ requests to SVD names.
+        if name == "__name__":
+            return self._name
+        elif name.lower() in self._children:
+            return self._children[name.lower()]
         else:
             raise KeyError("invalid key {} in {}".format(name, self._get_long_name()))
 
 
     def __repr__(self):
         """ Fancy printer for most SVD-derived classes. """
-        return "<{} {}: {} children>".format(self._short_type, self._get_long_name(), len(self.children))
+        return "<{} {}: {}._children>".format(self._short_type, self._get_long_name(), len(self._children))
 
 
+    def methodname(self, typename, level):
+        return "bees"
 
     @classmethod
     def _unique_type_from_svd_attribute(cls, svd_object, attribute, name_prefix="GeneratedObject", translate_writes=False):
@@ -100,10 +105,10 @@ class SVDGenerated(object):
 
         # Generate properties for each of our relevant fields. These will create the attributes
         # on our relevant type that serve as our documentation.
-        unique_type.children = {}
+        unique_type._children = {}
         for child in getattr(svd_object, attribute):
 
-            # We can't work with children that don't have names, so skip them.
+            # We can't work with._children that don't have names, so skip them.
             if child.name is None:
                 continue
 
@@ -112,14 +117,14 @@ class SVDGenerated(object):
             # If 'translate_writes' is set, automatically translate any assignment
             # to the given object into a call to its poke() method.
             if translate_writes:
-                setter = lambda self, value, name=name : self.children[name].poke(value)
+                setter = lambda self, value, name=name : self._children[name].poke(value)
 
             # Otherwise, don't allow the value to be overwritten.
             else:
                 setter = None
 
             # Always allow the property to be read.
-            getter = lambda self, name=name : self.children[name]
+            getter = lambda self, name=name : self._children[name]
 
             # Build the property that defines accessors for the given field, and attach it to our type.
             field_property = property(getter, setter, doc=child.description)
@@ -141,7 +146,7 @@ class SVDGenerated(object):
                 continue
 
             name = cls._normalize_name(value.name)
-            instance.children[name] = child_type.from_svd(value, instance)
+            instance._children[name] = child_type.from_svd(value, instance)
 
         return instance
 
@@ -188,6 +193,50 @@ class SVDMemoryAccessible(SVDGenerated):
             return "{} = {} / 0x{:x} / 0b{:b}".format(name, value, value, value)
 
 
+class MemoryWindow(SVDGenerated):
+    """ Class that implements a view into the target's memory.
+
+    This object can be used to read and write memory using the indexing operator:
+
+        print(gf.lowlevel.memory[0x00000000]) # prints the contents of address 0 (the start of the vector table)
+
+        gf.lowlevel.memory[0x10000000] = 0    # writes the value 0 to address 0x10000000
+
+    """
+
+    _name = "memory"
+    _description = "Full memory address space"
+
+    def __init__(self, peek_function, poke_function):
+        """ Sets up our view into memory. """
+
+        # Store our peek and poke functions,
+        self.__dict__['peek'] = peek_function
+        self.__dict__['poke'] = poke_function
+
+
+    def __getitem__(self, address):
+        """ Shortcut that allows us to read memory using the index operator. """
+
+        if isinstance(address, slice):
+            result = []
+
+            for i in range(address.start, address.stop, address.step or 1):
+                result.append(self.peek(i))
+
+            return result
+        else:
+            return self.peek(address)
+
+    def __setitem__(self, address, value):
+        """ Shortcut that allows us to write to memory using the index operator. """
+
+        if isinstance(address, slice):
+            for i in range(address.start, address.stop, address.step or 1):
+                self.poke(i, value)
+        else:
+            self.poke(address, value)
+
 
 
 class DebugTarget(SVDGenerated):
@@ -203,8 +252,14 @@ class DebugTarget(SVDGenerated):
         unique_type = cls._unique_type_from_svd_attribute(svd_device, 'peripherals',
             "GeneratedDebugTarget", translate_writes=False)
 
+        # Add a window into the target's memory.
+        unique_type.memory = property(lambda self : self._children['memory'], doc="Provides an indexable view into target memory.")
+
         # Finally, instantiate the unique type to get a register object.
-        return cls._instantiate_unique_type(unique_type, DebugPeripheral, svd_device, *arguments)
+        instance = cls._instantiate_unique_type(unique_type, DebugPeripheral, svd_device, *arguments)
+        instance._children['memory'] = MemoryWindow(instance.peek, instance.poke)
+
+        return instance
 
 
     def __init__(self, peek_function, poke_function):
@@ -219,8 +274,6 @@ class DebugTarget(SVDGenerated):
         self.__dict__['_peek'] = peek_function
         self.__dict__['_poke'] = poke_function
 
-
-
     def peek(self, address):
         """ Returns the contents of the target memory address. """
         return self._peek(address)
@@ -232,7 +285,18 @@ class DebugTarget(SVDGenerated):
 
 
     def peripherals(self):
-        return self.children.keys()
+        return self._children.keys()
+
+
+    def __repr__(self):
+
+        headers = ['peripheral', 'description']
+        rows = []
+
+        for peripheral in self._children.values():
+            rows.append([peripheral._name, peripheral._description or peripheral.__doc__])
+
+        return tabulate.tabulate(rows, tablefmt='simple', headers=headers)
 
 
 
@@ -241,20 +305,22 @@ class DebugPeripheral(SVDGenerated):
 
     _base = None
     _short_type = "peripheral"
+    _description = "anonymous peripheral"
 
     @classmethod
-    def from_svd(cls, svd_register, parent):
+    def from_svd(cls, svd_peripheral, parent):
         """ Creates a new DebugPeripheral-derived object for a given SVD peripheral. """
 
         # Create a unique object type that represents the given SVD peripheral.
-        unique_type = cls._unique_type_from_svd_attribute(svd_register, 'registers',
+        unique_type = cls._unique_type_from_svd_attribute(svd_peripheral, 'registers',
             "GeneratedDebugPeripheral", translate_writes=True)
 
         # ... and store its base address.
-        unique_type._base = svd_register.base_address
+        unique_type._base = svd_peripheral.base_address
+        unique_type._description = svd_peripheral._description
 
         # Finally, instantiate the unique type to get a register object.
-        return cls._instantiate_unique_type(unique_type, DebugRegister, svd_register, parent)
+        return cls._instantiate_unique_type(unique_type, DebugRegister, svd_peripheral, parent)
 
 
     def peek_at_offset(self, offset):
@@ -274,32 +340,38 @@ class DebugPeripheral(SVDGenerated):
 
 
     def registers(self):
-        return self.children.keys()
+        return self._children.keys()
 
 
-
-    def print_all(self, include_fields=False):
-        """ Convenience method that prints a representation of every child of the given object. """
+    def __repr__(self, include_fields=False):
 
         headers = ['register', 'dec', 'hex', 'bin', 'note']
         table_entries = []
 
         # Add each of the registers to this representation.
-        for register in self.children.values():
-                value = int(register)
+        for register in self._children.values():
+
+                value = None if register.write_only else int(register)
+
                 table_entries.append(register._table_row(value))
 
                 # And if we're including fields, add them, too.
-                if include_fields:
+                if (value is not None) and include_fields:
 
                     # If we don't have any fields to represent, then continue without trying.
-                    if (not register.children) or list(register.children.values())[0]._represents_whole_register():
+                    if (not register._children) or list(register._children.values())[0]._represents_whole_register():
                         continue
 
-                    for field in register.children.values():
+                    for field in register._children.values():
                         table_entries.append(field._table_row(value))
 
-        print(tabulate.tabulate(table_entries, tablefmt='simple', headers=headers))
+        return tabulate.tabulate(table_entries, tablefmt='simple', headers=headers)
+
+
+    def print_all(self, include_fields=False):
+        """ Convenience method that prints a representation of every child of the given object. """
+
+        print(self.__repr__(include_fields))
 
 
 
@@ -345,7 +417,7 @@ class DebugRegister(SVDMemoryAccessible):
 
 
     def fields(self):
-        return self.children.keys()
+        return self._children.keys()
 
 
     def _get_unimplemented_bits(self):
@@ -354,7 +426,7 @@ class DebugRegister(SVDMemoryAccessible):
         values = set(range(0, 32))
 
         # Iterate over each field in the register...
-        for field in self.children.values():
+        for field in self._children.values():
 
             # ... and remove any bits that are represented by a field.
             for i in range(field._width):
@@ -362,15 +434,16 @@ class DebugRegister(SVDMemoryAccessible):
 
         return values
 
+
     def _table_row(self, value=None):
         """ Generates a table row for the active register. """
-
-        if value is None:
-            value = int(self)
 
         if self.write_only:
             return [self._name, 'w', "w" * 8, "w" * 32, 'write-only']
         else:
+            if value is None:
+                value = int(self)
+
             bit_value_string = "{:032b}".format(value)
 
             # Modify the string, so any unimplemented bits are not included.
@@ -393,12 +466,13 @@ class DebugRegister(SVDMemoryAccessible):
         headers = ['register', 'dec', 'hex', 'bin', 'note']
 
         # Generate our first table row.
-        value = int(self)
+        value = None if self.read_only else int(self)
         table_entries = [self._table_row(value)]
 
         # Add each of the fields to this representation.
-        for field in self.children.values():
-            table_entries.append(field._table_row(value))
+        if value is not None:
+            for field in self._children.values():
+                table_entries.append(field._table_row(value))
 
         return tabulate.tabulate(table_entries, tablefmt='simple', headers=headers)
 
