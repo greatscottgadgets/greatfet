@@ -69,7 +69,7 @@ setup(
         'future',
         'pyfwup',
         'tqdm',
-        'cmsis_svd'
+        'cmsis_svd',
         'tabulate',
     ],
     description='Python library for hardware hacking with the GreatFET',
