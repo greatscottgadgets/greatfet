@@ -30,12 +30,14 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 .vscode
+.idea
 
 # ctags output
 tags
 
 firmware/build
 firmware/*/build
+firmware/cmake-build-debug
 libgreat/host/build/
 libgreat/host/dist/
 *.egg-info
