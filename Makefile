@@ -140,13 +140,9 @@ endif
 	@mkdir -p host-packages
 	@mkdir -p build
 
-	@#Python 2
-	@pushd libgreat/host; $(PYTHON2) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
-	@pushd host; $(PYTHON2) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
-
-	@#Python 3
-	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
-	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@#Create our python pacakges. These universal packages work for py2/py3.
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
+	@pushd host; $(PYTHON3) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
 
 	@# Create files for e.g. the nightly.
 	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/release-files; popd
@@ -236,3 +232,4 @@ clean:
 
 	# Clean out our created files and directories.
 	rm -rf VERSION firmware-bin host-packages release-files distro-packages *.egg-info CMakeFiles
+	rm -rf host/greatfet/assets/*.bin
