@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import argparse
 import shutil
+import errno
 import sys
 import os
 
@@ -13,7 +14,7 @@ from greatfet import GreatFET
 from greatfet import find_greatfet_asset
 
 
-def ensure_access_linux():
+def install_udev_rules():
     """ Installs udev rules as appropriate for the Linux distribution. """
 
     rules_target_path = '/etc/udev/rules.d/54-greatfet.rules'
@@ -44,10 +45,25 @@ def ensure_access_linux():
             print('Copying plugdev udev rules...')
             shutil.copy(plugdev_rules, rules_target_path)
 
-    except PermissionError:
-        raise PermissionError('Failed to copy udev rules to {}! Maybe try with sudo -E?'.format(rules_target_path)) from None
+    except (OSError, IOError) as e:
+        if e.errno == errno.EACCES or e.errno == errno.EPERM:
+            raise OSError(e.errno, 'Failed to copy udev rules to {}! Maybe try with sudo -E?'.format(rules_target_path))
 
     print('Done')
+
+
+def ensure_access_linux():
+
+    # Install udev rules
+    install_udev_rules()
+
+    # If we're Python 2, check if backports.functools_lru_cache is available
+    if sys.version_info < (3, 0):
+        try:
+            from backports import functools_lru_cache
+        except ImportError:
+            print("Warning: backports.functools_lru_cache is unavailable! Performace will be degraded.")
+            print("Try installing python-backports.functools-lru-cache with your system package manager?")
 
 
 def ensure_access():
