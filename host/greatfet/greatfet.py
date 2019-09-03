@@ -38,10 +38,12 @@ def GreatFETSingleton(serial=None):
 
     # If we already have a GreatFET with the given serial,
     if serial in active_connections:
-        return active_connections[serial]
+        device = active_connections[serial]
+        if device.comms.still_connected():
+            return device
 
     # Otherwise, try to create a new GreatFET instance.
-    greatfet =  GreatFET(serial_number=serial)
+    greatfet = GreatFET(serial_number=serial)
     active_connections[serial] = greatfet
 
 

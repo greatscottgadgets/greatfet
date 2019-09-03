@@ -194,8 +194,10 @@ def main():
                          help="Provide this option to capture from SGPIO8 up, rather than from SGPIO0 up.")
     parser.add_argument('-O', '--stdout', dest='write_to_stdout', action='store_true',
                          help='Provide this option to write the raw binary samples to the standard out. Implies -q.')
+    parser.add_argument('--rhododendron', dest='rhododendron', action='store_true',
+                         help='Capture raw packets for e.g. low or full speed USB using the Rhodadendon neighbor.')
     parser.add_argument('--raw-usb', dest='raw_usb', action='store_true',
-                         help='Capture raw packets for e.g. low or full speed USB; for example, using the Rhodadendon neighbor.')
+                         help='Capture raw packets for e.g. low or full speed USB on SGPIO0 and SGPIO1.')
     parser.add_argument('--debug-sgpio', dest='debug_sgpio', action='store_true',
                          help='Developer option for debugging; dumps the SGPIO configuration before starting.')
     parser.add_argument('--stats', dest='print_stats', action='store_true',
@@ -222,18 +224,20 @@ def main():
 
     channel_names = None
 
-    # If we have the raw option, override our other options to capture raw USB.
-    if args.raw_usb:
+    # If we have one of the raw-usb options, apply their settings.
+    if args.raw_usb or args.rhododendron:
         sample_rate    = int(51e6)
         bus_width      = 2
-        args.first_pin = 8
         channel_names = { 0: 'D-', 1: 'D+'}
+
+    if args.rhododendron:
+        args.first_pin = 8
 
     # Find our GreatFET.
     device = parser.find_specified_device()
 
     # Configure which locations we're using for SGPIO8/9.
-    device.apis.logic_analyzer.configure_alt_mappings(args.raw_usb)
+    device.apis.logic_analyzer.configure_alt_mappings(args.rhododendron)
 
     # Set the first pin in our capture according to our bank setting.
     device.apis.logic_analyzer.change_first_pin(args.first_pin)
