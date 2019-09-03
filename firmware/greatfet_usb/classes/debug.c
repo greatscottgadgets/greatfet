@@ -24,7 +24,7 @@ static int verb_read_dmesg(struct command_transaction *trans)
 }
 
 /**
- * Commmand that clears the debug ring.
+ * Command that clears the debug ring.
  */
 static int verb_clear_dmesg(struct command_transaction *trans)
 {

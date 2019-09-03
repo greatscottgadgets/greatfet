@@ -1,0 +1,11 @@
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: true
+ColumnLimit: 120
+BreakBeforeBraces: Linux
+PointerAlignment: Right
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+AlignConsecutiveAssignments: true
+AlignEscapedNewlines: Left
+IncludeBlocks: Preserve
+UseTab: ForIndentation

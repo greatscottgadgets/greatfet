@@ -37,7 +37,7 @@ add_greatfet_targets(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/rhododendron/capture.c
 )
 use_libgreat_modules(${PROJECT_NAME} allocator comms usb usb_comms gpio ad970x
-	debug-backtrace sgpio)
+	debug-backtrace sgpio uart ringbuffer)
 
 
 # Add a loadable for the Rhododendron baseband.
