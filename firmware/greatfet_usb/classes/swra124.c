@@ -39,6 +39,24 @@ static int swra124_verb_chip_erase()
     return 0;
 }
 
+static int swra124_verb_read_config(struct command_transaction *trans)
+{
+    comms_response_add_uint8_t(trans, swra124_read_config());
+    return 0;
+}
+
+static int swra124_verb_write_config(struct command_transaction *trans)
+{
+    uint8_t config = comms_argument_parse_uint8_t(trans);
+    if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+    comms_response_add_uint8_t(trans, swra124_write_config(config));
+
+    return 0;
+}
+
 static int swra124_verb_read_status(struct command_transaction *trans)
 {
 	comms_response_add_uint8_t(trans, swra124_read_status());
@@ -250,6 +268,20 @@ static struct comms_verb swra124_verbs[] =
 	    .in_signature = "",
 	    .out_signature = "",
 	    .doc = "erase all data on target"
+    },
+    {
+        .name = "read_config",
+        .handler = swra124_verb_read_config,
+        .in_signature = "",
+        .out_signature = "B",
+        .doc = "Read debug config",
+    },
+    {
+        .name = "write_config",
+        .handler = swra124_verb_write_config,
+        .in_signature = "<B",
+        .out_signature = "B",
+        .doc = "Write debug config",
     },
     {
         .name = "peek_code_byte",

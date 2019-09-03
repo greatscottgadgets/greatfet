@@ -24,15 +24,15 @@ def main():
                         help="Show target identification")
     parser.add_argument('-e', '--erase', dest='erase', action='store_true',
                         help="Erase target flash")
+    parser.add_argument('--read-config', dest='readconfig', action='store_true',
+                        help="Read Debug config")
+    parser.add_argument('--write-config', dest='writeconfig', type=ast.literal_eval,
+                        metavar='<value>', help="Write debug config")
     parser.add_argument('--status', dest='status', action='store_true',
                         help="Read target status")
     parser.add_argument('-f', '--flash', dest='flash', type=str,
                         metavar='<filename>', help="Write target flash")
-    parser.add_argument('--old-flash', dest='oldflash', type=str,
-                        metavar='<filename>', help="Write target flash")
     parser.add_argument('-V', '--verify', dest='verify', type=str,
-                        metavar='<filename>', help="Verify target flash")
-    parser.add_argument('--old-verify', dest='oldverify', type=str,
                         metavar='<filename>', help="Verify target flash")
     parser.add_argument('-R', '--peek', dest='peek', action='store_true',
                         help="Read from memory location")
@@ -85,17 +85,9 @@ def main():
         log_function("Starting flash")
         chipcon.flash(args.flash)
 
-    if args.oldflash:
-        log_function("Starting oldflash")
-        chipcon.oldflash(args.oldflash)
-
     if args.verify:
         log_function("Starting verify")
         chipcon.verify(args.verify)
-
-    if args.oldverify:
-        log_function("Starting oldverify")
-        chipcon.oldverify(args.oldverify)
 
     if args.peek:
         print("%0.2x" % chipcon.peek_data_byte(args.address))
@@ -111,6 +103,14 @@ def main():
 
     if args.get_pc:
         print("%0.4x" % chipcon.get_pc())
+
+    if args.writeconfig:
+        print(chipcon.write_config(args.writeconfig))
+
+    if args.readconfig:
+        config = chipcon.read_config()
+        print("%0.4x" % config)
+        print(bin(config))
 
     chipcon.debug_stop()
 

@@ -99,11 +99,18 @@ void swra124_chip_erase()
 	swra124_read();
 }
 
-void swra124_write_config(const uint8_t config)
+uint8_t swra124_read_config()
+{
+    uint8_t command[] = {0x24};
+    swra124_write(command, 1);
+    return swra124_read();
+}
+
+uint8_t swra124_write_config(const uint8_t config)
 {
 	uint8_t command[] = {0x1d, config};
-	swra124_write(command, 2);
-	swra124_read();
+	swra124_write(command, 1);
+    return swra124_read();
 }
 
 uint8_t swra124_read_status()

@@ -29,6 +29,8 @@ void swra124_setup();
 void swra124_debug_init();
 void swra124_debug_stop();
 void swra124_chip_erase();
+uint8_t swra124_read_config();
+uint8_t swra124_write_config(const uint8_t config);
 uint8_t swra124_read_status();
 uint16_t swra124_get_chip_id();
 void swra124_halt();

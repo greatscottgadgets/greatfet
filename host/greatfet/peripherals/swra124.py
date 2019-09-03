@@ -77,6 +77,12 @@ class SWRA124(GreatFETPeripheral):
             time.sleep(.1)
         self.log_function("Done erasing chip.")
 
+    def read_config(self):
+        return self.api.read_config()
+
+    def write_config(self, config):
+        return self.api.write_config(config)
+
     def read_status(self):
         status = self.api.read_status()
         self.log_function("status=%0.2x" % status)
@@ -93,9 +99,11 @@ class SWRA124(GreatFETPeripheral):
         return self.api.get_chip_id()
 
     def halt(self):
+        self.log_function("halting")
         self.api.halt()
 
     def resume(self):
+        self.log_function("Resuming")
         self.api.resume()
 
     def debug_instr(self):
@@ -106,6 +114,10 @@ class SWRA124(GreatFETPeripheral):
 
     def get_pc(self):
         return self.api.get_pc()
+
+    def set_pc(self, val):
+        self.log_function("setting program counter to: %04x" % val)
+        self.api.set_pc(val)
 
     def page_size(self):
         chip = self.get_chip_id() >> 8  # chip_id is type+ver, we only need type, so we shift out ver
@@ -121,6 +133,7 @@ class SWRA124(GreatFETPeripheral):
         return size
 
     def erase_flash_buffer(self):
+        self.log_function("Erasing flash buffer..")
         for i in range(0xf000, 0xf800):
             self.poke_data_byte(i, 0xFF)
 
@@ -134,79 +147,10 @@ class SWRA124(GreatFETPeripheral):
         return self.api.peek_data_byte(address)
 
     def poke_data_byte(self, address, value):
+        if address < 0xF000:
+            print("Stopped trying address below 0xF000, not allowed, address was: %04x" % address)
+            return
         self.api.poke_data_byte(address, value)
-
-    def oldflash(self, file):
-        """Flash an intel hex file to code memory."""
-        self.log_function("Flashing %s" % file)
-
-        h = IntelHex(file)
-        page = 0x0000
-        pagelen = self.page_size()  # Varies by chip.
-        if pagelen == 0:
-            print("Page size 0, chip not found?")
-            return
-        self.log_function("page=%04x, pagelen=%04x" % (page, pagelen))
-
-        # Wipe the RAM buffer for the next flash page.
-        self.log_function("Erasing flash buffer..")
-        self.erase_flash_buffer()
-        bcount = 0
-        for buf in h._buf.keys():
-            while buf >= page + pagelen:
-                if bcount > 0:
-                    time.sleep(.1)  # Make sure last poke is processed by chip, wait a bit
-                    self.write_flash_page(page)
-                    bcount = 0
-                    self.log_function("Flashed page at %06x" % page)
-                page += pagelen
-
-            # Place byte into buffer.
-            # self.log_function("adr=%0.4x val=%0.2x" % (0xF000 + i - page, h[buf]))
-            self.poke_data_byte(0xF000 + buf - page, h[buf])
-            bcount += 1
-            if buf % 0x100 == 0:
-                self.log_function("Buffering %04x toward %06x" % (buf, page))
-        # last page
-        time.sleep(.1)  # Make sure last poke is processed by chip, wait a bit
-        self.write_flash_page(page)
-        self.log_function("Flashed final page at %06x" % page)
-
-    def oldflashv2(self, file):
-        """Flash an intel hex file to code memory."""
-        self.log_function("Flashing %s" % file)
-
-        h = IntelHex(file)
-        page = 0x0000
-        pagelen = self.page_size()  # Varies by chip.
-        if pagelen == 0:
-            print("Page size 0, chip not found?")
-            return
-        self.log_function("page=%04x, pagelen=%04x" % (page, pagelen))
-
-        # Wipe the RAM buffer for the next flash page.
-        self.log_function("Erasing flash buffer..")
-        self.erase_flash_buffer()
-        bcount = 0
-        i = 0x0000
-        for buf in h._buf.keys():
-            while i >= page + pagelen:
-                if bcount > 0:
-                    self.write_flash_page(page)
-                    bcount = 0
-                    self.log_function("Flashed page at %06x" % page)
-                page += pagelen
-
-            # Place byte into buffer.
-            # self.log_function("adr=%0.4x val=%0.2x" % (0xF000 + i - page, h[buf]))
-            self.poke_data_byte(0xF000 + i - page, h[buf])
-            bcount += 1
-            i += 1
-            if buf % 0x100 == 0:
-                self.log_function("Buffering %04x toward %06x" % (buf, page))
-        # last page
-        self.write_flash_page(page)
-        self.log_function("Flashed final page at %06x" % page)
 
     def flash(self, file):
         h = IntelHex(file)
@@ -218,9 +162,7 @@ class SWRA124(GreatFETPeripheral):
         self.log_function("page=%04x, pagelen=%04x" % (page, pagelen))
 
         # Wipe the RAM buffer for the next flash page.
-        self.log_function("Erasing flash buffer..")
         self.erase_flash_buffer()
-        bcount = 0
         hl = list(h._buf.keys())
         hl_len = len(hl)
         width = 16
@@ -231,59 +173,29 @@ class SWRA124(GreatFETPeripheral):
             startaddr = (minaddr // width) * width
             endaddr = ((maxaddr // width) + 1) * width
             print("%0.4x %0.4x %0.4x" % (startaddr, endaddr, hl_len))
-            #missing = 0
-            bcount = 0
-            i = 0
+            missing = 0
+            i = 0x0000
             for byteaddr in range(minaddr, maxaddr):
                 addr = 0xF000 + i - page
-                #data = 0xff
+                data = 0x00
                 if h[byteaddr]:
                     data = h[byteaddr]
-                    self.poke_data_byte(addr, data)
-                    #self.log_function("i=%0.4x addr=%0.4x data=%0.2x page=%0.4x" % (i, addr, data, page))
-                    bcount += 1
-                    if i >= page+pagelen-1:
-                        time.sleep(.1)  # Make sure last poke is processed by chip, wait a bit
-                        self.write_flash_page(page)
-                        self.log_function("Flashed page at %06x" % page)
-                        page += pagelen
-                        bcount = 0
-                    if byteaddr % 0x100 == 0:
-                        self.log_function("Buffering %04x toward %06x" % (byteaddr, page))
-                    i += 1
-                #else:
-                #    print("%0.4x missing filling fff" % i)
-                #    missing += 1
+                else:
+                    print("%0.4x missing filling 00" % i)
+                    missing += 1
+                self.poke_data_byte(addr, data)
+                #self.log_function("i=%0.4x addr=%0.4x data=%0.2x page=%0.4x" % (i, addr, data, page))
+                if i >= page+pagelen-1:
+                    time.sleep(.1)  # Make sure last poke is processed by chip, wait a bit
+                    self.write_flash_page(page)
+                    self.log_function("Flashed page at %06x" % page)
+                    page += pagelen
+                if byteaddr % 0x100 == 0:
+                    self.log_function("Buffering %04x toward %06x" % (byteaddr, page))
+                i += 1
             time.sleep(.1)  # Make sure last poke is processed by chip, wait a bit
             self.write_flash_page(page)
             self.log_function("Flashed page at %06x" % page)
-            #print(missing)
-
-    def oldverify(self, file):
-        h = IntelHex(file)
-        start = 0
-        stop = 0xFFFF
-        for buf in h._buf.keys():
-            if(buf>=start and buf<stop):
-                peek = self.peek_code_byte(buf)
-                if(h[buf]!=peek):
-                    print("ERROR at %04x, found %02x not %02x"%(buf,peek,h[buf]))
-                if(buf%0x100==0):
-                    print("%04x" % buf)
-
-    def oldverifyv2(self, file):
-        h = IntelHex(file)
-        start = 0
-        stop = 0xFFFF
-        i = 0x0000
-        for buf in h._buf.keys():
-            if(i>=start and i<stop):
-                peek = self.peek_code_byte(i)
-                if(h[buf]!=peek):
-                    print("ERROR at %04x, found %02x not %02x"%(i,peek,h[buf]))
-                if(i%0x100==0):
-                    print("%04x" % i)
-            i += 1
 
     def verify(self, file):
         h = IntelHex(file)
@@ -301,17 +213,17 @@ class SWRA124(GreatFETPeripheral):
             print("%0.4x %0.4x %0.4x" % (startaddr, endaddr, hl_len))
             i = 0
             for byte in range(minaddr, maxaddr):
-                data = 0xff
+                data = 0x00
                 peek = None
                 if h[byte]:
                     data = h[byte]
-                    if start <= i < stop:
-                        peek = self.peek_code_byte(i)
-                    if data != peek:
-                        print("ERROR at %04x, found %02x not %02x" % (i, peek, data))
-                    #else:
-                    #    print("i=%04x peek=%02x data=%02x" % (i, peek, data))
+                if start <= i < stop:
+                    peek = self.peek_code_byte(i)
+                if data != peek:
+                    print("ERROR at %04x, found %02x not %02x" % (i, peek, data))
+                #else:
+                #    print("i=%04x peek=%02x data=%02x" % (i, peek, data))
 
-                    if i % 0x100 == 0:
-                        print("%04x" % i)
-                    i += 1
+                if i % 0x100 == 0:
+                    print("%04x" % i)
+                i += 1
