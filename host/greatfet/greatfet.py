@@ -9,6 +9,8 @@ from .board import GreatFETBoard
 # that all board modules are loaded for autoidentification.
 from .boards import *
 
+active_connections = {}
+
 
 def GreatFET(**board_identifiers):
     """
@@ -29,3 +31,19 @@ def GreatFET(**board_identifiers):
         return GreatFETBoard.autodetect_all(**board_identifiers)
     else:
         return GreatFETBoard.autodetect(**board_identifiers)
+
+
+def GreatFETSingleton(serial=None):
+    """ Returns a GreatFET object, re-using an existing object if we already have a connection to the given GreatFET. """
+
+    # If we already have a GreatFET with the given serial,
+    if serial in active_connections:
+        return active_connections[serial]
+
+    # Otherwise, try to create a new GreatFET instance.
+    greatfet =  GreatFET(serial_number=serial)
+    active_connections[serial] = greatfet
+
+
+    return greatfet
+

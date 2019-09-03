@@ -3,6 +3,8 @@
  */
 
 #include <drivers/comms.h>
+#include <drivers/gpio.h>
+
 #include <debug.h>
 
 #include <stddef.h>
@@ -12,6 +14,8 @@
 #include <spiflash.h>
 #include <spiflash_target.h>
 #include <gpio_lpc.h>
+#include <pins.h>
+
 
 #define CLASS_NUMBER_SPI_FLASH (0x101)
 
@@ -20,15 +24,17 @@ static struct gpio_t gpio_spiflash_hold   = GPIO(1, 14);
 static struct gpio_t gpio_spiflash_wp     = GPIO(1, 15);
 static struct gpio_t gpio_spiflash_select;
 
+
 /**
  * Object representing a generic SPI communication.
  */
 static spi_target_t spi_target = {
-	.bus         = &spi_bus_ssp0,
+	.bus         = &spi_bus_ssp1,
 	.gpio_hold   = &gpio_spiflash_hold,
 	.gpio_wp     = &gpio_spiflash_wp,
 	.gpio_select = &gpio_spiflash_select,
 };
+
 
 
 /**
@@ -40,28 +46,32 @@ static spiflash_driver_t spi_flash_drv = {
 };
 
 
+
 /**
  * Command to initialize use of the SPIFlash class / API and configure
  * how we'll talk to the SPI flash.
  */
 static int spi_flash_verb_initialize(struct command_transaction *trans)
 {
-    uint8_t gpio_pin, gpio_port;
+    uint8_t cs_port, cs_pin;
 
 	// FIXME: allow use of other GPIO ports, where possible, for hold/WP
     spi_flash_drv.page_len  = comms_argument_parse_uint16_t(trans);
     spi_flash_drv.num_pages = comms_argument_parse_uint16_t(trans);
     spi_flash_drv.num_bytes = comms_argument_parse_uint32_t(trans);
-    gpio_port               = comms_argument_parse_uint8_t(trans);
-    gpio_pin                = comms_argument_parse_uint8_t(trans);
+    cs_port                 = comms_argument_parse_uint8_t(trans);
+    cs_pin                  = comms_argument_parse_uint8_t(trans);
     spi_flash_drv.device_id = comms_argument_parse_uint8_t(trans);
 
+
+
 	// Apply our GPIO settings.
-    GPIO_SET(gpio_spiflash_select, gpio_port, gpio_pin);
+	gpio_configure_pinmux_and_resistors(gpio_pin(cs_port, cs_pin), RESISTOR_CONFIG_NO_PULL);
+	// FIXME: use libgreat's gpio dirver rather than libopencm3's
+    GPIO_SET(gpio_spiflash_select, cs_port, cs_pin);
 
     spi_bus_start(spi_flash_drv.target, &ssp_config_spi);
-    spiflash_setup(&spi_flash_drv);
-    return 0;
+    return spiflash_setup(&spi_flash_drv);
 }
 
 
@@ -76,7 +86,7 @@ static int spi_flash_verb_full_erase(struct command_transaction *trans)
 }
 
 
-/**
+/*?*
  * Command to write a page to the relevant flash chip.
  */
 static int spi_flash_verb_write_page(struct command_transaction *trans)
@@ -87,23 +97,23 @@ static int spi_flash_verb_write_page(struct command_transaction *trans)
 
     // Ensure we have data.
     if (!data_to_write) {
-        pr_error("error: recieved invalid firmware write request (no data)!");
+        pr_error("error: received invalid firmware write request (no data)!");
         return EINVAL;
     }
 
     // Validate our write spans.
     if (length > spi_flash_drv.page_len) {
-        pr_warning("firmware: rejecting write of more than page length! (%d > %d)\n", 
+        pr_warning("spi_flash: rejecting write of more than page length! (%d > %d)\n",
                 length, spi_flash_drv.page_len);
         return EINVAL;
     }
     if (address > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting write that's larger than our flash! (%d > %d)\n", 
+        pr_warning("spi_flash: rejecting write that's larger than our flash! (%d > %d)\n",
                 length, spi_flash_drv.num_bytes);
         return EINVAL;
     }
     if ((address + length) > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting write that extends past the end of flash! (%d > %d)\n", 
+        pr_warning("spi_flash: rejecting write that extends past the end of flash! (%d > %d)\n",
                 address + length, spi_flash_drv.num_bytes);
         return EINVAL;
     }
@@ -129,12 +139,12 @@ static int spi_flash_verb_read_page(struct command_transaction *trans)
 
     // Validate our read spans.
     if (address > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting read that's larger than our flash! (%d > %d)\n", 
+        pr_warning("spi_flash: rejecting read that's larger than our flash! (%d > %d)\n",
                 address, spi_flash_drv.num_bytes);
         return EINVAL;
     }
     if ((address + spi_flash_drv.page_len) > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting read that extends past the end of flash flash! (%d > %d)\n", 
+        pr_warning("spi_flash: rejecting read that extends past the end of flash flash! (%d > %d)\n",
                 address + spi_flash_drv.page_len, spi_flash_drv.num_bytes);
         return EINVAL;
     }
@@ -143,27 +153,118 @@ static int spi_flash_verb_read_page(struct command_transaction *trans)
     return 0;
 }
 
+
+/**
+ * Command to read a page from the relevant flash chip.
+ */
+static int spi_flash_verb_query_jedec_id(struct command_transaction *trans)
+{
+	spi_flash_jedec_id_t id;
+
+	// Read the JEDEC ID.
+	spiflash_read_jedec_id(&spi_flash_drv, &id);
+
+	// ... and return its component pieces.
+	comms_response_add_uint8_t(trans,  id.manufacturer);
+	comms_response_add_uint16_t(trans, id.device_id);
+	comms_response_add_uint8_t(trans,  id.capacity);
+
+	return 0;
+}
+
+
+
+/**
+ * Command to read device toplogy information via JEDEC Serial Flash Discoverable Paramters
+ * (SDFP) Protocol.
+ */
+static int spi_flash_verb_query_topology(struct command_transaction *trans)
+{
+	uint32_t size_in_bits, size_in_bytes;
+	uint16_t page_size, page_count;
+	spi_flash_sfdp_info_t info;
+	int rc;
+
+	// Read the device info via SPDF.
+	rc = spiflash_read_sfdp_info(&spi_flash_drv, &info);
+	if (rc) {
+		pr_warning("spi_flash: SFDP appears to be unsupported\n");
+		return rc;
+	}
+
+	// Capture the memory density from the SFDP information...
+	if (info.memory_density_is_order) {
+		// If we have an order, compute 2^N.
+		size_in_bits = (1 << info.memory_density);
+	} else {
+		// Otherwise, we have a maximum bit number, so add one to get a capacity.
+		size_in_bits = info.memory_density + 1;
+	}
+
+	// ... and convert it to a usable format. :)
+	size_in_bytes = size_in_bits / 8;
+
+
+	// Figure out the page size, in bytes.
+	page_size = (1 << info.page_size_order);
+
+	// ... and figure out the page count, rounding up to the next whole page.
+	page_count = (size_in_bytes + page_size - 1) / page_size;
+
+	// Return our topology info.
+	comms_response_add_uint16_t(trans, page_size);
+	comms_response_add_uint16_t(trans, page_count);
+	comms_response_add_uint32_t(trans, size_in_bytes);
+
+	return 0;
+}
+
+
+
 /**
  * Verbs for the firmware API.
  */
 static struct comms_verb spi_flash_verbs[] = {
-		{ .verb_number = 0x0, .name = "initialize", .handler = spi_flash_verb_initialize,
+
+		// Control and initialization.
+		{ .name = "initialize", .handler = spi_flash_verb_initialize,
             .in_signature = "<HHIBBB", .out_signature = "",
             .in_param_names = "page_len, num_pages, num_bytes, gpio_port, gpio_pin, expected_device_id",
-            .doc = "Sets up the board to have its spi_flash programmed." },
-		{ .verb_number = 0x1, .name = "full_erase", .handler = spi_flash_verb_full_erase,
+            .doc = "Sets up the board to program an external SPI flash." },
+		{ .name = "full_erase", .handler = spi_flash_verb_full_erase,
             .in_signature = "", .out_signature	= "", .doc = "Erases the entire spi_flash flash chip." },
         /* TODO: implement
 		{ .verb_number = 0x2, .name = "page_erase", .handler = spi_flash_verb_erase_page,
             .in_signature = "<I", .out_signature = "", .in_param_names = "address",
             .doc = "Erases the page with the provided address on the fw flash." },
         */
-		{ .verb_number = 0x3, .name = "write_page", .handler = spi_flash_verb_write_page,
+		{ .name = "write_page", .handler = spi_flash_verb_write_page,
             .in_signature = "<I*X", .out_signature = "", .in_param_names = "address, data",
             .doc = "Writes the provided data to a single spi_flash flash page." },
-		{ .verb_number = 0x4, .name = "read_page",	.handler = spi_flash_verb_read_page,
+		{ .name = "read_page",	.handler = spi_flash_verb_read_page,
             .in_signature = "<I", .out_signature = "<*X", .in_param_names = "address", .out_param_names = "data",
             .doc = "Returns the contents of the flash page at the given address." },
+
+
+		//
+		// Metdata query functions.
+		//
+		{ .name = "query_device_id", .handler = spi_flash_verb_query_jedec_id,
+            .in_signature = "<", .out_signature = "<BHB",
+            .in_param_names = "", .out_param_names = "manufacturer_id, device_id, capacity_code",
+            .doc =
+				"Reads the target SPI flash's JEDEC ID.\n\n"
+				"Returns invalid data if the device does not support the field."
+		},
+		{ .name = "query_topology", .handler = spi_flash_verb_query_topology,
+            .in_signature = "<", .out_signature = "<HHI",
+            .in_param_names = "", .out_param_names = "page_length, page_count, byte_length",
+            .doc =
+				"Attempts to read information about the device's 'shape' using SPDF.\n\n"
+				"Raises an exception if the device does not support SPDF."
+		},
+
+
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(spi_flash, CLASS_NUMBER_SPI_FLASH, "spi_flash", spi_flash_verbs,

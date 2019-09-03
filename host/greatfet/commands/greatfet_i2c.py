@@ -93,7 +93,7 @@ def scan(device, log_function):
                     addr_info[address][1].append(mode)
                 else:
                     addr_info[address] = (response, [mode])
-            else:
+            elif address not in addr_info:
                 addr_info[address] = ((None, None), [None])
     # list output
     print("Working I2C address(es): (Address, RW bit, frequency)")
@@ -122,4 +122,3 @@ def scan(device, log_function):
 
 if __name__ == '__main__':
     main()
-    

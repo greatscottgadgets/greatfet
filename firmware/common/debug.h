@@ -29,6 +29,10 @@ enum debug_log_level {
 	LOGLEVEL_INFO,
 	LOGLEVEL_DEBUG,
 	LOGLEVEL_TRACE,
+
+	// Log printing flags.
+	LOG_LEVEL_MASK = 0x0fff,
+	LOG_CONTINUE = 0x8000
 };
 typedef enum debug_log_level loglevel_t;
 

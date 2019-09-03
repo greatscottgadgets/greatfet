@@ -2,6 +2,7 @@
 # This file is part of GreatFET
 #
 
+import sys
 import array
 
 from ..peripheral import GreatFETPeripheral
@@ -26,7 +27,8 @@ class DeviceFirmwareManager(GreatFETPeripheral):
         # Store a reference to the parent board, via which we'll program the
         # the actual SPI flash.
         self.board = board
-        self.api = board.apis.firmware
+        self.api   = board.apis.firmware
+        self.comms = board.comms
 
         # Ask the device to perform initialization, and then grab its extents.
         self.page_size, self.maximum_address = self.api.initialize()
@@ -34,19 +36,12 @@ class DeviceFirmwareManager(GreatFETPeripheral):
 
     def erase(self):
         """Erases the GreatFET's onboard SPI flash, clearing its program.
-
-        CAUTION: After running this function, you'll need to use DFU mode to
-        load a new GreatFET program onto the board. Be careful!
         """
         self.api.full_erase(timeout=10000)
 
 
     def write(self, data, address=0, erase_first=False, progress_callback=None):
         """Calls a given method on each 'page' of a range of flash.
-
-        Note that this flash is used to store the program that runs when your
-        GreatFET is plugged in. If you accidentally destroy that, you can
-        restore by putting the device into DFU mode. Still, be careful!
 
         Args:
             data -- The data to be written, as a byte array or any form
@@ -77,19 +72,17 @@ class DeviceFirmwareManager(GreatFETPeripheral):
             self.erase()
 
         # And execute our write callback on each of the data sections.
-        self._run_method_on_flash_pages(perform_write, address, length, progress_callback)
+        try:
+            self.comms.get_exclusive_access()
+            self._run_method_on_flash_pages(perform_write, address, length, progress_callback)
+        finally:
+            self.comms.release_exclusive_access()
 
 
     def read(self, address=0, length=None, progress_callback=None):
-        """Calls a given method on each 'page' of a range of flash.
-
-        Note that this flash is used to store the program that runs when your
-        GreatFET is plugged in. If you accidentally destroy that, you can
-        restore by putting the device into DFU mode. Still, be careful!
+        """ Reads (and returns) the contents of the target flash memory.
 
         Args:
-            data -- The data to be written, as a byte array or any form
-                that can be used to initialize a Python array.array.
             address -- The address at which the data should start; default to zero.
             length -- The length to read; defaults to the remainder of the flash.
             progress_callback -- Optional function that should accept two
@@ -111,15 +104,15 @@ class DeviceFirmwareManager(GreatFETPeripheral):
             raise ValueError("Attempting to read past the end of flash!")
 
         # And execute our write callback on each of the data sections.
-        return self._run_method_on_flash_pages(perform_read, address, length, progress_callback=progress_callback)
+        try:
+            self.comms.get_exclusive_access()
+            return self._run_method_on_flash_pages(perform_read, address, length, progress_callback=progress_callback)
+        finally:
+            self.comms.release_exclusive_access()
 
 
     def _run_method_on_flash_pages(self, method, address, length, progress_callback=None):
         """Calls a given method on each 'page' of a range of flash.
-
-        Note that this flash is used to store the program that runs when your
-        GreatFET is plugged in. If you accidentally destroy that, you can
-        restore by putting the device into DFU mode. Still, be careful!
 
         Args:
             method -- The method to be called. Should accept two parameters--
@@ -219,3 +212,78 @@ class DeviceFirmwareManager(GreatFETPeripheral):
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
         return self.api.read_page(address)
+
+
+
+    def dump(self, filename, address=0, length=None, auto_truncate=False, progress_callback=None):
+        """ Convenience function that reads data from a flash into a file.
+
+        Args:
+            filename -- The filename to dump data into.
+            address -- The byte address from which the data should be read.
+                Intended to be page-aligned, but this function will work even
+                for unaligned inputs.
+            length -- The length of the data to read. Must be equal to or less
+                than this flash's page size, which is queryable via the page_size
+                property.
+            auto_truncate -- If true, any regions of unprogrammed words (repeating 0xFFs)
+                will be trimmed off the end of the read, rather than emitted into the output.
+            progress_callback -- Optional function that should accept two
+                arguments-- the current progress, in bytes, and the total bytes
+                to be read. Can be used to provide a progress indicator.
+
+
+        Returns the read data as an array of bytes.
+        """
+
+        try:
+            # Target stdout if the filename is '-'; or target the relevant file otherwise.
+            target = sys.stdout.buffer if filename == "-" else open(filename, "wb")
+
+            # Capture the relevant data from the flash...
+            data = bytearray(self.read(address, length, progress_callback))
+
+            # ... if desired, truncate any trailing "\xFF"s before writing...
+            if auto_truncate:
+                data = data.rstrip(b"\xFF")
+
+            #  ... and write.
+            target.write(data)
+
+        finally:
+            # If we didn't target stdout, close our file.
+            if filename != "-":
+                target.close()
+
+
+
+
+    def upload(self, filename, address=0, length=None, erase_first=True, progress_callback=None):
+        """ Convenience function that writes data from a file into flash. Erases by default.
+
+        Args:
+            filename -- The filename to accept data from; or '-' for stdin.
+            address -- The address at which the data should start.
+            length -- The amount of the file to write; defaults to the full file.
+            erase_first -- If set, the flash will automatically be erased
+                before writing.
+            progress_callback -- Optional function that should accept two
+                arguments-- the current progress, in bytes, and the total bytes
+                to be written. Can be used to provide a progress indicator.
+
+        Returns the read data as an array of bytes.
+        """
+
+        try:
+            # Target stdout if the filename is '-'; or target the relevant file otherwise.
+            target = sys.stdin.buffer if filename == "-" else open(filename, "rb")
+
+            data = target.read(length)
+            self.write(data, address, erase_first, progress_callback)
+
+        finally:
+            # If we didn't target stdin, close our file.
+            if filename != "-":
+                target.close()
+
+

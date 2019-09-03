@@ -2,8 +2,6 @@
  * This file is part of GreatFET
  */
 
-#include "usb_api_spi.h"
-
 #include <stddef.h>
 #include "usb_api_usbhost.h"
 

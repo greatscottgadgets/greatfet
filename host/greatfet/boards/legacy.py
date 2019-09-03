@@ -40,7 +40,7 @@ class GreatFETLegacy(GreatFETBoard):
 
     def __init__(self, **device_identifiers):
         """
-        Intiailize our connection to the device.
+        Initialize our connection to the device.
         """
         import usb
 

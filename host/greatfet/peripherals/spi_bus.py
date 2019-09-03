@@ -2,7 +2,6 @@
 # This file is part of GreatFET
 #
 
-from ..protocol import vendor_requests
 from ..peripheral import GreatFETPeripheral
 
 class SPIBus(GreatFETPeripheral):
@@ -75,8 +74,7 @@ class SPIBus(GreatFETPeripheral):
         freq = serial_clock_rate << 8 | clock_prescale_rate
 
         # Set up the SPI bus for communications.
-        board.comms._vendor_request_out(vendor_requests.SPI_INIT, value=freq)
-
+        self.board.apis.spi.init(serial_clock_rate, clock_prescale_rate)
 
 
     def attach_device(self, device):
@@ -119,13 +117,8 @@ class SPIBus(GreatFETPeripheral):
             raise ValueError("Tried to send/receive more than the size of the receive buffer.");
 
         # Perform the core transfer...
-        self.board.comms._vendor_request_out(vendor_requests.SPI_WRITE, data=data)
+        data = bytes(data)
+        result = self.board.apis.spi.transmit(receive_length, data)
 
-        # If reciept was requested, return the received data.
-        if receive_length > 0:
-            result = self.board.comms._vendor_request_in(vendor_requests.SPI_READ,
-                length=receive_length)
-        else:
-            result = []
 
         return result

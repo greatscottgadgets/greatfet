@@ -5,6 +5,11 @@
  */
 
 #include "gpio_int.h"
+#include <libopencm3/lpc43xx/m4/nvic.h>
+#include <drivers/arm_vectors.h>
+
+
+
 
 // Maps IRQs to their interrupts.
 static const int irq_for_interrupt[] = {
@@ -27,13 +32,13 @@ static const int irq_for_interrupt[] = {
  * @param interrupt_priority The interrupt priority. Takes the same format as nvic_set_priority.
  */
 static void _nvic_set_up_pin_change_interrupt(int interrupt_number,
-  vector_table_entry_t isr, int interrupt_priority)
+  void *isr, int interrupt_priority)
 {
     // Determine the NVIC IRQ line tied to our GPIO interrupt.
     uint8_t irq = irq_for_interrupt[interrupt_number];
 
     // Set the location of our interrupt handler, and the interrupt priority.
-    vector_table.irq[irq] = isr;
+    vector_table.irqs[irq] = isr;
     nvic_set_priority(irq, interrupt_priority);
 }
 
@@ -119,7 +124,7 @@ static void _gpio_set_up_pin_change_interrupt(int interrupt_number,
  */
 void gpio_interrupt_configure(int gpio_int_number, int port_number,
     int pin_number, gpio_interrupt_sensitivity_t sensitivity,
-    vector_table_entry_t isr, int interrupt_priority)
+    void *isr, int interrupt_priority)
 {
     // Ensure the interrupt's not enabled while we change it.
     gpio_interrupt_disable(gpio_int_number);

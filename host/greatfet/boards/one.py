@@ -2,14 +2,15 @@
 # This file is part of GreatFET
 #
 
+import os
+
 from ..board import GreatFETBoard
 
 from ..peripherals.i2c_bus import I2CBus
 from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager
-
-from ..glitchkit import *
-
+from ..peripherals.pattern_generator import PatternGenerator
+from ..peripherals.sdir import SDIRTransceiver
 
 
 class GreatFETOne(GreatFETBoard):
@@ -143,16 +144,10 @@ class GreatFETOne(GreatFETBoard):
         # Set up the core connection.
         super(GreatFETOne, self).initialize_apis()
 
-        # TODO: Abstract the below into a 'pull out standard peripherals'
-        # method?
+        # Create our simple peripherals.
+        self._populate_simple_peripherals()
 
         # Initialize the fixed peripherals that come on the board.
-        # TODO: Use a self.add_peripheral mechanism, so peripherals can
-        # be dynamically listed?
-        if self.supports_api('firmware'):
-            self.onboard_flash = DeviceFirmwareManager(self)
-
-
         # Populate the per-board GPIO.
         if self.supports_api("gpio"):
             self._populate_gpio()
@@ -160,22 +155,22 @@ class GreatFETOne(GreatFETBoard):
         if self.supports_api("adc"):
             self._populate_adc()
 
-        # XXX disable perpiherals as we develop libgreat
-        # return
-
         if self.supports_api('i2c'):
-            self.i2c_busses = [ I2CBus(self, 'I2C0') ]
-            self.i2c = self.i2c_busses[0]
+            self._add_peripheral('i2c_busses', [ I2CBus(self, 'I2C0') ])
+            self._add_peripheral('i2c', self.i2c_busses[0])
 
-        if self.supports_api('spi') or True:
-            self.spi_busses = [ SPIBus(self, 'SPI1') ]
-            self.spi = self.spi_busses[0]
+        if self.supports_api('spi'):
+            self._add_peripheral('spi_busses', [ SPIBus(self, 'SPI1') ])
+            self._add_peripheral('spi', self.spi_busses[0])
+
+        # As a convenience, if GREATFET_USE_LOWLEVEL is set in the environment,
+        # automatically set it up.
+        try:
+            if os.getenv('GREATFET_USE_LOWLEVEL'):
+                self.enable_low_level_access()
+        except:
+            pass
 
         # Add objects for each of our LEDs.
         self._populate_leds(self.SUPPORTED_LEDS)
-
-        # Add any GlitchKit modules we support.
-        if self.supports_api("glitchkit"):
-            self.glitchkit = GlitchKitCollection(self)
-
 

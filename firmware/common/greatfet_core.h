@@ -13,7 +13,10 @@ extern "C"
 #include <stdint.h>
 #include <stdbool.h>
 
+
 #ifndef __RUNNING_ON_HOST__
+
+#include <toolchain.h>
 
 #include "spi_ssp.h"
 #include "spiflash.h"
@@ -22,8 +25,6 @@ extern "C"
 #include "i2c_lpc.h"
 
 #endif
-
-#include "utils.h"
 
 /* hardware identification number */
 #define BOARD_ID_ONE 0

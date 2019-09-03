@@ -5,7 +5,7 @@
 
 include_guard()
 
-set(FLAGS_COMPILE_COMMON -std=gnu99 -Os -g3 -Wall -Wextra -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers)
+set(FLAGS_COMPILE_COMMON -std=gnu11 -Os -g3 -Wall -Wextra -Wno-format -fno-common -MD -fno-builtin-printf -Wno-missing-field-initializers)
 set(FLAGS_LINK_COMMON -Wl,--gc-sections -Os)
 
 # Variable which is used to set default values for features that should only be on in debug builds.
@@ -71,6 +71,31 @@ function(add_greatfet_targets EXECUTABLE_NAME)
 	add_custom_target(${EXECUTABLE_NAME}-program DEPENDS ${EXECUTABLE_NAME}.bin COMMAND greatfet_firmware -V ${EXECUTABLE_NAME}.bin)
 
 endfunction(add_greatfet_targets)
+
+
+
+#
+# All in one function that generates a set of GreatFET executables (and relevant commands).
+# Arguments: [binary_name] [sources...]
+#
+function(add_m0_loadable EXECUTABLE_NAME PRIMARY_EXECUTABLE_NAME)
+
+	# Create our executables.
+	# TODO: Allow the m0 to use the relevant libraries.
+	create_secondary_cpu_executable(${EXECUTABLE_NAME}.bin ${ARGN})
+
+	target_link_options(${EXECUTABLE_NAME}.bin.elf PRIVATE
+		-Wl,--just-symbols=${PRIMARY_EXECUTABLE_NAME}.bin.elf
+	)
+
+	# Ensure we have a base file before our executable.
+	# TODO: does this work well with out of tree builds?
+	add_dependencies(${EXECUTABLE_NAME}.bin.elf ${PRIMARY_EXECUTABLE_NAME}.bin.elf)
+
+	# Add a custom target for loading the relevant loadable.
+	add_custom_target(${EXECUTABLE_NAME}-load   DEPENDS ${EXECUTABLE_NAME}.bin COMMAND greatfet_loadable --m0 ${EXECUTABLE_NAME}.bin)
+
+endfunction(add_m0_loadable)
 
 
 # Ensure we always know how to build the GreatFET common library (libgreatfet).
