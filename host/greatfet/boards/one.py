@@ -11,7 +11,7 @@ from ..peripherals.spi_bus import SPIBus
 from ..peripherals.firmware import DeviceFirmwareManager
 from ..peripherals.pattern_generator import PatternGenerator
 from ..peripherals.sdir import SDIRTransceiver
-
+from ..peripherals.uart import UART
 
 class GreatFETOne(GreatFETBoard):
     """ Class representing GreatFET One base-boards. """
@@ -191,6 +191,9 @@ class GreatFETOne(GreatFETBoard):
         if self.supports_api('spi'):
             self._add_peripheral('spi_busses', [ SPIBus(self, 'SPI1') ])
             self._add_peripheral('spi', self.spi_busses[0])
+
+        if self.supports_api('uart'):
+            self._add_peripheral('uart', UART(self))
 
         # As a convenience, if GREATFET_USE_LOWLEVEL is set in the environment,
         # automatically set it up.

@@ -63,14 +63,19 @@ static int verb_initialize(struct command_transaction *trans)
 
 static int verb_synchronous_transmit(struct command_transaction *trans)
 {
-	uint8_t uart_number = comms_argument_parse_uint8_t(trans);
-	uint8_t byte = comms_argument_parse_uint8_t(trans);
+	uint32_t length_to_transmit;
 
-	if(!comms_transaction_okay(trans)) {
+	uint8_t uart_number = comms_argument_parse_uint8_t(trans);
+	uint8_t *data_to_transmit = comms_argument_read_buffer(trans, -1, &length_to_transmit);
+
+	if(!comms_transaction_okay(trans) || !data_to_transmit) {
 		return EBADMSG;
 	}
 
-	uart_transmit_synchronous(&uart[uart_number], byte);
+	for (unsigned i = 0; i < length_to_transmit; ++i) {
+		uart_transmit_synchronous(&uart[uart_number], data_to_transmit[i]);
+	}
+
 	return 0;
 }
 
@@ -126,7 +131,7 @@ static struct comms_verb _verbs[] = {
 
 		/* Low-level transmit and receive. */
 		{ .name = "synchronous_transmit", .handler = verb_synchronous_transmit,
-			.in_signature = "<BB", .out_signature = "",
+			.in_signature = "<B*X", .out_signature = "",
 			.in_param_names = "uart_number, byte",
 			.doc = "Transmits the provided byte over the given UART."
 		},

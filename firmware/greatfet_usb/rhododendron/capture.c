@@ -17,6 +17,7 @@
 #include <drivers/scu.h>
 #include <drivers/timer.h>
 #include <drivers/arm_vectors.h>
+#include <drivers/memory/allocator.h>
 #include <toolchain.h>
 
 #include "../pin_manager.h"
@@ -173,7 +174,6 @@ const uint8_t rhododendron_direction_isr_priority = 64;
 
 // Buffer allocated for large data processing.
 // Currently shared. Possibly should be replaced with malloc'd buffers?
-uint8_t capture_buffer[16384] ATTR_SECTION(".bss.heap");
 
 
 
@@ -260,8 +260,8 @@ void rhododendron_stop_capture(void)
  */
 static uint32_t consume_byte(void)
 {
-	uint8_t byte = capture_buffer[capture_buffer_read_position];
-	capture_buffer_read_position = (capture_buffer_read_position + 1) % sizeof(capture_buffer);
+	uint8_t byte = large_allocation_buffer[capture_buffer_read_position];
+	capture_buffer_read_position = (capture_buffer_read_position + 1) % sizeof(large_allocation_buffer);
 
 	return byte;
 }
@@ -417,7 +417,7 @@ static uint32_t capture_buffer_data_count(uint32_t write_position)
 	// position, then we're wrapping around the buffer's end. We'll account for
 	// this by undoing the most recent modulus -- the one that caused the wrap-around.
 	if (virtual_write_pointer < virtual_read_pointer) {
-		virtual_write_pointer += sizeof(capture_buffer);
+		virtual_write_pointer += sizeof(large_allocation_buffer);
 	}
 
 	return virtual_write_pointer - virtual_read_pointer;
@@ -443,11 +443,7 @@ void service_rhododendron(void)
 
 	// While we have data to consume...
 	while (capture_buffer_data_count(write_position)) {
-
 		rhododendron_toggle_led(LED_STATUS);
-		//pr_info("total bytes produced: %d\n", xxx_total_bytes_produced);
-		pr_info("wpos: %08x rpos: %08x size: %08x captured: %08x\n", write_position,
-			capture_buffer_read_position, capture_buffer_data_count(write_position), xxx_total_bytes_produced);
 
 		// ... handle any events that have come in, and any USB data pending.
 		emit_usb_data_packet();
@@ -493,9 +489,6 @@ static inline void enqueue_pending_usb_event(uint8_t sgpio_position,
 	// ... and mark it as available for consumption by the other side.
 	++events_pending;
 }
-
-
-
 
 /**
  * Core definition of the Rhododendron direction change ISR.
