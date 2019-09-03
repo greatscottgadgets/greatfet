@@ -6,6 +6,8 @@
 Module containing the core definitions for a GreatFET board.
 """
 
+import string
+
 from pygreat.board import GreatBoard
 
 from .peripherals.led import LED
@@ -76,7 +78,7 @@ class GreatFETBoard(GreatBoard):
         super(GreatFETBoard, self).__init__(*args, **kwargs)
 
 
-    def available_peripherals(self):
+    def available_interfaces(self):
         """ Returns a list of peripheral properties that exist on this board. """
         return self._peripherals[:]
 
@@ -170,5 +172,13 @@ class GreatFETBoard(GreatBoard):
 
         # Create our low-level access point.
         self.lowlevel = LPC43xxTarget(self)
+
+
+    def __dir__(self):
+        """ Generate a cleaned-up dir listing for the relevant board. """
+
+        items = super(GreatFETBoard, self).__dir__()
+        return [item for item in items if item[0] in string.ascii_lowercase]
+
 
 

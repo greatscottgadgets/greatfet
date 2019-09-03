@@ -54,6 +54,7 @@ host-packages
 host/.eggs
 release-files
 deploy-files
+firmware-bin
 *.tar.xz
 *.zip
 
