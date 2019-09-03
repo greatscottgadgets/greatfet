@@ -369,6 +369,9 @@ class DebugPeripheral(SVDGenerated):
                     for field in register._children.values():
                         table_entries.append(field._table_row(value))
 
+                    # Add an empty row to help space things out.
+                    table_entries.append(['', '', '', '', ''])
+
         return tabulate.tabulate(table_entries, tablefmt='simple', headers=headers)
 
 
@@ -458,7 +461,7 @@ class DebugRegister(SVDMemoryAccessible):
                 bit_value_list[string_position] = '-'
             bit_value_string = "".join(bit_value_list)
 
-            return [self._name, value, "{:08x}".format(value), bit_value_string, '']
+            return [self._name, value, "{:08x}".format(value), bit_value_string, self.__doc__]
 
 
     def __repr__(self):
