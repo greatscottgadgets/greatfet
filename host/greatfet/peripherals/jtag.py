@@ -38,7 +38,7 @@ class JTAG(GreatFETPeripheral):
  
     def shift_ir_8(self, instruction):
         """Shift the 8-bit Instruction Register."""
-        return self.board.apis.jtag.ir_shift(data)
+        return self.board.apis.jtag.ir_shift(instruction)
     
     def shift_dr_16(self, data):
         """Shift the 16-bit Data Register."""
