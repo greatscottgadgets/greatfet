@@ -22,12 +22,14 @@ setup_options = {}
 # Deduce version, if possible.
 if os.path.isfile('../VERSION'):
     setup_options['version'] = read('../VERSION').strip()
+    pygreat_with_version = 'pygreat>={}'.format(setup_options['version'])
 else:
     setup_options['version_config'] =  {
         "version_format": '{tag}.dev+git.{sha}',
         "starting_version": "2019.05.01"
     }
     setup_req.append('even-better-setuptools-git-version')
+    pygreat_with_version = "pygreat"
 
 setup(
     name='GreatFET',
@@ -66,7 +68,7 @@ setup(
     install_requires= [
         per_version_requirements,
         'pyusb',
-        'pygreat>={}'.format(setup_options['version']),
+        pygreat_with_version,
         'future',
         'pyfwup>=0.2',
         'tqdm',
