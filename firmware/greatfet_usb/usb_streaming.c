@@ -158,7 +158,5 @@ void usb_streaming_stop_streaming_to_host()
 	usb_streaming_enabled = false;
 	usb_endpoint_disable(&usb0_endpoint_bulk_in);
 
-	pr_info("Position in buffer: %08x\n", *position_in_buffer);
-
 	led_off(LED4);
 }
