@@ -66,9 +66,9 @@ setup(
     install_requires= [
         per_version_requirements,
         'pyusb',
-        'pygreat',
+        'pygreat>={}'.format(setup_options['version']),
         'future',
-        'pyfwup',
+        'pyfwup>=0.2',
         'tqdm',
         'cmsis_svd',
         'tabulate',
