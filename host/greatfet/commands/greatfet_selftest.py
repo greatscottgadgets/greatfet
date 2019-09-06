@@ -7,10 +7,29 @@ Self-testing framework for GreatFET hardware.
 """
 
 import math
+import sys
 import unittest
+import functools
 
 from greatfet import GreatFET
 from greatfet.utils import GreatFETArgumentParser
+
+# By default, don't run the "suspicious-only" tests.
+be_suspicious = False
+
+
+def suspicious_only(func):
+    """ Decorator that denotes functions that should only run in Suspicious mode. """
+
+    @functools.wraps(func)
+    def suspiciously_wrapped(*args, **kwargs):
+
+        if not be_suspicious:
+            raise unittest.SkipTest('(not a test of normal device function)')
+
+        func(*args, **kwargs)
+
+    return suspiciously_wrapped
 
 
 class ValidateBasicComms(unittest.TestCase):
@@ -35,6 +54,7 @@ class ValidateSystemClocks(unittest.TestCase):
         0x9: { 'name': 'main PLL',             'frequency': 204e6 },
         0xd: { 'name': 'USB1 clock divider',   'frequency':  60e6 },
     }
+
     def test_system_clocks(self):
         """ Test of each of the system's clocks """
         global gf
@@ -69,19 +89,39 @@ class ValidateSystemClocks(unittest.TestCase):
                     self.fail(failure_message)
 
 
+    @suspicious_only
+    def test_usb_pll_stability(self):
+        """ Test that the USB-PLL is exactly in spec. """
+
+        try:
+            self.assertNotEqual(gf.apis.selftest.measure_clock_frequencies(0x7), (0,), "USB-PLL not running?")
+            self.assertNotEqual(gf.apis.selftest.measure_raw_clock(0x7), (0,), "USB-PLL measurable only through divider!")
+        except AttributeError:
+            raise unittest.SkipTest("firmware not recent enough to test!")
+
+
+
+
+
+
+
 def main():
-    global gf
+    global gf, be_suspicious
 
     # Set up a simple argument parser.
-    parser = GreatFETArgumentParser( description="Runner for the GreatFET board self-tests.")
+    parser = GreatFETArgumentParser(description="Runner for the GreatFET board self-tests.")
+    parser.add_argument('--suspicious', action='store_true', help="Be extra suspicious; fail on things that aren't usually issues.")
 
     # Parse the arguments, and connect to the relevant GreatFET.
+    args, remaining = parser.parse_known_args()
     gf = parser.find_specified_device()
 
-    # TODO: possibly reset the GreatFET _first_, to ensure it's in a known state?
+    be_suspicious = args.suspicious
+
+    # TODO: possibly reset the GreatFET _first_, to ensure int's in a known state?
 
     # Run our self-tests.
-    unittest.main(verbosity=2)
+    unittest.main(module=__name__, verbosity=2 if args.verbose else 1, warnings='ignore', argv=[sys.argv[0]] + remaining)
 
 
 if __name__ == '__main__':
