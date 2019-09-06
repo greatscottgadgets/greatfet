@@ -11,7 +11,7 @@ import ast
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
-from greatfet.peripherals.spi_bus import SPIBus
+from greatfet.interfaces.spi_bus import SPIBus
 
 
 def main():
@@ -44,8 +44,7 @@ def transmit(device, data, receive_length, log_function):
     spi_bus = SPIBus(device)
     result = spi_bus.transmit(data, receive_length)
     print("received data:", result)
-    
+
 
 if __name__ == '__main__':
     main()
-    

@@ -4,7 +4,7 @@
 
 from .. import errors
 from ..sensor import GreatFETSensor
-from ..peripherals.i2c_device import I2CDevice
+from ..interfaces.i2c_device import I2CDevice
 
 class TSL256X(I2CDevice, GreatFETSensor):
     """

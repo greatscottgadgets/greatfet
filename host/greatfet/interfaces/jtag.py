@@ -2,9 +2,13 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+#
+# TODO: rewrite as a generic JTAG driver using the SPI peripheral
+#
 
-class JTAG(GreatFETPeripheral):
+from ..interface import GreatFETInterface
+
+class JTAG(GreatFETInterface):
     CoreID=0
     DeviceID=0
     JTAGID=0
@@ -21,11 +25,11 @@ class JTAG(GreatFETPeripheral):
     def setup(self):
         """Initialise the JTAG hardware and target device."""
         self.board.apis.jtag.setup()
-        
+
     def stop(self):
         """Stop debugging."""
         self.board.apis.jtag.stop()
-    
+
     def get_deviceid(self, chip):
         """
             Get the Device ID.
@@ -35,11 +39,11 @@ class JTAG(GreatFETPeripheral):
         """
         device_id = self.board.apis.jtag.get_device_id()
         return device_id
- 
+
     def shift_ir_8(self, instruction):
         """Shift the 8-bit Instruction Register."""
         return self.board.apis.jtag.ir_shift(instruction)
-    
+
     def shift_dr_16(self, data):
         """Shift the 16-bit Data Register."""
         return self.board.apis.jtag.dr_shift(data)

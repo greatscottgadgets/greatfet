@@ -2,9 +2,9 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
-class SPIBus(GreatFETPeripheral):
+class SPIBus(GreatFETInterface):
     """
         Class representing a GreatFET SPI bus.
 
@@ -40,7 +40,7 @@ class SPIBus(GreatFETPeripheral):
         """
         Initialize a new SPI bus.
 
-        SPI freq is set using either the freq_preset parameter or the 
+        SPI freq is set using either the freq_preset parameter or the
         combination of serial_clock_rate and clock_prescale_rate parameters.
 
         When using serial_clock_rate & clock_prescale_rate parameters, the

@@ -4,10 +4,10 @@
 
 import os
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 
-class M0Coprocessor(GreatFETPeripheral):
+class M0Coprocessor(GreatFETInterface):
     """
     Class that represents and controls the GreatFET's m0 coprocessor.
     """

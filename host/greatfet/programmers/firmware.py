@@ -5,11 +5,11 @@
 import sys
 import array
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 
 # TODO: pull into libgreat
-class DeviceFirmwareManager(GreatFETPeripheral):
+class DeviceFirmwareManager(GreatFETInterface):
     """
     Class representing a flash memory used to work with a libgreat device's firmware.
     """

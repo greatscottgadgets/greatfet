@@ -6,12 +6,12 @@ import os
 
 from ..board import GreatFETBoard
 
-from ..peripherals.i2c_bus import I2CBus
-from ..peripherals.spi_bus import SPIBus
-from ..peripherals.firmware import DeviceFirmwareManager
-from ..peripherals.pattern_generator import PatternGenerator
-from ..peripherals.sdir import SDIRTransceiver
-from ..peripherals.uart import UART
+from ..interfaces.i2c_bus import I2CBus
+from ..interfaces.spi_bus import SPIBus
+from ..programmers.firmware import DeviceFirmwareManager
+from ..interfaces.pattern_generator import PatternGenerator
+from ..interfaces.sdir import SDIRTransceiver
+from ..interfaces.uart import UART
 
 class GreatFETOne(GreatFETBoard):
     """ Class representing GreatFET One base-boards. """

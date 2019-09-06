@@ -21,7 +21,7 @@ from zipfile import ZipFile
 import greatfet
 
 from greatfet import GreatFET
-from greatfet.peripherals.pattern_generator import PatternGenerator
+from greatfet.interfaces.pattern_generator import PatternGenerator
 from greatfet.utils import GreatFETArgumentParser, eng_notation, from_eng_notation, log_silent, log_error
 
 

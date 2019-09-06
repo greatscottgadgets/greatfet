@@ -2,7 +2,7 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 from warnings import warn
 
@@ -18,7 +18,7 @@ from warnings import warn
 DIRECTION_IN  = 0
 DIRECTION_OUT = 1
 
-class GPIO(GreatFETPeripheral):
+class GPIO(GreatFETInterface):
     """
     Interact with the GPIO lines on a GreatFET board
     """

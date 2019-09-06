@@ -2,10 +2,10 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 
-class I2CBus(GreatFETPeripheral):
+class I2CBus(GreatFETInterface):
     """
         Class representing a GreatFET I2C bus.
 
@@ -93,7 +93,7 @@ class I2CBus(GreatFETPeripheral):
             raise ValueError("Tried to transmit to an invalid I2C address!")
         data = bytes(data)
         write_status = self.board.apis.i2c.write(address, data)
-        
+
         return write_status
 
     def transmit(self, address, data, receive_length):

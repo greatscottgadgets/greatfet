@@ -5,6 +5,7 @@ from .greatfet import GreatFET
 from .greatfet import GreatFETSingleton as GFSingleton
 from .greatfet import GreatFETBoard
 
+
 GreatFET = GreatFET  # pyflakes
 
 

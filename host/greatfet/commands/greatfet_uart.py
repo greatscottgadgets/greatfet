@@ -18,7 +18,7 @@ from greatfet import GreatFET
 from greatfet.utils import from_eng_notation, GreatFETArgumentParser
 from greatfet.util.console import Console
 
-from greatfet.peripherals.uart import UART
+from greatfet.interfaces.uart import UART
 
 console = None
 input_thread = None

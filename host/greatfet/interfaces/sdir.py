@@ -6,11 +6,11 @@
 import array
 import usb
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 from greatfet.protocol import vendor_requests
 
 
-class SDIRTransceiver(GreatFETPeripheral):
+class SDIRTransceiver(GreatFETInterface):
     """
         Data source for scanning out software-defined IR data.
     """

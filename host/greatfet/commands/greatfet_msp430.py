@@ -11,12 +11,12 @@ import ast
 
 import greatfet
 from greatfet import GreatFET
-from greatfet.peripherals import msp430_jtag
+from greatfet.programmers import msp430
 from greatfet.utils import log_silent, log_verbose
 
 def msp430_test(jtag):
     """Test MSP430 JTAG functions.  Requires that a chip be attached."""
-    
+
     if jtag.ident()==0xffff:
         print("ERROR Is anything connected?")
     print("Testing %s." % jtag.ident_string())
@@ -28,14 +28,14 @@ def msp430_test(jtag):
         jtag.poke(a,0xffff)
         if(jtag.peek(a)!=0xffff):
             print("Fault at %06x" % a)
-            
+
     print("Testing identity consistency.")
     ident=jtag.ident()
     for a in range(1,20):
         ident2=jtag.ident()
         if ident!=ident2:
             print("Identity %04x!=%04x" % (ident,ident2))
-    
+
     print("Testing flash erase.")
     jtag.erase_flash()
     for a in range(0xffe0, 0xffff):
@@ -49,7 +49,7 @@ def msp430_test(jtag):
         if jtag.peek(a)!=0xbeef:
             print("%04x unset, equals %04x" % (
                 a, jtag.peek(a)))
-    
+
     print("Tests complete, erasing.")
     jtag.erase_flash()
 
@@ -63,7 +63,7 @@ def main():
                         help="Show target identification")
     parser.add_argument('-e', '--erase', dest='erase', action='store_true',
                         help="Erase target flash")
-    parser.add_argument('-E', '--erase_info', dest='erase_info', 
+    parser.add_argument('-E', '--erase_info', dest='erase_info',
                         action='store_true', help="Erase target info flash")
     parser.add_argument('-f', '--flash', dest='flash', type=str,
                         metavar='<filename>', help="Write target flash")
@@ -78,7 +78,7 @@ def main():
     parser.add_argument('-W', '--poke', dest='poke', type=ast.literal_eval,
                         metavar='<value>', help="Write to memory location")
     parser.add_argument('-a', '--address', dest='address', default=0,
-                        type=ast.literal_eval, metavar='<address>', 
+                        type=ast.literal_eval, metavar='<address>',
                         help="Address for peek/poke/flash/dump/verify actions (default 0x00)")
     parser.add_argument('-l', '--length', dest='length', type=ast.literal_eval,
                         metavar='<length>', help="Length for peek/dump actions in bytes")
@@ -98,8 +98,8 @@ def main():
         else:
             print("No GreatFET board found!", file=sys.stderr)
         sys.exit(errno.ENODEV)
-    
-    jtag = msp430_jtag.JTAG_MSP430(device)
+
+    jtag = msp430.JTAG_MSP430(device)
     jtag_id = jtag.start()
     if jtag_id in (0x89, 0x91):
         log_function("Target dentified as 0x%02x." % jtag_id)
@@ -107,17 +107,17 @@ def main():
         print("Error, misidentified as 0x%02x." % jtag_id)
         print("Check wiring, as this should be 0x89 or 0x91.")
         sys.exit(errno.ENODEV)
-    
+
     if args.ident:
-        print("Identifies as %s (0x%04x)" % 
+        print("Identifies as %s (0x%04x)" %
                     (jtag.ident_string(), jtag.ident()))
-    
+
     if args.dump:
         if args.length:
             end = args.address + args.length
         else:
             end = 0xffff
-        log_function("Dumping from 0x%04x to 0x%04x to %s." 
+        log_function("Dumping from 0x%04x to 0x%04x to %s."
                      % (args.address, end, args.dump))
         with open(args.dump, 'wb') as f:
             address = args.address
@@ -125,15 +125,15 @@ def main():
                 data = jtag.peek_block(address)
                 f.write(data)
                 address += len(data)
-    
+
     if args.erase:
         log_function("Erasing main flash memory.")
         jtag.erase_flash()
-    
+
     if args.erase_info:
         log_function("Erasing info flash.")
-        jtag.erase_info()    
-    
+        jtag.erase_info()
+
     if args.flash:
         with open(args.flash, 'rb') as f:
             address = args.address
@@ -178,7 +178,7 @@ def main():
                 address += len(data)
             else:
                 print("Flash contents verified.")
-    
+
     if args.poke:
         log_function("Writing 0x%04x to 0x%04x." % (args.poke, args.address))
         written = jtag.poke(args.address, args.poke)
@@ -196,14 +196,14 @@ def main():
         values = jtag.peek(args.address, length)
         for i, v in enumerate(values):
             print("%04x: %04x" % (args.address + i*2, v))
-    
+
     if args.run:
         log_function("Resuming target execution.")
         jtag.run()
-    
+
     if args.test:
         log_function("Running test.")
         msp430_test(jtag)
-    
+
 if __name__ == '__main__':
     main()

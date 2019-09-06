@@ -2,13 +2,13 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 from .firmware import DeviceFirmwareManager
 
 from pygreat.comms import CommandFailureError
 
 
-class SPIFlash(DeviceFirmwareManager, GreatFETPeripheral):
+class SPIFlash(DeviceFirmwareManager, GreatFETInterface):
     """ Class representing an SPI flash connected to the GreatFET. """
 
     #

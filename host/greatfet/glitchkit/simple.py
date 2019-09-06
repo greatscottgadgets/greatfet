@@ -4,7 +4,7 @@
 
 from .base import GlitchKitModule
 from ..protocol import vendor_requests
-from ..peripherals.gpio import GPIOPin
+from ..interfaces.gpio import GPIOPin
 
 class GlitchKitSimple(GlitchKitModule):
     """

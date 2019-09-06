@@ -2,10 +2,10 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 
-class I2CDevice(GreatFETPeripheral):
+class I2CDevice(GreatFETInterface):
     """
         Class representing an generic I2C device connected to a GreatFET I2C Bus.
 

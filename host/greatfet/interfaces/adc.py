@@ -2,9 +2,9 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
-class ADC(GreatFETPeripheral):
+class ADC(GreatFETInterface):
     """
     Class representing a GreatFET ADC, which defaults to ADC 0 connected to J2_P5 on Azaela, with 10
     significant bits. """

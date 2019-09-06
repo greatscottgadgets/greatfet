@@ -3,7 +3,7 @@
 #
 
 from ..board import GreatFETBoard
-from ..peripherals.spi_flash import SPIFlash
+from ..programmers.spi_flash import SPIFlash
 
 
 class NXPXplorer(GreatFETBoard):

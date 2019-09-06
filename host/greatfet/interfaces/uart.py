@@ -2,12 +2,12 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 from warnings import warn
 
 
-class UART(GreatFETPeripheral):
+class UART(GreatFETInterface):
     """
     TODO: description
     """

@@ -6,7 +6,7 @@ import array
 import struct
 
 from ..board import GreatFETBoard
-from ..peripherals.firmware import DeviceFirmwareManager
+from ..programmers.firmware import DeviceFirmwareManager
 from ..errors import DeviceNotFoundError
 
 class GreatFETLegacy(GreatFETBoard):

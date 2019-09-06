@@ -2,10 +2,10 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 
-class LED(GreatFETPeripheral):
+class LED(GreatFETInterface):
     """ Simple periheral that allows control of an LED through the GreatFET HAL."""
 
     def __init__(self, board, led_number):

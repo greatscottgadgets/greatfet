@@ -10,14 +10,14 @@ import string
 
 from pygreat.board import GreatBoard
 
-from .peripherals.led import LED
-from .peripherals.gpio import GPIO
-from .peripherals.adc import ADC
+from .interfaces.led import LED
+from .interfaces.gpio import GPIO
+from .interfaces.adc import ADC
 
-from .peripherals.m0 import M0Coprocessor
-from .peripherals.firmware import DeviceFirmwareManager
-from .peripherals.pattern_generator import PatternGenerator
-from .peripherals.sdir import SDIRTransceiver
+from .interfaces.pattern_generator import PatternGenerator
+from .interfaces.sdir import SDIRTransceiver
+from .programmers.firmware import DeviceFirmwareManager
+from .programmers.m0 import M0Coprocessor
 
 from .glitchkit import *
 

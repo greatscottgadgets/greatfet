@@ -11,8 +11,8 @@ import ast
 import greatfet
 from greatfet import GreatFET
 from greatfet.utils import log_silent, log_verbose
-from greatfet.peripherals.i2c_device import I2CDevice
-from greatfet.peripherals.i2c_bus import I2CBus
+from greatfet.interfaces.i2c_device import I2CDevice
+from greatfet.interfaces.i2c_bus import I2CBus
 
 
 def main():

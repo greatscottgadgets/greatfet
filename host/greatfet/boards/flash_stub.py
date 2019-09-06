@@ -4,7 +4,7 @@
 
 from ..board import GreatFETBoard
 
-from ..peripherals.firmware import DeviceFirmwareManager
+from ..programmers.firmware import DeviceFirmwareManager
 
 
 class GreatFETFlashStub(GreatFETBoard):

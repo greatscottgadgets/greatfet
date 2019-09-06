@@ -2,7 +2,7 @@
 # This file is part of GreatFET
 #
 
-class GreatFETPeripheral(object):
+class GreatFETInterface(object):
     """
     Generic base class for GreatFET peripherals.
     """

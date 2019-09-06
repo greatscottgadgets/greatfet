@@ -16,7 +16,7 @@ from tqdm import tqdm
 from greatfet import GreatFET
 from greatfet.errors import DeviceNotFoundError
 from greatfet.utils import from_eng_notation, human_readable_size, GreatFETArgumentParser
-from greatfet.peripherals.spi_flash import SPIFlash
+from greatfet.programmers.spi_flash import SPIFlash
 
 from pygreat.comms import CommandFailureError
 

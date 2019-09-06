@@ -3,9 +3,9 @@
 #
 
 from ..board import GreatFETBoard
-from ..peripherals.gpio import GPIO
-from ..peripherals.i2c_bus import I2CBus
-from ..peripherals.spi_bus import SPIBus
+from ..interfaces.gpio import GPIO
+from ..interfaces.i2c_bus import I2CBus
+from ..interfaces.spi_bus import SPIBus
 
 
 class Rad1oBadge(GreatFETBoard):

@@ -2,10 +2,10 @@
 # This file is part of GreatFET
 #
 
-from ..peripheral import GreatFETPeripheral
+from ..interface import GreatFETInterface
 
 
-class PatternGenerator(GreatFETPeripheral):
+class PatternGenerator(GreatFETInterface):
     """
         Class that supports using the GreatFET as a simple pattern generator.
     """
