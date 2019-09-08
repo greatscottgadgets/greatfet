@@ -180,10 +180,10 @@ class DeviceFirmwareManager(GreatFETInterface):
             raise ValueError("Attempting to use page function to write more than a page!")
 
         # If our data doesn't fill a full page (e.g. this is the last page in a long write),
-        # pad it out to the maximum length.
+        # pad it out to the maximum length. We'll use 0xFF in order to leave these words unprogrammed.
         if length < self.page_size:
             pad_length = self.page_size - length
-            data_array.extend(b"\0" * pad_length)
+            data_array.extend(b"\xFF" * pad_length)
 
         # Perform the actual write. Note that this may take time, as we have to
         # wait for the flash chip to perform the write.
@@ -223,9 +223,7 @@ class DeviceFirmwareManager(GreatFETInterface):
             address -- The byte address from which the data should be read.
                 Intended to be page-aligned, but this function will work even
                 for unaligned inputs.
-            length -- The length of the data to read. Must be equal to or less
-                than this flash's page size, which is queryable via the page_size
-                property.
+            length -- The length of the data to read, or None to read all possible.
             auto_truncate -- If true, any regions of unprogrammed words (repeating 0xFFs)
                 will be trimmed off the end of the read, rather than emitted into the output.
             progress_callback -- Optional function that should accept two

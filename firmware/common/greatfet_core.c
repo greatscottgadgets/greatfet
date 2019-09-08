@@ -69,7 +69,9 @@ spi_bus_t spi_bus_ssp0 = {
 	.start = spi_ssp_start,
 	.stop = spi_ssp_stop,
 	.transfer = spi_ssp_transfer,
+	.transfer_data = spi_ssp_transfer_data,
 	.transfer_gather = spi_ssp_transfer_gather,
+	.transfer_gather_partial = spi_ssp_transfer_gather_partial,
 };
 
 const ssp_config_t ssp1_config_spi = {
@@ -84,7 +86,9 @@ spi_bus_t spi_bus_ssp1 = {
 	.start = spi_ssp_start,
 	.stop = spi_ssp_stop,
 	.transfer = spi_ssp_transfer,
+	.transfer_data = spi_ssp_transfer_data,
 	.transfer_gather = spi_ssp_transfer_gather,
+	.transfer_gather_partial = spi_ssp_transfer_gather_partial,
 };
 
 #define DELAY_CLK_SPEED 204000000
@@ -115,7 +119,6 @@ void pin_setup(void) {
 	scu_pinmux(SCU_SSP1_MISO, SCU_SSP_IO | SCU_SSP1_MISO_FUNC);
 	scu_pinmux(SCU_SSP1_MOSI, SCU_SSP_IO | SCU_SSP1_MOSI_FUNC);
 	scu_pinmux(SCU_SSP1_SSEL, SCU_SSP_IO | SCU_SSP1_SSEL_FUNC);
-
 
 	/* Configure each of the LEDs. */
 	for (i = 0; i < NUM_LEDS; ++i) {

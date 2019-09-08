@@ -51,6 +51,7 @@ class I2CBus(GreatFETInterface):
 
         self.devices.append(device)
 
+
     def read(self, address, receive_length=0):
         """
             Reads data from the I2C bus.
@@ -72,11 +73,8 @@ class I2CBus(GreatFETInterface):
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
-        read_response = self.board.apis.i2c.read(address, receive_length)
-        read_status = read_response[-1]
-        read_data = read_response[:-1]
+        return self.board.apis.i2c.read(address, receive_length)
 
-        return read_data, read_status
 
     def write(self, address, data):
         """
@@ -96,6 +94,7 @@ class I2CBus(GreatFETInterface):
 
         return write_status
 
+
     def transmit(self, address, data, receive_length):
         """
             Wrapper function for back to back TX/RX.
@@ -109,14 +108,13 @@ class I2CBus(GreatFETInterface):
                         to read the provided amount of data, in bytes.
         """
 
-        write_status = self.write(address, data)
-        read_data, read_status = self.read(address, receive_length)
+        self.write(address, data)
+        return self.read(address, receive_length)
 
-        return read_data, write_status, read_status
 
     def scan(self):
         """
-            TX/RX over the I2C bus, and recieves ACK/NAK
+            TX/RX over the I2C bus, and receives ACK/NAK
             in response for valid/invalid addresses.
         """
 
