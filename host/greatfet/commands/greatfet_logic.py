@@ -187,9 +187,9 @@ def main():
     parser.add_argument('-p', '--pulseview', '--sigrok', dest='pulseview', metavar="<filename>",
                         type=str, help="Generate a Sigrok/PulseView session file, and write it to the provided filename.")
     parser.add_argument('-f', '--samplerate', metavar='samples_per_second', type=int_from_msps, default=17000000,
-                         dest='sample_rate', help='samples to capture per second')
+                         dest='sample_rate', help='samples to capture per second (default: 17MSPS)')
     parser.add_argument('-n', '--num-channels', metavar='channels', type=int, default=8,
-                         dest='bus_width', help='the number of channels to capture')
+                         dest='bus_width', help='the number of channels to capture (default: 8)')
     parser.add_argument('-B', '--second-bank', action='store_const', const=8, default=0, dest='first_pin',
                          help="Provide this option to capture from SGPIO8 up, rather than from SGPIO0 up.")
     parser.add_argument('-O', '--stdout', dest='write_to_stdout', action='store_true',
