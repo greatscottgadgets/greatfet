@@ -165,7 +165,7 @@ def background_process_data(termination_request, args, bus_width, bin_file, empt
         if args.pulseview or args.binary:
             bin_file.write(samples)
         if args.write_to_stdout:
-            os.write(1,samples)
+            sys.stdout.buffer.write(samples)
 
         # ... and add the buffer back to our empty list.
         empty_buffers.append(active_buffer)
