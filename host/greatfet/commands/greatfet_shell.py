@@ -73,6 +73,14 @@ def main():
     shell = TerminalInteractiveShell()
     shell.push('gf')
 
+    # Create nice aliases for our primary interfaces.
+    i2c =  gf.i2c
+    spi =  gf.spi
+    adc =  gf.adc
+    uart = gf.uart
+    gpio = gf.gpio
+    shell.push(('i2c', 'spi', 'adc', 'uart', 'gpio',))
+
     # Make the autoreload extension available.
     shell.extension_manager.load_extension('autoreload')
 
