@@ -141,15 +141,17 @@ static void set_up_greatdancer_device(uint16_t max_packet_size) {
 	// Set up the control endpoint. The application will request setup
 	// for all of the non-standard channels on connection.
 	// Fetch the endpoint to be configured, and configure it.
-	ep0_in	= usb_preinit_endpoint_from_address((uint8_t)0x00);
-	ep0_out = usb_preinit_endpoint_from_address((uint8_t)0x80);
+	ep0_out	= usb_preinit_endpoint_from_address((uint8_t)0x00);
+	ep0_in  = usb_preinit_endpoint_from_address((uint8_t)0x80);
 	if(!ep0_in || !ep0_out) {
 	  return;
 	}
 
 	// And initialize the endpoint.
-	usb_endpoint_init_without_descriptor(ep0_in,  max_packet_size, USB_TRANSFER_TYPE_CONTROL);
-	usb_endpoint_init_without_descriptor(ep0_out, max_packet_size, USB_TRANSFER_TYPE_CONTROL);
+	usb_endpoint_init_without_descriptor(ep0_in,  max_packet_size, USB_TRANSFER_TYPE_CONTROL, false);
+
+	// We'll handle zero-length-packets manually for the out control endpoint.
+	usb_endpoint_init_without_descriptor(ep0_out, max_packet_size, USB_TRANSFER_TYPE_CONTROL, true);
 }
 
 
@@ -234,7 +236,7 @@ static int greatdancer_verb_set_up_endpoints(struct command_transaction *trans)
 		}
 
 		// And initialize the endpoint.
-		usb_endpoint_init_without_descriptor(target_endpoint, max_packet_size, transfer_type);
+		usb_endpoint_init_without_descriptor(target_endpoint, max_packet_size, transfer_type, false);
 
 		// Finally, enable notifications when NAKs occur for this endpoint.
 		// TODO: Make this optional?
@@ -411,6 +413,8 @@ static void store_transfer_count_callback(void * const user_data, unsigned int t
 static int greatdancer_verb_start_nonblocking_read(struct command_transaction *trans)
 {
 		uint_fast8_t address;
+		uint32_t maximum_length;
+
 		usb_endpoint_t *target_endpoint;
 
 		int endpoint_number = comms_argument_parse_uint8_t(trans);
@@ -423,8 +427,11 @@ static int greatdancer_verb_start_nonblocking_read(struct command_transaction *t
 		address = usb_endpoint_address(USB_TRANSFER_DIRECTION_OUT, endpoint_number);
 		target_endpoint = usb_endpoint_from_address(address, &usb_peripherals[1]);
 
+		maximum_length = (endpoint_number == 0) ? (target_endpoint->max_packet_size) :
+			sizeof(endpoint_buffer[endpoint_number]);
+
 		// ... and start a nonblocking transfer.
-		usb_transfer_schedule(target_endpoint, &endpoint_buffer[endpoint_number], sizeof(packet_buffer),
+		usb_transfer_schedule(target_endpoint, &endpoint_buffer[endpoint_number], maximum_length,
 				store_transfer_count_callback, &total_received_data[endpoint_number]);
 		return 0;
 }
