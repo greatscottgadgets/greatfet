@@ -120,7 +120,7 @@ class SPIFlash(DeviceFirmwareManager, GreatFETInterface):
 
     def __init__(self, board, autodetect=True, allow_fallback=False,
             page_size=256, pages=8192, maximum_address=None, allow_null_jedec=False,
-            device_id=0, chip_select_port=0, chip_select_pin=15):
+            device_id=0, chip_select_port=0, chip_select_pin=15, force_page_size=None):
         """Set up a new SPI flash connection.
 
         Args:
@@ -156,6 +156,16 @@ class SPIFlash(DeviceFirmwareManager, GreatFETInterface):
                 else:
                     # If we do fall back, then check to make sure none of our signals are stuck at 1/0.
                     self._stuck_signal_check(fail_on_null_jedec_id=not allow_null_jedec)
+
+
+        # If we have an argument forcing a given page size, override everything
+        # we've worked out above with the forced page size.
+        if force_page_size:
+            total_size = page_size * pages
+            page_size = force_page_size
+
+            # Adjust the number of pages accordingly.
+            pages = total_size // page_size
 
 
         # Store the limitations for this SPI flash.

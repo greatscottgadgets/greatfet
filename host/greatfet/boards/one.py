@@ -174,7 +174,7 @@ class GreatFETOne(GreatFETBoard):
         super(GreatFETOne, self).initialize_apis()
 
         # Create our simple peripherals.
-        self._populate_simple_peripherals()
+        self._populate_simple_interfaces()
 
         # Initialize the fixed peripherals that come on the board.
         # Populate the per-board GPIO.
@@ -185,15 +185,16 @@ class GreatFETOne(GreatFETBoard):
             self._populate_adc()
 
         if self.supports_api('i2c'):
-            self._add_peripheral('i2c_busses', [ I2CBus(self, 'I2C0') ])
-            self._add_peripheral('i2c', self.i2c_busses[0])
+            self._add_interface('i2c_busses', [ I2CBus(self, 'I2C0') ])
+            self._add_interface('i2c', self.i2c_busses[0])
 
-        if self.supports_api('spi'):
-            self._add_peripheral('spi_busses', [ SPIBus(self, 'SPI1') ])
-            self._add_peripheral('spi', self.spi_busses[0])
+        if self.supports_api('spi') and self.supports_api('gpio'):
+            chip_select = self.gpio.get_pin('J1_P37')
+            self._add_interface('spi_busses', [ SPIBus(self, chip_select, 'SPI1') ])
+            self._add_interface('spi', self.spi_busses[0])
 
         if self.supports_api('uart'):
-            self._add_peripheral('uart', UART(self))
+            self._add_interface('uart', UART(self))
 
         # As a convenience, if GREATFET_USE_LOWLEVEL is set in the environment,
         # automatically set it up.

@@ -9,7 +9,8 @@ from .greatfet import GreatFETBoard
 GreatFET = GreatFET  # pyflakes
 
 
-class __GreatFETSingletonWrapper(object):
+class _GreatFETSingletonWrapper(object):
+
     """
     Convenience function that acts like GreatFETSingleton, but also allows Magic:
     accessing a property on this object will act as though that property had been
@@ -20,17 +21,22 @@ class __GreatFETSingletonWrapper(object):
     2) create a new GreatFET object, if necessary.
     """
 
-    def __getitem__(self, serial):
-        return GFSingleton(serial)
+    def __init__(self, serial=None):
+        self.serial = serial
 
-    def __getattribute__(self, name):
-        return getattr(GFSingleton(), name)
+    def __getitem__(self, serial):
+        return _GreatFETSingletonWrapper(serial)
+
+    def __getattr__(self, name):
+        return getattr(GFSingleton(self.serial), name)
 
     def __call__(self, serial=None):
         return GFSingleton(serial)
 
+    def __dir__(self):
+        return dir(GFSingleton(self.serial))
 
-GreatFETSingleton = __GreatFETSingletonWrapper()
+GreatFETSingleton = _GreatFETSingletonWrapper()
 
 
 def greatfet_assets_directory():

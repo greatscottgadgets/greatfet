@@ -35,10 +35,13 @@ class SPIBus(GreatFETInterface):
 
 
 
-    def __init__(self, board, name='spi bus', buffer_size=255, freq_preset=0,
-                 serial_clock_rate=2, clock_prescale_rate=100):
+    def __init__(self, board, chip_select_gpio, name='spi bus', buffer_size=255,
+            freq_preset=None, serial_clock_rate=2, clock_prescale_rate=100):
         """
         Initialize a new SPI bus.
+
+        FIXME: There's no reason we shouldn't just take the frequency desired
+            and compute it for the user. This API should change soon.
 
         SPI freq is set using either the freq_preset parameter or the
         combination of serial_clock_rate and clock_prescale_rate parameters.
@@ -48,33 +51,38 @@ class SPIBus(GreatFETInterface):
             PCLK / (clock_prescale_rate * [serial_clock_rate+1]).
 
         Args:
-            board -- The GreatFET board whose SPI bus we want to control.
-            name -- The display name for the given SPI bus.
-            buffer_size -- The size of the SPI receive buffer on the GreatFET.
-            freq_preset -- Set clock_prescale_rate and serial_clock_rate using
+            board               -- The GreatFET board whose SPI bus we want to control.
+            name                -- The display name for the given SPI bus.
+            chip_select_gpio    -- The GPIOPin object that will represent the bus's default chip select
+            buffer_size         -- The size of the SPI receive buffer on the GreatFET.
+            freq_preset         -- Set clock_prescale_rate and serial_clock_rate using
                 one of the frequency presets defined by SPIBus.FREQ
             clock_prescale_rate -- This even value between 2 and 254, by which
                 PCLK is divided to yield the prescaler output clock.
-            serial_clock_rate -- The number of prescaler-output clocks per bit
+            serial_clock_rate   -- The number of prescaler-output clocks per bit
                  on the bus, minus one.
         """
 
         # Store a reference to the parent board.
+        self.api =board.apis.spi
         self.board = board
 
         # Store our limitations.
+        # TODO: grab these from the board!
         self.buffer_size = buffer_size
 
         # Create a list that will store all connected devices.
         self.devices = []
 
-        # Adjust frecuency parameters
-        if freq_preset != 0:
+        # Store our chip select.
+        self._chip_select = chip_select_gpio
+
+        # Apply our frequency information.
+        if freq_preset:
             clock_prescale_rate, serial_clock_rate = freq_preset
-        freq = serial_clock_rate << 8 | clock_prescale_rate
 
         # Set up the SPI bus for communications.
-        self.board.apis.spi.init(serial_clock_rate, clock_prescale_rate)
+        self.api.init(serial_clock_rate, clock_prescale_rate)
 
 
     def attach_device(self, device):
@@ -87,23 +95,34 @@ class SPIBus(GreatFETInterface):
         """
 
         # TODO: Check for select pin conflicts; and handle chip select pins.
+        # TODO: replace the device list with a set of weak references
 
         self.devices.append(device)
 
 
 
-    def transmit(self, data, receive_length=None):
+    def transmit(self, data, receive_length=None, chip_select=None, deassert_chip_select=True, spi_mode=0):
         """
         Sends (and typically receives) data over the SPI bus.
 
         Args:
-            data -- The data to be sent to the given device.
-            receive_length -- Returns the total amount of data to be read. If longer
-                than the data length, the transmit will automatically be extended
-                with zeroes.
-
-        TODO: Support more than one chip-select for more than one device on the bus!
+            data                 -- the data to be sent to the given device.
+            receive_length       -- the total amount of data to be read. If longer
+                    than the data length, the transmit will automatically be extended
+                    with zeroes.
+            chip_select          -- the GPIOPin object that will serve as the chip select
+                    for this transaction; or None to use the bus's default
+            deassert_chip_select -- if set, the chip-select line will be left low after
+                    communicating; this allows this transcation to be continued in the future
+            spi_mode             -- The SPI mode number [0-3] to use for the communication. Defaults to 0.
         """
+
+        data_to_transmit = bytearray(data)
+        data_received = bytearray()
+
+        # If we weren't provided with a chip-select, use the bus's default.
+        if chip_select is None:
+            chip_select = self._chip_select
 
         if receive_length is None:
             receive_length = len(data)
@@ -111,14 +130,40 @@ class SPIBus(GreatFETInterface):
         # If we need to receive more than we've transmitted, extend the data out.
         if receive_length > len(data):
             padding = receive_length - len(data)
-            data.extend([0] * padding)
+            data_to_transmit.extend([0] * padding)
 
-        if len(data) > self.buffer_size:
-            raise ValueError("Tried to send/receive more than the size of the receive buffer.");
+        # Set the polarity and phase (the "SPI mode").
+        self.api.set_clock_polarity_and_phase(spi_mode)
 
-        # Perform the core transfer...
-        data = bytes(data)
-        result = self.board.apis.spi.transmit(receive_length, data)
+        # Bring the relevant chip select low, to start the transaction.
+        chip_select.low()
+
+        # Transmit our data in chunks of the buffer size.
+        while data_to_transmit:
+
+            # Extract a single data chunk from the transmit buffer.
+            chunk = data_to_transmit[0:self.buffer_size]
+            del data_to_transmit[0:self.buffer_size]
+
+            # Finally, exchange the data.
+            response = self.api.clock_data(len(chunk), bytes(chunk))
+            data_received.extend(response)
 
 
-        return result
+        # Finally, unless the caller has requested we keep chip-select asserted,
+        # finish the transaction by releasing chip select.
+        if deassert_chip_select:
+            chip_select.high()
+
+        # Once we're done, return the data received.
+        return bytes(data_received)
+
+
+    def disable_drive(self):
+        """ Tristates each of the pins on the given SPI bus. """
+        self.api.enable_drive(False)
+
+
+    def enable_drive(self):
+        """ Enables the bus to drive each of its output pins. """
+        self.api.enable_drive(True)

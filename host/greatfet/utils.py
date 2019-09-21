@@ -15,8 +15,8 @@ import argparse
 
 from decimal import Decimal
 
-from greatfet import GreatFET
-from greatfet.boards.flash_stub import GreatFETFlashStub
+from . import GreatFET, _GreatFETSingletonWrapper
+from .boards.flash_stub import GreatFETFlashStub
 
 from pygreat.errors import DeviceNotFoundError
 
@@ -238,6 +238,22 @@ class GreatFETArgumentParser(argparse.ArgumentParser):
                     time.sleep(1)
 
         return device
+
+
+    def get_singleton_for_specified_device(self):
+        """
+        Connects to the GreatFET specified by the user's command line arguments, but gets a singleton that persists
+        across reconnects.
+        """
+
+        # Grab the device itself, and find its serial number.
+        device = self.find_specified_device()
+        serial = device.serial_number()
+        device.close()
+
+        # Create an equivalent singleton wrapper.
+        return _GreatFETSingletonWrapper(serial)
+
 
 
     def get_log_function(self):

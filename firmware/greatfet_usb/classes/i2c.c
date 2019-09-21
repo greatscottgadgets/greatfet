@@ -12,13 +12,11 @@
 
 #define CLASS_NUMBER_SELF (0x108)
 
-static uint16_t duty_cycle_count;
-static uint8_t read_status;
-static uint8_t write_status;
-
 static int i2c_verb_start(struct command_transaction *trans)
 {
+	uint16_t duty_cycle_count;
 	uint16_t value = comms_argument_parse_uint16_t(trans);
+
 	if (value == 0) {
 		duty_cycle_count = 255;
 	} else {
@@ -32,7 +30,7 @@ static int i2c_verb_start(struct command_transaction *trans)
 static int i2c_verb_stop()
 {
 	i2c_bus_stop(&i2c0);
-	return 0;	
+	return 0;
 }
 
 static int i2c_verb_read(struct command_transaction *trans)
@@ -45,8 +43,9 @@ static int i2c_verb_read(struct command_transaction *trans)
 	if (!comms_transaction_okay(trans)) {
         return EBADMSG;
     }
-	read_status = i2c_bus_read(&i2c0, address, i2c_rx_buffer, rx_length);
-	comms_response_add_uint8_t(trans, read_status);
+
+	// FIXME: handle the read status
+	i2c_bus_read(&i2c0, address, i2c_rx_buffer, rx_length);
 
 	return 0;
 }
@@ -61,14 +60,15 @@ static int i2c_verb_write(struct command_transaction *trans)
 	if (!comms_transaction_okay(trans)) {
         return EBADMSG;
     }
-	write_status = i2c_bus_write(&i2c0, address, data_to_write, tx_length);
-	comms_response_add_uint8_t(trans, write_status);
+	i2c_bus_write(&i2c0, address, data_to_write, tx_length);
 
 	return 0;
 }
 
 static int i2c_verb_scan(struct command_transaction *trans)
 {
+	uint8_t read_status, write_status;
+
 	uint8_t *write_status_buffer = comms_response_reserve_space(trans, 16);
 	uint8_t *read_status_buffer = comms_response_reserve_space(trans, 16);
 	uint8_t address;
@@ -101,6 +101,8 @@ static int i2c_verb_scan(struct command_transaction *trans)
  * Verbs for the firmware API.
  */
 static struct comms_verb _verbs[] = {
+
+		// Basic control.
 		{ .name = "start", .handler = i2c_verb_start,
 			.in_signature = "<I", .out_signature = "",
 			.in_param_names = "value, duty_cycle_count",
@@ -109,18 +111,23 @@ static struct comms_verb _verbs[] = {
 			.in_signature = "", .out_signature = "",
 			.in_param_names = "",
 			.doc = "Transmit a stop bit to an I2C device" },
+
+		// High-level transmit/receive/scan.
 		{ .name = "read", .handler = i2c_verb_read,
 			.in_signature = "<HH", .out_signature = "<*B",
-			.in_param_names = "value, index", .out_param_names = "response, status",
+			.in_param_names = "address, length", .out_param_names = "response",
 			.doc = "Reads from the I2C bus and responds accordingly" },
 		{ .name = "write", .handler = i2c_verb_write,
-			.in_signature = "<H*X", .out_signature = "<B",
-			.in_param_names = "value, index, data", .out_param_names = "status",
+			.in_signature = "<H*X", .out_signature = "<",
+			.in_param_names = "address, data", .out_param_names = "",
 			.doc = "Writes to the I2C bus and responds accordingly" },
 		{ .name = "scan", .handler = i2c_verb_scan,
 			.in_signature = "", .out_signature = "<*B",
 			.in_param_names = "value, index, data", .out_param_names = "states",
 			.doc = "Scans all valid I2C addresses for attached devices" },
+
+		// TODO: implement low-level send/receive / etc. (for bus pirate mode)
+
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(i2c, CLASS_NUMBER_SELF, "i2c", _verbs,

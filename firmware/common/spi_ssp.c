@@ -61,13 +61,16 @@ static uint32_t spi_ssp_transfer_word(spi_bus_t* const bus, const uint32_t data)
 	return SSP_DR(bus->obj);
 }
 
-void spi_ssp_transfer_gather(spi_target_t* target,
-							 const spi_transfer_t* const transfers,
-							 const size_t count) {
+/**
+ * Variant of spi_ssp_transfer_gather that does not assert or de/assert chip select.
+ * This allows an external source to control the chip select.
+ */
+void spi_ssp_transfer_gather_partial(spi_target_t* target,
+	const spi_transfer_t* const transfers, const size_t count) {
+
 	spi_bus_t* const bus = target->bus;
 	const bool word_size_u16 = (SSP_CR0(bus->obj) & 0xf) > SSP_DATA_8BITS;
 
-	gpio_clear(target->gpio_select);
 	for(size_t i=0; i<count; i++) {
 		const size_t data_count = transfers[i].count;
 
@@ -83,8 +86,17 @@ void spi_ssp_transfer_gather(spi_target_t* target,
 			}
 		}
 	}
+}
+
+void spi_ssp_transfer_gather(spi_target_t* target,
+							 const spi_transfer_t* const transfers,
+							 const size_t count) {
+	gpio_clear(target->gpio_select);
+	spi_ssp_transfer_gather_partial(target, transfers, count);
 	gpio_set(target->gpio_select);
 }
+
+
 
 void spi_ssp_transfer(spi_target_t* target, void* const data,
 					  const size_t count) {
@@ -93,3 +105,13 @@ void spi_ssp_transfer(spi_target_t* target, void* const data,
 	};
 	spi_ssp_transfer_gather(target, transfers, 1);
 }
+
+
+void spi_ssp_transfer_data(spi_target_t* target, void* const data,
+					  const size_t count) {
+	const spi_transfer_t transfers[] = {
+		{ data, count },
+	};
+	spi_ssp_transfer_gather_partial(target, transfers, 1);
+}
+
