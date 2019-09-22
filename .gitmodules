@@ -1,6 +1,6 @@
 [submodule "firmware/libopencm3"]
 	path = firmware/libopencm3
-	url = https://github.com/dominicgs/libopencm3
+	url = https://github.com/mossmann/libopencm3
 [submodule "libgreat"]
 	path = libgreat
 	url = https://github.com/greatscottgadgets/libgreat
