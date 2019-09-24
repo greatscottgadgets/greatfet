@@ -16,30 +16,30 @@ def main():
     from greatfet.utils import GreatFETArgumentParser
 
     # Set up a simple argument parser.
-    parser = GreatFETArgumentParser(description="Utility for experimenting with GreatFET's DAC")
-    parser.add_argument('-S', '--set', nargs=1, type=int, help="DAC value to set on ADC0_0 (0-1023)") 
-    args = parser.parse_args()
+    parser = GreatFETArgumentParser(description="Utility for experimenting with GreatFET's DAC", verbose_by_default=True)
+    parser.add_argument('-f', '--format', dest='format', type=str, default='voltage',
+                        choices=['voltage', 'raw'],
+                        help="Format for the input.\nVoltage string, or binary value to be loaded into the DAC.")
+    parser.add_argument('value', metavar='[value]', type=float,
+                        help="The desired voltage (default) or raw value to load into DAC (with -f raw).")
 
-    log_function = log_verbose if args.verbose else log_silent
+    args         = parser.parse_args()
+    log_function = parser.get_log_function()
+    device       = parser.find_specified_device()
 
-    try:
-        log_function("Trying to find a GreatFET device...")
-        device = GreatFET(serial_number=args.serial)
-        log_function("{} found. (Serial number: {})".format(device.board_name(), device.serial_number()))
-    except greatfet.errors.DeviceNotFoundError:
-        if args.serial:
-            print("No GreatFET board found matching serial '{}'.".format(args.serial), file=sys.stderr)
-        else:
-            print("No GreatFET board found!", file=sys.stderr)
-        sys.exit(errno.ENODEV)
+    device.apis.dac.initialize()
 
-    if args.set:
-        set(device, args.set[0])
+    if args.format == "voltage":
 
+        # Voltage must be passed to the device in millivolts, so * 1000.
+        device.apis.dac.set_voltage(int(args.value * 1000))
+        log_function("DAC set to {} volts".format(args.value))
 
-def set(device, dac_value):
-    device.apis.dac.set(dac_value)
-    print("DAC value set to", dac_value)
+    else:
+
+        device.apis.dac.set_value(int(args.value))
+        log_function("DAC set to {}".format(int(args.value)))
+
 
 if __name__ == '__main__':
     main()
