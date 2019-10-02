@@ -100,7 +100,11 @@ class Foxglove(GreatFETNeighbor):
 
     def set_up_hardware(self):
         """ Initializes the hardware; bringing the Foxglove board into a post-reset state. """
+
+        # Start with our DAC outputs powered down, and our voltage regulators off.
         self._dac.power_down_outputs()
+        self.use_external_vcca()
+        self.use_external_vccb()
 
 
 
@@ -177,22 +181,43 @@ class Foxglove(GreatFETNeighbor):
             regulator_enable.high()
 
 
-    def set_vcca_voltage(self, voltage):
+
+    def apply_configuration(self, configuration):
+        """ Applies a FoxgloveConfiguration object to the attached Foxglove.
+
+        This method generates a set of gateware, and then uploads that gatware
+        to the attached Foxglove board. This resets the FPGA, and reconfigures it
+        to provide the connections and interfaces described in the target configuration.
+        """
+
+        try:
+            import nmigen
+        except ImportError:
+            raise EnvironmentError("Cannot import nMigen, so we can't dynamically generate Gateware.")
+
+        # FIXME: read VCC properties and etc. from the relevant bitstream
+
+        # Convert our configuration to a bitstream, and then configure the FPGA with it.
+        bitstream = configuration.to_bitstream()
+        self.configure_fpga(bitstream)
+
+
+    def provide_vcca(self, voltage):
         """ Set VCCA to the provided voltage. """
         self._set_rail_voltage('VCCA', voltage)
 
 
-    def disable_vcca(self):
+    def use_external_vcca(self):
         """ Disable the VCCA regulator. """
         self._set_rail_voltage('VCCA', None)
 
 
-    def set_vccb_voltage(self, voltage):
-        """ Set VCCA to the provided voltage. """
+    def provide_vccb(self, voltage):
+        """ Set VCCB to the provided voltage. """
         self._set_rail_voltage('VCCB', voltage)
 
 
-    def disable_vccb(self):
+    def use_external_vccb(self):
         """ Disable the VCCA regulator. """
         self._set_rail_voltage('VCCB', None)
 
@@ -205,3 +230,11 @@ class Foxglove(GreatFETNeighbor):
     def disable_aux_rail(self):
         """ Disable the VCCA regulator. """
         self._set_rail_voltage('AUX', None)
+
+
+    def provide_clock(self, clk_pin=2):
+        """ Provide a clock to the target FPGA. """
+
+        # FIXME: abstract this into a clock generator interface
+        CLOCK_SOURCE_60MHZ = 0x0D
+        self.board.apis.clock_gen.output_clock(clk_pin, CLOCK_SOURCE_60MHZ)
