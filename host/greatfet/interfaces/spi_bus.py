@@ -2,9 +2,10 @@
 # This file is part of GreatFET
 #
 
-from ..interface import GreatFETInterface
+from ..interface import PirateCompatibleInterface
 
-class SPIBus(GreatFETInterface):
+
+class SPIBus(PirateCompatibleInterface):
     """
         Class representing a GreatFET SPI bus.
 
@@ -111,7 +112,7 @@ class SPIBus(GreatFETInterface):
                     than the data length, the transmit will automatically be extended
                     with zeroes.
             chip_select          -- the GPIOPin object that will serve as the chip select
-                    for this transaction; or None to use the bus's default
+                    for this transaction, None to use the bus's default, or False to not set CS.
             deassert_chip_select -- if set, the chip-select line will be left low after
                     communicating; this allows this transcation to be continued in the future
             spi_mode             -- The SPI mode number [0-3] to use for the communication. Defaults to 0.
@@ -136,7 +137,8 @@ class SPIBus(GreatFETInterface):
         self.api.set_clock_polarity_and_phase(spi_mode)
 
         # Bring the relevant chip select low, to start the transaction.
-        chip_select.low()
+        if chip_select:
+            chip_select.low()
 
         # Transmit our data in chunks of the buffer size.
         while data_to_transmit:
@@ -152,7 +154,7 @@ class SPIBus(GreatFETInterface):
 
         # Finally, unless the caller has requested we keep chip-select asserted,
         # finish the transaction by releasing chip select.
-        if deassert_chip_select:
+        if chip_select and deassert_chip_select:
             chip_select.high()
 
         # Once we're done, return the data received.
@@ -167,3 +169,32 @@ class SPIBus(GreatFETInterface):
     def enable_drive(self):
         """ Enables the bus to drive each of its output pins. """
         self.api.enable_drive(True)
+
+
+    #
+    # Support methods to support bus pirate commands.
+    #
+
+
+    def _handle_pirate_read(self, length):
+        """ Performs a bus-pirate read of the given length, and returns a list of numeric values. """
+
+        data_bytes = self.transmit(b"", receive_length=length, chip_select=False)
+        return list(data_bytes)
+
+
+    def _handle_pirate_write(self, data):
+        """ Performs a bus-pirate transmit of the given length, and returns a list of numeric values. """
+
+        data_bytes = self.transmit(data, chip_select=False)
+        return list(data_bytes)
+
+
+    def _handle_pirate_start(self):
+        """ Starts a given communication by performing any start conditions present on the interface. """
+        self._chip_select.low()
+
+
+    def _handle_pirate_stop(self):
+        """ Starts a given communication by performing any start conditions present on the interface. """
+        self._chip_select.high()
