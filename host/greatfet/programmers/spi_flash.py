@@ -32,6 +32,7 @@ class SPIFlash(DeviceFirmwareManager, GreatFETInterface):
         0xC8: "Gigadevice",
         0xD5: "ISSI",
         0xEF: "Winbond",
+        0xE0: 'Paragon',
     }
 
     #
@@ -57,6 +58,7 @@ class SPIFlash(DeviceFirmwareManager, GreatFETInterface):
         0x202014: "M25P80",
         0x1f4501: "AT24DF081",
         0x1C3114: "EN25F80",
+        0xE04014: "PN25F08",
     }
 
 
