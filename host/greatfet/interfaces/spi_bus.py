@@ -13,6 +13,10 @@ class SPIBus(PirateCompatibleInterface):
         is being used to control the onboard flash.
     """
 
+
+    # Short name for this type of interface.
+    INTERFACE_SHORT_NAME = "i2c"
+
     class FREQ():
         """
             Set of predefined frequencies used to configure the SPI bus. It
@@ -176,14 +180,14 @@ class SPIBus(PirateCompatibleInterface):
     #
 
 
-    def _handle_pirate_read(self, length):
+    def _handle_pirate_read(self, length, ends_transaction=False):
         """ Performs a bus-pirate read of the given length, and returns a list of numeric values. """
 
         data_bytes = self.transmit(b"", receive_length=length, chip_select=False)
         return list(data_bytes)
 
 
-    def _handle_pirate_write(self, data):
+    def _handle_pirate_write(self, data, ends_transaction=False):
         """ Performs a bus-pirate transmit of the given length, and returns a list of numeric values. """
 
         data_bytes = self.transmit(data, chip_select=False)
