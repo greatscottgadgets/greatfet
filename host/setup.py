@@ -75,6 +75,7 @@ setup(
         'tqdm',
         'cmsis_svd',
         'tabulate',
+        'prompt_toolkit'
     ],
     description='Python library for hardware hacking with the GreatFET',
     long_description=read('README.md'),
