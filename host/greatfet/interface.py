@@ -45,7 +45,7 @@ class PirateCompatibleInterface(GreatFETInterface):
         pending_read_length = 0
 
 
-        def issue_pending_writes():
+        def issue_pending_writes(ends_transaction=False):
             """ Issues any writes pending; used when performing a non-write operation."""
             nonlocal pending_write_data, result
 
@@ -53,11 +53,11 @@ class PirateCompatibleInterface(GreatFETInterface):
                 return
 
             # Perform all of our pending writes.
-            result.extend(self._handle_pirate_write(pending_write_data))
+            result.extend(self._handle_pirate_write(pending_write_data, ends_transaction=ends_transaction))
             pending_write_data = []
 
 
-        def perform_pending_reads():
+        def perform_pending_reads(ends_transaction=False):
             """ Issues any writes pending; used when performing a non-write operation."""
             nonlocal pending_read_length, result
 
@@ -66,14 +66,14 @@ class PirateCompatibleInterface(GreatFETInterface):
                 return
 
             # Perform all of our pending reads.
-            result.extend(self._handle_pirate_read(pending_read_length))
+            result.extend(self._handle_pirate_read(pending_read_length, ends_transaction=ends_transaction))
             pending_read_length = 0
 
 
-        def handle_pending_io():
+        def handle_pending_io(ends_transaction=False):
             """ Convenience method that handles any pending I/O."""
-            issue_pending_writes()
-            perform_pending_reads()
+            issue_pending_writes(ends_transaction=ends_transaction)
+            perform_pending_reads(ends_transaction=ends_transaction)
 
 
 
@@ -162,14 +162,13 @@ class PirateCompatibleInterface(GreatFETInterface):
                 perform_pending_reads()
                 pending_write_data.append(byte)
 
-
             # Handle our core commands.
             elif char in _START_CHARS:
                 handle_pending_io()
                 self._handle_pirate_start()
 
             elif char in _STOP_CHARS:
-                handle_pending_io()
+                handle_pending_io(ends_transaction=True)
                 self._handle_pirate_stop()
 
             elif char in _READ_CHARS:
@@ -203,12 +202,12 @@ class PirateCompatibleInterface(GreatFETInterface):
     #
 
 
-    def _handle_pirate_read(self, length):
+    def _handle_pirate_read(self, length, ends_transaction=False):
         """ Performs a bus-pirate read of the given length, and returns a list of numeric values. """
         return []
 
 
-    def _handle_pirate_write(self, data):
+    def _handle_pirate_write(self, data, ends_transaction=False):
         """ Performs a bus-pirate send of the relevant list of data, and returns a list of any data received. """
         return []
 

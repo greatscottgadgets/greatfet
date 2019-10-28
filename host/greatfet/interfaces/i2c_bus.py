@@ -2,16 +2,19 @@
 # This file is part of GreatFET
 #
 
-from ..interface import GreatFETInterface
+from ..interface import PirateCompatibleInterface
 
 
-class I2CBus(GreatFETInterface):
+class I2CBus(PirateCompatibleInterface):
     """
         Class representing a GreatFET I2C bus.
 
         For now, supports only the primary I2C bus (I2C0), but will be
         expanded when the vendor commands are.
     """
+
+    # Short name for this type of interface.
+    INTERFACE_SHORT_NAME = "i2c"
 
     def __init__(self, board, name='i2c bus', buffer_size=255, duty_cycle_count=255):
         """
@@ -23,8 +26,9 @@ class I2CBus(GreatFETInterface):
                 buffer_size -- The size of the I2C receive buffer on the GreatFET.
         """
 
-        # Store a reference to the parent board.
+        # Store a reference to the parent board, and our API.
         self.board = board
+        self.api = board.apis.i2c
 
         # Store our limitations.
         self.buffer_size = buffer_size
@@ -73,7 +77,7 @@ class I2CBus(GreatFETInterface):
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
-        return self.board.apis.i2c.read(address, receive_length)
+        return self.api.read(address, receive_length)
 
 
     def write(self, address, data):
@@ -90,7 +94,7 @@ class I2CBus(GreatFETInterface):
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
         data = bytes(data)
-        write_status = self.board.apis.i2c.write(address, data)
+        write_status = self.api.write(address, data)
 
         return write_status
 
@@ -118,7 +122,7 @@ class I2CBus(GreatFETInterface):
             in response for valid/invalid addresses.
         """
 
-        responses = self.board.apis.i2c.scan()
+        responses = self.api.i2c.scan()
         write_responses = responses[:16]
         read_responses = responses[16:]
         responses = []
@@ -131,3 +135,59 @@ class I2CBus(GreatFETInterface):
 
         return responses
 
+
+    #
+    # Low-level methods that allow us to be used in bus-pirate mode.
+    #
+
+    def _handle_pirate_read(self, length, ends_transaction=False):
+        """ Performs a bus-pirate read of the given length, and returns a list of numeric values. """
+
+        response = []
+
+        # Send down data in 256-byte chuns.
+        CHUNK_SIZE = 256
+
+        # Read our data.
+        to_receive = length
+        while to_receive:
+            size_to_read = CHUNK_SIZE if (to_receive > CHUNK_SIZE) else to_receive
+            to_receive -= size_to_read
+
+            # If this exhausts our data, we want to end with a NAK, as this serves as an I2C "end-of-packet".
+            end_with_nak = ends_transaction and (not to_receive)
+            data = self.api.read_bytes(size_to_read, end_with_nak)
+            response.extend(data)
+
+
+        return response
+
+
+
+    def _handle_pirate_write(self, data, ends_transaction=False):
+        """ Performs a bus-pirate send of the relevant list of data, and returns a list of any data received. """
+
+        # Send down data in 256-byte chuns.
+        CHUNK_SIZE = 256
+
+        # Transmit the bytes.
+        to_transmit = data[:]
+
+        while to_transmit:
+            chunk_to_transmit = to_transmit[0:CHUNK_SIZE]
+            del to_transmit[0:CHUNK_SIZE]
+
+            self.api.issue_bytes(bytes(chunk_to_transmit))
+
+        # I2C is half-duplex, so we don't provide any data in return.
+        return []
+
+
+    def _handle_pirate_start(self):
+        """ Starts a given communication by performing any start conditions present on the interface. """
+        self.api.issue_start()
+
+
+    def _handle_pirate_stop(self):
+        """ Starts a given communication by performing any start conditions present on the interface. """
+        self.api.issue_stop()
