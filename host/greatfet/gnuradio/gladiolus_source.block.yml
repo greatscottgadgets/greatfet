@@ -1,0 +1,21 @@
+id: gladiolus_source
+label: 'Gladiolus Source'
+category: '[SDIR]'
+flags: throttle
+
+parameters:
+- id: sample_rate
+  label: 'Sample Rate (sps)'
+  dtype: real
+  default: samp_rate
+
+templates:
+  imports: from greatfet.gnuradio import gladiolus
+  make: gladiolus.gladiolus_source(${sample_rate})
+
+outputs:
+- domain: stream
+  dtype: byte
+  multiplicity: 1
+
+file_format: 1

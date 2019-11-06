@@ -5,6 +5,12 @@
  * This file is part of greatfet.
  */
 
+
+#include <errno.h>
+#include <debug.h>
+#include <string.h>
+#include <toolchain.h>
+
 #include <drivers/comms.h>
 
 #include <drivers/sgpio.h>
@@ -17,19 +23,25 @@
 #include "usb_endpoint.h"
 
 
-#include <errno.h>
-#include <debug.h>
-#include <toolchain.h>
+
+typedef void (*streaming_handler_t)(void);
 
 
 static bool usb_streaming_enabled = false;
 static unsigned int phase = 1;
 
-static uint32_t *volatile position_in_buffer;
-static uint32_t *volatile data_in_buffer;
+static volatile uint32_t *position_in_buffer;
+static volatile uint32_t *data_in_buffer;
 volatile uint32_t debug_data;
 
-uint32_t read_position;
+// Abstract storage for buffer metadata. Used for functionality in which we manage the buffer,
+// rather than the caller.
+volatile uint32_t read_position;
+volatile uint32_t write_position;
+volatile uint32_t buffer_content_count;
+
+// Timer objects used by our "periodic upload" functionality.
+hw_timer_t periodic_event_timer;
 
 
 // XXX
@@ -129,11 +141,12 @@ void service_usb_streaming(void)
 	service_usb_streaming_in();
 }
 
+
 /**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
  */
-void usb_streaming_start_streaming_to_host(uint32_t *volatile user_position_in_buffer,
-	uint32_t *volatile user_data_in_buffer)
+void usb_streaming_start_streaming_to_host(volatile uint32_t *user_position_in_buffer,
+	volatile uint32_t *user_data_in_buffer)
 {
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
@@ -149,6 +162,31 @@ void usb_streaming_start_streaming_to_host(uint32_t *volatile user_position_in_b
 }
 
 
+/**
+ * Sets up a task thread that will periodically call a callback, and then deliver the collected
+ * data to the host.
+ */
+uint32_t usb_streaming_start_periodic_data_gathering(uint32_t frequency, timer_callback_t callback,
+	void *callback_argument)
+{
+	// Allocate a periodic event timer...
+	int rc = acquire_timer(&periodic_event_timer);
+	if (rc) {
+		pr_error("error: streaming: could not allocate a timer for periodic events (%u)!\n", rc);
+		return rc;
+	}
+
+	// ... set up our USB streaming ...
+	read_position = 0;
+	write_position = 0;
+	usb_endpoint_init(&usb0_endpoint_bulk_in);
+
+	// ... and enable data gathering.
+	call_function_periodically(&periodic_event_timer, frequency, callback, callback_argument);
+	return 0;
+}
+
+
 
 /**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
@@ -159,4 +197,87 @@ void usb_streaming_stop_streaming_to_host()
 	usb_endpoint_disable(&usb0_endpoint_bulk_in);
 
 	led_off(LED4);
+}
+
+
+/**
+ * Halts a periodic data gathering request.
+ */
+void usb_streaming_stop_periodic_gathering(void)
+{
+	cancel_periodic_function_calls(&periodic_event_timer);
+	release_timer(&periodic_event_timer);
+}
+
+
+
+static uint32_t usb_streaming_submit_data(void *data_in, uint32_t count)
+{
+	uint32_t original_position_in_buffer = write_position;
+
+	uint8_t *data_in_window = data_in;
+	uint32_t data_after_start = 0;
+
+	// Compute the vital statistics of our buffer.
+	const uint32_t buffer_size = sizeof(usb_bulk_buffer);
+
+	// Figure out how much data we want to place directly follwing the current
+	// write pointer.
+	uint32_t space_remaining_to_end = buffer_size - write_position;
+	uint32_t data_after_pointer = count;
+
+	// If we'd wrap around...
+	if (count > space_remaining_to_end) {
+
+		//... copy from the write pointer to the end...
+		data_after_pointer = space_remaining_to_end;
+		count -= space_remaining_to_end;
+
+		//  and copy the remaining data to the beginning.
+		data_after_start = count;
+	}
+
+
+	// Update our write pointer...
+	write_position = (write_position + count) % buffer_size;
+	buffer_content_count += count;
+
+	// ... and perform the copy itself.
+	memcpy(&usb_bulk_buffer[original_position_in_buffer], data_in, data_after_pointer);
+	memcpy(&usb_bulk_buffer[0], &data_in_window[data_after_pointer], data_after_start);
+
+	return 0;
+}
+
+
+/**
+ * Submit data into the user buffer for streaming, and schedule a USB transfer to gather
+ * the relevant data iff a transfer is available.
+ */
+uint32_t usb_streaming_send_data(void *data_in, uint32_t count)
+{
+	int rc;
+
+	uint32_t data_to_send;
+	uint32_t bytes_to_end_of_buffer;
+
+	// Add the data to our buffer...
+	usb_streaming_submit_data(data_in, count);
+
+	// Send either the amount of data we have available, or the bytes to the end of the buffer, whichever is less.
+	bytes_to_end_of_buffer = sizeof(usb_bulk_buffer) - read_position;
+	data_to_send = buffer_content_count < bytes_to_end_of_buffer ? buffer_content_count : bytes_to_end_of_buffer;
+
+	// Try to schedule a USB transfer.
+	rc = usb_transfer_schedule(
+		&usb0_endpoint_bulk_in,
+		&usb_bulk_buffer[read_position],
+		data_to_send, NULL, NULL);
+
+
+	// If we succeeded in scheduling a transfer, advance the read pointer.
+	if (!rc) {
+		read_position = (read_position + data_to_send) % sizeof(usb_bulk_buffer);
+		buffer_content_count -= data_to_send;
+	}
 }

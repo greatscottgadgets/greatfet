@@ -25,7 +25,7 @@ def main():
     parser.add_argument('-e', '--exec', metavar="code", type=str, help="Executes the provided code as though it were passed " +
             "to a greatfet shell, and then terminates.", dest="code")
     parser.add_argument('-E', '--pre-exec', metavar="code", type=str, help="Executes the provided code as though it were passed " +
-            "to a greatfet shell, but does not explicitly terminate..", dest="prelude")
+            "to a greatfet shell, but does not explicitly terminate.", dest="prelude")
     parser.add_argument('-f', '--file', metavar="file", type=str, help="Executes the relevant file before starting the given shell.")
     parser.add_argument('-M', '--automagic', dest="automagic", action='store_true',
             help="Enable automagic, so lazy developers don't have to type %%.")

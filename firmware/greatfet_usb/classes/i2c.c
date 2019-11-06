@@ -4,17 +4,37 @@
 
 #include <debug.h>
 #include <errno.h>
+#include <string.h>
 #include <toolchain.h>
 
 #include <greatfet_core.h>
 
 #include <drivers/comms.h>
+#include <drivers/memory/allocator.h>
 
 #include <i2c.h>
 #include <i2c_bus.h>
 
+#include "../usb_streaming.h"
+
 
 #define CLASS_NUMBER_SELF (0x108)
+
+
+typedef struct {
+	uint8_t address;
+
+	uint32_t read_length;
+	uint32_t write_length;
+
+	void   *write_data;
+	uint8_t read_data[256];
+
+} i2c_stream_t;
+
+
+// Pointer to a buffer that stores the I2C write data used in e.g. streaming I2C reads.
+static i2c_stream_t stream;
 
 
 static int i2c_verb_start(struct command_transaction *trans)
@@ -161,6 +181,62 @@ static int i2c_verb_scan(struct command_transaction *trans)
 	return 0;
 }
 
+
+void stream_i2c_data(void *argument)
+{
+	i2c_stream_t *stream = (i2c_stream_t *)argument;
+
+	// Perform our I2C read operation...
+	i2c_bus_write(&i2c0, stream->address, stream->write_data, stream->write_length);
+	i2c_bus_read(&i2c0, stream->address, stream->read_data, stream->read_length);
+
+	// ... and gather the resultant data.
+	usb_streaming_send_data(stream->read_data, stream->read_length);
+}
+
+
+
+static int i2c_verb_stream_periodic_read(struct command_transaction *trans)
+{
+	uint32_t frequency = comms_argument_parse_uint32_t(trans);
+	void *data_to_write;
+
+	stream.address     = comms_argument_parse_uint8_t(trans);
+	stream.read_length = comms_argument_parse_uint8_t(trans);
+	data_to_write      = comms_argument_read_buffer(trans, -1, &stream.write_length);
+
+	if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+	// If we already have a buffer, stop any existing transfers and clean up before creating a new one.
+	if (stream.write_data) {
+		usb_streaming_stop_periodic_gathering();
+		free(stream.write_data);
+	}
+
+	// Allocate a buffer for which to store our write data, and copy it in.
+	stream.write_data = malloc(stream.write_length);
+	if (!stream.write_data) {
+		pr_error("error: i2c streaming: could not allocate a buffer on the heap!\n");
+		return ENOMEM;
+	}
+	memcpy(stream.write_data, data_to_write, stream.write_length);
+
+	// Finally, schedule our periodic read.
+	usb_streaming_start_periodic_data_gathering(frequency, stream_i2c_data, &stream);
+	comms_response_add_uint8_t(trans, USB_STREAMING_IN_ADDRESS);
+	return 0;
+}
+
+
+static int i2c_verb_stop_periodic_read(struct command_transaction *trans)
+{
+	usb_streaming_stop_periodic_gathering();
+}
+
+
+
 /**
  * Verbs for the firmware API.
  */
@@ -190,7 +266,7 @@ static struct comms_verb _verbs[] = {
 			.in_param_names = "value, index, data", .out_param_names = "states",
 			.doc = "Scans all valid I2C addresses for attached devices" },
 
-		// TODO: implement low-level send/receive / etc. (for bus pirate mode)
+		// Low-level send/receive, for bus pirate mode.
 		{ .name = "issue_start", .handler = i2c_verb_issue_start,
 			.in_signature = "<", .out_signature = "<",
 			.doc = "Issues a raw start bit onto the I2C bus." },
@@ -203,6 +279,16 @@ static struct comms_verb _verbs[] = {
 		{ .name = "read_bytes", .handler = i2c_verb_read_bytes,
 			.in_signature = "<H?", .out_signature = "<*X", .in_param_names = "count, ack_last",
 			.doc = "Reads a raw set of bytes on the I2C bus. Should follow an issued address." },
+
+
+		// Functionality for streaming repeated sampes over a bulk pipe.
+		{ .name = "stream_periodic_read", .handler = i2c_verb_stream_periodic_read,
+			.in_signature = "<IBB*X", .out_signature = "<B",
+			.in_param_names = "frequency, address, read_length, write_data", .out_param_names = "pipe_id",
+			.doc = "Schedule a periodic SPI transaction, and stream its results to the host." },
+		{ .name = "stop_periodic_read", .handler = i2c_verb_stop_periodic_read,
+			.in_signature = "", .out_signature = "",
+			.doc = "Stop any active periodic read."},
 
 		{} // Sentinel
 };

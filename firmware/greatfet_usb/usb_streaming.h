@@ -6,12 +6,15 @@
  * This file is part of greatfet.
  */
 
+#ifndef __GREATFET_USB_STREAMING_H__
+#define __GREATFET_USB_STREAMING_H__
+
 
 #include <toolchain.h>
 #include "usb_bulk_buffer.h"
 
-#ifndef __GREATFET_USB_STREAMING_H__
-#define __GREATFET_USB_STREAMING_H__
+#include <drivers/timer.h>
+
 
 enum {
 	USB_STREAMING_NUM_BUFFERS = 2,
@@ -33,13 +36,36 @@ void service_usb_streaming(void);
 /**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
  */
-void usb_streaming_start_streaming_to_host(uint32_t *volatile user_position_in_buffer,
-	uint32_t *volatile user_data_in_buffer);
+void usb_streaming_start_streaming_to_host(volatile uint32_t *user_position_in_buffer,
+	volatile uint32_t *user_data_in_buffer);
+
+
 
 
 /**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
  */
 void usb_streaming_stop_streaming_to_host(void);
+
+
+/**
+ * Sets up a task thread that will periodically call a callback, and then deliver the collected
+ * data to the host.
+ */
+uint32_t usb_streaming_start_periodic_data_gathering(uint32_t frequency, timer_callback_t callback,
+	void *callback_argument);
+
+
+/**
+ * Halts a periodic data gathering request.
+ */
+void usb_streaming_stop_periodic_gathering(void);
+
+
+/**
+ * Submit data into the user buffer for streaming, and schedule a USB transfer to gather
+ * the relevant data iff a transfer is available.
+ */
+uint32_t usb_streaming_send_data(void *data_in, uint32_t count);
 
 #endif

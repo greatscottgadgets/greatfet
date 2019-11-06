@@ -74,12 +74,7 @@ int main(void) {
 	pin_setup();
 	heartbeat_init();
 
-	// For now, don't bring up the RTC, as bring up is slow and we don't
-	// immediately use it. This can be enabled here, but it's likely best to
-	// just bring the RTC up on-demand.
-	/* rtc_init(); */
 	init_usb0();
-
 	pr_info("GreatFET initialization complete!\n");
 
 	if (platform_get_parent_clock_source(CLOCK_SOURCE_PLL0_USB) == CLOCK_SOURCE_INTERNAL_OSCILLATOR) {
@@ -101,8 +96,6 @@ int main(void) {
 		service_heartbeat();
 		service_usb_streaming();
 		service_glitchkit();
-		service_usb_analysis();
-		service_rhododendron();
 	}
 
 	return 0;
