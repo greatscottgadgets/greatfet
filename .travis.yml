@@ -4,10 +4,6 @@ matrix:
   - os: linux
     cache: apt
     dist: xenial
-    python: '2.7'
-  - os: linux
-    cache: apt
-    dist: xenial
     python: '3.6'
     env: DEPLOY="true"
   - os: osx
