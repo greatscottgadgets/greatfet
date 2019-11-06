@@ -2,15 +2,20 @@
  * This file is part of GreatFET
  */
 
-#include <stddef.h>
-#include <greatfet_core.h>
-#include <i2c_bus.h>
-#include <i2c.h>
+#include <debug.h>
 #include <errno.h>
+#include <toolchain.h>
+
+#include <greatfet_core.h>
+
 #include <drivers/comms.h>
+
+#include <i2c.h>
+#include <i2c_bus.h>
 
 
 #define CLASS_NUMBER_SELF (0x108)
+
 
 static int i2c_verb_start(struct command_transaction *trans)
 {
@@ -64,6 +69,65 @@ static int i2c_verb_write(struct command_transaction *trans)
 
 	return 0;
 }
+
+
+static int i2c_verb_issue_start(struct command_transaction *trans)
+{
+	(void)trans;
+	i2c_tx_start(I2C0_BASE);
+	return 0;
+}
+
+
+static int i2c_verb_issue_stop(struct command_transaction *trans)
+{
+	(void)trans;
+	i2c_stop(I2C0_BASE);
+	return 0;
+}
+
+
+static int i2c_verb_issue_bytes(struct command_transaction *trans)
+{
+
+	while (comms_argument_data_remaining(trans)) {
+
+		// Transmit each byte in our data stream...
+		i2c_tx_byte(I2C0_BASE, comms_argument_parse_uint8_t(trans));
+
+		// FIXME: respond with status
+
+	}
+
+
+	return 0;
+}
+
+static int i2c_verb_read_bytes(struct command_transaction *trans)
+{
+	uint16_t count = comms_argument_parse_uint16_t(trans);
+	bool     ack_last = comms_argument_parse_bool(trans);
+
+	uint8_t *data_buffer = comms_response_reserve_space(trans, count);
+
+	if (!data_buffer) {
+		pr_error("error: i2c: cannot capture %d bytes simultaneously; data won't fit in response!\n");
+		return ENOMEM;
+	}
+
+	if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+	// Receive each of our bytes.
+	for (int i=0; i < count; i++) {
+		bool ack = ack_last ? true : (i + 1 != count);
+		data_buffer[i] = i2c_rx_byte(I2C0_BASE, ack);
+	}
+
+	return 0;
+}
+
 
 static int i2c_verb_scan(struct command_transaction *trans)
 {
@@ -127,6 +191,18 @@ static struct comms_verb _verbs[] = {
 			.doc = "Scans all valid I2C addresses for attached devices" },
 
 		// TODO: implement low-level send/receive / etc. (for bus pirate mode)
+		{ .name = "issue_start", .handler = i2c_verb_issue_start,
+			.in_signature = "<", .out_signature = "<",
+			.doc = "Issues a raw start bit onto the I2C bus." },
+		{ .name = "issue_stop", .handler = i2c_verb_issue_stop,
+			.in_signature = "<", .out_signature = "<",
+			.doc = "Issues a raw stop bit on the I2C bus." },
+		{ .name = "issue_bytes", .handler = i2c_verb_issue_bytes,
+			.in_signature = "<*X", .out_signature = "<*?", .in_param_names = "data", .out_param_names="ack_array",
+			.doc = "Issues a raw set of bytes on the I2C bus. Gives low-level control over transmit." },
+		{ .name = "read_bytes", .handler = i2c_verb_read_bytes,
+			.in_signature = "<H?", .out_signature = "<*X", .in_param_names = "count, ack_last",
+			.doc = "Reads a raw set of bytes on the I2C bus. Should follow an issued address." },
 
 		{} // Sentinel
 };
