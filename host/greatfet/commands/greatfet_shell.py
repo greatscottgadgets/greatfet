@@ -19,7 +19,6 @@ from IPython.terminal.interactiveshell import TerminalInteractiveShell
 
 def main():
 
-
     # Set up a simple argument parser.
     parser = GreatFETArgumentParser(
         description="Convenience shell for working with GreatFET devices.")
@@ -29,7 +28,7 @@ def main():
             "to a greatfet shell, but does not explicitly terminate..", dest="prelude")
     parser.add_argument('-f', '--file', metavar="file", type=str, help="Executes the relevant file before starting the given shell.")
     parser.add_argument('-M', '--automagic', dest="automagic", action='store_true',
-            help="Enable automagic, so lazy developers don't have to type %.")
+            help="Enable automagic, so lazy developers don't have to type %%.")
     parser.add_argument('-P', '--avoid-parens', dest="avoidparens", action='store_true',
             help="Enable full autocall, so bare methods are executed, rather than printed.")
     parser.add_argument('-A', '--autoreload', dest="autoreload", action='store_true',
