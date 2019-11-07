@@ -16,8 +16,9 @@ class I2CSourceBlock(GreatFETStreamingSource):
     """ Block that reads from an I2C device as a data source. """
 
 
-    def set_up_streaming(self, address, data_to_write, read_length, prelude_script=''):
+    def set_up_streaming(self, address, data_to_write, read_length, normalize_by, prelude_script=''):
         self.sample_size_bytes = read_length
+        self.normalization_max = normalize_by
 
         # If we were provided with a 'prelude script', run it before we execute our main block.
         if prelude_script:
@@ -36,3 +37,7 @@ class I2CSourceBlock(GreatFETStreamingSource):
 
     def get_sample_size(self):
         return self.sample_size_bytes
+
+
+    def get_sample_max_scale(self):
+        return self.normalization_max

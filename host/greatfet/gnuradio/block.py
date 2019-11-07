@@ -106,6 +106,16 @@ class GreatFETStreamingSource(gr.sync_block):
         return self.SAMPLE_ENDIANNESS
 
 
+    def get_sample_max_scale(self):
+        """
+        Returns the maximum value we should expect from a register read. This default implementation
+        returns OUTPUT_MAX_SCALE, but blocks with runtime-configurable maximum should override this.
+
+        This can return None to avoid scaling altogether.
+        """
+        return self.OUTPUT_MAX_SCALE
+
+
     def process_samples(self, samples):
         """
         Function that processes incoming samples into a format acceptable to GNURadio.
@@ -133,8 +143,8 @@ class GreatFETStreamingSource(gr.sync_block):
             # Process our sample...
             sample = int.from_bytes(raw_sample, byteorder=endianness)
 
-            if self.OUTPUT_MAX_SCALE:
-                sample = sample // self.OUTPUT_MAX_SCALE
+            if self.get_sample_max_scale():
+                sample = sample / self.get_sample_max_scale()
 
             # ... and move to the next sample.
             new_samples[sample_index] = sample
