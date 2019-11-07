@@ -16,6 +16,8 @@
 // FIXME: replace with libgreat driver
 #include <libopencm3/lpc43xx/adc.h>
 
+#include "../usb_streaming.h"
+
 
 #define CLASS_NUMBER_SELF (0x111)
 
@@ -48,6 +50,50 @@ static void set_up_onboard_adc(bool use_adc1, uint32_t pin_mask, uint8_t signifi
 	} else {
 		ADC0_CR = cr_value;
 	}
+}
+
+
+static uint16_t take_adc_sample(uint8_t adc_number, uint8_t pin_channel_number)
+{
+	const uint32_t adc_sample_mask = 0x03FF;
+
+	volatile uint32_t *adc_cr;
+	volatile uint32_t *adc_gdr;
+
+	// Sanity checks.
+	if (adc_number == 0) {
+		adc_cr = &ADC0_CR;
+		adc_gdr = &ADC0_GDR;
+	}
+	else if (adc_number == 1) {
+		adc_cr = &ADC1_CR;
+		adc_gdr = &ADC1_GDR;
+	} else {
+		pr_error("adc: invalid adc number %" PRIu8 " provided (must be <= 1)!\n", adc_number);
+		return EINVAL;
+	}
+
+	if (pin_channel_number > 8) {
+		pr_error("adc: error: invalid pin number %" PRIu8 " provided (must be <= 8)!\n", pin_channel_number);
+		return EINVAL;
+	}
+
+
+	uint32_t time_base = get_time();
+
+	// Start a conversion.
+	*adc_cr |= ADC_CR_START(1);
+
+	// And wait for it to complete.
+	while(!(*adc_gdr & ADC_DR_DONE) || (((*adc_gdr >> 24) & 0x7) != pin_channel_number)) {
+		if (get_time_since(time_base) > 500) {
+			return ETIMEDOUT;
+		}
+	}
+
+	// Read the most recently sampled V_REF from the global data register.
+	return (*adc_gdr >> 6) & adc_sample_mask;
+
 }
 
 
@@ -117,6 +163,46 @@ static int verb_read_samples(struct command_transaction *trans)
 
 
 /**
+ * Callback that captures ADC data periodically.
+ */
+void stream_adc_data(void *argument)
+{
+	(void)argument;
+
+	// TODO: accept channels other than ADC0_0 and implement pinmuxing support
+	uint16_t sample = take_adc_sample(0, 0);
+	usb_streaming_send_data(&sample, sizeof(uint16_t));
+}
+
+
+
+static int verb_stream_periodic_read(struct command_transaction *trans)
+{
+	uint32_t frequency = comms_argument_parse_uint32_t(trans);
+
+	if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+	// Schedule our periodic read.
+	usb_streaming_start_periodic_data_gathering(frequency, stream_adc_data, NULL);
+	comms_response_add_uint8_t(trans, USB_STREAMING_IN_ADDRESS);
+
+	return 0;
+}
+
+
+
+static int verb_stop_periodic_read(struct command_transaction *trans)
+{
+	(void)trans;
+
+	usb_streaming_stop_periodic_gathering();
+	return 0;
+}
+
+
+/**
  * Verbs for the ADC API.
  */
 static struct comms_verb _verbs[] = {
@@ -133,6 +219,16 @@ static struct comms_verb _verbs[] = {
 				"    sample_count -- number of samples to read\n"
 				"Returns: the raw samples read from the ADC."
 		},
+
+		// Functionality for streaming repeated sampes over a bulk pipe.
+		{ .name = "stream_periodic_read", .handler = verb_stream_periodic_read,
+			.in_signature = "<I", .out_signature = "<B",
+			.in_param_names = "frequency", .out_param_names = "pipe_id",
+			.doc = "Schedule a periodic ADC read, and stream its results to the host." },
+		{ .name = "stop_periodic_read", .handler = verb_stop_periodic_read,
+			.in_signature = "", .out_signature = "",
+			.doc = "Stop any active periodic read."},
+
 		{} // Sentinel
 };
 COMMS_DEFINE_SIMPLE_CLASS(adc, CLASS_NUMBER_SELF, "adc", _verbs,

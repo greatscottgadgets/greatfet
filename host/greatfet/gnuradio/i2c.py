@@ -17,6 +17,7 @@ class I2CSourceBlock(GreatFETStreamingSource):
 
 
     def set_up_streaming(self, address, data_to_write, read_length, prelude_script=''):
+        self.sample_size_bytes = read_length
 
         # If we were provided with a 'prelude script', run it before we execute our main block.
         if prelude_script:
@@ -31,3 +32,7 @@ class I2CSourceBlock(GreatFETStreamingSource):
 
     def tear_down_streaming(self):
         self.gf.apis.i2c.stop_periodic_read()
+
+
+    def get_sample_size(self):
+        return self.sample_size_bytes

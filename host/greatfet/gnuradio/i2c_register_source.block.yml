@@ -34,7 +34,7 @@ templates:
 
 outputs:
 - domain: stream
-  dtype: byte
+  dtype: float
   multiplicity: 1
 
 file_format: 1

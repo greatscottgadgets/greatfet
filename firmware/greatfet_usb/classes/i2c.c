@@ -232,7 +232,10 @@ static int i2c_verb_stream_periodic_read(struct command_transaction *trans)
 
 static int i2c_verb_stop_periodic_read(struct command_transaction *trans)
 {
+	(void)trans;
+
 	usb_streaming_stop_periodic_gathering();
+	return 0;
 }
 
 
@@ -285,7 +288,7 @@ static struct comms_verb _verbs[] = {
 		{ .name = "stream_periodic_read", .handler = i2c_verb_stream_periodic_read,
 			.in_signature = "<IBB*X", .out_signature = "<B",
 			.in_param_names = "frequency, address, read_length, write_data", .out_param_names = "pipe_id",
-			.doc = "Schedule a periodic SPI transaction, and stream its results to the host." },
+			.doc = "Schedule a periodic I2C transaction, and stream its results to the host." },
 		{ .name = "stop_periodic_read", .handler = i2c_verb_stop_periodic_read,
 			.in_signature = "", .out_signature = "",
 			.doc = "Stop any active periodic read."},

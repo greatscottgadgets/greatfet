@@ -15,12 +15,23 @@ class GreatFETStreamingSource(gr.sync_block):
     # The name for the block. Should be overridden by derived classes.
     BLOCK_NAME='GreatFET Source'
 
-    # Default to having a uint8_t type for
-    OUT_SIGNATURE=[np.uint8]
+    # Default to having a float type for our output, as this is easiest
+    # to work with in GNURadio.
+    OUTPUT_TYPE=np.float32
+
+    # If provided, the default sample processing will normalize a sample with a given
+    # value to 1.0. If None, the sample will be left as is.
+    OUTPUT_MAX_SCALE=None
 
     # The default timeout for the work function's USB transactions. Usually does not need
     # to be overridden.
     WORK_TIMEOUT=100
+
+    # Default sample size and endianness.
+    # Subclasses can either override this function or override the
+    SAMPLE_SIZE_BYTES = 1
+    SAMPLE_ENDIANNESS = 'little'
+
 
     def __init__(self, sample_rate, *args, **kwargs):
         """
@@ -31,7 +42,7 @@ class GreatFETStreamingSource(gr.sync_block):
             self,
             name=self.BLOCK_NAME,
             in_sig=None,
-            out_sig=self.OUT_SIGNATURE,
+            out_sig=[self.OUTPUT_TYPE],
         )
 
 
@@ -39,7 +50,7 @@ class GreatFETStreamingSource(gr.sync_block):
 
         # Create our core USB transaction buffer.
         # This will go away as soon as we switch to python-libusb1.
-        self.buffer   = array.array('B', bytes(4096))
+        self.buffer  = array.array('B', bytes(4096))
 
         # Create an array object that will store any pending samples received from the GreatFET.
         # This should probably be made a bytearray once we switch to python-libusb1.
@@ -79,6 +90,59 @@ class GreatFETStreamingSource(gr.sync_block):
         pass
 
 
+    def get_sample_size(self):
+        """
+        Returns the size of a normal sample, in bytes. This default implementation returns SAMPLE_SIZE_BYTES,
+        but blocks with runtime-configurable sample size should override this function.
+        """
+        return self.SAMPLE_SIZE_BYTES
+
+
+    def get_sample_endianness(self):
+        """
+        Returns the endianness of a normal sample; either 'big' or 'little. This default implementation
+        returns SAMPLE_ENDIANNESS, but blocks with runtime-configurable sample endianness should override this function.
+        """
+        return self.SAMPLE_ENDIANNESS
+
+
+    def process_samples(self, samples):
+        """
+        Function that processes incoming samples into a format acceptable to GNURadio.
+        By default, processes samples into integers based on their size in bytes.
+        """
+
+        # Convert our samples into a mutable array of bytes.
+        samples = bytearray(samples)
+
+        sample_size = self.get_sample_size()
+        endianness  = self.get_sample_endianness()
+
+        # Figure out how many entries we'll have in our new array
+        new_array_size = len(samples) // sample_size
+
+        # Create a new array of samples...
+        new_samples = np.array([0] * new_array_size, dtype=self.OUTPUT_TYPE)
+
+        # ... and populate it.
+        sample_index = 0
+        while samples:
+            raw_sample = samples[0:sample_size]
+            del samples[0:sample_size]
+
+            # Process our sample...
+            sample = int.from_bytes(raw_sample, byteorder=endianness)
+
+            if self.OUTPUT_MAX_SCALE:
+                sample = sample // self.OUTPUT_MAX_SCALE
+
+            # ... and move to the next sample.
+            new_samples[sample_index] = sample
+            sample_index += 1
+
+        return new_samples
+
+
     def work(self, input_items, output_items):
         """ Core work function for our streaming blocks. """
 
@@ -86,8 +150,8 @@ class GreatFETStreamingSource(gr.sync_block):
 
         # Try to read the what data we can from the GreatFET's streaming pipe.
         # TODO: upgrade this to use python-libusb1 and the new comms API
-        num_samples = self.gf.comms.device.read(self.pipe_id, self.buffer, self.WORK_TIMEOUT)
-        samples = self.buffer[0:num_samples]
+        num_sample_bytes = self.gf.comms.device.read(self.pipe_id, self.buffer, self.WORK_TIMEOUT)
+        samples = self.buffer[0:num_sample_bytes]
 
         # If we have samples left over from last time, use them.
         if self.pending_samples:
@@ -104,6 +168,9 @@ class GreatFETStreamingSource(gr.sync_block):
         if len(samples) > len(out):
             self.pending_samples = samples[len(out):]
             samples = samples[:len(out)]
+
+        # Perform any sample processing we need to do before sending these samples upstream.
+        samples = self.process_samples(samples)
 
         # Finally, pass our samples to GNURadio.
         out[:len(samples)] = samples
