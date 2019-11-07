@@ -23,9 +23,14 @@ parameters:
   dtype: int
   default: 1
 
+- id: prelude_script
+  label: 'Prelude script'
+  dtype: file_open
+
+
 templates:
   imports: from greatfet.gnuradio import i2c
-  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, "[${data_to_write}]", ${read_length})
+  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, "[${data_to_write}]", ${read_length}, ${prelude_script})
 
 outputs:
 - domain: stream
