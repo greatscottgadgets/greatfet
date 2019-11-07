@@ -330,6 +330,7 @@ static int verb_start_receive(struct command_transaction *trans)
 	usb_streaming_start_streaming_to_host(&sdir_functions[0].position_in_buffer, &sdir_functions[0].data_in_buffer);
 	sgpio_run(&sdir);
 
+	comms_response_add_uint8_t(trans, USB_STREAMING_IN_ADDRESS);
 	return 0;
 }
 
@@ -345,8 +346,8 @@ static int verb_stop(struct command_transaction *trans)
 
 
 static struct comms_verb _verbs[] = {
-		{  .name = "start_receive", .handler = verb_start_receive, .in_signature = "", .out_signature = "",
-           .doc = "Start receipt of SDIR data on the primary bulk comms pipe." },
+		{  .name = "start_receive", .handler = verb_start_receive, .in_signature = "", .out_signature = "<B",
+			.out_param_names = "pipe_id", .doc = "Start receipt of SDIR data on the primary bulk comms pipe." },
 		{  .name = "stop", .handler = verb_stop, .in_signature = "", .out_signature = "",
            .doc = "Halt SDIR communications; termianting any active communications" },
 

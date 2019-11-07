@@ -3,6 +3,7 @@ label: 'I2C Source'
 category: '[Software Defined Everything]'
 flags: throttle
 
+
 parameters:
 - id: sample_rate
   label: 'Sample Rate (sps)'
@@ -24,9 +25,11 @@ parameters:
   dtype: int
   default: 1
 
+
 templates:
   imports: from greatfet.gnuradio import i2c
-  make: i2c.i2c_source(${sample_rate}, ${address}, ${data_to_write}, ${read_length})
+  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, ${data_to_write}, ${read_length})
+
 
 outputs:
 - domain: stream

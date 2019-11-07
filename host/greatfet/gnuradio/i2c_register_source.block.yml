@@ -25,7 +25,7 @@ parameters:
 
 templates:
   imports: from greatfet.gnuradio import i2c
-  make: i2c.i2c_source(${sample_rate}, ${address}, "[${data_to_write}]", ${read_length})
+  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, "[${data_to_write}]", ${read_length})
 
 outputs:
 - domain: stream

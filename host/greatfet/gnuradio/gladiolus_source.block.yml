@@ -11,7 +11,7 @@ parameters:
 
 templates:
   imports: from greatfet.gnuradio import gladiolus
-  make: gladiolus.gladiolus_source(${sample_rate})
+  make: gladiolus.GladiolusSource(${sample_rate})
 
 outputs:
 - domain: stream
