@@ -16,14 +16,21 @@ class I2CSourceBlock(GreatFETStreamingSource):
     """ Block that reads from an I2C device as a data source. """
 
 
-    def set_up_streaming(self, address, data_to_write, read_length, normalize_by, prelude_script=''):
+    def set_up_streaming(self, address, data_to_write, read_length, normalize_by, prelude_script='', prelude=''):
         self.sample_size_bytes = read_length
         self.normalization_max = normalize_by
 
-        # If we were provided with a 'prelude script', run it before we execute our main block.
+
+        # If we were provided with any predlues (script or direct), execute them.
+        context = {'gf': self.gf}
+
+        if prelude:
+            exec(prelude, context)
+
         if prelude_script:
             with open(prelude_script) as f:
-                exec(f.read(), {'gf': self.gf })
+                exec(f.read(), context)
+
 
 
         # Convert our 'data to write' argument to a set of bytes to be written.

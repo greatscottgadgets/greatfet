@@ -26,18 +26,21 @@ parameters:
   default: 1
 
 - id: normalize_by
-  label: 'Register max value'
+  label: 'Register full scale'
   dtype: int
   default: 255
+
+- id: prelude
+  label: 'Prelude'
+  dtype: string
 
 - id: prelude_script
   label: 'Prelude script'
   dtype: file_open
 
-
 templates:
   imports: from greatfet.gnuradio import i2c
-  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, ${data_to_write}, ${read_length}, ${normalize_by}, ${prelude_script})
+  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, ${data_to_write}, ${read_length}, ${normalize_by}, ${prelude_script}, ${prelude})
 
 
 outputs:
