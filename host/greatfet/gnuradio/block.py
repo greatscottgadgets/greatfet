@@ -191,3 +191,19 @@ class GreatFETStreamingSource(gr.sync_block):
         """ Function called when we're halting execution of our flowgraph. """
         self.tear_down_streaming()
         return True
+
+
+    def handle_preludes(self, prelude, prelude_script):
+        """ Helper function that runs any prelude code specified by the given GRC block. """
+
+        context = {'gf': self.gf}
+
+        # If we have a direct prelude text, execute it.
+        if prelude:
+            exec(prelude, context)
+
+        # ... and if we have a script, load it and execute it.
+        if prelude_script:
+            with open(prelude_script) as f:
+                exec(f.read(), context)
+

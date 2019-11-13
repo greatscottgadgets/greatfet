@@ -87,7 +87,7 @@ static uint16_t take_adc_sample(uint8_t adc_number, uint8_t pin_channel_number)
 	// And wait for it to complete.
 	while(!(*adc_gdr & ADC_DR_DONE) || (((*adc_gdr >> 24) & 0x7) != pin_channel_number)) {
 		if (get_time_since(time_base) > 500) {
-			return ETIMEDOUT;
+			return -1;
 		}
 	}
 
@@ -183,6 +183,10 @@ static int verb_stream_periodic_read(struct command_transaction *trans)
 	if (!comms_transaction_okay(trans)) {
         return EBADMSG;
     }
+
+	// Set up the ADC.
+	// FIXME: support pins other than ADC0/0
+	set_up_onboard_adc(0, 1 << 0, 10);
 
 	// Schedule our periodic read.
 	usb_streaming_start_periodic_data_gathering(frequency, stream_adc_data, NULL);

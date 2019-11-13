@@ -179,6 +179,7 @@ uint32_t usb_streaming_start_periodic_data_gathering(uint32_t frequency, timer_c
 	// ... set up our USB streaming ...
 	read_position = 0;
 	write_position = 0;
+	buffer_content_count = 0;
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
 	// ... and enable data gathering.

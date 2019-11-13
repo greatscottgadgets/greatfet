@@ -1,0 +1,32 @@
+id: 'greatfet_adc_source'
+label: 'GreatFET ADC Source'
+category: '[Software Defined Everything]'
+flags: throttle
+
+parameters:
+- id: sample_rate
+  label: 'Sample Rate (sps)'
+  default: '""'
+  dtype: real
+  default: samp_rate
+
+- id: prelude
+  label: 'Prelude'
+  dtype: string
+
+- id: prelude_script
+  label: 'Prelude script'
+  dtype: file_open
+
+
+templates:
+  imports: from greatfet.gnuradio import adc
+  make: adc.ADCSourceBlock(${sample_rate}, ${prelude_script}, ${prelude})
+
+
+outputs:
+- domain: stream
+  dtype: float
+  multiplicity: 1
+
+file_format: 1

@@ -20,22 +20,12 @@ class I2CSourceBlock(GreatFETStreamingSource):
         self.sample_size_bytes = read_length
         self.normalization_max = normalize_by
 
-
         # If we were provided with any predlues (script or direct), execute them.
-        context = {'gf': self.gf}
-
-        if prelude:
-            exec(prelude, context)
-
-        if prelude_script:
-            with open(prelude_script) as f:
-                exec(f.read(), context)
-
-
+        self.handle_preludes(prelude, prelude_script)
 
         # Convert our 'data to write' argument to a set of bytes to be written.
         data_to_write = bytes(ast.literal_eval(data_to_write))
-        return self.gf.apis.i2c.stream_periodic_read(self.sample_rate, address, read_length, data_to_write)
+        return self.gf.apis.i2c.stream_periodic_read(round(self.sample_rate), address, read_length, data_to_write)
 
 
     def tear_down_streaming(self):
