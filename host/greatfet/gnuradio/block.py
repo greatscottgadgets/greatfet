@@ -32,6 +32,9 @@ class GreatFETStreamingSource(gr.sync_block):
     SAMPLE_SIZE_BYTES = 1
     SAMPLE_ENDIANNESS = 'little'
 
+    # Default to an unsigned sample.
+    SAMPLE_SIGNED = False
+
 
     def __init__(self, sample_rate, *args, **kwargs):
         """
@@ -106,6 +109,14 @@ class GreatFETStreamingSource(gr.sync_block):
         return self.SAMPLE_ENDIANNESS
 
 
+    def samples_are_signed(self):
+        """
+        Returns true iff samples should be interpreted as signed.
+        Normally returns SAMPLED_SIGNED, but configurable blocks can override this method.
+        """
+        return self.SAMPLE_SIGNED
+
+
     def get_sample_max_scale(self):
         """
         Returns the maximum value we should expect from a register read. This default implementation
@@ -141,7 +152,7 @@ class GreatFETStreamingSource(gr.sync_block):
             del samples[0:sample_size]
 
             # Process our sample...
-            sample = int.from_bytes(raw_sample, byteorder=endianness)
+            sample = int.from_bytes(raw_sample, byteorder=endianness, signed=self.samples_are_signed())
 
             if self.get_sample_max_scale():
                 sample = sample / self.get_sample_max_scale()

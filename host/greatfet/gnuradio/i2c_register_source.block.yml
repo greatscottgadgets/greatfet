@@ -28,6 +28,12 @@ parameters:
   dtype: int
   default: 255
 
+- id: signed
+  label: 'Sample Signedness'
+  dtype: enum
+  options: [False, True]
+  option_labels: ['Unsigned', 'Signed']
+
 - id: prelude
   label: 'Prelude'
   dtype: string
@@ -39,7 +45,7 @@ parameters:
 
 templates:
   imports: from greatfet.gnuradio import i2c
-  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, "[${data_to_write}]", ${read_length}, ${normalize_by}, ${prelude_script}, ${prelude})
+  make: i2c.I2CSourceBlock(${sample_rate}, ${address}, "[${data_to_write}]", ${read_length}, ${normalize_by}, ${prelude_script}, ${prelude}, ${signed})
 
 outputs:
 - domain: stream
