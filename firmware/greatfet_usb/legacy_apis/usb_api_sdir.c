@@ -145,7 +145,12 @@ void sdir_tx_start() {
 	timer_enable_counter(TIMER1);
 }
 
-void sdir_tx_mode(void) {
+void sdir_tx_mode(void)
+{
+	if (!sdir_tx_enabled) {
+		return;
+	}
+
 	usb_endpoint_init(&usb0_endpoint_bulk_out);
 	usb_transfer_schedule_block(
  		&usb0_endpoint_bulk_out,
@@ -212,7 +217,12 @@ static void sdir_rx_stop() {
 	nvic_disable_irq(NVIC_SGPIO_IRQ);
 }
 
-void sdir_rx_mode(void) {
+void sdir_rx_mode(void)
+{
+	if (!sdir_rx_enabled) {
+		return;
+	}
+
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
 
 	sdir_rx_start();
@@ -284,3 +294,6 @@ usb_request_status_t usb_vendor_request_sdir_tx_stop(
 	}
 	return USB_REQUEST_STATUS_OK;
 }
+
+DEFINE_TASK(sdir_rx_mode);
+DEFINE_TASK(sdir_tx_mode);

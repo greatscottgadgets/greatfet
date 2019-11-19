@@ -8,7 +8,6 @@
 #include <drivers/usb/usb_standard_request.h>
 #include <drivers/usb/comms_backend.h>
 
-#include "legacy_apis/usb_api_adc.h"
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
 #include "legacy_apis/usb_api_glitchkit_simple.h"
@@ -38,8 +37,8 @@ static const usb_request_handler_fn usb0_vendor_request_handler[] = {
 	NULL, //usb_vendor_request_logic_analyzer_start,
 	NULL, //usb_vendor_request_logic_analyzer_stop,
 	NULL, //usb_vendor_request_reset,
-	usb_vendor_request_adc_init,
-	usb_vendor_request_adc_read, // ADC read
+	NULL, //usb_vendor_request_adc_init,
+	NULL, //usb_vendor_request_adc_read, // ADC read
 	NULL, // ADC stream
 	usb_vendor_request_sdir_rx_start,
 	usb_vendor_request_sdir_rx_stop,

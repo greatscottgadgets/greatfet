@@ -129,20 +129,6 @@ static void service_usb_streaming_in(void)
 
 
 /**
- * Core USB streaming service routine: ferries data to or from the host.
- */
-void service_usb_streaming(void)
-{
-	if(!usb_streaming_enabled) {
-		return;
-	}
-
-	// TODO: support USB streaming out, too
-	service_usb_streaming_in();
-}
-
-
-/**
  * Sets up a task thread that will rapidly stream data to/from a USB host.
  */
 void usb_streaming_start_streaming_to_host(volatile uint32_t *user_position_in_buffer,
@@ -281,4 +267,23 @@ uint32_t usb_streaming_send_data(void *data_in, uint32_t count)
 		read_position = (read_position + data_to_send) % sizeof(usb_bulk_buffer);
 		buffer_content_count -= data_to_send;
 	}
+
+	return 0;
 }
+
+
+
+/**
+ * Core USB streaming service routine: ferries data to or from the host.
+ */
+void task_usb_streaming(void)
+{
+	if(!usb_streaming_enabled) {
+		return;
+	}
+
+	// TODO: support USB streaming out, too
+	service_usb_streaming_in();
+}
+
+DEFINE_TASK(task_usb_streaming);

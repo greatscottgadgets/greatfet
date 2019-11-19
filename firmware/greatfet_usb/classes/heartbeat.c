@@ -28,34 +28,6 @@ void heartbeat_init(void)
 }
 
 
-/**
- * Performs a single unit of heartbeat mode's work.
- * This should be called repeatedly from the main loop.
- *
- * Note that we use an iteartion count, rather than e.g. our ms timer,
- * as this gives the LED's period the nice property of being proporational
- * to the amount of work being done e.g. in interrupts.
- */
-void service_heartbeat(void)
-{
-	static uint32_t iteration_count = 0;
-
-	// If heartbeat mode is disabled, do nothing.
-	if (!heartbeat_mode_enabled) {
-		return;
-	}
-
-	// Count a heartbeat iteration.
-	iteration_count++;
-
-	// If we've exceeded our heartbeat period, flip the LED,
-	// and start over.
-	if (iteration_count > heartbeat_period) {
-		led_toggle(HEARTBEAT_LED);
-		iteration_count = 0;
-	}
-}
-
 
 static int heartbeat_verb_stop(struct command_transaction *trans)
 {
@@ -95,7 +67,7 @@ static int heartbeat_verb_get_period(struct command_transaction *trans)
 }
 
 static struct comms_verb heartbeat_verbs[] = {
-	{ .verb_number = 0x0, .name = "stop", .handler = heartbeat_verb_stop, 
+	{ .verb_number = 0x0, .name = "stop", .handler = heartbeat_verb_stop,
 		.in_signature ="", .out_signature = "", .doc = "Disables heartbeat mode, free'ing the LED for user use." },
 	{ .verb_number = 0x1, .name = "start", .handler = heartbeat_verb_start,
 		.in_signature ="", .out_signature = "", .doc = "Enables heartbeat mode, e.g. after the heartbeat has been stopped." },
@@ -108,3 +80,33 @@ static struct comms_verb heartbeat_verbs[] = {
 COMMS_DEFINE_SIMPLE_CLASS(heartbeat, CLASS_NUMBER_HEARTBEAT, "heartbeat", heartbeat_verbs,
 		"Controls the device's idle ('heartbeat') LED.");
 
+
+/**
+ * Performs a single unit of heartbeat mode's work.
+ * This should be called repeatedly from the main loop.
+ *
+ * Note that we use an iteration count, rather than e.g. our ms timer,
+ * as this gives the LED's period the nice property of being proportional
+ * to the amount of work being done e.g. in interrupts.
+ */
+void service_heartbeat(void)
+{
+	static uint32_t iteration_count = 0;
+
+	// If heartbeat mode is disabled, do nothing.
+	if (!heartbeat_mode_enabled) {
+		return;
+	}
+
+	// Count a heartbeat iteration.
+	iteration_count++;
+
+	// If we've exceeded our heartbeat period, flip the LED,
+	// and start over.
+	if (iteration_count > heartbeat_period) {
+		led_toggle(HEARTBEAT_LED);
+		iteration_count = 0;
+	}
+}
+
+DEFINE_TASK(service_heartbeat);
