@@ -77,7 +77,7 @@ def print_apis(device):
 def print_host_info():
     print("Host tools info:")
 
-    command_path = os.path.dirname(__file__)[1:]
+    command_path = os.path.dirname(__file__)
     module_path  = os.path.dirname(command_path)
 
 
