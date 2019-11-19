@@ -9,6 +9,7 @@ import argparse
 import inspect
 import errno
 import sys
+import os
 
 from greatfet import GreatFET
 
@@ -73,7 +74,29 @@ def print_apis(device):
             print("      <no introspectable methods>")
 
 
+def print_host_info():
+    print("Host tools info:")
 
+    command_path = os.path.dirname(__file__)[1:]
+    module_path  = os.path.dirname(command_path)
+
+
+    try:
+        import pkg_resources
+
+        gf_version = pkg_resources.require("greatfet")[0].version
+        pygreat_version = pkg_resources.require("pygreat")[0].version
+
+        print('\thost module version: {}'.format(gf_version))
+        print('\tpygreat module version: {}'.format(pygreat_version))
+
+    except ImportError:
+        print("\tCan't get module version info -- setuptools is missing.")
+
+    print("\tpython version: {}\n".format(sys.version.split('\n')[0]))
+    print("\tmodule path: {}".format(module_path))
+    print("\tcommand path: {}".format(command_path))
+    print("\tgnuradio-companion block path: {}".format(os.path.join(module_path, 'gnuradio')))
 
 
 
@@ -85,10 +108,18 @@ def main():
     parser.add_argument('-A', '--api', dest='print_apis', action='store_true',
                         help="Print information about each device's supported APIs.")
     parser.add_argument('-a', '--all', dest='print_all', action='store_true',
-                        help="Print all available information about the device.")
+                        help="Print all available information about the device & host.")
+    parser.add_argument('-H', '--host', dest='print_host', action='store_true')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_true',
                         help="Prints only the serial numbers of detected GreatFETs")
     args = parser.parse_args()
+
+
+    # If requested, print information about the GreatFET install environment.
+    if args.print_host or args.print_all:
+        print_host_info()
+        print("\n")
+
 
     # Try to find all existing devices
     devices = GreatFET(find_all=True)
