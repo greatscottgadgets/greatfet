@@ -6,9 +6,6 @@ matrix:
     dist: xenial
     python: '3.6'
     env: DEPLOY="true"
-  - os: osx
-    language: c
-    osx_image: xcode11
 addons:
   apt:
     packages:
