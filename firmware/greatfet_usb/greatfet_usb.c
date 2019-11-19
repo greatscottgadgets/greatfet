@@ -24,7 +24,6 @@
 #include "classes/heartbeat.h"
 #include "usb_streaming.h"
 #include "glitchkit.h"
-#include "rhododendron.h"
 
 #include <rom_iap.h>
 #include "usb_descriptor.h"
@@ -63,11 +62,6 @@ void init_usb0(void) {
 	usb_run(&usb_peripherals[0]);
 }
 
-// XXX:
-void service_usb_analysis(void);
-
-// XXX
-int rhododendron_early_init(void);
 
 
 int main(void) {
@@ -80,8 +74,6 @@ int main(void) {
 	if (platform_get_parent_clock_source(CLOCK_SOURCE_PLL0_USB) == CLOCK_SOURCE_INTERNAL_OSCILLATOR) {
 		emergency_mode();
 	}
-
-	rhododendron_early_init();
 
 	while(true) {
 		if(sdir_rx_enabled) {
