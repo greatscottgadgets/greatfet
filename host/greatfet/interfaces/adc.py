@@ -14,7 +14,7 @@ class ADC(GreatFETInterface):
     def __init__(self, board, board_pin='J2_P5', adc_num=0, significant_bits=10):
 
         # Sanity check:
-        if adc_num is not 0 and adc_num is not 1:
+        if adc_num not in (0, 1):
             raise ValueError("Specified an unavailable ADC! (Valid values are 0 and 1).")
 
         self.board = board
