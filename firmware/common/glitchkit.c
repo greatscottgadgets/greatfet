@@ -89,7 +89,7 @@ void glitchkit_enable(void) {
 
 	// Set up our default trigger GPIO, if none has been set up already.
 	// TODO: Allow this to be customizable, instead of fixed to Indigo?
-	
+
 	// FIXME: abstract
 	scu_grp_pin_t scu_pin = get_scu_pin_for_gpio(5, 14);
 	uint32_t scu_func    = get_scu_func_for_gpio(5, 14);
@@ -164,7 +164,7 @@ void glitchkit_notify_event(glitchkit_event_t event)
  *
  * This is good if events occur outside of a context with reproducible timing
  * (e.g. there's some skew in when a given event happen). The
- * glitchkit_apply_defferred_events method can be called from the next 
+ * glitchkit_apply_defferred_events method can be called from the next
  * synchronized context.
  *
  * @param event The type of event(s) observed. An OR'ing of multiple
@@ -195,9 +195,9 @@ void glitchkit_apply_deferred_events(glitchkit_event_t allowed_events)
 
 /**
  * Specifies to use a given type of event for synchronization, but does not
- * block. This will be used by	
+ * block. This will be used by
  *
- * @param event_to_sync_on 
+ * @param event_to_sync_on
  */
 void glitchkit_use_event_for_synchronization(glitchkit_event_t event_to_sync_on)
 {
@@ -244,27 +244,6 @@ void glitchkit_trigger() {
 		glitchkit.triggered = true;
 }
 
-/**
- * Main loop service routine for GlitchKit.
- */
-void service_glitchkit() {
-
-		if(!glitchkit.enabled) {
-				return;
-		}
-
-		// Temporary implementation: hold the trigger high for >1ms.
-		// FIXME: Replace me with a timer!
-		if(glitchkit.triggered) {
-
-			// Wait 1 ms...
-			delay(1000);
-
-			// ... and then de-assert the trigger.
-			gpio_write(&glitchkit.trigger_gpio, false);
-			glitchkit.triggered = false;
-		}
-}
 
 
 /**
@@ -296,3 +275,26 @@ void glitchkit_provide_target_clock(uint32_t source, glitchkit_event_t requireme
 }
 
 
+/**
+ * Main loop service routine for GlitchKit.
+ */
+void service_glitchkit() {
+
+		if(!glitchkit.enabled) {
+				return;
+		}
+
+		// Temporary implementation: hold the trigger high for >1ms.
+		// FIXME: Replace me with a timer!
+		if(glitchkit.triggered) {
+
+			// Wait 1 ms...
+			delay(1000);
+
+			// ... and then de-assert the trigger.
+			gpio_write(&glitchkit.trigger_gpio, false);
+			glitchkit.triggered = false;
+		}
+}
+
+DEFINE_TASK(service_glitchkit);

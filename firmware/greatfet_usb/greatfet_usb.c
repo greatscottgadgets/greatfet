@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include <scheduler.h>
 #include <toolchain.h>
 
 #include <libopencm3/cm3/vector.h>
@@ -14,12 +15,12 @@
 
 #include "drivers/usb/usb.h"
 
+
 #include "usb_request_handlers.h"
 
 // TODO: get rid of these
 #include "legacy_apis/usb_api_sdir.h"
 #include "legacy_apis/usb_api_usbhost.h"
-#include "legacy_apis/usb_api_adc.h"
 
 #include "classes/heartbeat.h"
 #include "usb_streaming.h"
@@ -64,7 +65,8 @@ void init_usb0(void) {
 
 
 
-int main(void) {
+int main(void)
+{
 	pin_setup();
 	heartbeat_init();
 
@@ -75,21 +77,8 @@ int main(void) {
 		emergency_mode();
 	}
 
-	while(true) {
-		if(sdir_rx_enabled) {
-			sdir_rx_mode();
-		}
-		if(sdir_tx_enabled) {
-			sdir_tx_mode();
-		}
-		if(adc_mode_enabled) {
-			adc_mode();
-		}
-		service_heartbeat();
-		service_usb_streaming();
-		service_glitchkit();
-	}
-
+	// Run all of our tasks (methods defined with DEFINE_TASK), and never return.
+	scheduler_run();
 	return 0;
 }
 
