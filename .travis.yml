@@ -47,7 +47,7 @@ before_deploy:
 - echo $KNOWN_HOSTS_ENTRIES >> $HOME/.ssh/known_hosts
 deploy:
   provider: script
-  script: rm -rf host-packages && make deploy_nightly VERSION_SUFFIX="auto-nightly" USE_NIGHTLY_VERSIONING=1
+  script: make deploy_nightly VERSION_SUFFIX="auto-nightly" USE_NIGHTLY_VERSIONING=1
   on:
     branch: master
     condition: $DEPLOY = "true"
