@@ -56,14 +56,12 @@ static int spi_flash_verb_initialize(struct command_transaction *trans)
     uint8_t cs_port, cs_pin;
 
 	// FIXME: allow use of other GPIO ports, where possible, for hold/WP
-    spi_flash_drv.page_len  = comms_argument_parse_uint16_t(trans);
-    spi_flash_drv.num_pages = comms_argument_parse_uint16_t(trans);
+    spi_flash_drv.page_len  = comms_argument_parse_uint32_t(trans);
+    spi_flash_drv.num_pages = comms_argument_parse_uint32_t(trans);
     spi_flash_drv.num_bytes = comms_argument_parse_uint32_t(trans);
     cs_port                 = comms_argument_parse_uint8_t(trans);
     cs_pin                  = comms_argument_parse_uint8_t(trans);
     spi_flash_drv.device_id = comms_argument_parse_uint8_t(trans);
-
-
 
 	// Apply our GPIO settings.
 	gpio_configure_pinmux_and_resistors(gpio_pin(cs_port, cs_pin), RESISTOR_CONFIG_NO_PULL);
@@ -181,7 +179,7 @@ static int spi_flash_verb_query_jedec_id(struct command_transaction *trans)
 static int spi_flash_verb_query_topology(struct command_transaction *trans)
 {
 	uint32_t size_in_bits, size_in_bytes;
-	uint16_t page_size, page_count;
+	uint32_t page_size, page_count;
 	spi_flash_sfdp_info_t info;
 	int rc;
 
@@ -204,7 +202,6 @@ static int spi_flash_verb_query_topology(struct command_transaction *trans)
 	// ... and convert it to a usable format. :)
 	size_in_bytes = size_in_bits / 8;
 
-
 	// Figure out the page size, in bytes.
 	page_size = (1 << info.page_size_order);
 
@@ -212,8 +209,8 @@ static int spi_flash_verb_query_topology(struct command_transaction *trans)
 	page_count = (size_in_bytes + page_size - 1) / page_size;
 
 	// Return our topology info.
-	comms_response_add_uint16_t(trans, page_size);
-	comms_response_add_uint16_t(trans, page_count);
+	comms_response_add_uint32_t(trans, page_size);
+	comms_response_add_uint32_t(trans, page_count);
 	comms_response_add_uint32_t(trans, size_in_bytes);
 
 	return 0;
@@ -228,7 +225,7 @@ static struct comms_verb spi_flash_verbs[] = {
 
 		// Control and initialization.
 		{ .name = "initialize", .handler = spi_flash_verb_initialize,
-            .in_signature = "<HHIBBB", .out_signature = "",
+            .in_signature = "<IIIBBB", .out_signature = "",
             .in_param_names = "page_len, num_pages, num_bytes, gpio_port, gpio_pin, expected_device_id",
             .doc = "Sets up the board to program an external SPI flash." },
 		{ .name = "full_erase", .handler = spi_flash_verb_full_erase,
@@ -257,7 +254,7 @@ static struct comms_verb spi_flash_verbs[] = {
 				"Returns invalid data if the device does not support the field."
 		},
 		{ .name = "query_topology", .handler = spi_flash_verb_query_topology,
-            .in_signature = "<", .out_signature = "<HHI",
+            .in_signature = "<", .out_signature = "<III",
             .in_param_names = "", .out_param_names = "page_length, page_count, byte_length",
             .doc =
 				"Attempts to read information about the device's 'shape' using SPDF.\n\n"

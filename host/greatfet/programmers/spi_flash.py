@@ -2,13 +2,20 @@
 # This file is part of GreatFET
 #
 
-from ..interface import GreatFETInterface
+from ..programmer import GreatFETProgrammer
 from .firmware import DeviceFirmwareManager
 
 from pygreat.comms import CommandFailureError
 
+def create_programmer(board, *args, **kwargs):
+    """ Creates a representative programmer for the given module. """
 
-class SPIFlash(DeviceFirmwareManager, GreatFETInterface):
+    # For now, always create an SSPI interface.
+    # We can take an 'interface' argument later to differentiate.
+    return SPIFlash(board, *args, **kwargs)
+
+
+class SPIFlash(DeviceFirmwareManager, GreatFETProgrammer):
     """ Class representing an SPI flash connected to the GreatFET. """
 
     #
