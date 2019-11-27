@@ -145,9 +145,8 @@ endif
 	@pushd host; $(PYTHON3) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
 
 	@# Create files for e.g. the nightly.
-	@mkdir -p libgreat/host/build/bdist.distro
-	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -p distro -d $(CURDIR)/release-files; popd
-	@pushd host; $(PYTHON3) setup.py bdist_wheel -p distro -d $(CURDIR)/release-files; popd
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -p distro -b build_dist --universal -d $(CURDIR)/release-files; popd
+	@pushd host; $(PYTHON3) setup.py bdist_wheel -p distro --universal -d $(CURDIR)/release-files; popd
 	ls $(CURDIR)/release-files
 
 	@echo --- Creating our firmware-binary directory.
