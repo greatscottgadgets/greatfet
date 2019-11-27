@@ -174,6 +174,7 @@ prepare_release_archives: prepare_release_files
 
 
 
+
 #
 # prepare_release generates the actual release, and then prints instructions.
 #
@@ -198,6 +199,7 @@ endif
 # prepare_nightly is mostly a convenience stub; but it may give us a place to hook things.
 #
 prepare_nightly: prepare_release_archives
+	$(eval NIGHTLY_FILES := $(wildcard release-files/*))
 	@echo --- Nightly prepared.
 
 
@@ -212,7 +214,7 @@ deploy_nightly: prepare_nightly
 
 	@echo --- Creating our deploy files.
 	@mkdir -p $(DEPLOY_FILES_PATH)
-	@cp release-files/* $(DEPLOY_FILES_PATH)
+	@cp $(NIGHTLY_FILES) $(DEPLOY_FILES_PATH)
 
 	@echo --- Deploying files to target server.
 	@pushd deploy-files; $(DEPLOY_COMMAND); popd
