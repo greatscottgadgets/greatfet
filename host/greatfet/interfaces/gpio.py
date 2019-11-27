@@ -5,7 +5,6 @@
 
 from enum import IntEnum
 from warnings import warn
-from abc import ABC, abstractmethod
 
 from ..interface import GreatFETInterface
 
@@ -28,7 +27,7 @@ DIRECTION_OUT = Directions.OUT
 
 
 
-class GPIOProvider(ABC, GreatFETInterface):
+class GPIOProvider(GreatFETInterface):
     """ Base class for an object that provides access to GPIO pins. """
 
     # For convenience.
@@ -212,7 +211,6 @@ class GPIOProvider(ABC, GreatFETInterface):
         self.mark_pin_as_unused(gpio_pin.name)
 
 
-    @abstractmethod
     def set_up_pin(self, line, direction, initial_value=False):
         """
         Configure a GPIO line for use as an input or output.  This must be
@@ -225,7 +223,6 @@ class GPIOProvider(ABC, GreatFETInterface):
         pass
 
 
-    @abstractmethod
     def set_pin_state(self, line, state):
         """
         Set the state of an output line.  The line must have previously been
@@ -238,7 +235,6 @@ class GPIOProvider(ABC, GreatFETInterface):
         pass
 
 
-    @abstractmethod
     def read_pin_state(self, line):
         """
         Get the state of an input line.  The line must have previously been
@@ -253,7 +249,6 @@ class GPIOProvider(ABC, GreatFETInterface):
         pass
 
 
-    @abstractmethod
     def get_pin_direction(self, line):
         """
         Gets the direction of a GPIO pin.
@@ -267,7 +262,6 @@ class GPIOProvider(ABC, GreatFETInterface):
         pass
 
 
-    @abstractmethod
     def get_pin_port(self, line):
         """ Returns the 'port number' for a given GPIO pin.
 
@@ -277,7 +271,6 @@ class GPIOProvider(ABC, GreatFETInterface):
         pass
 
 
-    @abstractmethod
     def get_pin_identifier(self, line):
         """ Returns the 'pin number' for a given GPIO pin.
 
