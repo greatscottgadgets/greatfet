@@ -126,7 +126,7 @@ int firmware_verb_read_page(struct command_transaction *trans)
         return EINVAL;
     }
     if ((address + spi_flash_drv.page_len) > spi_flash_drv.num_bytes) {
-        pr_warning("firmware: rejecting read that extends past the end of flash flash! (%d > %d)\n",
+        pr_warning("firmware: rejecting read that extends past the end of flash! (%d > %d)\n",
                 address + spi_flash_drv.page_len, spi_flash_drv.num_bytes);
         return EINVAL;
     }

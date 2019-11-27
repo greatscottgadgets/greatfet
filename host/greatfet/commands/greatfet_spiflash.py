@@ -198,7 +198,7 @@ def main():
         num_pages = (args.flash_size + (args.page_size - 1)) // args.page_size
 
         # Create a SPI flash object.
-        spi_flash = SPIFlash(device, args.autodetect, args.allow_fallback,
+        spi_flash = device.create_programmer('spi_flash', args.autodetect, args.allow_fallback,
             page_size=args.page_size, maximum_address=maximum_address, allow_null_jedec=args.bypass_jedec)
 
         # If we have a device that's ancient enough to not speak JEDEC, notify the user. Pithily.
