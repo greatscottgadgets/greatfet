@@ -214,10 +214,10 @@ deploy_nightly: prepare_nightly
 
 	@echo --- Creating our deploy files.
 	@mkdir -p $(DEPLOY_FILES_PATH)
-	@cp $(NIGHTLY_FILES) $(DEPLOY_FILES_PATH)
+	cp $(NIGHTLY_FILES) $(DEPLOY_FILES_PATH)
 
 	@echo --- Deploying files to target server.
-	@pushd deploy-files; $(DEPLOY_COMMAND); popd
+	pushd deploy-files; $(DEPLOY_COMMAND); popd
 
 
 
