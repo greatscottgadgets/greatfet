@@ -147,6 +147,7 @@ endif
 	@# Create files for e.g. the nightly.
 	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/release-files; popd
 	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/release-files; popd
+	ls $(CURDIR)/release-files
 
 	@echo --- Creating our firmware-binary directory.
 	@# Extract the firmware-binaries from the assets folder we've produced.
@@ -214,10 +215,10 @@ deploy_nightly: prepare_nightly
 
 	@echo --- Creating our deploy files.
 	@mkdir -p $(DEPLOY_FILES_PATH)
-	cp $(NIGHTLY_FILES) $(DEPLOY_FILES_PATH)
+	@cp $(NIGHTLY_FILES) $(DEPLOY_FILES_PATH)
 
 	@echo --- Deploying files to target server.
-	pushd deploy-files; $(DEPLOY_COMMAND); popd
+	@pushd deploy-files; $(DEPLOY_COMMAND); popd
 
 
 
