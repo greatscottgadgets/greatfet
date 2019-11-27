@@ -40,6 +40,10 @@ class ConsoleBase(object):
 
     def write_bytes(self, byte_string):
         """Write bytes (already encoded)"""
+
+        if isinstance(byte_string, tuple):
+            byte_string = byte_string[0]
+
         self.byte_output.write(byte_string)
         self.byte_output.flush()
 
@@ -140,7 +144,11 @@ class POSIXConsole(ConsoleBase):
         termios.tcsetattr(self.fd, termios.TCSANOW, new)
 
     def getkey(self):
-        c = sys.stdin.buffer.read(1)
+        try:
+            c = sys.stdin.buffer.read(1)
+        except AttributeError:
+            c = sys.stdin.read(1)
+
         if c == unichr(0x7f):
             c = unichr(8)    # map the BS key (which yields DEL) to backspace
         return c

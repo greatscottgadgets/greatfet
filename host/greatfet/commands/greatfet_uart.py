@@ -89,7 +89,7 @@ def main():
 
     # Set up a simple argument parser.
     # TODO: support configurations such as '8n1'
-    parser = GreatFETArgumentParser(description="Simple GreatFET UART monitor.")
+    parser = GreatFETArgumentParser(description="Simple GreatFET UART monitor.", verbose_by_default=True)
     parser.add_argument('baud', nargs='?', type=from_eng_notation, default=115200, help="Baud rate; in symbols/second. Defaults to 115200.")
     parser.add_argument('-d', '--data',  type=int, default=8, help="The number of data bits per frame.")
     parser.add_argument('-S', '--stop',  type=int, default=1, help="The number of stop bits per frame.")

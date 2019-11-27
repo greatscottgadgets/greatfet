@@ -36,38 +36,36 @@ class PirateCompatibleInterface(GreatFETInterface):
         _CHARS_VALID_IN_NUMBER="0123456789abcdefxh"
 
 
-        result = []
-        commands = list(command_string)
+        self._result = []
+        self._commands = list(command_string)
 
         # Simple performance enhancement: we'll gather any consecutive reads/writes and issue
         # them as single commands to the GreatFET.
-        pending_write_data = []
-        pending_read_length = 0
+        self._pending_write_data = []
+        self._pending_read_length = 0
 
 
         def issue_pending_writes(ends_transaction=False):
             """ Issues any writes pending; used when performing a non-write operation."""
-            nonlocal pending_write_data, result
 
-            if not pending_write_data:
+            if not self._pending_write_data:
                 return
 
             # Perform all of our pending writes.
-            result.extend(self._handle_pirate_write(pending_write_data, ends_transaction=ends_transaction))
-            pending_write_data = []
+            self._result.extend(self._handle_pirate_write(self._pending_write_data, ends_transaction=ends_transaction))
+            self._pending_write_data = []
 
 
         def perform_pending_reads(ends_transaction=False):
             """ Issues any writes pending; used when performing a non-write operation."""
-            nonlocal pending_read_length, result
 
             # If we don't have any pending reads, don't do anything.
-            if not pending_read_length:
+            if not self._pending_read_length:
                 return
 
             # Perform all of our pending reads.
-            result.extend(self._handle_pirate_read(pending_read_length, ends_transaction=ends_transaction))
-            pending_read_length = 0
+            self._result.extend(self._handle_pirate_read(self._pending_read_length, ends_transaction=ends_transaction))
+            self._pending_read_length = 0
 
 
         def handle_pending_io(ends_transaction=False):
@@ -83,8 +81,6 @@ class PirateCompatibleInterface(GreatFETInterface):
             starts with a number.
             """
 
-            nonlocal commands
-
             # Start building our number.
             number = []
 
@@ -92,7 +88,7 @@ class PirateCompatibleInterface(GreatFETInterface):
 
                 # If we don't have a starting character, read one.
                 if char is None:
-                    char = commands.pop(0)
+                    char = self._commands.pop(0)
 
                 # Grab all characters from the string until we run out of numbers.
                 while char in _CHARS_VALID_IN_NUMBER:
@@ -102,7 +98,7 @@ class PirateCompatibleInterface(GreatFETInterface):
                     char = 'x' if (char == 'h') else char
 
                     number.append(char)
-                    char = commands.pop(0)
+                    char = self._commands.pop(0)
 
 
 
@@ -128,12 +124,11 @@ class PirateCompatibleInterface(GreatFETInterface):
             If it doesn't, returns a default value of 1.
 
             """
-            nonlocal commands
 
-            if len(commands) and commands[0] == ':':
+            if len(self._commands) and self._commands[0] == ':':
 
                 # Discard our colon...
-                del commands[0]
+                del self._commands[0]
 
                 # ... and extract the relevant number.
                 return extract_number()
@@ -143,13 +138,13 @@ class PirateCompatibleInterface(GreatFETInterface):
 
 
         # Handle each byte in the command string.
-        while commands:
+        while self._commands:
 
             # Start off with no repeat modifier, and no pending operation.
             length = None
 
             # Grab the next command-character in the queue.
-            char = commands.pop(0)
+            char = self._commands.pop(0)
 
             # If this character starts a number, we have a write operation.
             if char in _CHARS_VALID_TO_START_NUMBER:
@@ -160,7 +155,7 @@ class PirateCompatibleInterface(GreatFETInterface):
 
                 # Schedule the write.
                 perform_pending_reads()
-                pending_write_data.append(byte)
+                self._pending_write_data.append(byte)
 
             # Handle our core commands.
             elif char in _START_CHARS:
@@ -175,7 +170,7 @@ class PirateCompatibleInterface(GreatFETInterface):
                 issue_pending_writes()
 
                 length = get_repeat_count()
-                pending_read_length += length
+                self._pending_read_length += length
 
             elif char in _DELAY_CHARS:
                 handle_pending_io()
@@ -193,7 +188,7 @@ class PirateCompatibleInterface(GreatFETInterface):
             # TODO: support 'D/d'?
             # TODO: message on 'Ww'?
 
-        return result
+        return self._result
 
 
     #
