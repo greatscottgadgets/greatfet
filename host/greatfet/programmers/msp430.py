@@ -2,12 +2,16 @@
 # This file is part of GreatFET
 #
 
+#
+#  FIXME: rewrite to be a compliant GreatFET JTAGDevice.
+#
+
 from itertools import chain
 
 from ..interface import GreatFETInterface
-from ..interfaces.jtag import JTAG
+from ..programmer import GreatFETProgrammer
 
-class JTAG_MSP430(JTAG):
+class JTAG_MSP430(GreatFETProgrammer):
     MSP430_ident = 0x00
 
     def __init__(self, board):
@@ -17,7 +21,7 @@ class JTAG_MSP430(JTAG):
             Args:
                 board -- The GreatFET board connected to the target.
         """
-        JTAG.__init__(self, board)
+        self.board = board
 
     def start(self):
         """Initialise the JTAG hardware and target device."""

@@ -62,6 +62,7 @@ setup(
             'greatfet_usb-capture = greatfet.commands.greatfet_usb_capture:main',
             'greatfet_uart = greatfet.commands.greatfet_uart:main',
             'greatfet_pirate = greatfet.commands.greatfet_pirate:main',
+            'greatfet_jtag = greatfet.commands.greatfet_jtag:main',
         ],
     },
     author='Great Scott Gadgets',
