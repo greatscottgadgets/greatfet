@@ -8,6 +8,7 @@ from ..board import GreatFETBoard
 
 from ..interfaces.i2c_bus import I2CBus
 from ..interfaces.spi_bus import SPIBus
+from ..interfaces.jtag import JTAGChain
 from ..programmers.firmware import DeviceFirmwareManager
 from ..interfaces.pattern_generator import PatternGenerator
 from ..interfaces.sdir import SDIRTransceiver
@@ -195,6 +196,12 @@ class GreatFETOne(GreatFETBoard):
 
         if self.supports_api('uart'):
             self._add_interface('uart', UART(self))
+
+        if self.supports_api("jtag"):
+            try:
+                self._add_interface('jtag', JTAGChain(self))
+            except:
+                pass
 
         # As a convenience, if GREATFET_USE_LOWLEVEL is set in the environment,
         # automatically set it up.
