@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SWRA124_MAX_INSTR_SIZE 4
+#define SWRA124_MAX_INSTR_SIZE 3
 
 void swra124_setup();
 void swra124_debug_init();

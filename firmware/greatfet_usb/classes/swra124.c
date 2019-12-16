@@ -54,7 +54,7 @@ static int swra124_verb_debug_instr(struct command_transaction *trans)
 {
 	size_t size = 0;
 	uint8_t instr[SWRA124_MAX_INSTR_SIZE];
-	while (comms_argument_data_remaining(trans) && size < SWRA124_MAX_INSTR_SIZE) {
+	while (comms_argument_data_remaining(trans) && size <= SWRA124_MAX_INSTR_SIZE) {
 		instr[size++] = comms_argument_parse_uint8_t(trans);
 	}
 	if (comms_argument_data_remaining(trans) || size == 0) {
