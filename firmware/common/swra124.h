@@ -8,16 +8,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SWRA124_MAX_INSTR_SIZE 4
+#define SWRA124_MAX_INSTR_SIZE 3
 
-void swra124_setup();
-void swra124_debug_init();
-uint8_t swra124_read_status();
-uint16_t swra124_get_chip_id();
-void swra124_halt();
-void swra124_resume();
+void swra124_setup(void);
+void swra124_debug_init(void);
+void swra124_chip_erase(void);
+uint8_t swra124_read_status(void);
+uint16_t swra124_get_chip_id(void);
+void swra124_halt(void);
+void swra124_resume(void);
 uint8_t swra124_debug_instr(const uint8_t *instr, const size_t size);
-void swra124_step_instr();
-uint16_t swra124_get_pc();
+void swra124_step_instr(void);
+uint16_t swra124_get_pc(void);
 
 #endif

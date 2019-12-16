@@ -26,6 +26,12 @@ static int swra124_verb_debug_init()
 	return 0;
 }
 
+static int swra124_verb_chip_erase(struct command_transaction *trans)
+{
+	swra124_chip_erase();
+	return 0;
+}
+
 static int swra124_verb_read_status(struct command_transaction *trans)
 {
 	comms_response_add_uint8_t(trans, swra124_read_status());
@@ -54,7 +60,7 @@ static int swra124_verb_debug_instr(struct command_transaction *trans)
 {
 	size_t size = 0;
 	uint8_t instr[SWRA124_MAX_INSTR_SIZE];
-	while (comms_argument_data_remaining(trans) && size < SWRA124_MAX_INSTR_SIZE) {
+	while (comms_argument_data_remaining(trans) && size <= SWRA124_MAX_INSTR_SIZE) {
 		instr[size++] = comms_argument_parse_uint8_t(trans);
 	}
 	if (comms_argument_data_remaining(trans) || size == 0) {
@@ -94,6 +100,13 @@ static struct comms_verb swra124_verbs[] =
 		.doc = "reset target into debugging mode",
 	},
 	{
+		.name = "chip_erase",
+		.handler = swra124_verb_chip_erase,
+		.in_signature = "",
+		.out_signature = "",
+		.doc = "erase the chip",
+	},
+	{
 		.name = "read_status",
 		.handler = swra124_verb_read_status,
 		.in_signature = "",
@@ -126,7 +139,7 @@ static struct comms_verb swra124_verbs[] =
 	{
 		.name = "debug_instr",
 		.handler = swra124_verb_debug_instr,
-		.in_signature = "<*B",
+		.in_signature = "<*X",
 		.out_signature = "B",
 		.out_param_names = "a_reg",
 		.doc = "execute instruction on target",
