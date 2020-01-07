@@ -126,7 +126,7 @@ static struct comms_verb swra124_verbs[] =
 	{
 		.name = "debug_instr",
 		.handler = swra124_verb_debug_instr,
-		.in_signature = "<*B",
+		.in_signature = "<*X",
 		.out_signature = "B",
 		.out_param_names = "a_reg",
 		.doc = "execute instruction on target",

@@ -4,7 +4,6 @@
 
 from ..programmer import GreatFETProgrammer
 
-
 def create_programmer(board, *args, **kwargs):
     """ Creates a representative programmer for this module. """
 
@@ -44,7 +43,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         """
 
         if not isinstance(instruction[0], bytes):
-            instruction = bytes(*instruction)
+            instruction = bytes(instruction)
         else:
             instruction = instruction[0]
 
@@ -58,20 +57,42 @@ class ChipconProgrammer(GreatFETProgrammer):
 
         output = bytearray()
 
+        # Each bank is a 15-bit address space.
         bank = linear_address >> 15
         page_address = linear_address & 0x7FFF
 
         page_address_high = page_address >> 8
         page_address_low  = page_address & 0xFF
-
+        
         self.run_instruction(0x75, 0xc7, (bank * 16) + 1)               # MOV MEMCTR, (bank * 16) + 1
         self.run_instruction(0x90, page_address_high, page_address_low) # MOV DPTR, address
-
+        
         for n in range(length):
             self.run_instruction(0xE4)                # CLR A
             output.append(self.run_instruction(0x93)) # MOVC A, @A+DPTR
             self.run_instruction(0xA3)                # INC DPTR
 
         return output
+    
+    """ TODO: peek, poke, verify (inside PROGRAM_FLASH()) """
+    
+    
+    def flash_dump(self, linear_address):
+        """ READ_FLASH_PAGE() """
+        # read_code_memory()
+        pass
+    
+    
+    def flash_write(self):
+        """ WRITE_FLASH_PAGE() """
+        pass
+    
+    
+    def flash_erase(self):
+        """ MASS_ERASE_FLASH() """
+        pass
+    
+    
+    
 
 
