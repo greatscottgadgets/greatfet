@@ -2,6 +2,8 @@
 # This file is part of GreatFET
 #
 
+from enum import IntFlag
+
 from ..programmer import GreatFETProgrammer
 
 
@@ -57,7 +59,7 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def read_status(self):
-        return(self.api.read_status())
+        return(DebugStatus(self.api.read_status()))
 
 
     def run_instruction(self, *instruction):
@@ -135,4 +137,40 @@ class ChipconProgrammer(GreatFETProgrammer):
             self.run_instruction(0xA3) # INC DPTR
 
         return output
-    
+
+
+    def write_xdata_memory(self, linear_address, input_data):
+        """ Writes data from input_data into xdata memory, byte by byte
+
+        Parameters:
+            linear_address -- The address in code memory to read from. It will be converted into an 8-bit bank
+                index and a 15-bit address within that bank.
+            input_data -- The data to be written into xdata memory
+        """
+
+        # Assembly opcodes used as recommended in SWRA124.add()
+
+        address_high = linear_address >> 8
+        address_low  = linear_address & 0xFF
+
+        self.run_instruction(0x90, address_high, address_low) # MOV DPTR, address
+
+        for byte in input_data:
+            self.run_instruction(0x74, byte)    # MOV A, #inputArray[n]
+            self.run_instruction(0xF0)          # MOVX @DPTR, A
+            self.run_instruction(0xA3)          # INC DPTR
+
+
+
+class DebugStatus(IntFlag):
+    """
+    """
+
+    CHIP_ERASE_DONE     = 0x80
+    PCON_IDLE           = 0x40
+    CPU_HALTED          = 0x20
+    POWER_MODE_0        = 0x10
+    HALT_STATUS         = 0x08
+    DEBUG_LOCKED        = 0x04
+    OSCILLATOR_STABLE   = 0x02
+    STACK_OVERFLOW      = 0x01
