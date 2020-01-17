@@ -115,7 +115,7 @@ class ChipconProgrammer(GreatFETProgrammer):
     def read_xdata_memory(self, linear_address, length):
         """ Reads a section of xdata memory.
 
-        Paramters:
+        Parameters:
             linear_address -- The address in code memory to read from. It will be converted into an 8-bit bank
                 index and a 15-bit address within that bank.
             length -- The amount of data to read.
@@ -125,9 +125,10 @@ class ChipconProgrammer(GreatFETProgrammer):
 
         output = bytearray()
 
-        bank, page_address_low, page_address_high = self._split_linear_address(linear_address)
+        address_high = linear_address >> 8
+        address_low  = linear_address & 0xFF
 
-        self.run_instruction(0x90, page_address_high, page_address_low) # MOV DPTR, address
+        self.run_instruction(0x90, address_high, address_low) # MOV DPTR, address
 
         for n in range(length):
             output.append(self.run_instruction(0xE0)) # MOVX A, @DPTR; (output[n] = A)
