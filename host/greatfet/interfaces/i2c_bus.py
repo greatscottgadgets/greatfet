@@ -122,7 +122,7 @@ class I2CBus(PirateCompatibleInterface):
             in response for valid/invalid addresses.
         """
 
-        responses = self.api.i2c.scan()
+        responses = self.api.scan()
         write_responses = responses[:16]
         read_responses = responses[16:]
         responses = []
