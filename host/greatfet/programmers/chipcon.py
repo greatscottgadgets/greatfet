@@ -140,7 +140,7 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def write_xdata_memory(self, linear_address, input_data):
-        """ Writes data from input_data into xdata memory, byte by byte
+        """ Writes data from input_data into xdata memory, byte by byte.
 
         Parameters:
             linear_address -- The address in code memory to read from. It will be converted into an 8-bit bank
@@ -159,6 +159,35 @@ class ChipconProgrammer(GreatFETProgrammer):
             self.run_instruction(0x74, byte)    # MOV A, #inputArray[n]
             self.run_instruction(0xF0)          # MOVX @DPTR, A
             self.run_instruction(0xA3)          # INC DPTR
+
+
+    def set_pc(self, linear_address):
+        """ Modifies the program counter value.
+
+        Parameters:
+            linear_address -- TODO: describe
+        """
+
+        # Assembly opcodes used as recommended in SWRA124
+
+        address_high = linear_address >> 8
+        address_low  = linear_address & 0xFF
+
+        self.run_instruction(0x02, address_high, address_low) # LJMP 
+
+
+    def clock_init(self):
+        """ Initializes the 32MHz crystal oscillator.
+        """
+
+        # Assembly opcodes used as recommended in SWRA124
+
+        self.run_instruction(0x75, 0xC6, 0x00) # MOV CLKCON, #00H
+
+        while True:
+            sleep_reg = self.run_instruction(0xE5, 0xBE)    # MOV A, SLEEP (sleep_reg = A)
+            if not sleep_reg & 0x40:
+                break
 
 
 
