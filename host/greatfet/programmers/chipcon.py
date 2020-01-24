@@ -62,6 +62,10 @@ class ChipconProgrammer(GreatFETProgrammer):
         return(DebugStatus(self.api.read_status()))
 
 
+    def resume(self):
+        self.api.resume()
+
+
     def run_instruction(self, *instruction):
         """ Executes a single instruction on the target without
         incrementing the program counter.
@@ -187,6 +191,70 @@ class ChipconProgrammer(GreatFETProgrammer):
         while True:
             sleep_reg = self.run_instruction(0xE5, 0xBE)    # MOV A, SLEEP (sleep_reg = A)
             if not sleep_reg & 0x40:
+                break
+
+
+    def write_flash_page(self, linear_address, input_data, erase_page):
+        """ Writes a single flash page by loading the image into XDATA memory,
+        together with an assembly routine that performs the actual update.
+        This is done by using unified mapping.
+
+        Parameters:
+            linear_address --
+            input_data --
+            erase_page --
+        """
+
+        # Assumbly opcodes used as recommended in SWRA124
+
+        # TODO: actually define these
+        FLASH_PAGE_SIZE      = -1
+        WORDS_PER_FLASH_PAGE = -1
+        FLASH_WORD_SIZE      = -1
+
+        high_byte = WORDS_PER_FLASH_PAGE >> 8
+        low_byte  = WORDS_PER_FLASH_PAGE & 0xFF
+
+        # Note: The marked section, which performs page erasure,
+        # should only be included in the routine when the erase_page_1 = 1.
+        # The pseudo-code does not refer to this parameter!
+        routine = {
+            0x75, 0xAD, ((linear_address >> 8) / FLASH_PAGE_SIZE) & 0x7E,   # MOV FADDRH, #imm
+            0x75, 0xAC, 0x00,                                               # MOV FADDRL, #00
+            0x75, 0xAE, 0x01,                                               # marked; MOV FLC, #01H (ERASE)
+                                                                            # marked; wait for flash erase to complete
+            0xE5, 0xAE,                                                     # marked; erase_wait_loop: MOV A, FLC
+            0x20, 0xE7, 0xFB,                                               # marked; JB ACC_BUSY, erase_wait_loop
+                                                                            # initialize the data pointer
+            0x90, 0xF0, 0x00,                                               # MOV DPTR, #0F000H
+                                                                            # outer loops
+            0x7F, high_byte,                                                # MOV R7, #imm
+            0x7E, low_byte,                                                 # MOV R6, #imm
+            0x75, 0xAE, 0x02,                                               # MOV FLC, #02H (WRITE)
+                                                                            # inner loops
+            0x7D, FLASH_WORD_SIZE,                                          # write_loop:   MOV R5, #imm
+            0xE0,                                                           # write_word_loop:  MOVX A, @DPTR
+            0xA3,                                                           #                   INC DPTR
+            0xF5, 0xAF,                                                     #                   MOV FWDATA, A
+            0xDD, 0xFA,                                                     #               DJNZ R5, write_word_loop
+                                                                            #               wait for completion
+            0xE5, 0xAE,                                                     # w_wait_loop:  MOV A, FLX
+            0x20, 0xE6, 0xFB,                                               #               JB ACC_SWBSY, w_wait_loop
+            0xDE, 0xF1,                                                     # DJNZ R6, write_loop
+            0xDF, 0xEF,                                                     # DJNZ R7, write_loop
+                                                                            # done, fake a breakpoint
+            0xA5                                                            # DB 0xA5
+        }
+
+        self.write_xdata_memory(0xF000, input_data)
+        self.write_xdata_memory(0xF000 + FLASH_PAGE_SIZE, routine)
+        self.run_instruction(0x75, 0xC7, 0x51)                              # MOV MEMCRT, (bank * 16) + 1
+        self.set_pc(0xF000 + FLASH_PAGE_SIZE)
+        self.resume()
+
+        while True:
+            status = self.read_status()
+            if not (status & DebugStatus(0x20)):
                 break
 
 
