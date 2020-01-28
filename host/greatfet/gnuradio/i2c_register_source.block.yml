@@ -31,7 +31,7 @@ parameters:
 - id: signed
   label: 'Sample Signedness'
   dtype: enum
-  options: [False, True]
+  options: [0, 1]
   option_labels: ['Unsigned', 'Signed']
 
 - id: prelude

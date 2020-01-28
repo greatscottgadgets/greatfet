@@ -203,6 +203,10 @@ class GreatFETOne(GreatFETBoard):
             except:
                 pass
 
+
+        if self.supports_api('sdir'):
+            self._add_interface('sdir', SDIRTransceiver(self))
+
         # As a convenience, if GREATFET_USE_LOWLEVEL is set in the environment,
         # automatically set it up.
         try:

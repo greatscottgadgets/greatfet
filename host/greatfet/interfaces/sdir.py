@@ -17,20 +17,55 @@ class SDIRTransceiver(GreatFETInterface):
 
     USB_TIMEOUT_ERRNO = 110
 
-    def __init__(self, board):
-        self.board = board
-        self.api = board.apis.sdir
-        self.running = False
+    # Gain parameters in
+    MAX_GAIN_SAMPLE  = 116
+    MAX_GAIN_DB      = 50
+
+    DEFAULT_GAIN     = 0
+    DEFAULT_DAC_ADDR = 0x60
+
+    def __init__(self, board, dac_i2c_addr=DEFAULT_DAC_ADDR, initial_gain=DEFAULT_GAIN):
+        self.board        = board
+        self.api          = board.apis.sdir
+        self.dac_i2c_addr = dac_i2c_addr
+        self.gain         = initial_gain
+
+        self.coupling_pin = None
+        self.running      = False
+
+
+    def set_coupling(self, ac_coupled):
+        """ Sets whether the SDIR sampling is AC or DC coupling. """
+
+        if self.coupling_pin is None:
+            self.coupling_pin = self.board.gpio.get_pin('J2_P27')
+
+        if ac_coupled:
+            self.coupling_pin.low()
+        else:
+            self.coupling_pin.high()
 
 
     def start_receive(self):
-        self.api.start_receive()
+        self.set_gain(self.gain)
+        pipe = self.api.start_receive()
         self.running = True
+        return pipe
 
 
     def stop(self):
         self.api.stop()
         self.running = False
+
+
+    def set_gain(self, db_gain):
+        """ Sets the gain of the receiver, in dB. """
+        self.gain = db_gain
+
+        # Convert our gain in decibels to the relevant DAC samples, and
+        # configure the DAC with it.
+        sample = (db_gain * self.MAX_GAIN_SAMPLE) // self.MAX_GAIN_DB
+        self.board.i2c.write(self.dac_i2c_addr, (0, sample))
 
 
     def read(self, timeout=1000, max_data=0x4000, autostart=False, allow_timeout=False):

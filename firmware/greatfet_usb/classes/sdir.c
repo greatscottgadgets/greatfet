@@ -42,7 +42,7 @@ static sgpio_pin_configuration_t sdir_adc_data_pins[] = {
  * Clock generation pin for the ADC clock.
  */
 static sgpio_pin_configuration_t sdir_adc_clk_pin =
-	{ .sgpio_pin = 8,  .scu_group = 9, .scu_pin =  6, .pull_resistors = SCU_NO_PULL};
+	{ .sgpio_pin = 11,  .scu_group = 4, .scu_pin =  5, .pull_resistors = SCU_NO_PULL};
 
 /**
  * Definition of a set of logic analyzer functions.
