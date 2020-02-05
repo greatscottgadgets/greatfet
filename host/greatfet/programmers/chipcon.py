@@ -22,7 +22,7 @@ class ChipconProgrammer(GreatFETProgrammer):
     def _split_linear_address(self, linear_address):
         """ Takes a linear address and returns a bank index, and the page address as separate bytes.
 
-        Paramters:
+        Parameters:
             linear_address -- The address to convert.
 
             Returns -- A tuple of the three values: (bank, page_address_high, page_address_low)
@@ -70,7 +70,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         """ Executes a single instruction on the target without
         incrementing the program counter.
 
-        Paramters:
+        Parameters:
             instruction -- A bytes instance or a list of integers representing the opcodes to execute.
         """
 
@@ -85,7 +85,7 @@ class ChipconProgrammer(GreatFETProgrammer):
     def read_code_memory(self, linear_address, length):
         """ Reads a section of code memory.
 
-        Paramters:
+        Parameters:
             linear_address -- The address in code memory to read from. It will be converted into an 8-bit bank
                 index and a 15-bit address within that bank.
             length -- The amount of data to read.
@@ -119,11 +119,10 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def read_xdata_memory(self, linear_address, length):
-        """ Reads a section of xdata memory.
+        """ Reads a section of XDATA memory.
 
         Parameters:
-            linear_address -- The address in code memory to read from. It will be converted into an 8-bit bank
-                index and a 15-bit address within that bank.
+            linear_address -- The address in code memory to read from.
             length -- The amount of data to read.
         """
 
@@ -144,12 +143,11 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def write_xdata_memory(self, linear_address, input_data):
-        """ Writes data from input_data into xdata memory, byte by byte.
+        """ Writes data from input_data into XDATA memory, byte by byte.
 
         Parameters:
-            linear_address -- The address in code memory to read from. It will be converted into an 8-bit bank
-                index and a 15-bit address within that bank.
-            input_data -- The data to be written into xdata memory
+            linear_address -- The address in XDATA memory to write to.
+            input_data -- The data to be written into XDATA memory
         """
 
         # Assembly opcodes used as recommended in SWRA124.add()
@@ -169,7 +167,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         """ Modifies the program counter value.
 
         Parameters:
-            linear_address -- TODO: describe
+            linear_address -- The address in code memory to resume execution from.
         """
 
         # Assembly opcodes used as recommended in SWRA124
@@ -200,17 +198,16 @@ class ChipconProgrammer(GreatFETProgrammer):
         This is done by using unified mapping.
 
         Parameters:
-            linear_address --
-            input_data --
-            erase_page --
+            linear_address -- The address in flash memory to read from.
+            input_data -- The data to be written into flash memory.
+            erase_page -- Boolean value for page erasing.
         """
 
         # Assumbly opcodes used as recommended in SWRA124
 
-        # TODO: actually define these
-        FLASH_PAGE_SIZE      = -1
-        WORDS_PER_FLASH_PAGE = -1
-        FLASH_WORD_SIZE      = -1
+        FLASH_PAGE_SIZE      = 1024 # 1KB
+        FLASH_WORD_SIZE      = 2    # 2 bytes
+        WORDS_PER_FLASH_PAGE = FLASH_PAGE_SIZE // FLASH_WORD_SIZE
 
         high_byte = WORDS_PER_FLASH_PAGE >> 8
         low_byte  = WORDS_PER_FLASH_PAGE & 0xFF
@@ -218,14 +215,18 @@ class ChipconProgrammer(GreatFETProgrammer):
         # Note: The marked section, which performs page erasure,
         # should only be included in the routine when the erase_page_1 = 1.
         # The pseudo-code does not refer to this parameter!
-        routine = {
-            0x75, 0xAD, ((linear_address >> 8) / FLASH_PAGE_SIZE) & 0x7E,   # MOV FADDRH, #imm
+        routine_part1 = [
+            0x75, 0xAD, ((linear_address >> 8) // FLASH_WORD_SIZE) & 0x7E,   # MOV FADDRH, #imm
             0x75, 0xAC, 0x00,                                               # MOV FADDRL, #00
+        ]
+        routine_erase = [
             0x75, 0xAE, 0x01,                                               # marked; MOV FLC, #01H (ERASE)
                                                                             # marked; wait for flash erase to complete
             0xE5, 0xAE,                                                     # marked; erase_wait_loop: MOV A, FLC
             0x20, 0xE7, 0xFB,                                               # marked; JB ACC_BUSY, erase_wait_loop
-                                                                            # initialize the data pointer
+        ]
+
+        routine_part2 = [                                                   # initialize the data pointer
             0x90, 0xF0, 0x00,                                               # MOV DPTR, #0F000H
                                                                             # outer loops
             0x7F, high_byte,                                                # MOV R7, #imm
@@ -244,7 +245,12 @@ class ChipconProgrammer(GreatFETProgrammer):
             0xDF, 0xEF,                                                     # DJNZ R7, write_loop
                                                                             # done, fake a breakpoint
             0xA5                                                            # DB 0xA5
-        }
+        ]
+
+        if erase_page:
+            routine = routine_part1 + routine_erase + routine_part2
+        else:
+            routine = routine_part1 + routine_part2
 
         self.write_xdata_memory(0xF000, input_data)
         self.write_xdata_memory(0xF000 + FLASH_PAGE_SIZE, routine)
@@ -254,8 +260,20 @@ class ChipconProgrammer(GreatFETProgrammer):
 
         while True:
             status = self.read_status()
-            if not (status & DebugStatus(0x20)):
+            if not (status & DebugStatus.CPU_HALTED):
                 break
+
+
+    def read_flash_page(self, linear_address):
+        """ Reads from a single flash page.
+
+        Parameters:
+            linear_address -- The address in flash memory to read from. It will be converted into an 8-bit bank
+                index and a 15-bit address within that bank.
+        """
+        FLASH_PAGE_SIZE = 1024
+
+        return self.read_code_memory(linear_address & 0xFFFF, FLASH_PAGE_SIZE)
 
 
 
