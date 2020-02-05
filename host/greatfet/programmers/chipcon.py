@@ -276,6 +276,15 @@ class ChipconProgrammer(GreatFETProgrammer):
         return self.read_code_memory(linear_address & 0xFFFF, FLASH_PAGE_SIZE)
 
 
+    def mass_erase_flash(self):
+        self.run_instruction(0x00)
+        self.api.erase_chip()
+
+        while True:
+            status = self.read_status()
+            if not (status & DebugStatus.CPU_HALTED):
+                break
+
 
 class DebugStatus(IntFlag):
     """

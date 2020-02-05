@@ -26,6 +26,12 @@ static int swra124_verb_debug_init()
 	return 0;
 }
 
+static int swra124_verb_chip_erase(struct command_transaction *trans)
+{
+	swra124_chip_erase();
+	return 0;
+}
+
 static int swra124_verb_read_status(struct command_transaction *trans)
 {
 	comms_response_add_uint8_t(trans, swra124_read_status());
@@ -92,6 +98,13 @@ static struct comms_verb swra124_verbs[] =
 		.in_signature = "",
 		.out_signature = "",
 		.doc = "reset target into debugging mode",
+	},
+	{
+		.name = "chip_erase",
+		.handler = swra124_verb_chip_erase,
+		.in_signature = "",
+		.out_signature = "",
+		.doc = "erase the chip",
 	},
 	{
 		.name = "read_status",
