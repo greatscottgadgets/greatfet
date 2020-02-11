@@ -56,25 +56,60 @@ static inline void cm_disable_interrupts(void)
 }
 
 
+static int streaming_detect_overrun(void)
+{
+	// We reach the overrun threshold if the logic analyzer has captured enough data to fill
+	// every available buffer -- that is, every buffer except the one we're actively using to transmit.
+	uint32_t overrun_threeshold = USB_STREAMING_NUM_BUFFERS * USB_STREAMING_BUFFER_SIZE;
+
+	if (!data_in_buffer) {
+		return 0;
+	}
+
+
+	// Basic overrun detection: if we have more than our threshold remaining after
+	// consuming a buffer (really, passing it to the USB hardware for transmission),
+	// then we overran.
+	if (*data_in_buffer > overrun_threeshold) {
+		pr_debug("streaming: debug: host isn't reading from us (possible overflow) -- stalling endpoint\n");
+		usb_endpoint_stall(&usb0_endpoint_bulk_in);
+
+		// Tentative: stop streaming if we ever overrun.
+		usb_streaming_stop_streaming_to_host();
+		return EOVERFLOW;
+	}
+
+	return 0;
+}
+
+
 /**
  * Schedules transmission of a completed logic-analyzer buffer.
  */
 static int streaming_schedule_usb_transfer_in(int buffer_number)
 {
-	// We reach the overrun threshold if the logic analyzer has captured enough data to fill
-	// every available buffer -- that is, every buffer except the one we're actively using to transmit.
-	unsigned overrun_threeshold = (USB_STREAMING_NUM_BUFFERS- 1) * USB_STREAMING_BUFFER_SIZE;
+	int rc;
+
 
 	// If we don't have a full buffer of data to transmit, we can't send anything yet. Bail out.
 	if (data_in_buffer && (*data_in_buffer < USB_STREAMING_BUFFER_SIZE)) {
 		return EAGAIN;
 	}
 
+
+	if (streaming_detect_overrun()) {
+		return EOVERFLOW;
+	}
+
+
 	// Otherwise, transmit the relevant (complete) buffer...
-	usb_transfer_schedule_wait(
+	rc = usb_transfer_schedule(
 		&usb0_endpoint_bulk_in,
 		&usb_bulk_buffer[buffer_number * USB_STREAMING_BUFFER_SIZE],
-		USB_STREAMING_BUFFER_SIZE, 0, 0, 0);
+		USB_STREAMING_BUFFER_SIZE, 0, 0);
+	if (rc) {
+		return EAGAIN;
+	}
 
 	// ... and mark those samples as no longer pending transfer.
 	if (data_in_buffer) {
@@ -82,13 +117,6 @@ static int streaming_schedule_usb_transfer_in(int buffer_number)
 		*data_in_buffer -= USB_STREAMING_BUFFER_SIZE;
 		cm_enable_interrupts();
 
-		// Basic overrun detection: if we have more than our threshold remaining after
-		// consuming a buffer (really, passing it to the USB hardware for transmission),
-		// then we overran.
-		if (*data_in_buffer > overrun_threeshold) {
-			pr_error("logic analyzer: overrun detected (%u data writes to buffer)!\n", *data_in_buffer);
-			usb_endpoint_stall(&usb0_endpoint_bulk_in);
-		}
 	}
 
 	return 0;
@@ -110,8 +138,7 @@ static void service_usb_streaming_in(void)
 
 		++transfers;
 	}
-
-	if ((*position_in_buffer < USB_STREAMING_BUFFER_SIZE) && phase == 0) {
+	else if ((*position_in_buffer < USB_STREAMING_BUFFER_SIZE) && phase == 0) {
 		rc = streaming_schedule_usb_transfer_in(1);
 		if(rc) {
 			return;
@@ -120,9 +147,14 @@ static void service_usb_streaming_in(void)
 
 		++transfers;
 	}
+	else {
+		streaming_detect_overrun();
+		return;
+	}
+
 
 	// Toggle the LED a bit to indicate progress.
-	if ((transfers % 100) == 0) {
+	if ((transfers % 200) == 0) {
 		led_toggle(LED4);
 	}
 }
@@ -135,6 +167,7 @@ void usb_streaming_start_streaming_to_host(volatile uint32_t *user_position_in_b
 	volatile uint32_t *user_data_in_buffer)
 {
 	usb_endpoint_init(&usb0_endpoint_bulk_in);
+	usb_endpoint_clear_stall(&usb0_endpoint_bulk_in);
 
 	// Store our references to the user variables to be updated.
 	position_in_buffer = user_position_in_buffer;
