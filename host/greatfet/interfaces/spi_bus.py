@@ -15,7 +15,7 @@ class SPIBus(PirateCompatibleInterface):
 
 
     # Short name for this type of interface.
-    INTERFACE_SHORT_NAME = "i2c"
+    INTERFACE_SHORT_NAME = "spi"
 
     class FREQ():
         """
