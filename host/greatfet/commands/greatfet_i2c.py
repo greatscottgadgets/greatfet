@@ -55,12 +55,10 @@ def read(device, address, receive_length, log_function):
     Read data from connected I2C device
     """
     i2c_device = I2CDevice(device.i2c, address)
-    received_data, i2c_status = i2c_device.read(receive_length)
+    received_data = i2c_device.read(receive_length)
     if received_data:
-        log_function("Bytes received from address %s:" % hex(address))
-        for byte in received_data:
-            log_function(hex(byte))
-    log_function("I2C read status: %s" % hex(i2c_status))
+        log_function(f"Bytes received from address 0x{address:02x}")
+        print(bytes(received_data))
 
 
 def write(device, address, data, log_function):
@@ -68,9 +66,8 @@ def write(device, address, data, log_function):
     Write data to connected I2C device
     """
     i2c_device = I2CDevice(device.i2c, address)
-    log_function("Writing to address %s" %  hex(address))
-    i2c_status = i2c_device.write(data)
-    log_function("I2C write status: %s" % hex(i2c_status))
+    log_function(f"Writing to address {address:x}")
+    i2c_device.write(data)
 
 
 def scan(device, log_function):
@@ -99,16 +96,16 @@ def scan(device, log_function):
     print("Working I2C address(es): (Address, RW bit, frequency)")
     for address in addr_info:
         if addr_info[address][0][0]:
-            print("%s W" % hex(address), addr_info[address][1])
+            print(f"{address:x} W {addr_info[address][1]}")
         if addr_info[address][0][1]:
-            print("%s R" % hex(address), addr_info[address][1])
+            print(f"{address:x} R {addr_info[address][1]}")
 
     # table output
     print("\n******** W/R bit set at each valid address ********")
-    print("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f", end='')
+    print("    0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f", end='')
     for i, response in enumerate(addr_info):
         if i % 16 == 0:
-            print("\n%d0:" % (i / 16), end=' ')
+            print(f"\n{(i // 16):d}0", end=' ')
         if addr_info[response][0][0]:
             print("W", end='')
         else:
