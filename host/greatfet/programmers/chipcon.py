@@ -276,6 +276,15 @@ class ChipconProgrammer(GreatFETProgrammer):
         return self.read_code_memory(linear_address & 0xFFFF, FLASH_PAGE_SIZE)
 
 
+    def read_flash(self, length, start_address=0):
+        FLASH_PAGE_SIZE = 1024
+        flash_data = bytearray()
+        for i in range(start_address, length, FLASH_PAGE_SIZE):
+            flash_data.extend(self.read_flash_page(i))
+
+        return flash_data[:length]
+
+
     def mass_erase_flash(self):
         self.run_instruction(0x00)
         self.api.erase_chip()
