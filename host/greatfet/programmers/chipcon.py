@@ -2,10 +2,15 @@
 # This file is part of GreatFET
 #
 
+import time
+
 from enum import IntFlag
 
 from ..programmer import GreatFETProgrammer
 
+FLASH_PAGE_SIZE      = 1024 # 1KB
+FLASH_WORD_SIZE      = 2    # 2 bytes
+WORDS_PER_FLASH_PAGE = FLASH_PAGE_SIZE // FLASH_WORD_SIZE
 
 def create_programmer(board, *args, **kwargs):
     """ Creates a representative programmer for this module. """
@@ -192,7 +197,7 @@ class ChipconProgrammer(GreatFETProgrammer):
                 break
 
 
-    def write_flash_page(self, linear_address, input_data, erase_page):
+    def write_flash_page(self, linear_address, input_data, erase_page=True):
         """ Writes a single flash page by loading the image into XDATA memory,
         together with an assembly routine that performs the actual update.
         This is done by using unified mapping.
@@ -203,11 +208,7 @@ class ChipconProgrammer(GreatFETProgrammer):
             erase_page -- Boolean value for page erasing.
         """
 
-        # Assumbly opcodes used as recommended in SWRA124
-
-        FLASH_PAGE_SIZE      = 1024 # 1KB
-        FLASH_WORD_SIZE      = 2    # 2 bytes
-        WORDS_PER_FLASH_PAGE = FLASH_PAGE_SIZE // FLASH_WORD_SIZE
+        # Assembly opcodes used as recommended in SWRA124
 
         high_byte = WORDS_PER_FLASH_PAGE >> 8
         low_byte  = WORDS_PER_FLASH_PAGE & 0xFF
@@ -271,13 +272,11 @@ class ChipconProgrammer(GreatFETProgrammer):
             linear_address -- The address in flash memory to read from. It will be converted into an 8-bit bank
                 index and a 15-bit address within that bank.
         """
-        FLASH_PAGE_SIZE = 1024
 
         return self.read_code_memory(linear_address & 0xFFFF, FLASH_PAGE_SIZE)
 
 
     def read_flash(self, length, start_address=0):
-        FLASH_PAGE_SIZE = 1024
         flash_data = bytearray()
         for i in range(start_address, length, FLASH_PAGE_SIZE):
             flash_data.extend(self.read_flash_page(i))
@@ -287,12 +286,31 @@ class ChipconProgrammer(GreatFETProgrammer):
 
     def mass_erase_flash(self):
         self.run_instruction(0x00)
-        self.api.erase_chip()
+        self.api.chip_erase()
 
         while True:
             status = self.read_status()
-            if not (status & DebugStatus.CPU_HALTED):
+            if not (status & DebugStatus.CHIP_ERASE_DONE):
                 break
+
+
+    def program_flash(self, image_array, flash_size, erase=True):
+        # self.clock_init()
+        if erase:
+            self.mass_erase_flash()
+
+        data = bytearray(image_array)
+        address = 0
+        while data:
+            time.sleep(0.1)
+            # Grab a page...
+            page = data[:FLASH_PAGE_SIZE]
+            del data[:FLASH_PAGE_SIZE]
+
+            # ... and write it to flash.
+            self.write_flash_page(address, page, False)
+            address += FLASH_PAGE_SIZE
+
 
 
 class DebugStatus(IntFlag):
