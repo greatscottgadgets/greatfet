@@ -272,7 +272,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         return self.read_code_memory(linear_address & 0xFFFF, FLASH_PAGE_SIZE)
 
 
-    def read_flash(self, length, start_address=0):
+    def read_flash(self, *, length=0, start_address=0):
         """ Read a chunk of flash memory.
 
         Parameters:
@@ -298,12 +298,14 @@ class ChipconProgrammer(GreatFETProgrammer):
                 break
 
 
-    def program_flash(self, image_array, erase=True):
+    def program_flash(self, image_array, erase=True, verify=True, start=0):
         """ Program the entire flash memory.
 
         Parameters:
             image_array -- The data to be written to the flash.
             erase -- Used to specify whether or not the flash needs to be erased before programming.
+            verify - Used to specify whether or not the data was flashed correctly.
+            start -- The address to begin writing data to the flash.
         """
         if erase:
             self.mass_erase_flash()
@@ -319,6 +321,12 @@ class ChipconProgrammer(GreatFETProgrammer):
             # ... and write it to flash.
             self.write_flash_page(address, page, False)
             address += FLASH_PAGE_SIZE
+
+        time.sleep(0.1)
+        if verify:
+            data = self.read_flash(length=len(image_array), start_address=start)
+            if data != image_array:
+                raise IOError("Flash did not pass verification after programming")
 
 
 
