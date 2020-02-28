@@ -19,9 +19,7 @@ def create_programmer(board, *args, **kwargs):
 
 
 class ChipconProgrammer(GreatFETProgrammer):
-    """
-    Class representing a GreatFET TODO: name it
-    """
+    """ Class used to program chipcon devices."""
 
 
     def _split_linear_address(self, linear_address):
@@ -72,8 +70,7 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def run_instruction(self, *instruction):
-        """ Executes a single instruction on the target without
-        incrementing the program counter.
+        """ Executes a single instruction on the target without incrementing the program counter.
 
         Parameters:
             instruction -- A bytes instance or a list of integers representing the opcodes to execute.
@@ -184,8 +181,7 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def clock_init(self):
-        """ Initializes the 32MHz crystal oscillator.
-        """
+        """ Initializes the 32MHz crystal oscillator."""
 
         # Assembly opcodes used as recommended in SWRA124
 
@@ -277,6 +273,12 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def read_flash(self, length, start_address=0):
+        """ Read a chunk of flash memory.
+
+        Parameters:
+            length -- The length (in bytes) of the amount of flash memory that you want to read.
+            start_address -- The address in flash memory you want to begin reading data from.
+        """
         flash_data = bytearray()
         for i in range(start_address, length, FLASH_PAGE_SIZE):
             flash_data.extend(self.read_flash_page(i))
@@ -285,6 +287,8 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
     def mass_erase_flash(self):
+        """ Erase the entire flash memory.
+        """
         self.run_instruction(0x00)
         self.api.chip_erase()
 
@@ -294,8 +298,13 @@ class ChipconProgrammer(GreatFETProgrammer):
                 break
 
 
-    def program_flash(self, image_array, flash_size, erase=True):
-        # self.clock_init()
+    def program_flash(self, image_array, erase=True):
+        """ Program the entire flash memory.
+
+        Parameters:
+            image_array -- The data to be written to the flash.
+            erase -- Used to specify whether or not the flash needs to be erased before programming.
+        """
         if erase:
             self.mass_erase_flash()
 
@@ -314,7 +323,7 @@ class ChipconProgrammer(GreatFETProgrammer):
 
 
 class DebugStatus(IntFlag):
-    """
+    """ Enumeration for the values returned from the chip status.
     """
 
     CHIP_ERASE_DONE     = 0x80
