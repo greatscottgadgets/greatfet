@@ -1,5 +1,5 @@
 import unittest
-import microchipEEPROM
+import greatfet.programmers.microchipEEPROM as microchipEEPROM
 
 class Fakebus: 
     """crude little mock for I2C bus object"""

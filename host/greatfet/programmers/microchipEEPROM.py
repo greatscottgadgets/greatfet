@@ -1,7 +1,29 @@
-#from ..i2c_device import I2CDevice
 from greatfet.interfaces.i2c_device import I2CDevice
+from greatfet.programmer import GreatFETProgrammer
 import time
 from math import log2, ceil, floor
+
+"""
+This programmer can configure itself using Microchip part numbers to identify the device we wish to address.
+In most cases, we will want to create the programmer like this:
+    p = gf.create_programmer('microchipEEPROM', device='24LC128')
+
+Then read some bytes:
+     read_bytes = p.read_bytes(0x000, 0x3FFF)
+
+or maybe write some bytes:
+    p.write_bytes(0x000, b'\xde\xad\xbe\xef')
+
+Occasionally, we might need to pass an argument to specify the address bits that have been set on the EEPROM:
+    p = gf.create_programmer('microchipEEPROM', device='24LC128', slave_address=0b010)
+
+Or to configure the EEPROM ourselves, by specifying the capacity and the page size, with a few other options:
+    p = gf.create_programmer(capacity, page_size, bitmask="AAA", slave_address=0, write_cycle_length=0.005)
+
+By default, the first I2C bus will be used. The bus keyword argument can be used in to pass in a different I2C bus object.
+
+"""
+
 
 BASE_DEVICE_ADDRESS = 0x50
 
@@ -135,6 +157,22 @@ EEPROM_MODELS = \
  'AT24MAC402':  {'page_size':  16,   'max_clock':  1000000,  'write_cycle':  0.005,  'capacity':  256,     'bitmask':  'AAA'},
  'AT24MAC602':  {'page_size':  16,   'max_clock':  1000000,  'write_cycle':  0.005,  'capacity':  256,     'bitmask':  'AAA'}}
 
+def create_programmer(board, *args, **kwargs):
+    """ Creates a representative programmer for the given module. """
+
+    # Use supplied bus argument, or use the first bus for the board as default
+    bus = kwargs.pop('bus', board.i2c_busses[0])
+
+    # If 'device' argument is supplied, intialize for that part number
+    if "device" in kwargs:
+        device = kwargs.pop('device')
+        return EEPROM(bus, device, **kwargs)
+
+    # Otherwise pass all the arguments along to the initializer
+    return EEPROMDevice(bus, *args, **kwargs)
+
+
+
 def EEPROM(bus, part_number, slave_address=0):
     """
         Create and configure an EEPROM device given a Microchip part number.
@@ -166,7 +204,7 @@ def setbits(word, bits, value):
             word &= ~(1<<bits[i]) 
     return word 
 
-class EEPROMDevice(object):
+class EEPROMDevice(GreatFETProgrammer):
     """
         Class representing a Microchip I2C serial EEPROM connected to a GreatFET I2C bus.
     """
