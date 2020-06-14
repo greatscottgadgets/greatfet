@@ -77,13 +77,6 @@ static const scu_grp_pin_t scu_type_led[NUM_LEDS] = {
 #define SCU_PINMUX_BOOT2    (P2_8)  /* GPIO5[7] on P2_8 */
 #define SCU_PINMUX_BOOT3    (P2_9)  /* GPIO1[10] on P2_9 */
 
-/* SSP1 Peripheral PinMux */
-#define SCU_SSP1_MISO       (P1_3)  /* P1_3 */
-#define SCU_SSP1_MOSI       (P1_4)  /* P1_4 */
-#define SCU_SSP1_SCK        (P1_19) /* P1_19 */
-#define SCU_SSP1_SSEL       (P1_20) /* P1_20 */
-
-
 #define SCU_PINMUX_SGPIO0   (P0_0)
 #define SCU_PINMUX_SGPIO1   (P0_1)
 #define SCU_PINMUX_SGPIO2   (P1_15)
