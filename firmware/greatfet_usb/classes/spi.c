@@ -79,8 +79,8 @@ static int spi_verb_init(struct command_transaction *trans)
 	static ssp_config_t local_spi_config;
 	ssp_config_t *config;
 
-	uint16_t scr = comms_argument_parse_uint8_t(trans);
-	uint16_t cpsdvsr = comms_argument_parse_uint8_t(trans);
+	uint16_t scr = comms_argument_parse_uint16_t(trans);
+	uint16_t cpsdvsr = comms_argument_parse_uint16_t(trans);
 
 	config = (ssp_config_t *)&ssp1_config_spi;
 	if (cpsdvsr != 0) {
