@@ -123,7 +123,7 @@ def main():
     input_thread.start()
 
     # Configure our UART parameters.
-    device.uart.update_parameters(baud=args.baud, data_bits=args.data, stop_bits=args.stop, parity=args.parity)
+    device.uart.update_parameters(baud=args.baud, data_bits=args.data, stop_bits=args.stop, parity=parity_modes[args.parity])
 
     # Generate our UART monitor.
     while True:
