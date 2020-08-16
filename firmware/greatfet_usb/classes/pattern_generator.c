@@ -296,7 +296,7 @@ static struct comms_verb pattern_generator_verbs[] = {
 		.doc = "Sets the GreatFET to repeatedly emit a short pattern.\n\n"
 			"    sample_rate_hz -- The target sample rate, in Hz.\n"
 			"    num_channels -- The number of channels to emit; up to 8.\n"
-			"    pattern_length -- The length of the relevant pattern, in samples."
+			"    pattern_length -- The length of the relevant pattern, in samples.\n"
 			"    repeat -- If set, the pattern will be emitted repeatedly. The pattern must be sized to a binary number of bytes." },
 
 
