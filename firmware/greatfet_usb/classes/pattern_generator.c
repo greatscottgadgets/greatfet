@@ -292,11 +292,11 @@ static struct comms_verb pattern_generator_verbs[] = {
 			"    offset_into_buffer -- The offset into the sample buffer, in bytes..\n"
 			"    samples -- The packed samples to be uploaded; usually up to around 4096 samples.\n" },
 	{ .name = "generate_pattern", .handler = verb_generate_pattern,
-		.in_signature = "<IBI?", .out_signature = "", .in_param_names = "sample_rate_hz, num_channels, pattern_length",
+		.in_signature = "<IBI?", .out_signature = "", .in_param_names = "sample_rate_hz, num_channels, pattern_length, repeat",
 		.doc = "Sets the GreatFET to repeatedly emit a short pattern.\n\n"
 			"    sample_rate_hz -- The target sample rate, in Hz.\n"
 			"    num_channels -- The number of channels to emit; up to 8.\n"
-			"    pattern_length -- The length of the relevant pattern, in samples."
+			"    pattern_length -- The length of the relevant pattern, in samples.\n"
 			"    repeat -- If set, the pattern will be emitted repeatedly. The pattern must be sized to a binary number of bytes." },
 
 
