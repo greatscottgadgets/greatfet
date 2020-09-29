@@ -24,7 +24,8 @@ def int_auto_base(s):
 def main():
 
     # Set up a simple argument parser.
-    parser = GreatFETArgumentParser(description="Utility for chipcon debugging via GreatFET",
+    parser = GreatFETArgumentParser(description="""Utility for chipcon debugging via GreatFET
+                                                    (See /firmware/common/swra.c for pin mappings)""",
                                     verbose_by_default=True)
     parser.add_argument('--chip-id', action='store_true', # Short options (one dash) should always be one letter
                         help="Print the chip ID of the connected device.")

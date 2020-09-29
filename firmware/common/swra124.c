@@ -10,9 +10,9 @@
 #include <libopencm3/lpc43xx/scu.h>
 #include <pins.h>
 
-static struct gpio_t swra124_reset = GPIO(0, 10);
-static struct gpio_t swra124_clock = GPIO(0, 11);
-static struct gpio_t swra124_data = GPIO(0, 15);
+static struct gpio_t swra124_reset = GPIO(0, 10);	// GF1 Pin: J1.40
+static struct gpio_t swra124_clock = GPIO(0, 11);	// GF1 Pin: J1.39
+static struct gpio_t swra124_data = GPIO(0, 15);	// GF1 Pin: J1.37
 
 void swra124_setup()
 {
