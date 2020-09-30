@@ -382,6 +382,10 @@ static int greatdancer_verb_read_setup(struct command_transaction *trans)
 	// Reserve space for the target data...
 	comms_response_add_raw(trans, setup_data, sizeof(*setup_data));
 
+	// workaround for issue 344 (https://github.com/greatscottgadgets/greatfet/issues/344)
+	usb_queue_flush_endpoint(target_endpoint->in);
+	usb_queue_flush_endpoint(target_endpoint->out);
+
 	// ... and mark that packet as handled.
 	usb_clear_endpoint_setup_status(1 << endpoint_number, &usb_peripherals[1]);
 
