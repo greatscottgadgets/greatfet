@@ -382,6 +382,10 @@ static int greatdancer_verb_read_setup(struct command_transaction *trans)
 	// Reserve space for the target data...
 	comms_response_add_raw(trans, setup_data, sizeof(*setup_data));
 
+	// workaround for issue 344 (https://github.com/greatscottgadgets/greatfet/issues/344)
+	usb_queue_flush_endpoint(target_endpoint->in);
+	usb_queue_flush_endpoint(target_endpoint->out);
+
 	// ... and mark that packet as handled.
 	usb_clear_endpoint_setup_status(1 << endpoint_number, &usb_peripherals[1]);
 
@@ -518,8 +522,7 @@ static int greatdancer_verb_send_on_endpoint(struct command_transaction *trans)
 	memcpy(&endpoint_buffer[endpoint_number], data_to_send, length_to_send);
 
 	// And request that the USB controller send it.
-	usb_transfer_schedule(target_endpoint, &endpoint_buffer[endpoint_number], length_to_send, NULL, NULL);
-	return 0;
+	return usb_transfer_schedule(target_endpoint, &endpoint_buffer[endpoint_number], length_to_send, NULL, NULL);
 }
 
 
