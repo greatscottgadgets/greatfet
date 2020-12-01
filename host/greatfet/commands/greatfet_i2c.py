@@ -55,12 +55,13 @@ def read(device, address, receive_length, log_function):
     Read data from connected I2C device
     """
     i2c_device = I2CDevice(device.i2c, address)
-    received_data, i2c_status = i2c_device.read(receive_length)
+#    received_data, i2c_status = i2c_device.read(receive_length)
+    received_data = i2c_device.read(receive_length)
     if received_data:
         log_function("Bytes received from address %s:" % hex(address))
         for byte in received_data:
             log_function(hex(byte))
-    log_function("I2C read status: %s" % hex(i2c_status))
+#    log_function("I2C read status: %s" % hex(i2c_status))
 
 
 def write(device, address, data, log_function):
@@ -70,7 +71,7 @@ def write(device, address, data, log_function):
     i2c_device = I2CDevice(device.i2c, address)
     log_function("Writing to address %s" %  hex(address))
     i2c_status = i2c_device.write(data)
-    log_function("I2C write status: %s" % hex(i2c_status))
+#    log_function("I2C write status: %s" % hex(i2c_status))
 
 
 def scan(device, log_function):
