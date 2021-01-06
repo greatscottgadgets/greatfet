@@ -217,7 +217,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         # should only be included in the routine when the erase_page_1 = 1.
         # The pseudo-code does not refer to this parameter!
         routine_part1 = [
-            0x75, 0xAD, ((linear_address >> 8) // FLASH_WORD_SIZE) & 0x7E,   # MOV FADDRH, #imm
+            0x75, 0xAD, ((linear_address >> 8) // FLASH_WORD_SIZE) & 0x7E,  # MOV FADDRH, #imm
             0x75, 0xAC, 0x00,                                               # MOV FADDRL, #00
         ]
         routine_erase = [
@@ -253,7 +253,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         else:
             routine = routine_part1 + routine_part2
 
-        self.write_xdata_memory(0xF000, input_data)
+        self.write_xdata_memory(0xF000, input_data[:FLASH_PAGE_SIZE])
         self.write_xdata_memory(0xF000 + FLASH_PAGE_SIZE, routine)
         self.run_instruction(0x75, 0xC7, 0x51)                              # MOV MEMCRT, (bank * 16) + 1
         self.set_pc(0xF000 + FLASH_PAGE_SIZE)
@@ -276,12 +276,12 @@ class ChipconProgrammer(GreatFETProgrammer):
         return self.read_code_memory(linear_address & 0xFFFF, FLASH_PAGE_SIZE)
 
 
-    def read_flash(self, *, start_address=0, length=0):
+    def read_flash(self, *, start_address=0, length):
         """ Read a chunk of flash memory.
 
         Parameters:
-            length -- The length (in bytes) of the amount of flash memory that you want to read.
             start_address -- The address in flash memory you want to begin reading data from.
+            length -- The length (in bytes) of the amount of flash memory that you want to read.
         """
         flash_data = bytearray()
         for i in range(start_address, length, FLASH_PAGE_SIZE):
@@ -308,7 +308,7 @@ class ChipconProgrammer(GreatFETProgrammer):
         Parameters:
             image_array -- The data to be written to the flash.
             erase -- Used to specify whether or not the flash needs to be erased before programming.
-            verify - Used to specify whether or not the data was flashed correctly.
+            verify -- Used to specify whether or not the data was flashed correctly.
             start -- The address to begin writing data to the flash.
         """
 
@@ -316,7 +316,8 @@ class ChipconProgrammer(GreatFETProgrammer):
             self.mass_erase_flash()
 
         data = bytearray(image_array)
-        address = 0
+        address = start
+
         while data:
             time.sleep(0.1)
             # Grab a page...
@@ -324,7 +325,7 @@ class ChipconProgrammer(GreatFETProgrammer):
             del data[:FLASH_PAGE_SIZE]
 
             # ... and write it to flash.
-            self.write_flash_page(address, page, False)
+            self.write_flash_page(address - start, page, False)
             address += FLASH_PAGE_SIZE
 
         time.sleep(0.1)

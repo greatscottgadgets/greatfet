@@ -4,8 +4,10 @@
 
 from __future__ import print_function
 
-import ast
+import io
 import argparse
+
+from intelhex import IntelHex
 
 from greatfet.utils import GreatFETArgumentParser, log_silent, log_verbose
 
@@ -42,6 +44,8 @@ def main():
     parser.add_argument('-E', '--mass-erase', action='store_true', help="Erase the entire flash memory")
     parser.add_argument('-w', '--write', metavar='<filename>', type=argparse.FileType('rb'),
                         help="Write data from file")
+    parser.add_argument("--bin", action='store_true', default=False,
+                        help="Disable Intel hex detection and flash as-is.")
 
     args = parser.parse_args()
 
@@ -65,7 +69,7 @@ def main():
         mass_erase_flash(chipcon, log_function)
 
     if args.write:
-        program_flash(chipcon, args.write, args.address, args.erase, args.verify, log_function)
+        program_flash(chipcon, args.write, args.address, args.erase, args.verify, args.bin, log_function)
 
 
 def chip_id(programmer):
@@ -83,9 +87,22 @@ def mass_erase_flash(programmer, log_function):
     programmer.mass_erase_flash()
 
 
-def program_flash(programmer, in_file, start_address, erase, verify, log_function):
-    log_function("Writing data to flash...")
+def program_flash(programmer, in_file, start_address, erase, verify, force_bin, log_function):
     image_array = in_file.read()
+
+    if image_array.startswith(b':') and not force_bin:
+
+        print("File type detected as Intel Hex -- converting to binary before flashing...")
+        print("To force flashing as-is, pass --bin.")
+
+        # HACK: The IntelHex class expects a filename or file-like object, but...we've already read the file.
+        # So let's wrap it in a file-like object. Normally, we'd use io.BytesIO,
+        # except IntelHex wants strings, not bytes objects. So...
+        intel_hex = IntelHex(io.StringIO(image_array.decode('ascii')))
+        image_array = intel_hex.tobinstr()
+
+
+    log_function("Writing data to flash...")
     programmer.program_flash(image_array, erase=erase, verify=verify, start=start_address)
 
 
