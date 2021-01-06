@@ -249,7 +249,7 @@ class GreatFETLegacy(GreatFETBoard):
         """
         raw = self._vendor_request(usb.ENDPOINT_IN, request, length_or_data=length,
             value=value, index=index, timeout=timeout)
-        return raw.tostring().decode(encoding)
+        return raw.tobytes().decode(encoding)
 
 
     def vendor_request_out(self, request, value=0, index=0, data=None, timeout=1000):
