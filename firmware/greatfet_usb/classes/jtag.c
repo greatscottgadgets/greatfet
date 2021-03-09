@@ -77,7 +77,7 @@ static int verb_configure(struct command_transaction *trans)
 		// Figure out the half-period time, rounding up to the next whole microsecond.
 		half_period_delay = ((1000000 + (frequency - 1)) / frequency) / 2;
 	}
-	pr_info("jtag: using half-period delay of %u microseconds to achieve frequency of %u\n", half_period_delay, frequency);
+	pr_debug("jtag: using half-period delay of %u microseconds to achieve frequency of %u\n", half_period_delay, frequency);
 	next_edge_time = get_time() + half_period_delay;
 
 	// Return the total number of bits we can shift per single call.
