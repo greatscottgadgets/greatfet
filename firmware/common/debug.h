@@ -14,8 +14,6 @@
 
 #include <config.h>
 
-#include <greatfet_core.h>
-
 typedef struct backtrace_frame backtrace_frame_t;
 
 // Possible log levels.

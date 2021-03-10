@@ -8,6 +8,8 @@
 #include <gpio_lpc.h>
 #include <libopencm3/lpc43xx/scu.h>
 
+#include "greatfet_core.h"
+
 /* We populate the RTC crystal, so use of the RTC is allowed. */
 #define BOARD_CAPABILITY_RTC
 

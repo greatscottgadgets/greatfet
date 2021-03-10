@@ -22,6 +22,8 @@
 #include "usb_bulk_buffer.h"
 #include "usb_endpoint.h"
 
+#include "greatfet_core.h"
+
 
 
 typedef void (*streaming_handler_t)(void);
