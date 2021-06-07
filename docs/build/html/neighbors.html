@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Neighbors &mdash; GreatFET One  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/status.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Linux Distribution Python Version Matrix" href="linux_distribution_python_version_matrix.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> GreatFET One
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="board_naming.html">Board Naming</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design_neighbor.html">How to Design a Neighbor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started_firmware_development.html">Getting Started with Firmware Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greatfet_gnuradio.html">GreatFET and GNURadio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greatfet_classes.html">GreatFET Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greatfet_i2c.html">greatfet_i2c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="i2c_registry.html">I2C Registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greatfet_logic.html">greatfet_logic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indigo.html">Indigo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kniphofia.html">Kniphofia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libgreat_verb_signatures.html">LibGreat Verb Signatures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="linux_distribution_python_version_matrix.html">Linux Distribution Python Version Matrix</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Neighbors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#already-designed">already designed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#some-progress-made">some progress made</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rough-ideas">rough ideas</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GreatFET One</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Neighbors</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/neighbors.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="neighbors">
+<h1>Neighbors<a class="headerlink" href="#neighbors" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="already-designed">
+<h2>already designed<a class="headerlink" href="#already-designed" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://github.com/greatfet-hardware/begonia">Begonia</a>: a GIMME for GreatFET</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/crocus">Crocus</a>: nRF24L01+</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/daffodil">Daffodil</a>: through-hole prototyping</li>
+<li><a class="reference external" href="https://github.com/miek/scorzonera">Scorzonera</a>: interface for FLIR PM-series thermal cameras (AM7969 &amp; RS232)</li>
+<li><a class="reference external" href="https://github.com/straithe/NeighbourSpotHardware">Spot</a>: a chonky indicator LED</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="some-progress-made">
+<h2>some progress made<a class="headerlink" href="#some-progress-made" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://github.com/tarikku/canna-greatfet-neighbor">Canna</a>: basic 2-channel CAN neighbor</li>
+<li>Edelweiss: CC1310 (depending on progress, could consider newer cc1352 that supports more)</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/foxglove">Foxglove</a>: advanced level shifting and probing (support for +/- 12v would be awesome…)</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/gladiolus">Gladiolus</a>: IR</li>
+<li>Heliopsis: googly eyes</li>
+<li>Hydrangea: NFC</li>
+<li><a class="reference external" href="https://github.com/greatscottgadgets/greatfet/wiki/Indigo">Indigo</a>: ChipWhisperer 20-Pin Connector + Voltage Glitching</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/jasmine">Jasmine</a>: Lithium Polymer battery pack/charger</li>
+<li><a class="reference external" href="https://github.com/greatscottgadgets/greatfet/wiki/Kniphofia">Kniphofia</a>: iCE40 FPGA capable of remapping neighbor pins</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/lily">Lily</a>: RF power detector</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/luckybamboo">Lucky Bamboo</a>: quadruple 2.4 GHz ADF7242 transceiver for monitoring Bluetooth LE advertising channels</li>
+<li>Magnolia: TDR, dual ethernet (LAN tap)</li>
+<li>Narcissus: a jig for testing GreatFET One</li>
+<li><a class="reference external" href="https://github.com/greatscottgadgets/greatfet/wiki/Orchid">Orchid</a>: Breakout board for common hardware hacking interfaces</li>
+<li><a class="reference external" href="https://github.com/greatscottgadgets/greatfet/wiki/Peony">Peony</a>: SDR based on AT86RF215IQ</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/quince">Quince</a>: 2.4 GHz SDR using 1 bit ADC over SGPIO</li>
+<li>Rhododendron: Hi-Speed USB passive sniffer</li>
+<li>Stellaria: experimental random number generator</li>
+<li>Tulip: an awesome blinky neighbor</li>
+<li><a class="reference external" href="https://github.com/greatfet-hardware/ursinia">Ursinia</a>: Grove base</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="rough-ideas">
+<h2>rough ideas<a class="headerlink" href="#rough-ideas" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li>RNG</li>
+<li>DAQ</li>
+<li>pulse generation (TTL)</li>
+<li>arbitrary waveform generation</li>
+<li>magstripe</li>
+<li>barcode</li>
+<li>dual cc1101</li>
+<li>cc1200 + cc2500 for rfcat-like functionality in Sub-GHz and 2.5 GHz</li>
+<li>cc1352 for WiFi, BLE 5, Zigbee, Thread, Wireless M-Bus, 802.15.4g, 6LoWPAN, KNX RF, Wi-SUN®, and 2FSK/4FSK proprietary protocols</li>
+<li>Fieldbus Neighbor with CAN, RS-232, TIA-422, TIA-485 (possibly support for two of these neighbors operating at the same time for MitM and other dual interface abilities)</li>
+<li>ODB-II ?</li>
+<li>DTMF</li>
+<li>NFC/RFID</li>
+<li>DPA</li>
+<li>JTAG (like bus blaster and/or Black Magic Probe) (could be satisfied by Foxglove)</li>
+<li>SX1257 (SDR, no FPGA needed)</li>
+<li>SD card</li>
+<li>clock generator (for multi-HackRF)</li>
+<li>ultrasound</li>
+<li>USB Type-C sniffer</li>
+<li>LCD</li>
+<li>nRF8001</li>
+<li>general comms: Ethernet, Bluetooth, Wi-Fi, etc.?</li>
+<li>one or more of the Cypress Wi-Fi and/or Bluetooth chips formerly owned by Broadcom</li>
+<li>KNX</li>
+<li>mmWave sensor/radar</li>
+<li>energy harvesting (buck/boost)</li>
+<li>USB Type-C power delivery, accessory mode, alternate mode breakout/sniff/hack</li>
+<li>weather station</li>
+<li>zero insertion force neighbor</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="linux_distribution_python_version_matrix.html" class="btn btn-neutral float-left" title="Linux Distribution Python Version Matrix" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Great Scott Gadgets.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

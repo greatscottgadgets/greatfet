@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>GreatFET Classes &mdash; GreatFET One  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/status.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="GreatFET and GNURadio" href="greatfet_gnuradio.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> GreatFET One
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="board_naming.html">Board Naming</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started_firmware_development.html">Getting Started with Firmware Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greatfet_gnuradio.html">GreatFET and GNURadio</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">GreatFET Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#class-registry">Class Registry</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GreatFET One</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>GreatFET Classes</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/greatfet_classes.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="greatfet-classes">
+<h1>GreatFET Classes<a class="headerlink" href="#greatfet-classes" title="Permalink to this headline">¶</a></h1>
+<p>The new <em>GreatFET Communications Protocol</em> uses a simple Class/Verb scheme to organize protocol-independent commands. <strong>Classes</strong> organize groups of related functions, while <strong>verbs</strong> provide the functions themselves. This very much parallels the organization of GoodFET commands.</p>
+<p>Examples of <em>classes</em>:</p>
+<blockquote>
+<div><ul class="simple">
+<li>SPI functionality</li>
+<li>FaceDancer (“GreatDancer”) functionality</li>
+<li>Debug utilities</li>
+<li>GPIO</li>
+</ul>
+</div></blockquote>
+<p>Examples of <em>verbs</em>:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Configure the SPI bus to set e.g. polarity</li>
+<li>Read a USB1 status register (for consumption by the FaceDancer host)</li>
+<li>Return the contents of the device’s debug ring</li>
+<li>Set a particular pin to a given value</li>
+</ul>
+</div></blockquote>
+<p>Each class is identified by a unique <strong>32-bit integer</strong>. Each verb is identified by a <em>separately-namespaced</em> <strong>32-bit integer</strong>. To add a class to GreatFET, first reserve its number in the Class Registry below.</p>
+<div class="section" id="class-registry">
+<h2>Class Registry<a class="headerlink" href="#class-registry" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="colwidths-given docutils">
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Class Number</th>
+<th class="head">Class Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>0x0</td>
+<td>core</td>
+<td>core device identification functionality</td>
+</tr>
+<tr class="row-odd"><td>0x1</td>
+<td>firmware</td>
+<td>verbs for working with/updating device firmware</td>
+</tr>
+<tr class="row-even"><td>0x10</td>
+<td>debug</td>
+<td>debug utilities</td>
+</tr>
+<tr class="row-odd"><td>0x11</td>
+<td>selftest</td>
+<td>utilities for self-testing libgreat-based boards</td>
+</tr>
+<tr class="row-even"><td>0x100</td>
+<td>example</td>
+<td>example verbs meant to illustrate the comms protocol</td>
+</tr>
+<tr class="row-odd"><td>0x101</td>
+<td>spi_flash</td>
+<td>verbs for programming SPI flashes</td>
+</tr>
+<tr class="row-even"><td>0x102</td>
+<td>heartbeat</td>
+<td>control the GreatFET’s idle/”heartbeat” LED</td>
+</tr>
+<tr class="row-odd"><td>0x103</td>
+<td>gpio</td>
+<td>raw control over the GreatFET’s GPIO pins</td>
+</tr>
+<tr class="row-even"><td>0x104</td>
+<td>greatdancer</td>
+<td>remote control over the GreatFET’s USB1 port in device mode, for e.g. FaceDancer</td>
+</tr>
+<tr class="row-odd"><td>0x105</td>
+<td>usbhost</td>
+<td>remote control over the GreatFET’s USB port in host mode, for e.g. FaceDancer</td>
+</tr>
+<tr class="row-even"><td>0x106</td>
+<td>glitchkit  c</td>
+<td>control over the GlitchKit API, and control over simple triggers</td>
+</tr>
+<tr class="row-odd"><td>0x107</td>
+<td>glitchkit_usb</td>
+<td>control over functionality intended to help with timing USB fault injection</td>
+</tr>
+<tr class="row-even"><td>0x108</td>
+<td>i2c</td>
+<td>communication as an I2C controller</td>
+</tr>
+<tr class="row-odd"><td>0x109</td>
+<td>spi</td>
+<td>communication as SPI controller</td>
+</tr>
+<tr class="row-even"><td>0x10A</td>
+<td>leds</td>
+<td>control over a given board’s LEDs</td>
+</tr>
+<tr class="row-odd"><td>0x10B</td>
+<td>jtag</td>
+<td>functions for debugging over JTAG</td>
+</tr>
+<tr class="row-even"><td>0x10C</td>
+<td>jtag_msp430</td>
+<td>MSP430 specific JTAG functions</td>
+</tr>
+<tr class="row-odd"><td>0x10D</td>
+<td>logic_analyzer</td>
+<td>allows one to use the GreatFET’s SGPIO interface as a logic analyzer</td>
+</tr>
+<tr class="row-even"><td>0x10E</td>
+<td>sdir</td>
+<td>Functionality for Software Defined Infrared</td>
+</tr>
+<tr class="row-odd"><td>0x10F</td>
+<td>usbproxy</td>
+<td>Firmware functionality supporting USBProxy</td>
+</tr>
+<tr class="row-even"><td>0x110</td>
+<td>pattern_generator</td>
+<td>allows one to use the GreatFET’s SGPIO interface as a pattern generator</td>
+</tr>
+<tr class="row-odd"><td>0x111</td>
+<td>adc</td>
+<td>analog to digital converter functionality</td>
+</tr>
+<tr class="row-even"><td>0x112</td>
+<td>uart</td>
+<td>functionality for talking ‘serial’</td>
+</tr>
+<tr class="row-odd"><td>0x113</td>
+<td>usb_analysis</td>
+<td>functionality for USB analysis e.g. with Rhododendron</td>
+</tr>
+<tr class="row-even"><td>0x114</td>
+<td>swra124</td>
+<td>debugging/programming for TI cc111x, cc243x, and cc251x</td>
+</tr>
+<tr class="row-odd"><td>0x115</td>
+<td>loadables</td>
+<td>API for loading and running small firmware extensions</td>
+</tr>
+<tr class="row-even"><td>0x116</td>
+<td>clock_gen</td>
+<td>clock generation / control</td>
+</tr>
+<tr class="row-odd"><td>0x117</td>
+<td>benchmarking</td>
+<td>measurement of GreatFET communications and functions</td>
+</tr>
+<tr class="row-even"><td>0x118</td>
+<td>can</td>
+<td>functionality for communication over CAN</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="greatfet_gnuradio.html" class="btn btn-neutral float-left" title="GreatFET and GNURadio" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Great Scott Gadgets.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

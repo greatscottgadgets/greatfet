@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Getting Started with Firmware Development &mdash; GreatFET One  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/status.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="GreatFET and GNURadio" href="greatfet_gnuradio.html" />
+    <link rel="prev" title="Board Naming" href="board_naming.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> GreatFET One
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="board_naming.html">Board Naming</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started with Firmware Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fresh-install">Fresh install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#updating-your-repository">Updating your repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-host-tools">Installing host tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-and-flashing-firmware">Building and flashing firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#re-building-and-flashing-firmware">Re-Building and flashing firmware</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="greatfet_gnuradio.html">GreatFET and GNURadio</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GreatFET One</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Getting Started with Firmware Development</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/getting_started_firmware_development.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started-with-firmware-development">
+<h1>Getting Started with Firmware Development<a class="headerlink" href="#getting-started-with-firmware-development" title="Permalink to this headline">¶</a></h1>
+<p>Here’s some quick info for people with GreatFETs who want to get started with firmware development.</p>
+<div class="section" id="fresh-install">
+<h2>Fresh install<a class="headerlink" href="#fresh-install" title="Permalink to this headline">¶</a></h2>
+<p>To get started, you will need to install the dependencies:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>sudo apt-get install gcc-arm-none-eabi libnewlib-arm-none-eabi cmake make dfu-util python-setuptools python-yaml
+pip install pyyaml
+</pre></div>
+</div>
+<p>Acquire the code by cloning the repository:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git clone --recursive https://github.com/greatscottgadgets/greatfet.git
+</pre></div>
+</div>
+</div>
+<div class="section" id="updating-your-repository">
+<h2>Updating your repository<a class="headerlink" href="#updating-your-repository" title="Permalink to this headline">¶</a></h2>
+<p>You should already have the prerequisites installed as above. Now update the GreatFET repository that you have previously cloned:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> greatfet
+git pull
+git submodule update
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing-host-tools">
+<h2>Installing host tools<a class="headerlink" href="#installing-host-tools" title="Permalink to this headline">¶</a></h2>
+<p>The host tools are written in Python. To install them, run the following from the root of the cloned repository:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">pushd</span> libgreat/host/
+python setup.py build
+sudo python setup.py install
+<span class="nb">popd</span>
+
+<span class="nb">pushd</span> host/
+python setup.py build
+sudo python setup.py install
+<span class="nb">popd</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-and-flashing-firmware">
+<h2>Building and flashing firmware<a class="headerlink" href="#building-and-flashing-firmware" title="Permalink to this headline">¶</a></h2>
+<p>The firmware currently constitutes two parts, <code class="docutils literal notranslate"><span class="pre">libopencm3</span></code> and <code class="docutils literal notranslate"><span class="pre">greatfet_usb</span></code>. We build the library first, then the firmware on top of it:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> firmware/libopencm3
+make
+<span class="nb">cd</span> ../greatfet_usb
+mkdir build
+<span class="nb">cd</span> build
+cmake ..
+make
+</pre></div>
+</div>
+<p>This will produce a file named <code class="docutils literal notranslate"><span class="pre">greatfet_usb.bin</span></code> which can be written to a GreatFET One using <code class="docutils literal notranslate"><span class="pre">greatfet_firmware</span> <span class="pre">-w</span> <span class="pre">greatfet_usb.bin</span></code>.</p>
+<p>If you need to recover from an empty flash or non-functional firmware, you will need to use DFU to recover. Remember, if the firmware written to flash was non-functional, the DFU version will be too, you will need to return to a known good version to restore GreatFET.</p>
+<p>To write the file, first hold the DFU button while resetting the board, <code class="docutils literal notranslate"><span class="pre">lsusb</span></code> will show a line such as <code class="docutils literal notranslate"><span class="pre">Bus</span> <span class="pre">002</span> <span class="pre">Device</span> <span class="pre">007:</span> <span class="pre">ID</span> <span class="pre">1fc9:000c</span> <span class="pre">NXP</span> <span class="pre">Semiconductors</span></code>, which is the NXP LPC4330 in DFU mode. You can write the firmware to the GreatFET One’s RAM using <code class="docutils literal notranslate"><span class="pre">greatfet_firmware</span> <span class="pre">-V</span> <span class="pre">greatfet_usb.bin</span></code>. The firmware will run immediately. If you wish to run from ROM you then need to use <code class="docutils literal notranslate"><span class="pre">greatfet_firmware</span></code> as above.</p>
+</div>
+<div class="section" id="re-building-and-flashing-firmware">
+<h2>Re-Building and flashing firmware<a class="headerlink" href="#re-building-and-flashing-firmware" title="Permalink to this headline">¶</a></h2>
+<p>When rebuilding software the following is recommended</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> firmware/libopencm3
+make clean
+make
+<span class="nb">cd</span> ../greatfet_usb
+mkdir build
+<span class="nb">cd</span> build
+cmake ..
+make clean
+make
+</pre></div>
+</div>
+<p>This will produce a file named <code class="docutils literal notranslate"><span class="pre">greatfet_usb.bin</span></code> which can be written to a GreatFET One using <code class="docutils literal notranslate"><span class="pre">greatfet_firmware</span> <span class="pre">-w</span> <span class="pre">greatfet_usb.bin</span></code>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="greatfet_gnuradio.html" class="btn btn-neutral float-right" title="GreatFET and GNURadio" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="board_naming.html" class="btn btn-neutral float-left" title="Board Naming" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Great Scott Gadgets.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
