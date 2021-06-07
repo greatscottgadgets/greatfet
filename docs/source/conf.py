@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'GreatFET One'
+project = 'GreatFET Project'
 copyright = '2021, Great Scott Gadgets'
 author = 'Great Scott Gadgets'
 
