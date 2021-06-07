@@ -4,14 +4,14 @@
    contain the root `toctree` directive.
 
 
-Welcome to GreatFET One's documentation!
-========================================
+Welcome to GreatFET Project documentation!
+==========================================
 
 The GreatFET project produces interface tools for hardware hacking, making, and reverse engineering.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
+   :caption: GreatFET Project
 
    using_greatfet_apis   
    greatfet_classes
@@ -25,18 +25,13 @@ The GreatFET project produces interface tools for hardware hacking, making, and 
    release_process
 
 
-
 .. toctree::
    :maxdepth: 2
-   :caption: Neighbours
-
+   :caption: Hardware
+   
    neighbors
    design_neighbor
    board_naming  
-   indigo   
-   kniphofia
-   orchid
-   peony
 
 
 
