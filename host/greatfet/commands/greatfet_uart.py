@@ -93,7 +93,7 @@ def main():
     parser.add_argument('baud', nargs='?', type=from_eng_notation, default=115200, help="Baud rate; in symbols/second. Defaults to 115200.")
     parser.add_argument('-d', '--data',  type=int, default=8, help="The number of data bits per frame.")
     parser.add_argument('-S', '--stop',  type=int, default=1, help="The number of stop bits per frame.")
-    parser.add_argument('-P', '--parity', choices=parity_modes, default=0, help="The type of parity to use.")
+    parser.add_argument('-P', '--parity', choices=parity_modes, default='none', help="The type of parity to use.")
     parser.add_argument('-E', '--echo', action='store_true', help="If provided, local echo will be enabled.")
     parser.add_argument('-N', '--no-newline-translation', action='store_false', dest='tr_newlines',
         help="Provide this option to disable newline translation.")
