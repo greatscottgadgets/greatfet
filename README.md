@@ -2,7 +2,7 @@
 
 ### firmware and software for the GreatFET project
 
-For documentation, visit the
-[wiki](https://github.com/greatscottgadgets/greatfet/wiki).
+For documentation, visit the GreatFET page on [Read the Docs](https://greatfet.readthedocs.io/en/latest/index.html). If you would like to compile the docs on your own machine please review the 
+[docs folder](https://github.com/greatscottgadgets/greatfet/tree/master/docs) in this repository and build with the [Sphinx documentation generator software](https://www.sphinx-doc.org/en/master/). If you would like to help us maintain the docs, please open a pull request. 
 
 [project home](https://greatscottgadgets.com/greatfet/)
