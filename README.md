@@ -2,7 +2,6 @@
 
 ### firmware and software for the GreatFET project
 
-For documentation, visit the
-[wiki](https://github.com/greatscottgadgets/greatfet/wiki).
+GreatFET's documentation is captured on [Read the Docs](https://greatfet.readthedocs.io/en/latest/index.html). Raw documentation sources are in the `docs` folder.
 
 [project home](https://greatscottgadgets.com/greatfet/)
