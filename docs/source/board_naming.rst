@@ -5,7 +5,7 @@ Board Naming
 Code Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When we start working on a neighbor or other hardware design related to the GreatFET project, we assign a code name to the board. Our code names are names of flowers, and we usually choose a name starting with the next letter in the alphabet. We update the `list of neighbors <https://github.com/greatscottgadgets/greatfet/wiki/Neighbors>`__ as soon as a name is selected.
+When we start working on a neighbor or other hardware design related to the GreatFET project, we assign a code name to the board. Our code names are names of flowers, and we usually choose a name starting with the next letter in the alphabet. We update the :ref:`list of neighbors <neighbors>` as soon as a name is selected.
 
 
 
@@ -34,4 +34,5 @@ An even better option is to use a URL pointing to your own informative web site 
 Naming Your Neighbor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you create a neighbor or other GreatFET-related hardware design, we suggest that you follow our practice of using flowery code names, but you are welcome to choose whatever name you like. Just be careful of our trademark guidelines above. Please add your neighbor to the `list <https://github.com/greatscottgadgets/greatfet/wiki/Neighbors>`__!
+If you create a neighbor or other GreatFET-related hardware design, we suggest that you follow our practice of using flowery code names, but you are welcome to choose whatever name you like. Just be careful of our trademark guidelines above. Please add your neighbor to the 
+:ref:`list <neighbors>`!

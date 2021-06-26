@@ -61,7 +61,7 @@ Last, orient any major text in the same way as the title text on GreatFET.
 Neighbor Identification
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-It is neighborly to enable automated detection of your neighbor. We like I2C for this because any number of neighbors can be detected over the same pair of I2C pins without conflict. If you have a use for an I/O expander or other I2C device on your neighbor, configure it with a unique address and reserve that address on the `I2C Registry <https://github.com/greatscottgadgets/greatfet/wiki/I2C-Registry>`__. Document your I2C address in 7-bit format even if the datasheet for your I2C part uses 8-bit format.
+It is neighborly to enable automated detection of your neighbor. We like I2C for this because any number of neighbors can be detected over the same pair of I2C pins without conflict. If you have a use for an I/O expander or other I2C device on your neighbor, configure it with a unique address and reserve that address on the :ref:`I2C Registry <I2C_Registry>`. Document your I2C address in 7-bit format even if the datasheet for your I2C part uses 8-bit format.
 
 If you don't have a use for any particular I2C function, consider using an I2C EEPROM for identification. We've added one to the template to make this easy. This will allow your neighbor to participate in our scheme for identifying multiple neighbors that all share an I2C address on their EEPROMs.
 
@@ -76,7 +76,7 @@ An extra-neighborly neighbor is stackable and allows the user maximum flexibilit
 
 Unfortunately not all neighbors will be electrically compatible with each other even if they fit together mechanically, but there are some things you can do to maximize compatibility.
 
-If you have an option to use I2C as the primary interface to your neighbor, use it and configure your neighbor with an I2C address that is unused by other neighbors. `Register <https://github.com/greatscottgadgets/greatfet/wiki/I2C-Registry>`__ your I2C address on this wiki. If you can provide solderable jumpers or some other means for a user to reconfigure the I2C address on your neighbor, do so. This could allow a user to solve unforeseen conflicts or to use multiple copies of your neighbor simultaneously. See `Crocus <https://github.com/greatfet-hardware/crocus>`__ for an example. Document your I2C address in 7-bit format even if the datasheet for your I2C part uses 8-bit format.
+If you have an option to use I2C as the primary interface to your neighbor, use it and configure your neighbor with an I2C address that is unused by other neighbors. :ref:`I2C Registry <I2C_Registry>` your I2C address on this wiki. If you can provide solderable jumpers or some other means for a user to reconfigure the I2C address on your neighbor, do so. This could allow a user to solve unforeseen conflicts or to use multiple copies of your neighbor simultaneously. See `Crocus <https://github.com/greatfet-hardware/crocus>`__ for an example. Document your I2C address in 7-bit format even if the datasheet for your I2C part uses 8-bit format.
 
 Solder jumpers can also be used to provide alternative pin selections for any pin. See `Begonia <https://github.com/greatfet-hardware/begonia>`__ for an example.
 
