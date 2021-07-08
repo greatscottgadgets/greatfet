@@ -17,7 +17,6 @@ RUN apt-get -y install cmake
 RUN apt-get -y install gcc-arm-none-eabi
 RUN apt-get -y install python2
 RUN apt-get -y install python3
-
 RUN apt-get -y install software-properties-common
 RUN add-apt-repository -y universe
 RUN apt-get -y install curl
@@ -28,12 +27,6 @@ RUN apt-get -y install libusb-1.0-0
 RUN apt-get -y install libusb-1.0-0-dev
 RUN apt-get -y install git
 RUN apt-get -y install python3-venv
-RUN apt-get -y install python-yaml
-RUN apt-get -y install python3-yaml
-
-RUN pip install PyYAML
-RUN pip3 install PyYAML
-
 RUN pip3 install --upgrade capablerobot_usbhub
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
