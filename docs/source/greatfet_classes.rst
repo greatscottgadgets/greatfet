@@ -119,4 +119,6 @@ Class Registry
   * - 0x118   
     - can  
     - functionality for communication over CAN
-
+  * - 0x119
+    - SWD
+    - functionality for communicating with ARM SWD interfaces
