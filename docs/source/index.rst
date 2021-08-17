@@ -5,24 +5,30 @@ The GreatFET project produces interface tools for hardware hacking, making, and 
 
 .. toctree::
    :maxdepth: 2
-   :caption: GreatFET Project
+   :caption: User Documentation
 
-   using_greatfet_apis   
-   greatfet_classes
-   getting_started_firmware_development
    greatfet_gnuradio
-   libgreat_verb_signatures
    linux_distribution_python_version_matrix
-   release_process
 
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Command Line Tools
+   :caption: Software
 
+   using_greatfet_apis
    greatfet_i2c
    greatfet_logic    
+
+
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Firmware
+
+   getting_started_firmware_development
+   libgreat_verb_signatures
+   greatfet_classes
 
 
 
@@ -34,3 +40,11 @@ The GreatFET project produces interface tools for hardware hacking, making, and 
    design_neighbor
    board_naming  
    i2c_registry   
+
+
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Release Notes
+
+  release_process
