@@ -4,33 +4,47 @@ Welcome to the GreatFET Project documentation!
 The GreatFET project produces interface tools for hardware hacking, making, and reverse engineering.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: GreatFET Project
+  :maxdepth: 2
+  :caption: User Documentation
 
-   using_greatfet_apis   
-   greatfet_classes
-   getting_started_firmware_development
-   greatfet_gnuradio
-   libgreat_verb_signatures
-   linux_distribution_python_version_matrix
-   release_process
+  greatfet_gnuradio
+  linux_distribution_python_version_matrix
 
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Command Line Tools
+  :maxdepth: 2
+  :caption: Software
 
-   greatfet_i2c
-   greatfet_logic    
+  using_greatfet_apis
+  greatfet_i2c
+  greatfet_logic
 
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Hardware
+  :maxdepth: 2
+  :caption: Firmware
 
-   neighbors
-   design_neighbor
-   board_naming  
-   i2c_registry   
+  getting_started_firmware_development
+  libgreat_verb_signatures
+  greatfet_classes
+
+
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Hardware
+
+  neighbors
+  design_neighbor
+  board_naming
+  i2c_registry
+
+
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Release Notes
+
+  release_process
