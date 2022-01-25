@@ -1,9 +1,10 @@
 #!/bin/bash 
 source testing-venv/bin/activate
-usbhub power state --port 1 --reset
+usbhub --hub D9D1 power state --port 1 --reset
 sleep 1s
 greatfet_info
 EXIT_CODE="$?"
+deactivate
 if [ "$EXIT_CODE" == "19" ]
 then
     echo "Host tool installation success! Exiting.."
@@ -20,4 +21,3 @@ else
     echo "god have mercy on your soul"
     exit $EXIT_CODE
 fi
-deactivate

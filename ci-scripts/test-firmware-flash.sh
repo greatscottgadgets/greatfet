@@ -20,4 +20,3 @@ else
 fi
 greatfet_info
 deactivate
-rm -rf testing-venv/
