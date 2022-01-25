@@ -11,27 +11,26 @@ WORKDIR /home/jenkins
 
 CMD ["/bin/bash"]
 
+# override interactive installations
+ENV DEBIAN_FRONTEND=noninteractive 
+
 # Install prerequisites
-RUN apt-get update && apt-get install -y
-RUN apt-get -y install cmake
-RUN apt-get -y install gcc-arm-none-eabi
-RUN apt-get -y install python2
-RUN apt-get -y install python3
-RUN apt-get -y install software-properties-common
-RUN add-apt-repository -y universe
-RUN apt-get -y install curl
+RUN apt-get update && apt-get install -y \
+    cmake \
+    curl \
+    gcc-arm-none-eabi \
+    git \
+    libusb-1.0-0-dev \
+    python-is-python3 \
+    python2 \
+    python3 \
+    python3-pip \
+    python3-venv \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
 RUN python2 get-pip.py
-RUN apt-get -y install python3-pip
-RUN apt-get -y install libusb-1.0-0
-RUN apt-get -y install libusb-1.0-0-dev
-RUN apt-get -y install git
-RUN apt-get -y install python3-venv
-RUN pip3 install --upgrade capablerobot_usbhub
-
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-RUN export
+RUN pip3 install capablerobot_usbhub
 
 USER jenkins
 
