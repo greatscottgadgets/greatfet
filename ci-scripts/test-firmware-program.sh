@@ -7,17 +7,17 @@ EXIT_CODE="$?"
 deactivate
 if [ "$EXIT_CODE" == "0" ]
 then
-    echo "DFU installation success! Exiting.."
+    echo "DFU installation success! Exiting."
     exit $EXIT_CODE
 elif [ "$EXIT_CODE" == "19" ]
 then
-    echo "No GreatFET found! Disconnected? Exiting.."
+    echo "No GreatFET found! Disconnected? Exiting."
     exit $EXIT_CODE
 elif [ "$EXIT_CODE" == "127" ]
 then
-    echo "Host tool installation failed! Exiting.."
+    echo "Host tool installation failed! Exiting."
     exit $EXIT_CODE
 else
-    echo "god have mercy on your soul"
+    echo "Unhandled case. Exiting."
     exit $EXIT_CODE
 fi
