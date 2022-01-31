@@ -37,5 +37,5 @@ USER jenkins
 # Inform Docker that the container is listening on the specified port at runtime.
 EXPOSE 8080
 
-# Copy the rest of your app's source code from your host to your image filesystem.
+# Copy the source code from host to image filesystem.
 COPY . .
