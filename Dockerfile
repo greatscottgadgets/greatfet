@@ -21,16 +21,12 @@ RUN apt-get update && apt-get install -y \
     gcc-arm-none-eabi \
     git \
     libusb-1.0-0-dev \
-    python-is-python3 \
-    python2 \
     python3 \
     python3-pip \
     python3-venv \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
-RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-RUN python2 get-pip.py
-RUN pip3 install capablerobot_usbhub
+RUN pip3 install capablerobot_usbhub pyyaml
 
 USER jenkins
 
