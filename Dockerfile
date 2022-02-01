@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
-RUN pip3 install capablerobot_usbhub pyyaml
+RUN pip3 install capablerobot_usbhub
 
 USER jenkins
 
