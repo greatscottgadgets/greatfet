@@ -1,6 +1,6 @@
 #!/bin/bash
 source testing-venv/bin/activate
-usbhub --hub D9D1 power state --port 1 --reset
+usbhub --disable-i2c --hub D9D1 power state --port 1 --reset
 sleep 1s
 greatfet_firmware --volatile-upload firmware/greatfet_usb/build/greatfet_usb.bin
 EXIT_CODE="$?"
