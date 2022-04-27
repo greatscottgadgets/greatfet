@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
-RUN pip3 install capablerobot_usbhub
+RUN pip3 install git+https://github.com/CapableRobot/CapableRobot_USBHub_Driver --upgrade
 
 # Inform Docker that the container is listening on port 8080 at runtime
 EXPOSE 8080
