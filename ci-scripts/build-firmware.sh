@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 source testing-venv/bin/activate
 cd firmware/libopencm3
 make clean
