@@ -115,6 +115,38 @@ class I2CBus(PirateCompatibleInterface):
         self.write(address, data)
         return self.read(address, receive_length)
 
+    def repeated_transmit(self, address, receive_length, count, data):
+        """
+            Repeatedly transmits a write/read over the I2C bus
+
+            Args:
+                address -- The 7-bit I2C address for the target device.
+                    Should not contain read/write bits. Can be used to address
+                    special addresses, for now; but this behavior may change.
+                receive_length -- The I2C controller will attempt
+                        to read the provided amount of data, in bytes.
+                count -- number of times to perform the write/read transission.
+                data -- The data to be sent to the given device.
+        """
+        MAX_TRANSMIT_COUNT = 255
+
+        if (not isinstance(receive_length, int)) or receive_length < 0:
+            raise ValueError("invalid receive length!")
+
+        if receive_length > self.buffer_size:
+            raise ValueError("Tried to receive more than the size of the receive buffer.")
+        
+        if address > 127 or address < 0:
+            raise ValueError("Tried to transmit to an invalid I2C address!")
+
+        if (not isinstance(count, int)) or count > MAX_TRANSMIT_COUNT:
+            raise ValueError("invalid count!")
+        
+        data = bytes(data)
+        transmit_status = self.api.write(address, receive_length, count, data)
+
+        return transmit_status
+
 
     def scan(self):
         """
