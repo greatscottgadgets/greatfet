@@ -90,6 +90,34 @@ static int i2c_verb_write(struct command_transaction *trans)
 	return 0;
 }
 
+static int i2c_verb_repeated_transmit(struct command_transaction *trans)
+{
+	uint32_t tx_length_single;
+	uint16_t address 		= comms_argument_parse_uint16_t(trans);
+	uint16_t rx_length_single	= comms_argument_parse_uint16_t(trans);
+	uint8_t  transmit_count		= comms_argument_parse_uint8_t(trans);
+	uint8_t *data_to_write 		= comms_argument_read_buffer(trans, -1, &tx_length_single);
+
+	if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+	uint16_t rx_length 		= rx_length_single * transmit_count;
+	uint8_t *i2c_rx_buffer 		= comms_response_reserve_space(trans, rx_length);
+
+	if (!comms_transaction_okay(trans)) {
+        return EBADMSG;
+    }
+
+	for (uint8_t i = 0; i < transmit_count; i++)
+	{
+		i2c_bus_write(&i2c0, address, data_to_write, (size_t) tx_length_single);
+		i2c_bus_read(&i2c0, address, &i2c_rx_buffer[i*transmit_count], (size_t) rx_length_single);
+	}
+
+	return 0;
+}
+
 
 static int i2c_verb_issue_start(struct command_transaction *trans)
 {
@@ -264,6 +292,11 @@ static struct comms_verb _verbs[] = {
 			.in_signature = "<H*X", .out_signature = "<",
 			.in_param_names = "address, data", .out_param_names = "",
 			.doc = "Writes to the I2C bus and responds accordingly" },
+		{ .name = "repeated_transmit", .handler = i2c_verb_repeated_transmit,
+			.in_signature = "<HHB*X", .out_signature = "<*B",
+			.in_param_names = "address, rx_length, count, data",
+			.out_param_names = "response",
+			.doc = "Repeats a write/read transmission to the I2C bus" },
 		{ .name = "scan", .handler = i2c_verb_scan,
 			.in_signature = "", .out_signature = "<*B",
 			.in_param_names = "value, index, data", .out_param_names = "states",
