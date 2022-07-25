@@ -9,6 +9,7 @@ The GreatFET project produces interface tools for hardware hacking, making, and 
 
   greatfet_gnuradio
   linux_distribution_python_version_matrix
+  troubleshooting
 
 
 
