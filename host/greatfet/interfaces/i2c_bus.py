@@ -135,16 +135,18 @@ class I2CBus(PirateCompatibleInterface):
 
         if receive_length > self.buffer_size:
             raise ValueError("Tried to receive more than the size of the receive buffer.")
-        
+
         if address > 127 or address < 0:
             raise ValueError("Tried to transmit to an invalid I2C address!")
 
         if (not isinstance(count, int)) or count > MAX_TRANSMIT_COUNT:
-            raise ValueError("invalid count!")
-        
-        data = bytes(data)
-        transmit_status = self.api.write(address, receive_length, count, data)
+            raise ValueError("Invalid count!")
 
+        data = bytes(data)
+        transmit_status = self.api.repeated_transmit(address,
+                                                     receive_length,
+                                                     count,
+                                                     data)
         return transmit_status
 
 

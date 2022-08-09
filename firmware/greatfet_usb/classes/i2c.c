@@ -112,7 +112,7 @@ static int i2c_verb_repeated_transmit(struct command_transaction *trans)
 	for (uint8_t i = 0; i < transmit_count; i++)
 	{
 		i2c_bus_write(&i2c0, address, data_to_write, (size_t) tx_length_single);
-		i2c_bus_read(&i2c0, address, &i2c_rx_buffer[i*transmit_count], (size_t) rx_length_single);
+		i2c_bus_read(&i2c0, address, &i2c_rx_buffer[i*rx_length_single], (size_t) rx_length_single);
 	}
 
 	return 0;
