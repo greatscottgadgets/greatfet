@@ -378,6 +378,7 @@ class LSM6DS33(I2CDevice, GreatFETSensor):
                                     self.MASK_XL_HM_MODE)
 
     def set_fifo_mode(self, mode):
+        self._fifo_mode = mode
         return self._write_reg_bits(self.REG_FIFO_CTRL5,
                                     mode,
                                     self.MASK_FIFO_MODE)
@@ -463,6 +464,11 @@ class LSM6DS33(I2CDevice, GreatFETSensor):
     def get_fifo_word(self):
         return (self.transmit([self.REG_FIFO_DATA_OUT_L], 2))
 
+    def get_fifo_words(self, num_words):
+        return (self.repeated_transmit([self.REG_FIFO_DATA_OUT_L],
+                                       2,
+                                       num_words))
+
     def get_data_endian(self):
         self._data_endian = ((self.transmit([self.REG_FIFO_CTRL3], 1))[0] |
                              self.MASK_BLE)
@@ -486,16 +492,18 @@ class LSM6DS33(I2CDevice, GreatFETSensor):
                                self._get_num_fifo_pattern_datasets())
 
         base_pattern_idx = self.get_fifo_pattern_index()
+        fifo_raw = self.get_fifo_words(num_fifo_words)
 
         for i in range(num_fifo_words):
             pattern_idx = ((base_pattern_idx + i) %
                            (self._get_num_fifo_pattern_scalars()))
             scalar = self._get_fifo_pattern_scalar(pattern_idx)
-            data_word_bytes = self.get_fifo_word()
+            data_word_bytes = [fifo_raw[2*i], fifo_raw[2*i+1]]
             data_word = self._word_bytes_to_int(data_word_bytes)
             data[scalar].append(data_word)
 
         return data
+
 
     def set_fifo_dataset_pattern(self, pattern):
         self._fifo_dataset_pattern = pattern
