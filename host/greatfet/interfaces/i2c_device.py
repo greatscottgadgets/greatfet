@@ -50,6 +50,24 @@ class I2CDevice(GreatFETInterface):
         return self.bus.transmit(self.address, data, receive_length)
 
 
+    def repeated_transmit(self, data, receive_length, transmit_count):
+        """
+            Repeatedly sends data over the I2C bus, and recieves
+            data in response.
+
+            Args:
+                data -- The data to be sent to the given device.
+                receive_length -- If provided, the I2C controller will attempt
+                        to read the provided amount of data, in bytes.
+                trasmit_count -- number of times to repeat the
+                        write/read transmission
+        """
+        return self.bus.repeated_transmit(self.address,
+                                          receive_length,
+                                          transmit_count,
+                                          data)
+
+
     def read(self, receive_length=0):
         """
             Reads data from the I2C bus.
