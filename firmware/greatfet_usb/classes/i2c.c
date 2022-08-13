@@ -93,7 +93,7 @@ static int i2c_verb_write(struct command_transaction *trans)
 static int i2c_verb_repeated_transmit(struct command_transaction *trans)
 {
 	uint32_t tx_length_single;
-	uint16_t address 			= comms_argument_parse_uint16_t(trans);
+	uint16_t address			= comms_argument_parse_uint16_t(trans);
 	uint16_t rx_length_single	= comms_argument_parse_uint16_t(trans);
 	uint8_t  transmit_count		= comms_argument_parse_uint8_t(trans);
 	uint8_t *data_to_write 		= comms_argument_read_buffer(trans, -1, &tx_length_single);
