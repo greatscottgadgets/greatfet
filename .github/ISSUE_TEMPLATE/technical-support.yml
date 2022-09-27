@@ -1,0 +1,54 @@
+name: Technical Support Request
+description: File a technical support request
+title: "[Tech Support]: "
+labels: ["technical support"]
+assignees:
+  - straithe
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out this technical support request form! Please note that technical support requests can expect a response time of two weeks.  
+  - type: dropdown
+    id: troubleshooting-documentation
+    attributes: 
+      label: Have you read the GreatFET documentation at https://greatfet.readthedocs.io/?
+      options:
+        - "yes"
+        - "no"
+    validations:
+      required: true
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: What outcome were you hoping for?
+      placeholder: Please be detailed in what you expected to happen
+    validations:
+      required: true
+  - type: textarea
+    id: actual-outcome
+    attributes:
+      label: What outcome actually happened? 
+      placeholder: Please be detailed in what did happen
+    validations:
+      required: true
+  - type: textarea
+    id: operating-systems
+    attributes:
+      label: What operating systems are you seeing the problem on?
+    validations:
+      required: true
+  - type: textarea
+    id: third-party-software
+    attributes:
+      label: Are you using any third-party software?
+      description: Please list the software you are using with your GreatFET or indicate N/A. Please list version numbers where possible. 
+    validations:
+      required: true
+  - type: textarea
+    id: third-party-hardware
+    attributes:
+      label: Are you using any third-party hardware? 
+      description: Please list any hardware you are using with your GreatFET or indicate N/A. 
+    validations:
+      required: true
