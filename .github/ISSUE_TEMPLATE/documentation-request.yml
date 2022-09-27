@@ -1,0 +1,15 @@
+name: Documentation 
+description: Make a request regarding GreatFET documentation 
+title: "[Documentation]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to help Great Scott Gadgets improve the GreatFET One documentation! 
+  - type: textarea
+    id: documentation-request
+    attributes:
+      label: What would like us to add to or change about the GreatFET One documentation?
+    validations:
+      required: true
