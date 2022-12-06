@@ -44,7 +44,7 @@ Describing Verb Signatures
 Verb signatures are provided in a format that's heavily inspired by `Python's struct module <https://docs.python.org/2/library/struct.html>`__ -- in fact, the formats are mostly identical. To provide some additional flexibility, we support a few additional format characters. The standard and added format characters are described below:
 
 .. list-table:: Verb Signatures
-   :widths: 10 7 11 10 33 29  
+   :widths: 10 7 11 10 33 29
    :header-rows: 1
 
    * - Format
@@ -53,118 +53,118 @@ Verb signatures are provided in a format that's heavily inspired by `Python's st
      - Python Type
      - libgreat parse function
      - libgreat response function
-   * - x (1)
+   * - x *(1)*
      - 1
      - none
      - none
      - comms_argument_read_buffer( trans, 1, NULL )
      - comms_argument_read_buffer( trans, 1, NULL )
-   * - c  
-     - 1  
-     - char   
-     - string of length 1   
+   * - c
+     - 1
+     - char
+     - string of length 1
      - comms_argument_parse_uint8_t
      - comms_response_add_uint8_t
-   * - b  
-     - 1  
+   * - b
+     - 1
      - int8_t
-     - integer  
+     - integer
      - comms_argument_parse_int8_t
      - comms_response_add_int8_t
-   * - B  
-     - 1  
+   * - B
+     - 1
      - uint8_t
-     - integer  
+     - integer
      - comms_argument_parse_uint8_t
      - comms_response_add_uint8_t
-   * - ?  
-     - 1  
-     - bool / _Bool   
-     - integer  
+   * - ?
+     - 1
+     - bool / _Bool
+     - integer
      - comms_argument_parse_bool
      - comms_response_add_bool
-   * - h  
-     - 2  
+   * - h
+     - 2
      - int16_t
-     - integer  
+     - integer
      - comms_argument_parse_int16_t
      - comms_response_add_int16_t
-   * - H  
-     - 2  
+   * - H
+     - 2
      - uint16_t
-     - integer  
+     - integer
      - comms_argument_parse_uint16_t
      - comms_response_add_uint16_t
-   * - i  
-     - 4  
+   * - i
+     - 4
      - int32_t
-     - integer  
+     - integer
      - comms_argument_parse_int32_t
      - comms_response_add_int32_t
-   * - I  
-     - 4  
+   * - I
+     - 4
      - uint32_t
-     - integer  
+     - integer
      - comms_argument_parse_uint32_t
      - comms_response_add_uint32_t
-   * - l  
-     - 4  
+   * - l
+     - 4
      - int32_t
-     - integer  
+     - integer
      - comms_argument_parse_int32_t
      - comms_response_add_int32_t
-   * - L  
-     - 4  
+   * - L
+     - 4
      - uint32_t
-     - integer  
+     - integer
      - comms_argument_parse_uint32_t
      - comms_response_add_uint32_t
-   * - q  
-     - 8  
+   * - q
+     - 8
      - int64_t
-     - integer  
+     - integer
      - comms_argument_parse_int64_t
      - comms_response_add_int64_t
-   * - Q  
-     - 8  
+   * - Q
+     - 8
      - uint64_t
-     - integer  
+     - integer
      - comms_argument_parse_uint64_t
      - comms_response_add_uint64_t
-   * - f  
-     - 4  
+   * - f
+     - 4
      - float
-     - float  
+     - float
      - comms_argument_parse_float
      - comms_response_add_float
-   * - d  
-     - 8  
-     - double   
-     - float  
+   * - d
+     - 8
+     - double
+     - float
      - comms_argument_parse_double
      - comms_response_add_double
-   * - s (2) (3) (6)
-     -      
+   * - s *(2)(3)(6)*
+     - 
      - char[]
-     - string   
+     - string
      - comms_argument_read_buffer
      - comms_response_add_raw
-   * - p (2) (6)
-     -    
+   * - p *(2)(6)*
+     - 
      - char[]
-     - string   
+     - string
      - comms_argument_parse_uint8_t / comms_argument_read_buffer
      - comms_response_add_uint8_t / comms_response_add_raw
-   * - S (4)
-     -    
+   * - S *(4)*
+     - 
      - char[]
-     - string   
+     - string
      - comms_argument_read_string
      - comms_response_add_string
-   * - X (3) (5) (6)    
+   * - X *(3)(5)(6)*
      - 
      - uint8_t
-     - bytes of length 1  
+     - bytes of length 1
      - comms_argument_read_string
      - comms_response_add_string
 
@@ -173,19 +173,19 @@ Verb signatures are provided in a format that's heavily inspired by `Python's st
   :header-rows: 1
   :widths: 1 2
 
-  * - note number   
+  * - note number
     - description
-  * - (1)   
+  * - *(1)*
     - null padding byte; rarely used
-  * - (2)   
+  * - *(2)*
     - see python docs
-  * - (3)   
+  * - *(3)*
     - typically used with a numeric prefix
-  * - (4)   
+  * - *(4)*
     - encodes a null-terminated string
-  * - (5)   
+  * - *(5)*
     - encodes raw bytes; repeated elements are merged into a single entry
-  * - (6)   
+  * - *(6)*
     - numeric prefixes behave differently; see below
 
 ``libgreat`` data is always of standard size, and *always* little-endian. **Accordingly, every non-empty method signature must begin with a '<'.** Exceptions are made for methods that expect no arguments or return no values, which can provide an empty string.
@@ -224,13 +224,13 @@ A handful of format specifiers interpret numeric prefixes as *element lengths*, 
   :header-rows: 1
   :widths: 1 3
 
-  * - type  
+  * - type
     - interpretation
-  * - s   
+  * - s
     - the specified element represents a string of N characters, where N is the length specifier
-  * - p   
+  * - p
     - the specified element represents a pascal string of maximum length N, where N is the length specifier
-  * - X   
+  * - X
     - the specified element represents a string of N bytes, where N is the length specifier
 
 For the ``s`` and ``X`` specifiers, a length specifier of ``*`` indicates that the relevant string can be expected to take up all of the remaining data. Note that the format ``S`` does accepts a *repeat specifier* and **not** a *length specifier*, so the string ``32S`` denotes 32 null-terminated strings.
@@ -256,7 +256,7 @@ It may help to consider an example RPC with the following meta-data:
 
   { .name = "sum_polar", .handler = example_verb_sum_polar, .in_signature = "<*(II)",
       .out_signature = "<II", .in_param_names = "magnitudes_and_angles", .out_param_names = "sum_magnitude, sum_angle",
-      .doc = "Sums together a collection of polar coordinates." },  
+      .doc = "Sums together a collection of polar coordinates." },
 
 The method's in-signature, ``<*(II)``, demonstrates that the method expects any number of *two-element pairs*, which each contain a pair of integers. Accordingly, we might call it as follows:
 
