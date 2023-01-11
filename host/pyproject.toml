@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "greatfet"
 dynamic = ["version"]
 authors = [
-    {name = "Great Scott Gadgets", email = "ktemkin@greatscottgadgets.com"},
+    {name = "Great Scott Gadgets", email = "dev@greatscottgadgets.com"},
 ]
 license = { text = "BSD" }
 description = "Python library for hardware hacking with the GreatFET"
@@ -14,7 +14,7 @@ urls = { Source = "https://greatscottgadgets.com/greatfet" }
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python",
-    "Development Status :: 1 - Planning",
+    "Development Status :: 5 - Production/Stable",
     "Natural Language :: English",
     "Environment :: Console",
     "Environment :: Plugins",
@@ -67,9 +67,3 @@ greatfet_chipcon = "greatfet.commands.greatfet_chipcon:main"
 [tool.setuptools-git-versioning]
 enabled = true
 starting_version = "2019.05.01"
-
-#[tool.setuptools]
-#packages = ["greatfet"]
-
-#[tool.setuptools.packages.find]
-#where = ["greatfet"]
