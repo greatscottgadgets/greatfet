@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 source testing-venv/bin/activate
 usbhub --disable-i2c --hub D9D1 power state --port 1 --reset
 sleep 1s

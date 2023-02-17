@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 source testing-venv/bin/activate
 sleep 1s
 greatfet_firmware --write firmware/greatfet_usb/build/greatfet_usb.bin
