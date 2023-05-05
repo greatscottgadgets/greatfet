@@ -68,8 +68,6 @@ def main():
 
 
     # Create a new shell, and give it access to our created GreatFET object.
-    # Apr 18 2023 - Changed method for creating the shell, to support changes in IPython v8.11+
-    #             - ref. https://github.com/ipython/ipython/issues/13966
     if IPython.core.getipython.get_ipython() is None:
         shell = IPython.terminal.embed.InteractiveShellEmbed.instance()
     else:
