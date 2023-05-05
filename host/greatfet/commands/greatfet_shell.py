@@ -15,7 +15,6 @@ from greatfet.utils import GreatFETArgumentParser
 from greatfet.util.interactive import GreatFETShellMagics
 
 import IPython
-from IPython.terminal.interactiveshell import TerminalInteractiveShell
 
 def main():
 
@@ -69,7 +68,10 @@ def main():
 
 
     # Create a new shell, and give it access to our created GreatFET object.
-    shell = TerminalInteractiveShell()
+    if IPython.core.getipython.get_ipython() is None:
+        shell = IPython.terminal.embed.InteractiveShellEmbed.instance()
+    else:
+        shell = IPython.terminal.embed.InteractiveShellEmbed()
     shell.push('gf')
 
     # Create nice aliases for our primary interfaces.
