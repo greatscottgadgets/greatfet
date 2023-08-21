@@ -5,8 +5,7 @@ greatfet_logic
 greatfet_logic is a logic analyzer implementation for GreatFET. It uses the SGPIO peripheral in the LPC4330 to monitor the state of 8 pins and combines those into an 8-bit integer streamed to the USB host.
 
 
-
-Pin usage
+Pin Usage
 ~~~~~~~~~
 
 .. list-table :: 
@@ -17,7 +16,7 @@ Pin usage
     - symbol
     - pin
   * - SPGIO0
-    - PP0_0
+    - P0_0
     - J1.04
   * - SGPIO1
     - P0_1

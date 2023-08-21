@@ -20,6 +20,7 @@ The GreatFET project produces interface tools for hardware hacking, making, and 
   using_greatfet_apis
   greatfet_i2c
   greatfet_logic
+  greatfet_msp430
 
 
 
