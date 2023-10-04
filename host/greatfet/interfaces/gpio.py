@@ -3,7 +3,8 @@
 #
 
 
-from enum import IntEnum
+from ctypes   import LittleEndianStructure, Union, c_uint32
+from enum     import IntEnum
 from warnings import warn
 
 from ..interface import GreatFETInterface
@@ -26,7 +27,107 @@ DIRECTION_IN  = Directions.IN
 DIRECTION_OUT = Directions.OUT
 
 
+class PullResistor(IntEnum):
+    NO_PULL  = 0b10 # default value
+    PULLDOWN = 0b11
+    PULLUP   = 0b00
+    KEEPER   = 0b01
 
+    
+class InputBuffer(IntEnum):
+    """
+    The input buffer must be enabled for receiving.
+    """
+    DISABLE = 0b0
+    ENABLE  = 0b1 # default value
+
+    
+class GlitchFilter(IntEnum):
+    """
+    Disable the input glitch filter for clocking signals higher than 30 MHz.
+    """
+    ENABLE  = 0b0 # default value
+    DISABLE = 0b1 
+
+    
+class SlewRate(IntEnum):
+    """
+    Not available on high-drive pins.
+    """
+    SLOW = 0b0 # default value
+    FAST = 0b1
+
+    
+class DriveStrength(IntEnum):
+    """
+    Only available on high-drive pins:
+      J1_P32: (0, 12) -- P1_17
+      J2_P18: (5, 5)  -- P2_5
+      J2_P19: (5, 4)  -- P2_4
+      J2_P20: (5, 3)  -- P2_3
+    """
+    NORMAL = 0b00 # default value
+    """Normal drive strength: 4 mA """
+    MEDIUM = 0b01 
+    """Medium drive strength: 8 mA """ 
+    HIGH   = 0b10 
+    """High drive strength: 14 mA """ 
+    ULTRA  = 0b11 
+    """Ultra-high drive strength: 20 mA """
+
+
+class PinConfiguration(Union):
+    """ SCU pin configuration register block. """
+    class RegisterBlock(LittleEndianStructure):
+        _fields_ = [
+            ("_function",      c_uint32, 3),
+            ("pull_resistor",  c_uint32, 2),
+            ("slew_rate",      c_uint32, 1),
+            ("input_buffer",   c_uint32, 1),
+            ("glitch_filter",  c_uint32, 1),
+            ("drive_strength", c_uint32, 2),
+            ("_reserved",      c_uint32, 22),
+        ]
+
+    _fields_ = [
+        ("reg", RegisterBlock),
+        ("bits", c_uint32),
+    ]
+
+    def __init__(self, direction):
+        self.direction = direction
+
+
+class InputConfiguration(PinConfiguration):
+    def __init__(self, pull_resistor=PullResistor.NO_PULL, input_buffer=InputBuffer.ENABLE, glitch_filter=GlitchFilter.ENABLE):
+        """
+        Specify the configuration of a GPIO line to be used as an input.
+
+        Parameters:
+            pull_resistor -- PullResistor.NO_PULL, PullResistor.PULLDOWN, PullResistor.PULLUP or PullResistor.KEEPER
+            input_buffer  -- InputBuffer.DISABLE or InputBuffer.ENABLE
+            glitch_filter -- GlitchFilter.ENABLE or GlitchFilter.DISABLE
+        """        
+        super().__init__(direction=Directions.IN)
+        self.reg.pull_resistor = pull_resistor
+        self.reg.input_buffer = input_buffer
+        self.reg.glitch_filter = glitch_filter
+
+
+class OutputConfiguration(PinConfiguration):
+    def __init__(self, slew_rate=SlewRate.SLOW, drive_strength=DriveStrength.NORMAL):
+        """
+        Specify the configuration of a GPIO line to be used as an output.
+
+        Parameters:
+            slew_rate      -- SlewRate.SLOW or SlewRate.FAST. Not supported on high-drive pins.
+            drive_strength -- DriveStrength. Only supported on high-drive pins.
+        """
+        super().__init__(direction=Directions.OUT)
+        self.reg.slew_rate = slew_rate
+        self.reg.drive_strength = drive_strength
+
+        
 class GPIOProvider(GreatFETInterface):
     """ Base class for an object that provides access to GPIO pins. """
 
@@ -201,9 +302,9 @@ class GPIOProvider(GreatFETInterface):
         if gpio_pin.name not in self.active_gpio:
             raise ValueError("Trying to release a pin we don't own!")
 
-        # Mark the pin as an input, placing it into High-Z mode.
-        # TODO: Disable any pull-ups present on the pin.
-        gpio_pin.set_direction(DIRECTION_IN)
+        # Mark the pin as an input, placing it into High-Z mode and
+        # disabling any pull-ups present on the pin.
+        gpio_pin.set_configuration(InputConfiguration(pull_resistor=PullResistor.NO_PULL))
 
         # Remove the GPIO pin from our active array, and add it back to the
         # available pool.
@@ -211,14 +312,15 @@ class GPIOProvider(GreatFETInterface):
         self.mark_pin_as_unused(gpio_pin.name)
 
 
-    def set_up_pin(self, line, direction, initial_value=False):
+    def configure_pin(self, line, configuration, initial_value=False):
         """
         Configure a GPIO line for use as an input or output.  This must be
         called before the line can be used by other functions.
 
         Parameters:
-            line      -- A unique identifier for the given pin that has meaning to the subclass.
-            direction -- Directions.IN (input) or Directions.OUT (output)
+            line          -- A unique identifier for the given pin that has meaning to the subclass.
+            configuration -- An InputConfiguration or OutputConfiguration instance.
+            initial_value -- Initial value if the pin is an output.
         """
         pass
 
@@ -262,6 +364,19 @@ class GPIOProvider(GreatFETInterface):
         pass
 
 
+    def get_pin_configuration(self, line):
+        """
+        Gets the configuration for a GPIO pin.
+
+        Args:
+            line  -- A unique identifier for the given pin that has meaning to the subclass.
+
+        Return:
+            Configuration -- OutputConfiguration if line is an output, InputConfiguration if line is an input
+        """
+        pass
+
+
     def get_pin_port(self, line):
         """ Returns the 'port number' for a given GPIO pin.
 
@@ -281,6 +396,21 @@ class GPIOProvider(GreatFETInterface):
         pass
 
 
+    #
+    # Deprecated methods.
+    #
+    def set_up_pin(self, line, direction, initial_value=False):
+        """
+        Configure a GPIO line for use as an input or output.  This must be
+        called before the line can be used by other functions.
+
+        Parameters:
+            line      -- A unique identifier for the given pin that has meaning to the subclass.
+            direction -- Directions.IN (input) or Directions.OUT (output)
+        """
+        pass
+
+    
 class GPIO(GPIOProvider):
     """ Work with the GPIO directly present on the GreatFET board. """
 
@@ -301,18 +431,42 @@ class GPIO(GPIOProvider):
         # TODO: provide functionality to restore GPIO state on reconnect?
 
 
-    def set_up_pin(self, line, direction, initial_value=False):
+    def configure_pin(self, line, configuration, initial_value=False):
         """
         Configure a GPIO line for use as an input or output.  This must be
         called before the line can be used by other functions.
 
-        Args:
-            line -- (port, pin); typically a tuple from J1, J2, J7 below
-            direction -- Directions.IN (input) or Directions.OUT (output)
-
-        TODO: allow pull-up/pull-down resistors to be configured for inputs
+        Parameters:
+            line          -- A unique identifier for the given pin that has meaning to the subclass.
+            configuration -- An InputConfiguration or OutputConfiguration instance.
+            initial_value -- Initial value if the pin is an output.        
         """
-        self.api.set_up_pin(line[0], line[1], direction, initial_value)
+
+        # Validate pin configuration.
+        high_drive_lines = [(0, 12), (5, 5), (5, 4), (5, 3)]
+        if line in high_drive_lines:
+            if configuration.reg.slew_rate != SlewRate.SLOW:
+                configuration.reg.slew_rate = SlewRate.SLOW
+                warn("Cannot configure slew rate for high-drive pins. Ignoring setting.")
+        else:
+            if configuration.reg.drive_strength != DriveStrength.NORMAL:
+                configuration.reg.drive_strength = DriveStrength.NORMAL
+                warn("Cannot configure drive strength for normal-drive pins. Ignoring setting.")
+    
+        # Configure the pin.
+        if self.api.supports_verb("configure_pin"):
+            self.api.configure_pin(
+                line[0], line[1],
+                configuration.direction,
+                initial_value,
+                configuration.bits,
+            )
+        else:
+            self.api.set_up_pin(
+                line[0], line[1],
+                configuration.direction,
+                initial_value,
+            )
 
 
     def set_pin_state(self, line, state):
@@ -329,7 +483,6 @@ class GPIO(GPIOProvider):
 
         single_write = (line[0], line[1], state,)
         self.api.write_pins(single_write)
-
 
 
     def read_pin_state(self, line):
@@ -360,6 +513,28 @@ class GPIO(GPIOProvider):
         directions = self.api.get_pin_directions(line)
         return directions[0]
 
+
+    def get_pin_configuration(self, line):
+        """
+        Gets the configuration for a GPIO pin.
+
+        Args:
+            line  -- (port, pin); typically a tuple from J1, J2, J7 below
+
+        Return:
+            Configuration -- OutputConfiguration if line is an output, InputConfiguration if line is an input
+        """
+        if self.get_pin_direction(line) == Directions.IN:
+            configuration = InputConfiguration()
+        else:
+            configuration = OutputConfiguration()
+        
+        if self.api.supports_verb("get_pin_configurations"):
+            configuration.bits = self.api.get_pin_configurations(line)[0]
+
+        return configuration
+
+
     def get_pin_port(self, line):
         """ Returns the 'port number' for a given GPIO pin."""
         return line[0]
@@ -367,7 +542,6 @@ class GPIO(GPIOProvider):
     def get_pin_identifier(self, line):
         """ Returns the 'pin number' for a given GPIO pin. """
         return line[1]
-
 
 
     #
@@ -382,10 +556,15 @@ class GPIO(GPIOProvider):
         return self.read_pin_state(line)
 
     def setup(self, line, direction):
-        warn("GPIO.setup is deprecated; prefer set_up_pin.", DeprecationWarning)
+        warn("GPIO.setup is deprecated; prefer configure_pin.", DeprecationWarning)
         self.set_up_pin(line, direction)
 
-
+    def set_up_pin(self, line, direction, initial_value=False):        
+        warn("GPIO.set_up_pin is deprecated; prefer configure_pin.", DeprecationWarning)
+        if direction == Directions.IN:
+            self.configure_pin(line, InputConfiguration())
+        else:
+            self.configure_pin(line, OutputConfiguration(), initial_value)
 
 
 class GPIOPin(object):
@@ -417,19 +596,42 @@ class GPIOPin(object):
         self.DIRECTION_OUT = Directions.OUT
 
         # Set up the pin for use. Idempotent.
-        self._parent.set_up_pin(self._line, self.get_direction(), self.read())
+        self._parent.configure_pin(self._line, self.get_configuration(), self.read())
 
 
-    def set_direction(self, direction, initial_value=False):
+    def set_direction(self, direction, initial_value=False, configuration=None):
         """
         Sets the GPIO pin to use a given direction.
         """
-        self._parent.set_up_pin(self._line, direction, initial_value)
+        if configuration is not None:
+            if direction != configuration.direction:
+                warn(f"Direction does not match configuration. Ignoring configuration.")
+                configuration = None
+
+        if configuration is None:
+            if direction == Directions.IN:
+                configuration = InputConfiguration()
+            else:
+                configuration = OutputConfiguration()
+                
+        self._parent.configure_pin(self._line, configuration, initial_value)
 
 
     def get_direction(self):
         """ Returns the pin's direction; will be either Directions.IN or Directions.OUT """
         return self._parent.get_pin_direction(self._line)
+
+
+    def set_configuration(self, configuration, initial_value=False):
+        """
+        Sets the GPIO pin configuration to use a given InputConfiguration or OutputConfiguration.
+        """
+        return self._parent.configure_pin(self._line, configuration, initial_value)
+
+                                
+    def get_configuration(self):
+        """ Returns the pin's configuration; will be either InputConfiguration or OutputConfiguration """
+        return self._parent.get_pin_configuration(self._line)
 
 
     def is_input(self):
@@ -517,9 +719,6 @@ class GPIOPin(object):
 
     # TODO: Toggle-- we have the hardware for this :)
 
-    # TODO: handle pulldowns/pull-ups, etc.
-
-
 
 class VirtualGPIOPort(object):
     """ An object that represents a "virtually contiguous" group of GPIO pins. """
@@ -602,6 +801,3 @@ class VirtualGPIOPort(object):
         for bit, pin in enumerate(self.pins):
             new_value = bool(value & (1 << bit))
             pin.write(new_value)
-
-
-
