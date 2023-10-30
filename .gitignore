@@ -61,3 +61,6 @@ firmware-bin
 # Never include unencrypted deploy keys.
 id_deploy
 id_deploy.pub
+
+# Documentation output
+/docs/build/
