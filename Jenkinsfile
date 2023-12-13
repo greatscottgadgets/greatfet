@@ -1,5 +1,5 @@
 pipeline {
-    agent { 
+    agent {
         dockerfile {
             args '--group-add=46 --device-cgroup-rule="c 189:* rmw" -v /dev/bus/usb:/dev/bus/usb'
         }
@@ -25,12 +25,12 @@ pipeline {
                     sh './ci-scripts/test-firmware-program.sh'
                 }
                 sh './ci-scripts/test-firmware-flash.sh'
+                sh './ci-scripts/configure-hubs.sh --reset'
             }
         }
     }
     post {
         always {
-            sh './ci-scripts/configure-hubs.sh --reset'
             cleanWs(cleanWhenNotBuilt: false,
                     deleteDirs: true,
                     disableDeferredWipeout: true,
