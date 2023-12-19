@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 git submodule init
 git submodule update
 python3 -m venv testing-venv

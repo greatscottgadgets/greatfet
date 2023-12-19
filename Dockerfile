@@ -1,9 +1,9 @@
 # Sandbox test environment for GreatFET
-FROM ubuntu:20.04
-CMD ["/bin/bash"]
+FROM ubuntu:22.04
+USER root
 
 # Override interactive installations and install prerequisite programs
-ENV DEBIAN_FRONTEND=noninteractive 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     cmake \
     curl \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
+    python3-yaml \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 RUN pip3 install git+https://github.com/CapableRobot/CapableRobot_USBHub_Driver --upgrade
