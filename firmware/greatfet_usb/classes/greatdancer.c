@@ -26,7 +26,7 @@
 
 #define CLASS_NUMBER_SELF (0x104)
 
-typedef char packet_buffer[4096];
+typedef char packet_buffer[512];
 
 /**
  *	Buffers for each of the relevant endpoints.
