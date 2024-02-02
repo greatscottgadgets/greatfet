@@ -73,7 +73,7 @@ GPIO
 
 The GPIO peripheral can be easily controlled from the convenience interface ``gf.gpio``.
 
-``gf.gpio.read_pin_state((1, 6))`` will read the logic value for GPIO pin 1[6] (pin mappings for peripherals can be found `temporarily here <https://gf.ktemkin.com/>`__) Likewise ``gf.gpio.set_pin_state((1, 6), 0)`` can be used to set the same pin to logic low.
+``gf.gpio.read_pin_state((1, 6))`` will read the logic value for GPIO pin 1[6] (pin mappings for peripherals can be found `here <https://gf-pinout.greatscottgadgets.com/>`__) Likewise ``gf.gpio.set_pin_state((1, 6), 0)`` can be used to set the same pin to logic low.
 
 
 
