@@ -109,11 +109,11 @@ class NTConsole(ConsoleBase):
         while True:
             z = msvcrt.getwch()
             if z == unichr(13):
-                return unichr(10)
+                return unichr(10).encode('utf-8')
             elif z in (unichr(0), unichr(0x0e)):    # functions keys, ignore
                 msvcrt.getwch()
             else:
-                return z
+                return z.encode('utf-8')
 
     def cancel(self):
         import ctypes
@@ -147,10 +147,10 @@ class POSIXConsole(ConsoleBase):
         try:
             c = sys.stdin.buffer.read(1)
         except AttributeError:
-            c = sys.stdin.read(1)
+            c = sys.stdin.read(1).encode('utf-8')
 
-        if c == unichr(0x7f):
-            c = unichr(8)    # map the BS key (which yields DEL) to backspace
+        if c == b'\x7f':
+            c = b'\x08'    # map the BS key (which yields DEL) to backspace
         return c
 
     def cancel(self):
