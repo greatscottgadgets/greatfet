@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools>=41", "wheel", "setuptools-git-versioning<2"]
+requires = ["setuptools>=64", "wheel", "setuptools-git-versioning<2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "greatfet"
-dynamic = ["version"]
+description = "Python library for hardware hacking with the GreatFET"
+license = { text = "BSD" }
+readme = "README.md"
+requires-python = ">=3.8"
 authors = [
     {name = "Great Scott Gadgets", email = "dev@greatscottgadgets.com"},
 ]
-license = { text = "BSD" }
-description = "Python library for hardware hacking with the GreatFET"
-urls = { Source = "https://greatscottgadgets.com/greatfet" }
-readme = "README.md"
+
 classifiers = [
     "Programming Language :: Python",
     "Development Status :: 5 - Production/Stable",
@@ -25,6 +25,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Security",
 ]
+
 dependencies = [
     "pyusb",
     "future",
@@ -35,6 +36,13 @@ dependencies = [
     "prompt_toolkit",
     "pygreat"
 ]
+
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://greatfet.readthedocs.io"
+Repository    = "https://github.com/greatscottgadgets/greatfet"
+Issues        = "https://github.com/greatscottgadgets/greatfet/issues"
 
 [project.scripts]
 greatfet = "greatfet.commands.gf:main"
@@ -64,6 +72,9 @@ greatfet_pirate = "greatfet.commands.greatfet_pirate:main"
 greatfet_jtag = "greatfet.commands.greatfet_jtag:main"
 greatfet_chipcon = "greatfet.commands.greatfet_chipcon:main"
 
+[tool.setuptools.package-data]
+greatfet = ["gnuradio/*.yml", "examples/greatfet_flame"]
+
 [tool.setuptools-git-versioning]
 enabled = true
-starting_version = "2019.05.01"
+starting_version = "2024.0.0"
