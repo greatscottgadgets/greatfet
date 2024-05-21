@@ -48,7 +48,7 @@ ARCHIVE_FLAGS = \
 # If we have a release version, also include the version and release-notes files.
 #
 ifdef RELEASE_VERSION
-ARCHIVE_FLAGS += --extra=VERSION --extra=RELEASENOTES
+ARCHIVE_FLAGS += --extra=VERSION --extra=RELEASENOTES.md
 endif
 
 
@@ -124,7 +124,7 @@ libgreat/README.md:
 
 
 #
-# Prepares a GreatFET release based on the VERSION arguments and based on a RELEASENOTES file.
+# Prepares a GreatFET release based on the VERSION arguments and based on a RELEASENOTES.md file.
 #
 prepare_release_files: firmware
 	@mkdir -p release-files/
@@ -140,13 +140,13 @@ endif
 	@mkdir -p host-packages
 	@mkdir -p build
 
-	@#Create our python pacakges. These universal packages work for py2/py3.
-	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
-	@pushd host; $(PYTHON3) setup.py bdist_wheel --universal -d $(CURDIR)/host-packages; popd
+	@#Create our python pacakges. 
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
+	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 
 	@# Create files for e.g. the nightly.
-	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -p any -b build_dist --universal -d $(CURDIR)/release-files; popd
-	@pushd host; $(PYTHON3) setup.py bdist_wheel -p any --universal -d $(CURDIR)/release-files; popd
+	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -p any -b build_dist -d $(CURDIR)/release-files; popd
+	@pushd host; $(PYTHON3) setup.py bdist_wheel -p any -d $(CURDIR)/release-files; popd
 	ls $(CURDIR)/release-files
 
 	@echo --- Creating our firmware-binary directory.
@@ -179,7 +179,7 @@ prepare_release_archives: prepare_release_files
 #
 # prepare_release generates the actual release, and then prints instructions.
 #
-prepare_release: RELEASENOTES prepare_release_archives
+prepare_release: RELEASENOTES.md prepare_release_archives
 
 	@# If no tag was supplied, warn the user.
 ifndef RELEASE_VERSION
