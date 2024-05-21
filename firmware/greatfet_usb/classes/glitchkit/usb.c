@@ -10,6 +10,8 @@
 #include <errno.h>
 #include <ctype.h>
 
+#include <greatfet_core.h>
+
 #include <drivers/usb/usb.h>
 #include <drivers/usb/usb_queue.h>
 #include "../../usb_endpoint.h"
