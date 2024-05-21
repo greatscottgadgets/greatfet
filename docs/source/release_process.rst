@@ -2,91 +2,83 @@
 Release Process
 ================================================
 
-This is the process for tagging and publishing a release. Change the release version number and paths as appropriate. Release version numbers are in the form YYYY.MM.N where N is the release number for that month (usually 1).
+This is the process for tagging and publishing a release. Change the release version number and paths as appropriate. Release version numbers are in the form ``YYYY.major.minor`` where ``YYYY`` is the year and ``major``, ``minor`` are the release numbers.
 
 
+Create Environment
+~~~~~~~~~~~~~~~~~~
 
-tag the release
+.. code-block:: sh
+
+    pyenv install 3.8
+    pyenv virtualenv 3.8 gsg-release
+    pyenv local gsg-release
+
+    python -m pip install --upgrade pip
+    pip install --upgrade setuptools setuptools_git_versioning build twine
+
+
+Dependencies
+~~~~~~~~~~~~
+
+.. code-block:: sh
+
+    pip install pyyaml wheel git-archive-all
+
+
+Clone Repository
+~~~~~~~~~~~~~~~~
+
+.. code-block:: sh
+
+    # clone repository
+    git clone git@github.com:greatscottgadgets/greatfet.git greatfet.git
+
+    # update submodules
+    cd greatfet.git/
+    git submodule update --init --recursive
+
+
+Update ``RELEASENOTES.md`` from previous release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  - update ``RELEASENOTES.md`` for the latest release
+
+
+Prepare release
 ~~~~~~~~~~~~~~~
 
 .. code-block:: sh
 
-	git tag -a v2013.07.1 -m 'release 2013.07.1'
-	git push --tags
+    RELEASE_VERSION=2024.0.1 make prepare_release
 
 
-
-make the release directory
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Push Release Tag
+~~~~~~~~~~~~~~~~
 
 .. code-block:: sh
 
-	cd /tmp
-	git clone ~/src/greatfet
-	cd greatfet
-	rm -rf .git*
-	mkdir firmware-bin
-	cd ..
-	mv greatfet greatfet-2013.07.1
-
-
-
-copy/update RELEASENOTES from previous release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  - prepend the current release notes to previous release notes
-
-
-
-make second clone for firmware build
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: sh
-
-	git clone --recursive ~/src/greatfet
-	cd greatfet/firmware/libopencm3
-	make
-	cd ..
-
-
-
-update the firmware VERSION_STRING and compile firmware
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: sh
-
-	sed -i 's/git-${VERSION}/2013.07.1/' cmake/greatfet-common.cmake
-	mkdir build
-	cd build
-	cmake ..
-	make
-	cp flash_stub/flash_stub.dfu /tmp/greatfet-2013.07.1/firmware-bin/
-	cp greatfet_usb/greatfet_usb.bin /tmp/greatfet-2013.07.1/firmware-bin/
-
-
-
-make the release archives
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: sh
-
-	tar -cJvf greatfet-2013.07.1.tar.xz greatfet-2013.07.1
-	zip -r greatfet-2013.07.1.zip greatfet-2013.07.1
-
+    git tag -a v2024.0.1 -m 'release 2024.0.1'
+    git push --tags
 
 
 "Draft a new release" on github
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    - call it "release 2013.07.1"
+    - call it "release 2024.0.1"
     - paste release notes (just for this release, not previous)
     - upload .tar.xz and .zip files
 
 
+Upload release to PyPI
+~~~~~~~~~~~~~~~~~~~~~~
 
-announce the release
+    python -m twine upload --repository pypi host-packages/*
+
+
+Announce the release
 ~~~~~~~~~~~~~~~~~~~~
 
-    - irc
+    - discord
     - greatfet mailing list
     - twitter
