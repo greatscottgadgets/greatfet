@@ -20,10 +20,9 @@ Happy hacking!
 
 ### GreatFET
 
-* [gpio: add support for configuring all gpio pin
+* [gpio: add support for configuring all gpio pin modes](https://github.com/greatscottgadgets/greatfet/pull/418)
 * [uart: fix python KeyError when parity argument not specified](https://github.com/greatscottgadgets/greatfet/pull/375)
 * [shell: support versions of IPython >= 3.11](https://github.com/greatscottgadgets/greatfet/pull/414)
-modes](https://github.com/greatscottgadgets/greatfet/pull/418)
 * [facedancer: fix usb mass storage example](https://github.com/greatscottgadgets/greatfet/pull/425)
 * [shell: fix runtime errors when using uart functionality](https://github.com/greatscottgadgets/greatfet/pull/426)
 
