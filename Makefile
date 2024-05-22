@@ -45,10 +45,10 @@ ARCHIVE_FLAGS = \
 	--force-submodules --prefix=greatfet-$(VERSION)/
 
 #
-# If we have a release version, also include the version and release-notes files.
+# If we have a release version, also include the version file.
 #
 ifdef RELEASE_VERSION
-ARCHIVE_FLAGS += --extra=VERSION --extra=RELEASENOTES.md
+ARCHIVE_FLAGS += --extra=VERSION 
 endif
 
 
