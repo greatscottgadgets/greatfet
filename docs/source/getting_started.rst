@@ -10,10 +10,6 @@ To use GreatFET you will need to ensure the following software is installed:
 
   * `Python <https://wiki.python.org/moin/BeginnersGuide/Download>`__ v3.8, or later.
 
-If you want to use GreatFET's interactive shell you will also need to install:
-
-  * `IPython <https://ipython.readthedocs.io>`__
-
 
 GreatFET Host Software Installation
 -----------------------------------
