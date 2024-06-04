@@ -15,6 +15,13 @@ Happy hacking!
 
 # Changelog
 
+## v2024.0.1
+
+### GreatFET
+
+* Add IPython to the GreatFET installation by default.
+* Update udev rules to use `uaccess` tag rather than the `plugdev` group.
+* Board support: [Update the rad1o board file](https://github.com/greatscottgadgets/greatfet/pull/432) (tx @dos1!)
 
 ## v2024.0.0
 
