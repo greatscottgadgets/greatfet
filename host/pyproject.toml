@@ -34,7 +34,8 @@ dependencies = [
     "cmsis_svd",
     "tabulate",
     "prompt_toolkit",
-    "pygreat"
+    "pygreat",
+    "ipython~=8.25",
 ]
 
 dynamic = ["version"]
