@@ -29,7 +29,7 @@ classifiers = [
 dependencies = [
     "pyusb",
     "future",
-    "pyfwup>=0.2",
+    "pyfwup>=0.5.1",
     "tqdm",
     "cmsis_svd",
     "tabulate",
