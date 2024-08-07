@@ -30,7 +30,7 @@ dependencies = [
     "importlib_resources; python_version<'3.9'",
     "pyusb",
     "future",
-    "pyfwup>=0.2",
+    "pyfwup>=0.5.2",
     "tqdm",
     "setuptools",     # cmsis_svd requires pkg_resources
     "cmsis_svd",
