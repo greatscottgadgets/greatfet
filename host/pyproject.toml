@@ -32,12 +32,12 @@ dependencies = [
     "future",
     "pyfwup>=0.2",
     "tqdm",
-    "setuptools",    # cmsis_svd requires pkg_resources
+    "setuptools",     # cmsis_svd requires pkg_resources
     "cmsis_svd",
     "tabulate",
     "prompt_toolkit",
     "pygreat",
-    "ipython~=8.25",
+    "ipython~=8.12",  # final version supported by Python 3.8
 ]
 
 dynamic = ["version"]

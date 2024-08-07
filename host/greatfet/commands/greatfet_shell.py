@@ -66,12 +66,15 @@ def main():
         singleton_text = "singleton " if args.singleton else ""
         print("A GreatFET {}object has been created for you as 'gf'. Have fun!\n".format(singleton_text))
 
+    # Mute annoying venv warning.
+    config = IPython.terminal.ipapp.load_default_config()
+    config.InteractiveShell.warn_venv = False
 
     # Create a new shell, and give it access to our created GreatFET object.
     if IPython.core.getipython.get_ipython() is None:
-        shell = IPython.terminal.embed.InteractiveShellEmbed.instance()
+        shell = IPython.terminal.interactiveshell.TerminalInteractiveShell.instance(config=config)
     else:
-        shell = IPython.terminal.embed.InteractiveShellEmbed()
+        shell = IPython.terminal.interactiveshell.TerminalInteractiveShell(config=config)
     shell.push('gf')
 
     # Create nice aliases for our primary interfaces.
