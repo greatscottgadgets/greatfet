@@ -82,10 +82,10 @@ def print_host_info():
 
 
     try:
-        import pkg_resources
+        import importlib.metadata
 
-        gf_version = pkg_resources.require("greatfet")[0].version
-        pygreat_version = pkg_resources.require("pygreat")[0].version
+        gf_version = importlib.metadata.version("greatfet")
+        pygreat_version = importlib.metadata.version("pygreat")
 
         print('\thost module version: {}'.format(gf_version))
         print('\tpygreat module version: {}'.format(pygreat_version))
