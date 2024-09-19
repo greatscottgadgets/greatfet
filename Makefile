@@ -7,7 +7,7 @@
 SHELL := /bin/bash
 
 # By default, use the system's "python" binary.
-PYTHON  ?= python
+PYTHON	?= python
 PYTHON2 ?= python2
 PYTHON3 ?= python3
 
@@ -18,12 +18,12 @@ CMAKE  ?= cmake
 BUILD_NUMBER ?= $(TRAVIS_BUILD_NUMBER)
 
 # Used only for deploying nightlies -- only DEPLOY_COMMAND is used in the text below.
-DEPLOY_USER    ?= deploy
-DEPLOY_PATH    ?= ~/nightlies/greatfet
+DEPLOY_USER	   ?= deploy
+DEPLOY_PATH	   ?= ~/nightlies/greatfet
 DEPLOY_COMMAND ?= scp -q -r * $(DEPLOY_USER)@$(DEPLOY_SERVER):$(DEPLOY_PATH)
 
 # By default, if RELEASE_VERSION is set, use it as our version.
-VERSION        ?= $(RELEASE_VERSION)
+VERSION		   ?= $(RELEASE_VERSION)
 
 # Allow for easy specification of a version suffix, if desired.
 ifdef VERSION_SUFFIX
@@ -48,7 +48,7 @@ ARCHIVE_FLAGS = \
 # If we have a release version, also include the version file.
 #
 ifdef RELEASE_VERSION
-ARCHIVE_FLAGS += --extra=VERSION 
+ARCHIVE_FLAGS += --extra=VERSION
 endif
 
 
@@ -62,8 +62,8 @@ endif
 ifdef RELEASE_VERSION
 			@# Tag a version before we complete this build, if requested.
 			@echo Tagging release $(VERSION).
-			@git tag -a v$(VERSION) -m "release $(VERSION)" $(TAG_OPTIONS)
-			@git -C libgreat tag -a v$(VERSION) -m "release $(VERSION)" $(TAG_OPTIONS)
+			@git tag -a v$(VERSION) -m "release $(VERSION)" -s $(TAG_OPTIONS)
+			@git -C libgreat tag -a v$(VERSION) -m "release $(VERSION)" -s $(TAG_OPTIONS)
 			@echo "$(VERSION)" > VERSION
 			@echo "$(VERSION)" > libgreat/VERSION
 endif
@@ -124,7 +124,7 @@ libgreat/README.md:
 
 
 #
-# Prepares a GreatFET release based on the VERSION arguments and based on a RELEASENOTES.md file.
+# Prepares a GreatFET release based on the VERSION arguments and based on a CHANGELOG.md file.
 #
 prepare_release_files: firmware
 	@mkdir -p release-files/
@@ -140,7 +140,7 @@ endif
 	@mkdir -p host-packages
 	@mkdir -p build
 
-	@#Create our python pacakges. 
+	@#Create our python pacakges.
 	@pushd libgreat/host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 	@pushd host; $(PYTHON3) setup.py bdist_wheel -d $(CURDIR)/host-packages; popd
 
@@ -179,7 +179,7 @@ prepare_release_archives: prepare_release_files
 #
 # prepare_release generates the actual release, and then prints instructions.
 #
-prepare_release: RELEASENOTES.md prepare_release_archives
+prepare_release: CHANGELOG.md prepare_release_archives
 
 	@# If no tag was supplied, warn the user.
 ifndef RELEASE_VERSION
@@ -189,11 +189,11 @@ endif
 	@echo
 	@echo Archives seem to be ready in ./release-files.
 	@echo If everything seems okay, you probably should push the relevant tag:
-	@echo "    git push origin v$(VERSION)"
-	@echo "    git -C libgreat push origin v$(VERSION)"
+	@echo "	   git push origin v$(VERSION)"
+	@echo "	   git -C libgreat push origin v$(VERSION)"
 	@echo
 	@echo And push the relevant packages to Pypi:
-	@echo "    python3 -m twine upload host-packages/*"
+	@echo "	   python3 -m twine upload host-packages/*"
 
 
 #

@@ -1,4 +1,10 @@
-This the fourth major release of the GreatFET software and firmware stacks. As usual, this release contains firmware images in `firmware-bin`, host software in `host-packages`, and a copy of all sources necessary to build the entire codebase.
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+<!--
+## [Unreleased]
+-->
 
 ## Upgrading to this release
 
@@ -13,21 +19,33 @@ After upgrading the host tools, update your GreatFET firmware to the latest rele
 Happy hacking!
 
 
-# Changelog
+## v2024.0.2
+### Fixed
+* The GreatFET shell was unable to access globals inside user defined functions.
+* Import errors on some Python distributions.
+### Changed
+* Updated pyfwup dependency to `0.5.2`
+* Updated libgreat dependency to [`v2024.0.2`](https://github.com/greatscottgadgets/libgreat/compare/v2024.0.1...v2024.0.2)
+### Added
+* Windows support for Cynthion.
+
+
+## v2024.0.1
+### Added
+* Add IPython to the GreatFET installation by default.
+### Changed
+* Updated udev rules to use uaccess tag rather than the plugdev group.
+* Updated the rad1o board file (tx @dos1!)
 
 
 ## v2024.0.0
-
 ### GreatFET
-
 * [gpio: add support for configuring all gpio pin modes](https://github.com/greatscottgadgets/greatfet/pull/418)
 * [uart: fix python KeyError when parity argument not specified](https://github.com/greatscottgadgets/greatfet/pull/375)
 * [shell: support versions of IPython >= 3.11](https://github.com/greatscottgadgets/greatfet/pull/414)
 * [facedancer: fix usb mass storage example](https://github.com/greatscottgadgets/greatfet/pull/425)
 * [shell: fix runtime errors when using uart functionality](https://github.com/greatscottgadgets/greatfet/pull/426)
-
 ### libgreat
-
 * [Added TX & RX pin definitions for UART1, USART2&3](https://github.com/greatscottgadgets/libgreat/pull/25)
 * [Implement NXP's recommended PLL setup sequence](https://github.com/greatscottgadgets/libgreat/pull/30)
 * [Add support for configuring all gpio pin modes](https://github.com/greatscottgadgets/libgreat/pull/35)
@@ -53,3 +71,10 @@ NOTE: We no longer support Python 2. This release targets Python 3.6+.
 ### Major bugfixes:
 
  - #344: Facedancer with bMaxPacketSize0 < 32 does not work.
+
+
+[Unreleased]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.2...HEAD
+[v2024.0.2]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.1...v2024.0.2
+[v2024.0.1]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.0...v2024.0.1
+[v2024.0.0]: https://github.com/greatscottgadgets/libgreat/compare/v2021.2.1...v2024.0.0
+[v2021.2.1]: https://github.com/greatscottgadgets/libgreat/releases/tag/v2021.2.1
