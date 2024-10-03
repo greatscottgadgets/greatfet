@@ -268,7 +268,7 @@ def main():
         except:
             holding_dir = None
 
-        bin_file = tempfile.NamedTemporaryFile(dir=holding_dir)
+        bin_file = tempfile.NamedTemporaryFile(dir=holding_dir, delete=False)
         bin_file_name = bin_file.name
 
     # Create queues of transfer objects that we'll use as a producer/consumer interface for our comm thread.
@@ -333,6 +333,7 @@ def main():
     # Flush whatever data we've read to disk, so it can be correctly read by subsequent operations.
     if args.pulseview:
         bin_file.flush()
+        bin_file.close()
 
     # Finally, generate our output.
     if args.binary:
@@ -340,6 +341,7 @@ def main():
     if args.pulseview:
         emit_sigrok_file(args.pulseview, bin_file_name, bus_width, sample_rate, args.first_pin, channel_names)
         log_function("Sigrok/PulseView compatible session file created: '{}'.".format(args.pulseview))
+        os.unlink(bin_file_name)
 
     # Print how long we sampled for, as a nicety.
     log_function("Sampled for {} seconds.".format(round(elapsed_time, 4)))
