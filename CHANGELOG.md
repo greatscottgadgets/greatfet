@@ -19,6 +19,11 @@ After upgrading the host tools, update your GreatFET firmware to the latest rele
 Happy hacking!
 
 
+## v2024.0.3
+### Fixed
+* Permission denied error when using logic analyzer on Windows.
+
+
 ## v2024.0.2
 ### Fixed
 * The GreatFET shell was unable to access globals inside user defined functions.
@@ -73,7 +78,8 @@ NOTE: We no longer support Python 2. This release targets Python 3.6+.
  - #344: Facedancer with bMaxPacketSize0 < 32 does not work.
 
 
-[Unreleased]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.2...HEAD
+[Unreleased]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.3...HEAD
+[v2024.0.3]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.2...v2024.0.3
 [v2024.0.2]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.1...v2024.0.2
 [v2024.0.1]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.0...v2024.0.1
 [v2024.0.0]: https://github.com/greatscottgadgets/libgreat/compare/v2021.2.1...v2024.0.0
