@@ -19,18 +19,30 @@ After upgrading the host tools, update your GreatFET firmware to the latest rele
 Happy hacking!
 
 
-## v2024.0.2
+## [v2024.0.4] - 2024-12-18
+### Fixed
+* Serial packets were framed incorrectly when using the GreatFET UART interface with parity set to one of: ODD, EVEN or PARITY_STUCK_AT_ONE
+### Changed
+* Updated libgreat to [`v2024.0.3`](https://github.com/greatscottgadgets/libgreat/compare/v2024.0.2...v2024.0.3)
+
+
+## [v2024.0.3] - 2024-10-10
+### Fixed
+* Permission denied error when using logic analyzer on Windows.
+
+
+## [v2024.0.2] - 2024-09-19
 ### Fixed
 * The GreatFET shell was unable to access globals inside user defined functions.
 * Import errors on some Python distributions.
 ### Changed
 * Updated pyfwup dependency to `0.5.2`
-* Updated libgreat dependency to [`v2024.0.2`](https://github.com/greatscottgadgets/libgreat/compare/v2024.0.1...v2024.0.2)
+* Updated libgreat to [`v2024.0.2`](https://github.com/greatscottgadgets/libgreat/compare/v2024.0.1...v2024.0.2)
 ### Added
 * Windows support for Cynthion.
 
 
-## v2024.0.1
+## [v2024.0.1] - 2024-06-04
 ### Added
 * Add IPython to the GreatFET installation by default.
 ### Changed
@@ -38,7 +50,7 @@ Happy hacking!
 * Updated the rad1o board file (tx @dos1!)
 
 
-## v2024.0.0
+## [v2024.0.0] - 2024-05-22
 ### GreatFET
 * [gpio: add support for configuring all gpio pin modes](https://github.com/greatscottgadgets/greatfet/pull/418)
 * [uart: fix python KeyError when parity argument not specified](https://github.com/greatscottgadgets/greatfet/pull/375)
@@ -54,7 +66,8 @@ Happy hacking!
 * [Do not set USB device address to zero](https://github.com/greatscottgadgets/libgreat/pull/26)
 
 
-## v2021.2.1
+
+## [v2021.2.1] - 2021-02-23
 
 NOTE: We no longer support Python 2. This release targets Python 3.6+.
 
@@ -73,8 +86,10 @@ NOTE: We no longer support Python 2. This release targets Python 3.6+.
  - #344: Facedancer with bMaxPacketSize0 < 32 does not work.
 
 
-[Unreleased]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.2...HEAD
-[v2024.0.2]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.1...v2024.0.2
-[v2024.0.1]: https://github.com/greatscottgadgets/libgreat/compare/v2024.0.0...v2024.0.1
-[v2024.0.0]: https://github.com/greatscottgadgets/libgreat/compare/v2021.2.1...v2024.0.0
-[v2021.2.1]: https://github.com/greatscottgadgets/libgreat/releases/tag/v2021.2.1
+[Unreleased]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.4...HEAD
+[v2024.0.4]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.3...v2024.0.4
+[v2024.0.3]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.2...v2024.0.3
+[v2024.0.2]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.1...v2024.0.2
+[v2024.0.1]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.0...v2024.0.1
+[v2024.0.0]: https://github.com/greatscottgadgets/greatfet/compare/v2021.2.1...v2024.0.0
+[v2021.2.1]: https://github.com/greatscottgadgets/greatfet/releases/tag/v2021.2.1
