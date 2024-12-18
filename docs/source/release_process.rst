@@ -10,8 +10,8 @@ Create Environment
 
 .. code-block:: sh
 
-    pyenv install 3.8
-    pyenv virtualenv 3.8 gsg-release
+    pyenv install 3.9
+    pyenv virtualenv 3.9 gsg-release
     pyenv local gsg-release
 
     python -m pip install --upgrade pip
