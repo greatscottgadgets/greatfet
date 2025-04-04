@@ -37,7 +37,7 @@ dependencies = [
     "tabulate",
     "prompt_toolkit",
     "pygreat",
-    "ipython~=8.12",
+    "ipython",
 ]
 
 dynamic = ["version"]
