@@ -8,7 +8,7 @@ Prerequisites
 
 To use GreatFET you will need to ensure the following software is installed:
 
-  * `Python <https://wiki.python.org/moin/BeginnersGuide/Download>`__ v3.8, or later.
+  * `Python <https://wiki.python.org/moin/BeginnersGuide/Download>`__ v3.9, or later.
 
 
 GreatFET Host Software Installation
