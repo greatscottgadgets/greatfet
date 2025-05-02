@@ -272,7 +272,12 @@ def main():
     device = parser.find_specified_device()
 
     # Bring our Rhododendron board online; and capture communication parameters.
-    buffer_size, endpoint = device.apis.usb_analyzer.initialize(args.speed, timeout=10000, comms_timeout=10000)
+    try:
+        buffer_size, endpoint = device.apis.usb_analyzer.initialize(args.speed, timeout=10000, comms_timeout=10000)
+    except:
+        log_error("Can't find a GreatFET Rhododendron Neighbour.")
+        log_error("We can't run without one.")
+        sys.exit(-1)
 
     # $Load the Rhododendron firmware loadable into memory...
     try:
