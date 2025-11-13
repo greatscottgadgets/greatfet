@@ -1,2 +1,2 @@
-SUBSYSTEM=="usb", ATTR{idVendor}=="1d50", ATTR{idProduct}=="60e6", SYMLINK+="greatfet-one%k", TAG+="uaccess", MODE:="0660"
-SUBSYSTEM=="usb", ATTR{idVendor}=="1fc9", ATTR{idProduct}=="000c", SYMLINK+="nxp-dfu-%k", TAG+="uaccess", MODE:="0660"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1d50", ATTR{idProduct}=="60e6", SYMLINK+="greatfet-one%k", TAG+="uaccess", MODE:="0660", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1fc9", ATTR{idProduct}=="000c", SYMLINK+="nxp-dfu-%k", TAG+="uaccess", MODE:="0660", GROUP="plugdev"
