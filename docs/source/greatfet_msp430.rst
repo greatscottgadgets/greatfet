@@ -8,9 +8,9 @@ greatfet_430 implements MSP430 JTAG functions.
 Pin Usage
 ~~~~~~~~~
 
-.. list-table :: 
+.. list-table ::
   :header-rows: 1
-  :widths: 1 1 1 
+  :widths: 1 1 1
 
   * - signal
     - symbol
@@ -33,3 +33,6 @@ Pin Usage
   * - TST
     - P4_2
     - J2.08
+
+.. image:: ../images/greatfet_msp430.png
+    :align: center
