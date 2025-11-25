@@ -5,6 +5,7 @@
  */
 #include <stdbool.h>
 #include <greatfet_core.h>
+#include "debug.h"
 #include "jtag_msp430.h"
 #include "jtag.h"
 
@@ -404,15 +405,22 @@ uint8_t jtag430_start_reset_halt()
 
 void jtag430_check_init()
 {
-	/* FIXME from GoodFET
-	 * Sometimes JTAG doesn't init correctly.
-	 * This restarts the connection if the masked-rom
-	 * chip ID cannot be read.  Should print warning
-	 */
-	int i;
-	if (jtagid!=0) {
-		while((i=jtag430_readmem(0xff0))==0xFFFF) {
-			jtag430x2_start();
-		}
+  // Sometimes JTAG doesn't init correctly. This attempts to restart
+  // the connection if the masked-rom chip ID cannot be read.
+  if (jtagid != 0) {
+	uint8_t timeout = 0;
+	while (true) {
+	  if (timeout >= 10) {
+		pr_warning("JTAG did not initialize correctly. Giving up after %d attempts.\n", timeout);
+		return;
+	  }
+	  timeout++;
+
+	  if (jtag430_readmem(0xff0) == 0xFFFF) {
+		jtag430x2_start();
+		continue;
+	  }
+	  break;
 	}
+  }
 }
