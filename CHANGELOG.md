@@ -19,6 +19,22 @@ After upgrading the host tools, update your GreatFET firmware to the latest rele
 Happy hacking!
 
 
+## [v2025.0.0] - 2025-12-05
+### Fixed
+* `greatfet_msp430` causes the GreatFET firmware to enter an infinite loop if the JTAG interface cannot be initialized.
+### Changed
+* `greatfet_usb-capture` will now exit with a warning if it cannot find a GreatFET Rhododendron Neighbour.
+* Updated libgreat to [`v2024.0.5`](https://github.com/greatscottgadgets/libgreat/compare/v2024.0.3...v2024.0.5).
+* Dropped support for Python 3.8.
+* Removed the version pin on `ipython`. Versions newer than `8.12` are now supported.
+### Added
+* Updated the `greatfet_msp430` documentation to provide more detail on JTAG pin connections.
+* Updated the Getting Started documentation to recommend the use of `greatfet host-tools --ensure-access` instead of manual udev rule installation.
+### Security
+* Update `jinja2` from `3.1.4` to `3.1.6`.
+### Removed
+* Deleted the udev rules file in `host/util/`. Copies of the rules for `uaccess` and `plugdev` can still be found in `host/greatfet/assets/`.
+
 ## [v2024.0.4] - 2024-12-18
 ### Fixed
 * Serial packets were framed incorrectly when using the GreatFET UART interface with parity set to one of: ODD, EVEN or PARITY_STUCK_AT_ONE
@@ -86,7 +102,8 @@ NOTE: We no longer support Python 2. This release targets Python 3.6+.
  - #344: Facedancer with bMaxPacketSize0 < 32 does not work.
 
 
-[Unreleased]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.4...HEAD
+[Unreleased]: https://github.com/greatscottgadgets/greatfet/compare/v2025.0.0...HEAD
+[v2025.0.0]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.4...v2025.0.0
 [v2024.0.4]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.3...v2024.0.4
 [v2024.0.3]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.2...v2024.0.3
 [v2024.0.2]: https://github.com/greatscottgadgets/greatfet/compare/v2024.0.1...v2024.0.2
