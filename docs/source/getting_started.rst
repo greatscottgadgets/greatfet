@@ -32,18 +32,13 @@ To install the GreatFET host software from PyPI using the `pip <https://pypi.org
 Install udev Rules (Linux Only)
 -------------------------------
 
-Configure your system to allow access to GreatFET:
+Configure your system to allow access to GreatFET for logged in users:
 
 .. code-block :: sh
 
-    # install udev rules
-    sudo cp host/util/54-greatfet.rules /etc/udev/rules.d
+    greatfet host-tools --ensure-access
 
-    # reload udev rules
-    sudo udevadm control --reload
-
-    # apply udev rules to any devices that are already plugged in
-    sudo udevadm trigger
+If you’d prefer to perform this step manually, you can find a udev rules file matching your distribution in the ``host/greatfet/assets/`` directory of the `GreatFET source repository <https://github.com/greatscottgadgets/greatfet/tree/main/host/greatfet/assets>`__.
 
 
 Test Installation
