@@ -13,6 +13,8 @@ from greatfet.utils import GreatFETArgumentParser
 from greatfet.util.interactive import GreatFETShellMagics
 
 import IPython
+import IPython.terminal.ipapp
+import IPython.terminal.interactiveshell
 
 def main():
 
